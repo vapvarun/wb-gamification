@@ -257,8 +257,8 @@ WB Gamification Doctor v1.0.0
   ✓ Starting level (0 points) exists
 
 ► Default Badges
-  ✓ 30 badges defined
-  ✓ 23 badges with auto-award conditions
+  ✓ 37 badges defined
+  ✓ 30 badges with auto-award conditions
 
 ► Registered Actions
   ✓ 14 actions registered

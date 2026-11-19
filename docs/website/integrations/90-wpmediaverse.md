@@ -20,8 +20,6 @@ All point values below are defaults you can override from **WB Gamification → 
 | `mvs_receive_follow` | Gain a new follower | 3 | - |
 | `mvs_receive_favorite` | Photo bookmarked by someone | 2 | - |
 | `mvs_give_comment` | Write a meaningful comment | 3 | 20 |
-| `mvs_give_follow` | Follow another member | 1 | 50 |
-| `mvs_bookmark_photo` | Bookmark a photo | 1 | 30 |
 
 `mvs_receive_like` and `mvs_receive_favorite` award the **media owner**, not the person who reacted. Self-reactions (liking or bookmarking your own content) are excluded - the engine compares the reactor ID against the media author and returns 0 if they match.
 
@@ -40,7 +38,7 @@ All point values below are defaults you can override from **WB Gamification → 
 
 `mvs_challenge_winner` awards the top-three finishers of a photo challenge. The default 200 points is the 1st-place value; a points callback resolves 200 / 100 / 50 for 1st / 2nd / 3rd place when WPMediaVerse Pro supplies the rank (200 is the fallback if Pro is inactive).
 
-`mvs_streak_milestone` fires when a member hits 7, 30, 100, or 365 consecutive upload days. The manifest uses a points callback that reads the bonus passed by WPMediaVerse Pro's streak engine, so the points awarded may exceed the 50-point base depending on streak length.
+`mvs_streak_milestone` fires when a member hits 7, 30, 100, or 365 consecutive upload days. The manifest uses a points callback that reads the bonus passed by WPMediaVerse Pro's streak engine, so each milestone pays its own amount: 50 points at 7 days, 250 at 30 days, 1,000 at 100 days and 5,000 at 365 days.
 
 Competition actions have no cooldowns or daily caps - they are high-stakes events that fire infrequently by design.
 

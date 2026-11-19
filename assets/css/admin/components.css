@@ -243,6 +243,14 @@
 	overflow: hidden;
 }
 
+/* Two cards in a row are always separated, whether or not the first one
+   carries .wbgam-stack-block (block margins collapse, so the gap stays
+   1.25rem either way). Grid/flex parents space their cards with `gap`
+   and reset this (see .wbgam-dashboard-row in pages/settings.css). */
+.wbgam-card + .wbgam-card {
+	margin-block-start: 1.25rem;
+}
+
 .wbgam-card-header {
 	padding: 1rem 1.25rem;
 	border-bottom: 1px solid var(--wb-gam-border);

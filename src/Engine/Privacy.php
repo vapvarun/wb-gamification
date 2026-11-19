@@ -438,7 +438,12 @@ final class Privacy {
 				'wb_gam_league_tier'             => __( 'Cohort league tier', 'wb-gamification' ),
 				// Erased since 1.4.1, never exported until now. The member's own personal record is
 				// their data; "we delete it but will not show it to you" is the wrong way round.
+				'wb_gam_pr_best_day'             => __( 'Personal record — best day', 'wb-gamification' ),
 				'wb_gam_pr_best_week'            => __( 'Personal record — best week', 'wb-gamification' ),
+				'wb_gam_pr_best_month'           => __( 'Personal record — best month', 'wb-gamification' ),
+				'wb_gam_pr_run_day'              => __( 'Personal record — points today', 'wb-gamification' ),
+				'wb_gam_pr_run_week'             => __( 'Personal record — points this week', 'wb-gamification' ),
+				'wb_gam_pr_run_month'            => __( 'Personal record — points this month', 'wb-gamification' ),
 				'wb_gam_sandboxed'               => __( 'Excluded from earning (sandboxed)', 'wb-gamification' ),
 				// Written as `self::SOME_CONST` at their call sites, which is why Rule 11's grep never
 				// saw them and this list went on looking complete. The award note is the one that

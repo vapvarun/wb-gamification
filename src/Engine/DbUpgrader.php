@@ -169,15 +169,12 @@ final class DbUpgrader {
 		global $wpdb;
 
 		// Champion by NAME, never by id. Falls back to the highest level the site has.
-		$champion_id = (int) $wpdb->get_var(
-			$wpdb->prepare( "SELECT id FROM {$wpdb->prefix}wb_gam_levels WHERE name = %s LIMIT 1", 'Champion' )
-		);
-		if ( ! $champion_id ) {
-			$champion_id = (int) $wpdb->get_var( "SELECT id FROM {$wpdb->prefix}wb_gam_levels ORDER BY min_points DESC LIMIT 1" );
-		}
+		$champion_id = Installer::champion_level_id();
 
-		$tenure_on     = FeatureFlags::is_enabled( 'tenure_badges' ) ? 1 : 0;
-		$site_first_on = FeatureFlags::is_enabled( 'site_first_badges' ) ? 1 : 0;
+		// These two flags are no longer FeatureFlags defaults, so only a saved "off" counts here.
+		$flags         = FeatureFlags::get_all();
+		$tenure_on     = ( $flags['tenure_badges'] ?? true ) ? 1 : 0;
+		$site_first_on = ( $flags['site_first_badges'] ?? true ) ? 1 : 0;
 
 		$seed = array(
 			'tenure_1yr'           => array(
@@ -1488,7 +1485,50 @@ final class DbUpgrader {
 			'1.5.4' => 'upgrade_to_1_5_4',
 			'1.5.5' => 'upgrade_to_1_5_5',
 			'1.6.4' => 'upgrade_to_1_6_4',
+			'1.6.8' => 'upgrade_to_1_6_8',
 		);
+	}
+
+	/**
+	 * 1.6.8 — index the content-removal lookup, and redraw the activity-stream cards.
+	 *
+	 * Removing a post, comment, upload or topic takes its award back
+	 * ({@see PointsEngine::reverse_object_awards()}), which reads the ledger by (action_id, object_id)
+	 * once per removed item. Without this index a bulk delete of 2,000 posts would scan the ledger
+	 * 2,000 times. Fresh installs get it from the CREATE TABLE in Installer.
+	 *
+	 * Idempotent: SHOW INDEX first; adding an index touches no row.
+	 *
+	 * @since 1.6.8
+	 */
+	private static function upgrade_to_1_6_8(): void {
+		global $wpdb;
+
+		$points = $wpdb->prefix . 'wb_gam_points';
+
+		if ( $points === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $points ) ) ) {
+			$has_index = $wpdb->get_results(
+				$wpdb->prepare( "SHOW INDEX FROM `{$points}` WHERE Key_name = %s", 'idx_action_object' ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+			);
+
+			if ( empty( $has_index ) ) {
+				$wpdb->query( "ALTER TABLE `{$points}` ADD KEY `idx_action_object` (`action_id`, `object_id`)" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL.
+			}
+
+			// Awards start recording their object from here. Content paid before this moment is
+			// recognised by its date (PointsEngine::is_legacy_object()). Only on a site with history;
+			// add_option keeps the first stamp if this step runs again.
+			if ( $wpdb->get_var( "SELECT 1 FROM `{$points}` LIMIT 1" ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+				add_option( PointsEngine::OBJECT_AWARDS_SINCE_OPTION, current_time( 'mysql', true ), '', false );
+			}
+		}
+
+		// Activity-stream cards from earlier versions get the 1.6.8 card markup. Upgrades run on
+		// plugins_loaded:1, before BuddyPress loads its activity functions, so test for the plugin's
+		// class (defined when its main file loads); the batch itself checks the activity component.
+		if ( self::buddypress_present() ) {
+			\WBGam\BuddyPress\Stream\Backfiller::run();
+		}
 	}
 
 	/**
@@ -1572,10 +1612,18 @@ final class DbUpgrader {
 	 * @since 1.5.5
 	 */
 	private static function upgrade_to_1_5_5(): void {
-		if ( ! function_exists( 'bp_activity_add' ) || ! class_exists( '\WBGam\BuddyPress\Stream\Backfiller' ) ) {
+		if ( ! self::buddypress_present() ) {
 			return;
 		}
 		\WBGam\BuddyPress\Stream\Backfiller::run();
+	}
+
+	/**
+	 * Is BuddyPress (or BuddyBoss) active? Usable on plugins_loaded:1, where its functions are not
+	 * loaded yet: the BuddyPress class is defined as soon as its main plugin file is included.
+	 */
+	private static function buddypress_present(): bool {
+		return class_exists( 'BuddyPress', false );
 	}
 
 	/**

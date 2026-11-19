@@ -62,6 +62,26 @@ defined( 'ABSPATH' ) || exit;
 final class MemberUrl {
 
 	/**
+	 * The plugin's Hub page, optionally opened on one panel, or '' when no published Hub exists.
+	 *
+	 * The one place that answers "where is the member's dashboard": emails, member surfaces and
+	 * notifications link here.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param string $panel Hub panel to open (leaderboard, challenges, badges, history), '' for none.
+	 * @return string
+	 */
+	public static function hub_url( string $panel = '' ): string {
+		$page_id = (int) get_option( 'wb_gam_hub_page_id', 0 );
+		if ( $page_id <= 0 || 'publish' !== get_post_status( $page_id ) ) {
+			return '';
+		}
+		$url = (string) get_permalink( $page_id );
+		return '' !== $panel ? add_query_arg( 'panel', sanitize_key( $panel ), $url ) : $url;
+	}
+
+	/**
 	 * Where should this member's name link to?
 	 *
 	 * @param int $user_id WordPress user ID.

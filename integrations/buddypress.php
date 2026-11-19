@@ -16,6 +16,27 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// BuddyPress Reactions fires ( $reactor_id, $item_id, $content_type, $emoji_id, $is_update ).
+// Its content types are activity, activity-comment, or a post type.
+$wb_gam_bp_reacted_activity = static fn( $item_id ) => bp_activity_get_specific(
+	[
+		'activity_ids' => [ $item_id ],
+		'show_hidden'  => true,
+	]
+)['activities'][0] ?? null;
+
+// BuddyPress Polls has two ways to create a poll and no hook for either, so funnel both into one.
+add_action(
+	'bp_activity_after_save',
+	static function ( $activity ): void {
+		if ( 'activity_poll' === $activity->type ) {
+			do_action( 'wb_gam_bp_poll_created', (int) $activity->user_id, (int) $activity->id );
+		}
+	}
+);
+// A poll page is keyed apart from activity ids so the two can never share an award.
+add_action( 'publish_wbpoll', static fn( $post_id, $post ) => do_action( 'wb_gam_bp_poll_created', (int) $post->post_author, \WBGam\Engine\Registry::object_key( 'wbpoll', (int) $post_id ) ), 10, 2 );
+
 return [
 	'plugin'   => 'BuddyPress',
 	'version'  => '1.0.0',
@@ -34,6 +55,9 @@ return [
 					'activity_id' => $activity_id,
 				];
 			},
+			// A deleted update takes its award back (BuddyPress passes every deleted activity id).
+			'once_per_object'     => static fn( $content, $user_id, $activity_id ): int => (int) $activity_id,
+			'reverse_on'          => [ 'bp_activity_deleted_activities' => static fn( $activity_ids ): array => (array) $activity_ids ],
 			'default_points'      => 10,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-message-circle',
@@ -49,6 +73,11 @@ return [
 			'description'         => static fn(): string => __( 'Awarded when a member comments on an activity update.', 'wb-gamification' ),
 			'hook'                => 'bp_activity_comment_posted',
 			'user_callback'       => function ( int $comment_id, array $params, object $activity ): int {
+				// MediaVerse copies a media comment onto the photo's activity from inside
+				// mvs_comment_created; that comment was paid there (mvs_give_comment).
+				if ( doing_action( 'mvs_comment_created' ) ) {
+					return 0;
+				}
 				return (int) ( $params['user_id'] ?? 0 );
 			},
 			// Capture word count and parent activity for quality scoring.
@@ -59,6 +88,10 @@ return [
 					'activity_id' => (int) ( $params['activity_id'] ?? 0 ),
 				];
 			},
+			'once_per_object'     => static fn( $comment_id ): int => (int) $comment_id,
+			'reverse_on'          => [ 'bp_activity_deleted_activities' => static fn( $activity_ids ): array => (array) $activity_ids ],
+			// Commenting on your own update earns nothing (and must not start the cooldown).
+			'owner_callback'      => static fn( $comment_id, $params, $activity ): int => is_object( $activity ) ? (int) ( $activity->user_id ?? 0 ) : 0,
 			'default_points'      => 5,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-message-square',
@@ -78,6 +111,11 @@ return [
 				// BP fires: ($friendship->id, $initiator_user_id, $friend_user_id, $friendship_object)
 				return is_object( $friendship ) ? (int) ( $friendship->friend_user_id ?? $friend_id ) : $friend_id;
 			},
+			'once_per_object'     => static fn( int $friendship_id ): int => $friendship_id,
+			'reverse_on'          => [
+				'friends_friendship_deleted' => static fn( $friendship_id ): int => (int) $friendship_id,
+			],
+			'async'               => false,
 			'default_points'      => 8,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-users',
@@ -91,6 +129,14 @@ return [
 			'description'         => static fn(): string => __( 'Awarded when a member joins a BuddyPress group.', 'wb-gamification' ),
 			'hook'                => 'groups_join_group',
 			'user_callback'       => fn( int $group_id, int $user_id ) => $user_id,
+			'once_per_object'     => static fn( int $group_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $group_id ),
+			// Per member and group: leaving, being removed or banned takes the points back; rejoining pays again.
+			'reverse_on'          => [
+				'groups_leave_group'   => static fn( $group_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $group_id ),
+				'groups_remove_member' => static fn( $group_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $group_id ),
+				'groups_ban_member'    => static fn( $group_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $group_id ),
+			],
+			'async'               => false,
 			'default_points'      => 8,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-network',
@@ -107,6 +153,11 @@ return [
 				$group = groups_get_group( $group_id );
 				return $group ? (int) $group->creator_id : 0;
 			},
+			'once_per_object'     => static fn( int $group_id ): int => $group_id,
+			'reverse_on'          => [
+				'groups_delete_group' => static fn( $group_id ): int => (int) $group_id,
+			],
+			'async'               => false,
 			'default_points'      => 20,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-plus',
@@ -120,6 +171,7 @@ return [
 			'description'         => static fn(): string => __( 'Awarded once when a member saves their extended BuddyPress profile.', 'wb-gamification' ),
 			'hook'                => 'xprofile_updated_profile',
 			'user_callback'       => fn( int $user_id ) => $user_id,
+			'permanent'           => 'A one-time profile milestone.',
 			'default_points'      => 15,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-user',
@@ -130,25 +182,30 @@ return [
 		[
 			'id'                  => 'bp_reactions_received',
 			'label'               => static fn(): string => __( 'Receive a reaction', 'wb-gamification' ),
-			'description'         => static fn(): string => __( 'Awarded when a member receives a reaction on their activity.', 'wb-gamification' ),
-			'hook'                => 'bp_reactions_add',
-			'user_callback'       => function ( int $reaction_id, array $reaction_data ): int {
-				return (int) ( $reaction_data['secondary_item_id'] ?? 0 );
-			},
-			// Capture the activity type so ActivityIntegration can apply quality weighting:
-			// activity_update reactions worth 5 pts, activity_comment reactions worth 3 pts.
-			'metadata_callback'   => function ( int $reaction_id, array $reaction_data ): array {
-				$activity_id = (int) ( $reaction_data['item_id'] ?? 0 );
-				if ( ! $activity_id || ! function_exists( 'bp_activity_get_specific' ) ) {
-					return [ 'activity_id' => $activity_id ];
+			'description'         => static fn(): string => __( 'Awarded when another member reacts to their content.', 'wb-gamification' ),
+			'hook'                => 'bp_reactions_after_react',
+			'user_callback'       => static function ( $reactor_id, $item_id, $content_type, $emoji_id, $is_update ) use ( $wb_gam_bp_reacted_activity ): int {
+				if ( in_array( $content_type, [ 'activity', 'activity-comment' ], true ) ) {
+					$owner_id = (int) ( $wb_gam_bp_reacted_activity( $item_id )->user_id ?? 0 );
+				} else {
+					$owner_id = (int) get_post_field( 'post_author', $item_id );
 				}
-				$result   = bp_activity_get_specific( [ 'activity_ids' => [ $activity_id ] ] );
-				$activity = $result['activities'][0] ?? null;
+				return $is_update || (int) $reactor_id === $owner_id ? 0 : $owner_id;
+			},
+			// One reactor pays once per item, so reacting, removing and reacting again earns nothing.
+			'once_per_object'     => static fn( $reactor_id, $item_id, $content_type ): int => \WBGam\Engine\Registry::object_key( $reactor_id, $content_type, $item_id ),
+			// One amount for every reaction, the owner's (default 3). Until 1.6.8 a reaction on an
+			// activity update was forced up to at least 5, so the owner could not lower it.
+			'metadata_callback'   => static function ( $reactor_id, $item_id, $content_type ) use ( $wb_gam_bp_reacted_activity ): array {
 				return [
-					'activity_id'   => $activity_id,
-					'activity_type' => $activity ? $activity->type : 'unknown',
+					'activity_id'   => (int) $item_id,
+					'activity_type' => 'activity' === $content_type ? ( $wb_gam_bp_reacted_activity( $item_id )->type ?? 'unknown' ) : $content_type,
 				];
 			},
+			'reverse_on'          => [
+				'bp_reactions_after_unreact' => static fn( $reactor_id, $item_id, $content_type ): int => \WBGam\Engine\Registry::object_key( $reactor_id, $content_type, $item_id ),
+			],
+			'async'               => false,
 			'default_points'      => 3,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-heart',
@@ -159,51 +216,21 @@ return [
 		[
 			'id'                  => 'bp_polls_created',
 			'label'               => static fn(): string => __( 'Create a poll', 'wb-gamification' ),
-			'description'         => static fn(): string => __( 'Awarded when a member creates a BuddyPress poll.', 'wb-gamification' ),
-			'hook'                => 'bp_polls_created',
-			'user_callback'       => fn( int $poll_id, int $user_id ) => $user_id,
+			'description'         => static fn(): string => __( 'Awarded when a member creates a poll with BuddyPress Polls.', 'wb-gamification' ),
+			'hook'                => 'wb_gam_bp_poll_created',
+			'user_callback'       => static fn( $user_id ): int => (int) $user_id,
+			'once_per_object'     => static fn( $user_id, $poll_id ): int => (int) $poll_id,
+			// An activity poll is keyed by its activity id, a poll page by Registry::object_key( 'wbpoll', id ) (the bridge above).
+			'reverse_on'          => [
+				'bp_activity_deleted_activities' => static fn( $activity_ids ): array => array_map( 'intval', (array) $activity_ids ),
+				'wp_trash_post'                  => static fn( $post_id ): int => 'wbpoll' === get_post_type( (int) $post_id ) ? \WBGam\Engine\Registry::object_key( 'wbpoll', (int) $post_id ) : 0,
+				'before_delete_post'             => static fn( $post_id ): int => 'wbpoll' === get_post_type( (int) $post_id ) ? \WBGam\Engine\Registry::object_key( 'wbpoll', (int) $post_id ) : 0,
+			],
+			'async'               => false,
 			'default_points'      => 10,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-chart-bar',
 			'repeatable'          => true,
-			'requires_buddypress' => true,
-		],
-
-		[
-			'id'                  => 'bp_publish_post',
-			'label'               => static fn(): string => __( 'Publish a member blog post', 'wb-gamification' ),
-			'description'         => static fn(): string => __( 'Awarded when a member publishes a post via BP Member Blog.', 'wb-gamification' ),
-			'hook'                => 'publish_post',
-			'user_callback'       => function ( int $post_id ): int {
-				$post = get_post( $post_id );
-				// Only award for user-authored posts (not pages, products, etc.).
-				if ( ! $post || 'post' !== $post->post_type ) {
-					return 0;
-				}
-				return (int) $post->post_author;
-			},
-			'default_points'      => 25,
-			'category'            => 'buddypress',
-			'icon'                => 'icon-file-text',
-			'repeatable'          => true,
-			// Rate-limit: publish_post fires on every Publish click + revisions.
-			// Cap at 5 awards/day so a member can't grind by republishing.
-			'cooldown'            => 600,
-			'daily_cap'           => 5,
-			'requires_buddypress' => true,
-		],
-
-		[
-			'id'                  => 'bp_media_upload',
-			'label'               => static fn(): string => __( 'Upload media', 'wb-gamification' ),
-			'description'         => static fn(): string => __( 'Awarded when a member uploads media via BuddyPress.', 'wb-gamification' ),
-			'hook'                => 'bp_media_add',
-			'user_callback'       => fn( int $media_id ) => get_current_user_id(),
-			'default_points'      => 5,
-			'category'            => 'buddypress',
-			'icon'                => 'icon-image',
-			'repeatable'          => true,
-			'cooldown'            => 60,
 			'requires_buddypress' => true,
 		],
 
@@ -217,6 +244,11 @@ return [
 			'metadata_callback'   => function ( int $item_id, string $type = '' ): array {
 				return array( 'avatar_type' => $type );
 			},
+			'once_per_object'     => static fn( int $item_id ): int => $item_id,
+			'reverse_on'          => [
+				'bp_core_delete_existing_avatar' => static fn( $args ): int => 'user' === ( $args['object'] ?? 'user' ) ? (int) ( $args['item_id'] ?? 0 ) : 0,
+			],
+			'async'               => false,
 			'default_points'      => 10,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-user',
@@ -234,6 +266,11 @@ return [
 			'user_callback'       => function ( int $item_id, string $name = '', string $cover_url = '', int $feedback_code = 0 ): int {
 				return 1 === $feedback_code ? $item_id : 0;
 			},
+			'once_per_object'     => static fn( int $item_id ): int => $item_id,
+			'reverse_on'          => [
+				'members_cover_image_deleted' => static fn( $item_id ): int => (int) $item_id,
+			],
+			'async'               => false,
 			'default_points'      => 10,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-image',
@@ -247,15 +284,21 @@ return [
 			'description'         => static fn(): string => __( 'Awarded once per group when an admin uploads a cover image for a group.', 'wb-gamification' ),
 			// BP fires: do_action( 'groups_cover_image_uploaded', $item_id, $name, $cover_url, $feedback_code ).
 			// We award the acting user (the admin who uploaded), not the group creator —
-			// repeatability is "false" with action_id namespaced by group via metadata, so each
-			// fresh group cover earns once per (user, group) pair through the rate-limiter.
+			// each group cover earns once per (user, group) pair.
 			'hook'                => 'groups_cover_image_uploaded',
+			'once_per_object'     => static fn( int $item_id ): int => $item_id,
 			'user_callback'       => function ( int $item_id, string $name = '', string $cover_url = '', int $feedback_code = 0 ): int {
 				return 1 === $feedback_code ? get_current_user_id() : 0;
 			},
 			'metadata_callback'   => function ( int $item_id, string $name = '', string $cover_url = '', int $feedback_code = 0 ): array {
 				return array( 'group_id' => $item_id );
 			},
+			'reverse_on'          => [
+				'groups_cover_image_deleted' => static fn( $item_id ): int => (int) $item_id,
+				// Deleting the whole group fires no cover action; the group id is the same key.
+				'groups_delete_group'        => static fn( $group_id ): int => (int) $group_id,
+			],
+			'async'               => false,
 			'default_points'      => 10,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-image',
@@ -270,13 +313,17 @@ return [
 			// BP fires: do_action_ref_array( 'messages_message_sent', array( &$message, $r ) ).
 			'hook'                => 'messages_message_sent',
 			'user_callback'       => function ( $message ): int {
-				return is_object( $message ) ? (int) ( $message->sender_id ?? 0 ) : 0;
+				$sender = is_object( $message ) ? (int) ( $message->sender_id ?? 0 ) : 0;
+				// A message whose only recipient is the sender earns nothing.
+				$others = array_diff( array_map( 'intval', wp_list_pluck( (array) ( $message->recipients ?? array() ), 'user_id' ) ), array( $sender ) );
+				return $others ? $sender : 0;
 			},
 			'metadata_callback'   => function ( $message ): array {
 				return array(
 					'thread_id' => is_object( $message ) ? (int) ( $message->thread_id ?? 0 ) : 0,
 				);
 			},
+			'permanent'           => 'A sent message cannot be unsent; deleting a conversation only hides it for one member.',
 			'default_points'      => 3,
 			'category'            => 'buddypress',
 			'icon'                => 'icon-mail',

@@ -25,4 +25,3 @@
 1 src/Blocks/streak/style.css
 6 src/Blocks/user-status-bar/style.css
 3 src/Blocks/year-recap/style.css
-2 src/shared/base.css

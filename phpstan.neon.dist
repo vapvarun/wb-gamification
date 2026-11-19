@@ -41,6 +41,11 @@ parameters:
         # WP-CLI class + functions are only defined when running under WP-CLI;
         # load the stubs so static analysis knows WP_CLI::line/add_command/etc.
         - vendor/php-stubs/wp-cli-stubs/wp-cli-stubs.php
+    # Bundled licensing libraries: known to analysis (LicenseActivator::request(), package_signatures_register),
+    # never analysed themselves.
+    scanDirectories:
+        - libs/easy-digital-downloads/edd-sl-sdk/src
+        - libs/package-signatures
     treatPhpDocTypesAsCertain: false
     inferPrivatePropertyTypeFromConstructor: true
     reportUnmatchedIgnoredErrors: false
@@ -50,12 +55,14 @@ parameters:
         - '#Constant (WB_GAM_PATH|WB_GAM_URL|WB_GAM_FILE|WB_GAM_VERSION|WB_GAM_BASENAME) not found#'
         # Action Scheduler is loaded conditionally — its functions are
         # discovered at runtime and may not be visible to static analysis.
-        - '#Function as_(enqueue_async_action|schedule_single_action|unschedule_all_actions) not found#'
+        - '#Function as_(enqueue_async_action|schedule_single_action|unschedule_all_actions|get_scheduled_actions) not found#'
+        - '#on an unknown class ActionScheduler_Store#'
         # WordPress runtime constants defined by core during a real request but
         # not present in the static stubs (auth cookie name, DB name).
         - '#Constant (LOGGED_IN_COOKIE|DB_NAME) not found#'
         # Third-party integration symbols. Each integrations/*.php file only
         # executes when its host plugin is active, which defines these at
         # runtime. They are intentionally invisible to static analysis.
-        - '#Function (wc_get_order|wc_get_orders|bp_core_current_time|bp_get_member_user_id|bp_displayed_user_id|bp_displayed_user_domain|bp_displayed_user_url|bp_core_new_nav_item|bp_core_new_subnav_item|bp_core_load_template|bp_current_action|bp_activity_set_action|groups_get_group|give_get_payment_user_id|give_get_payments|register_graphql_object_type|register_graphql_field) not found#'
-        - '#(unknown class|invalid type|on an unknown class) (MeprEvent|MeprUser|LLMS_Quiz_Attempt|LLMS_User_Certificate|LLMS_User_Achievement)#'
+        - '#Function (wc_get_order|wc_get_orders|bp_core_current_time|bp_get_member_user_id|bp_displayed_user_id|bp_displayed_user_domain|bp_displayed_user_url|bp_core_new_nav_item|bp_core_new_subnav_item|bp_core_load_template|bp_current_action|bp_activity_set_action|groups_get_group|give_get_payment_user_id|give_get_payment_donor_id|give_get_payment_form_id|tec_tc_get_order|tribe_is_truthy|bp_activity_get_specific|tutor_utils|register_graphql_object_type|register_graphql_field) not found#'
+        - '#(Instantiated class|on an unknown class) Give_Donor#'
+        - '#(unknown class|invalid type|on an unknown class) (MeprEvent|MeprTransaction|Give\\Campaigns\\Models\\Campaign|Tutor\\Models\\QuizModel)#'

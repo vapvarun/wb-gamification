@@ -51,6 +51,44 @@
 		// The share toggle. A badge is private until its owner publishes it -- the share card, the
 		// OpenBadges credential and the public share page all refuse to render one that has not been --
 		// so this button is the only door through that gate, and it is only rendered on your own board.
+		// Copy the share link. The link next to it always works, so a browser that refuses the
+		// clipboard is told to use it rather than shown an error.
+		root.addEventListener( 'click', function ( event ) {
+			var copy = event.target.closest( '[data-wb-gam-share-copy]' );
+			if ( ! copy || ! root.contains( copy ) ) {
+				return;
+			}
+			var wrap   = copy.closest( '[data-wb-gam-share-link]' );
+			var link   = wrap && wrap.querySelector( 'a' );
+			var status = wrap && wrap.querySelector( '[role="status"]' );
+			var label  = copy.getAttribute( 'data-label' ) || copy.textContent;
+			copy.setAttribute( 'data-label', label );
+
+			function done( ok ) {
+				var text = copy.getAttribute( ok ? 'data-label-copied' : 'data-label-failed' );
+				copy.textContent = text;
+				if ( status ) {
+					status.textContent = text;
+				}
+				window.setTimeout( function () {
+					copy.textContent = label;
+				}, 2000 );
+			}
+
+			if ( ! link || ! navigator.clipboard || ! navigator.clipboard.writeText ) {
+				done( false );
+				return;
+			}
+			navigator.clipboard.writeText( link.href ).then(
+				function () {
+					done( true );
+				},
+				function () {
+					done( false );
+				}
+			);
+		} );
+
 		root.addEventListener( 'click', function ( event ) {
 			var button = event.target.closest( '[data-wb-gam-share]' );
 			if ( ! button || ! root.contains( button ) || 'true' === button.getAttribute( 'aria-disabled' ) ) {
@@ -81,6 +119,15 @@
 					button.textContent = nowShared
 						? button.getAttribute( 'data-label-shared' )
 						: button.getAttribute( 'data-label-share' );
+
+					var shareLink = button.parentNode.querySelector( '[data-wb-gam-share-link]' );
+					if ( shareLink ) {
+						var url = result.data && result.data.share_url;
+						if ( nowShared && url ) {
+							shareLink.querySelector( 'a' ).href = url;
+						}
+						shareLink.hidden = ! nowShared || ! shareLink.querySelector( 'a' ).getAttribute( 'href' );
+					}
 				} )
 				.finally( function () {
 					button.removeAttribute( 'aria-disabled' );

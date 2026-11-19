@@ -15,8 +15,9 @@ The Redemption Store lets members spend their accumulated points on rewards you 
 | `discount_fixed` | Generates a fixed-amount coupon code |
 | `custom` | You define the fulfillment manually |
 
-5. Optionally set a **stock limit**. When stock hits zero, the item becomes unavailable.
-6. Click **Publish**.
+5. Under **Stock**, pick **Unlimited**, or **Limited to** and enter how many are left. When a limited reward reaches zero it shows as sold out.
+6. Set **Status** to **Active** to show the reward in the store, or **Inactive** to keep it hidden while you prepare it.
+7. Click **Publish**.
 
 ## How Members Redeem
 
@@ -30,4 +31,6 @@ Every redemption is recorded with the member ID, reward ID, points spent, timest
 
 ## Stock Management
 
-Stock counts decrement on each successful redemption. If you set no stock limit, the reward is unlimited. You can update stock at any time from the reward edit screen.
+Stock counts down by one on each successful redemption. A reward set to **Unlimited** never runs out. You can change stock at any time from the reward edit screen: switching to **Unlimited** removes the count, and entering 0 marks the reward sold out.
+
+Inactive rewards never appear in the member store and cannot be redeemed.

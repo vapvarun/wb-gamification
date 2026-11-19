@@ -54,7 +54,7 @@ final class WebhooksAdminPage {
 	 * @return void
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( 'gamification_page_wb-gam-webhooks' !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( 'wb-gam-webhooks', 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 		wp_enqueue_style(
@@ -69,16 +69,6 @@ final class WebhooksAdminPage {
 			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
-		);
-		// Shared confirm/cancel modal button labels — confirmAction() falls back
-		// to these when a caller doesn't pass its own confirmText/cancelText.
-		wp_localize_script(
-			'wb-gam-admin-rest-utils',
-			'wbGamAdminRestI18n',
-			array(
-				'confirm' => __( 'Confirm', 'wb-gamification' ),
-				'cancel'  => __( 'Cancel', 'wb-gamification' ),
-			)
 		);
 		wp_enqueue_script(
 			'wb-gam-admin-rest-form',
@@ -195,6 +185,7 @@ final class WebhooksAdminPage {
 				</div>
 				<div class="wbgam-card-body">
 					<form
+						method="post"
 						class="wb-gam-webhook-form"
 						data-wb-gam-rest-form="wbGamWebhooksSettings"
 						data-wb-gam-rest-method="POST"

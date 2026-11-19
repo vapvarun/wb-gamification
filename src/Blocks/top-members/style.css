@@ -9,7 +9,9 @@
 .wb-gam-top-members__podium {
 	display: flex;
 	justify-content: center;
-	align-items: flex-end;
+	/* Top-aligned with fixed steps, so #1 is always highest, then #2, then #3, whatever the
+	 * names below wrap to. Bottom alignment let a long #3 name lift its avatar above #2. */
+	align-items: flex-start;
 	gap: 1rem;
 	padding-block-end: 1rem;
 }
@@ -26,13 +28,17 @@
 
 /* 1st place taller */
 .wb-gam-top-members__podium-slot--1 { order: 2; }
-.wb-gam-top-members__podium-slot--2 { order: 1; }
-.wb-gam-top-members__podium-slot--3 { order: 3; }
+.wb-gam-top-members__podium-slot--2 { order: 1; padding-block-start: 1rem; }
+.wb-gam-top-members__podium-slot--3 { order: 3; padding-block-start: 1.75rem; }
 
+/* Reserved in every slot so the steps above are the only height difference. */
 .wb-gam-top-members__podium-crown {
-	font-size: 1.5rem;
-	line-height: 1;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
 	min-height: 1.75rem;
+	color: var(--wb-gam-color-gold-text);
+	line-height: 1;
 }
 
 .wb-gam-top-members__avatar-link img {
@@ -51,7 +57,7 @@
 	border-radius: 999px;
 }
 
-.wb-gam-top-members__rank-badge--1 { background: var(--wb-gam-gold);   color: var(--wb-gam-color-white); }
+.wb-gam-top-members__rank-badge--1 { background: var(--wb-gam-color-gold-text); color: var(--wb-gam-color-white); }
 .wb-gam-top-members__rank-badge--2 { background: var(--wb-gam-silver); color: var(--wb-gam-color-white); }
 .wb-gam-top-members__rank-badge--3 { background: var(--wb-gam-bronze); color: var(--wb-gam-color-white); }
 
@@ -74,13 +80,19 @@ a.wb-gam-top-members__name:hover { text-decoration: underline; }
 .wb-gam-top-members__points {
 	font-size: 1rem;
 	font-weight: 700;
-	color: var(--wb-gam-primary);
+	color: var(--wb-gam-primary-text);
 }
 
 .wb-gam-top-members__pts-label {
 	font-size: 0.75rem;
 	font-weight: 400;
 	color: var(--wb-gam-silver);
+}
+
+.wb-gam-top-members__badges {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
 }
 
 .wb-gam-top-members__level,
@@ -133,7 +145,7 @@ a.wb-gam-top-members__rest-name:hover { text-decoration: underline; }
 .wb-gam-top-members__rest-points {
 	font-size: 0.8125rem;
 	font-weight: 600;
-	color: var(--wb-gam-primary);
+	color: var(--wb-gam-primary-text);
 }
 
 /* List layout */
@@ -192,12 +204,15 @@ a.wb-gam-top-members__list-name:hover { text-decoration: underline; }
 
 .wb-gam-top-members__list-points {
 	font-weight: 600;
-	color: var(--wb-gam-primary);
+	color: var(--wb-gam-primary-text);
 	font-size: 0.9375rem;
 	white-space: nowrap;
 }
 
 .wb-gam-top-members__list-badges {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
 	font-size: 0.8125rem;
-	color: var(--wb-gam-silver);
+	color: var(--wb-gam-color-text-muted);
 }

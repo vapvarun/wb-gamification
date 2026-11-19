@@ -94,10 +94,14 @@ final class RecapEngine {
 		$total_events = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_events
-				  WHERE user_id = %d AND created_at BETWEEN %s AND %s",
+				  WHERE user_id = %d AND created_at BETWEEN %s AND %s
+				    AND action_id NOT LIKE %s AND action_id NOT LIKE %s",
 				$user_id,
 				$start,
-				$end
+				$end,
+				// Content-removal rows are corrections, not something the member did (as top actions).
+				'%' . $wpdb->esc_like( PointsEngine::REMOVED_SUFFIX ),
+				'%' . $wpdb->esc_like( PointsEngine::RESTORED_SUFFIX )
 			)
 		);
 
@@ -107,12 +111,16 @@ final class RecapEngine {
 				"SELECT action_id, COUNT(*) AS event_count
 				   FROM {$wpdb->prefix}wb_gam_events
 				  WHERE user_id = %d AND created_at BETWEEN %s AND %s
+				    AND action_id NOT LIKE %s AND action_id NOT LIKE %s
 				  GROUP BY action_id
 				  ORDER BY event_count DESC
 				  LIMIT 3",
 				$user_id,
 				$start,
-				$end
+				$end,
+				// Content-removal rows are corrections, not something the member did.
+				'%' . $wpdb->esc_like( PointsEngine::REMOVED_SUFFIX ),
+				'%' . $wpdb->esc_like( PointsEngine::RESTORED_SUFFIX )
 			),
 			ARRAY_A
 		) ?: array();
@@ -148,11 +156,11 @@ final class RecapEngine {
 			)
 		);
 
-		// ── Kudos given / received ──────────────────────────────────────────
+		// ── Kudos given / received (a revoked kudos no longer counts, as everywhere else) ──
 		$kudos_given = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_kudos
-				  WHERE giver_id = %d AND created_at BETWEEN %s AND %s",
+				  WHERE giver_id = %d AND revoked_at IS NULL AND created_at BETWEEN %s AND %s",
 				$user_id,
 				$start,
 				$end
@@ -162,7 +170,7 @@ final class RecapEngine {
 		$kudos_received = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_kudos
-				  WHERE receiver_id = %d AND created_at BETWEEN %s AND %s",
+				  WHERE receiver_id = %d AND revoked_at IS NULL AND created_at BETWEEN %s AND %s",
 				$user_id,
 				$start,
 				$end
@@ -229,7 +237,7 @@ final class RecapEngine {
 	 *
 	 * @param int $user_id User ID to query.
 	 * @param int $year    Four-digit year to search within.
-	 * @return array{ week: string, points: int }|null Peak week data or null if no activity.
+	 * @return array{ week: string, week_start: string, points: int }|null Peak week data or null if no activity.
 	 */
 	private static function get_peak_week( int $user_id, int $year ): ?array {
 		global $wpdb;
@@ -244,11 +252,11 @@ final class RecapEngine {
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $local is built by Clock from a fixed column name.
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT DATE_FORMAT({$local}, '%%Y-W%%V') AS iso_week,
+				"SELECT DATE_SUB(DATE({$local}), INTERVAL WEEKDAY({$local}) DAY) AS week_start,
 				        SUM(points) AS week_points
 				   FROM {$wpdb->prefix}wb_gam_points
 				  WHERE user_id = %d AND is_spend = 0 AND created_at BETWEEN %s AND %s
-				  GROUP BY iso_week
+				  GROUP BY week_start
 				  ORDER BY week_points DESC
 				  LIMIT 1",
 				$user_id,
@@ -263,9 +271,13 @@ final class RecapEngine {
 			return null;
 		}
 
+		// The Monday the week starts on, in the site's calendar. 'week' stays the ISO code for API
+		// readers (it paired the calendar year with the ISO week number, wrong around New Year).
+		$monday = new \DateTimeImmutable( (string) $row['week_start'], wp_timezone() );
 		return array(
-			'week'   => $row['iso_week'],
-			'points' => (int) $row['week_points'],
+			'week'       => $monday->format( 'o-\WW' ),
+			'week_start' => $monday->format( 'Y-m-d' ),
+			'points'     => (int) $row['week_points'],
 		);
 	}
 
@@ -383,5 +395,27 @@ final class RecapEngine {
 			__( 'You earned %s points this year - keep the momentum going!', 'wb-gamification' ),
 			number_format_i18n( $points )
 		);
+	}
+
+	/**
+	 * A kudos was revoked: drop the cached recap of both members for the year it was given.
+	 *
+	 * The recap counts only live kudos, and is cached for an hour; without this the revoked kudos
+	 * stayed in "kudos received" until the cache expired.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param int $kudos_id    Revoked kudos.
+	 * @param int $giver_id    Giver.
+	 * @param int $receiver_id Receiver.
+	 * @return void
+	 */
+	public static function forget_kudos( int $kudos_id, int $giver_id, int $receiver_id ): void {
+		global $wpdb;
+		$created = (string) $wpdb->get_var( $wpdb->prepare( "SELECT created_at FROM {$wpdb->prefix}wb_gam_kudos WHERE id = %d", $kudos_id ) );
+		$year    = '' !== $created ? (int) get_date_from_gmt( $created, 'Y' ) : (int) wp_date( 'Y' );
+		foreach ( array( $giver_id, $receiver_id ) as $user_id ) {
+			wp_cache_delete( "wb_gam_recap_{$user_id}_{$year}", self::CACHE_GROUP );
+		}
 	}
 }

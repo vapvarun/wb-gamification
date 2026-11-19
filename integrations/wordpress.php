@@ -29,6 +29,30 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// A comment is approved when it is posted or later from moderation, and a trigger listens to one hook.
+// Back from the trash or spam is not an approval: the award taken on the way out is given back
+// (restore_on), so it is not paid a second time.
+add_action(
+	'comment_post',
+	static function ( $comment_id, $approved ): void {
+		if ( 1 === (int) $approved ) {
+			do_action( 'wb_gam_comment_approved', (int) $comment_id );
+		}
+	},
+	10,
+	2
+);
+add_action(
+	'transition_comment_status',
+	static function ( $new_status, $old_status, $comment ): void {
+		if ( 'approved' === $new_status && ! in_array( $old_status, [ 'approved', 'trash', 'spam' ], true ) ) {
+			do_action( 'wb_gam_comment_approved', (int) $comment->comment_ID );
+		}
+	},
+	10,
+	3
+);
+
 return [
 	'plugin'   => 'WordPress',
 	'version'  => '1.0.0',
@@ -42,6 +66,7 @@ return [
 			'description'     => static fn(): string => __( 'Awarded once when a user registers.', 'wb-gamification' ),
 			'hook'            => 'user_register',
 			'user_callback'   => fn( int $user_id ) => $user_id,
+			'permanent'       => 'A sign-up. Deleting the member removes their points with them.',
 			'default_points'  => 15,
 			'category'        => 'wordpress',
 			'icon'            => 'icon-users',
@@ -55,6 +80,7 @@ return [
 			'description'     => static fn(): string => __( 'Awarded once on the very first login.', 'wb-gamification' ),
 			'hook'            => 'wp_login',
 			'user_callback'   => fn( string $user_login, \WP_User $user ) => $user->ID,
+			'permanent'       => 'A first login cannot be undone.',
 			'default_points'  => 10,
 			'category'        => 'wordpress',
 			'icon'            => 'icon-lock',
@@ -66,10 +92,12 @@ return [
 			'id'              => 'wp_profile_complete',
 			'label'           => static fn(): string => __( 'Complete WordPress profile', 'wb-gamification' ),
 			'description'     => static fn(): string => __( 'Awarded once when the user saves their WP profile with a bio.', 'wb-gamification' ),
-			'hook'            => 'personal_options_update',
+			// personal_options_update fires before the bio is saved; this fires after.
+			'hook'            => 'profile_update',
 			'user_callback'   => function ( int $user_id ): int {
 				return get_user_meta( $user_id, 'description', true ) ? $user_id : 0;
 			},
+			'permanent'       => 'A one-time profile milestone.',
 			'default_points'  => 10,
 			'category'        => 'wordpress',
 			'icon'            => 'icon-user',
@@ -80,12 +108,10 @@ return [
 		[
 			'id'              => 'wp_post_receives_comment',
 			'label'           => static fn(): string => __( 'Receive a comment on a post', 'wb-gamification' ),
-			'description'     => static fn(): string => __( 'Post author earns points when an approved comment is left on their content.', 'wb-gamification' ),
-			'hook'            => 'comment_post',
-			'user_callback'   => function ( int $comment_id, int|string $approved ): int {
-				if ( 1 !== (int) $approved ) {
-					return 0;
-				}
+			'description'     => static fn(): string => __( 'Post author earns points when a comment on their content is approved.', 'wb-gamification' ),
+			'hook'            => 'wb_gam_comment_approved',
+			'once_per_object' => static fn( int $comment_id ): int => $comment_id,
+			'user_callback'   => function ( int $comment_id ): int {
 				$comment = get_comment( $comment_id );
 				if ( ! $comment ) {
 					return 0;
@@ -104,7 +130,10 @@ return [
 				}
 				// Member Blog pays the author for comments on its posts (bpmb_post_commented),
 				// with its own eligibility filter. Paying here too doubled every such comment.
-				if ( \WBGam\Engine\Registry::get_action( 'bpmb_post_commented' )
+				// It listens to comment_post only, so it pays only a comment approved as it is
+				// posted; one approved later from moderation is paid here, or by no one.
+				if ( doing_action( 'comment_post' )
+					&& \WBGam\Engine\Registry::get_action( 'bpmb_post_commented' )
 					// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Member Blog's own eligibility filter, read so both triggers agree on which posts it covers.
 					&& apply_filters( 'bpmb_gamification_award_comment_for_post', 'post' === $post->post_type, $post ) ) {
 					return 0;
@@ -120,6 +149,8 @@ return [
 			// per author so a coordinated comment-spam ring can't grind.
 			'cooldown'        => 0,
 			'daily_cap'       => 10,
+			'async'           => false, // Awarded before a delete can arrive, so it can be reversed.
+			...\WBGam\Engine\Registry::comment_object_hooks(),
 			'standalone_only' => false,
 		],
 
@@ -151,10 +182,15 @@ return [
 				}
 				return (int) $post->post_author;
 			},
+			// One award per post while it is live: trashing or deleting it takes the points back, and
+			// publishing it again (untrash returns a post to draft) earns again.
+			'once_per_object' => static fn( string $new_status, string $old_status, $post ): int => $post instanceof \WP_Post ? (int) $post->ID : 0,
+			...\WBGam\Engine\Registry::post_object_hooks( 'post' ),
 			'default_points'  => 25,
 			'category'        => 'wordpress',
 			'icon'            => 'icon-file-text',
 			'repeatable'      => true,
+			'async'           => false,
 			'standalone_only' => false,
 			// BP Member Blog's `bp_publish_post` awards on the same published
 			// `post`. This canonical core trigger supersedes it so a publish
@@ -186,6 +222,9 @@ return [
 				$post_count = (int) count_user_posts( $author_id, 'post' );
 				return 1 === $post_count ? $author_id : 0;
 			},
+			'once_per_object' => static fn( string $new_status, string $old_status, $post ): int => $post instanceof \WP_Post ? (int) $post->ID : 0,
+			...\WBGam\Engine\Registry::post_object_hooks( 'post' ),
+			'async'           => false,
 			'default_points'  => 20,
 			'category'        => 'wordpress',
 			'icon'            => 'icon-star',
@@ -213,11 +252,16 @@ return [
 				}
 				return (int) $comment->user_id;
 			},
+			'once_per_object' => static fn( $comment_id ): int => (int) $comment_id,
+			...\WBGam\Engine\Registry::comment_object_hooks(),
+			// Commenting on your own post earns nothing.
+			'owner_callback'  => static fn( $comment_id ): int => (int) get_post_field( 'post_author', (int) get_comment( (int) $comment_id )?->comment_post_ID ),
 			'default_points'  => 5,
 			'category'        => 'wordpress',
 			'icon'            => 'icon-message-square',
 			'repeatable'      => true,
 			'cooldown'        => 60,
+			'async'           => false,
 			'standalone_only' => false,
 		],
 
@@ -227,7 +271,8 @@ return [
 			'description'     => static fn(): string => __( 'Awarded when a previously pending comment gets approved.', 'wb-gamification' ),
 			'hook'            => 'transition_comment_status',
 			'user_callback'   => function ( string $new_status, string $old_status, \WP_Comment $comment ): int {
-				if ( 'approved' !== $new_status || 'approved' === $old_status ) {
+				// Back from the trash or spam is a restore (restore_on), not a moderation approval.
+				if ( 'approved' !== $new_status || in_array( $old_status, [ 'approved', 'trash', 'spam' ], true ) ) {
 					return 0;
 				}
 				// Skip product reviews — WooCommerce manifest handles those separately.
@@ -237,10 +282,14 @@ return [
 				}
 				return (int) $comment->user_id;
 			},
+			'once_per_object' => static fn( string $new_status, string $old_status, \WP_Comment $comment ): int => (int) $comment->comment_ID,
+			...\WBGam\Engine\Registry::comment_object_hooks(),
+			'owner_callback'  => static fn( $new_status, $old_status, $comment ): int => $comment instanceof \WP_Comment ? (int) get_post_field( 'post_author', (int) $comment->comment_post_ID ) : 0,
 			'default_points'  => 5,
 			'category'        => 'wordpress',
 			'icon'            => 'icon-circle-check',
 			'repeatable'      => true,
+			'async'           => false,
 			'standalone_only' => false,
 		],
 

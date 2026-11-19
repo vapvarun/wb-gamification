@@ -33,6 +33,9 @@ return array(
 			'metadata_callback' => function ( int $post_id, $post = null ): array {
 				return array( 'resume_id' => $post_id );
 			},
+			'once_per_object'   => static fn( int $post_id ): int => $post_id,
+			...\WBGam\Engine\Registry::post_object_hooks( 'wcb_resume' ),
+			'async'             => false,
 			'default_points'    => 20,
 			'category'          => 'careers',
 			'icon'              => 'icon-file-text',

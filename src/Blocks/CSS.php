@@ -107,6 +107,7 @@ final class CSS {
 		self::collect_border_radius( $attrs, $desktop );
 		self::collect_box_shadow( $attrs, $desktop );
 		self::collect_typography( $attrs, $desktop, $tablet, $mobile );
+		self::collect_colors( $attrs, $desktop );
 
 		$css = '';
 
@@ -193,6 +194,11 @@ final class CSS {
 		if ( ! empty( $attrs['hideOnMobile'] ) ) {
 			$classes[] = 'wb-gam-hide-mobile';
 		}
+		// A card colour of the owner's own sets the token scheme on the block (see design-tokens.css).
+		$card_ink = isset( $attrs['cardBackground'] ) && is_string( $attrs['cardBackground'] ) ? self::ink_for( trim( $attrs['cardBackground'] ) ) : '';
+		if ( '' !== $card_ink ) {
+			$classes[] = self::DARK_INK === $card_ink ? 'wb-gam-scheme-light' : 'wb-gam-scheme-dark';
+		}
 
 		return implode( ' ', $classes );
 	}
@@ -275,6 +281,116 @@ final class CSS {
 			absint( $radius['left'] ?? 0 ),
 			$unit
 		);
+	}
+
+	/** Text on a light owner card. */
+	private const DARK_INK = '#1a1a2e';
+
+	/** Text on a dark owner card. */
+	private const LIGHT_INK = '#f5f5f7';
+
+	/**
+	 * Accent-derived tokens, as design-tokens.css declares them on :root.
+	 */
+	private const ACCENT_DERIVED = array(
+		'--wb-gam-color-accent-light' => 'color-mix(in srgb, var(--wb-gam-color-accent) 14%, var(--wb-gam-color-surface))',
+		'--wb-gam-color-accent-text'  => 'color-mix(in srgb, var(--wb-gam-color-accent) var(--wb-gam-owner-accent-mix, 50%), var(--wb-gam-color-accent-ink))',
+		'--wb-gam-color-accent-ring'  => 'color-mix(in srgb, var(--wb-gam-color-accent) 20%, transparent)',
+		'--wb-gam-color-primary-soft' => 'color-mix(in srgb, var(--wb-gam-color-accent) 10%, transparent)',
+		'--wb-gam-primary'            => 'var(--wb-gam-color-accent)',
+		'--wb-gam-primary-light'      => 'var(--wb-gam-color-accent-light)',
+		'--wb-gam-primary-text'       => 'var(--wb-gam-color-accent-text)',
+		'--wb-gam-fill'               => 'var(--wb-gam-color-accent)',
+		'--wb-gam-recap-accent'       => 'var(--wb-gam-color-accent)',
+		'--wb-gam-pop-accent'         => 'var(--wb-gam-color-accent)',
+		'--wb-gam-pop-accent-fg'      => 'oklch(from var(--wb-gam-color-accent) round(1.07 - l) 0 0)',
+		'--gam-accent-text'           => 'color-mix(in srgb, var(--wb-gam-color-accent) var(--wb-gam-owner-accent-mix, 50%), var(--wb-gam-color-accent-ink))',
+	);
+
+	/**
+	 * Append the colour settings every block shares: Accent, Card background, Card border.
+	 *
+	 * Set as the design tokens the block's CSS reads, on the block root, so the setting reaches
+	 * every part of the block that uses that token, and as the root's own background and border.
+	 *
+	 * @param array<string, mixed> $attrs   Block attributes.
+	 * @param array<int, string>   $desktop Desktop bucket (modified in place).
+	 */
+	private static function collect_colors( array $attrs, array &$desktop ): void {
+		// Hex, rgb()/rgba() or a CSS variable; anything else is dropped so it cannot break out of the rule.
+		$color = static fn( string $key ): string => isset( $attrs[ $key ] ) && is_string( $attrs[ $key ] )
+			&& preg_match( '/^(#[0-9a-f]{3,8}|rgba?\([0-9.,%\s]+\)|var\(--[a-z0-9-]+\))$/i', trim( $attrs[ $key ] ) )
+			? trim( $attrs[ $key ] ) : '';
+
+		$accent = $color( 'accentColor' );
+		if ( '' !== $accent ) {
+			$desktop[] = '--wb-gam-color-accent: ' . $accent . ';';
+			// Tokens derived from the accent are declared on :root, so they resolve against the
+			// site accent there. Declared again here, they follow this block's accent (and its card
+			// background): text in the accent, tints, rings, bars.
+			foreach ( self::ACCENT_DERIVED as $token => $value ) {
+				$desktop[] = $token . ': ' . $value . ';';
+			}
+		}
+		$background = $color( 'cardBackground' );
+		if ( '' !== $background ) {
+			$desktop[] = '--wb-gam-color-surface: ' . $background . ';';
+			$desktop[] = '--wb-gam-color-white: ' . $background . ';';
+			$desktop[] = 'background-color: ' . $background . ';';
+			// The block carries .wb-gam-scheme-light/-dark (get_visibility_classes), which re-applies that
+			// token set on it; here the text and surfaces are pinned to the owner's card itself.
+			$ink = self::ink_for( $background );
+			if ( '' !== $ink ) {
+				$desktop[] = '--wb-gam-color-text: ' . $ink . ';';
+				$desktop[] = '--wb-gam-color-text-muted: color-mix(in srgb, ' . $ink . ' 84%, ' . $background . ');';
+				$desktop[] = '--wb-gam-color-text-light: color-mix(in srgb, ' . $ink . ' 80%, ' . $background . ');';
+				$desktop[] = '--wb-gam-color-surface-hover: color-mix(in srgb, ' . $ink . ' 5%, ' . $background . ');';
+				$desktop[] = '--wb-gam-color-surface-alt: color-mix(in srgb, ' . $ink . ' 7%, ' . $background . ');';
+				$desktop[] = 'color: ' . $ink . ';';
+			}
+		}
+		$border = $color( 'cardBorderColor' );
+		if ( '' !== $border ) {
+			$desktop[] = '--wb-gam-color-border: ' . $border . ';';
+			// Hub and Year Recap draw no border of their own, so set the whole border: the colour shows on
+			// every block (the card blocks already use 1px solid).
+			$desktop[] = 'border: 1px solid ' . $border . ';';
+		}
+	}
+
+	/**
+	 * Ink that reads on a card background: the darker or lighter text, whichever has more contrast.
+	 *
+	 * @param string $color Hex or rgb()/rgba() colour; a CSS variable cannot be measured.
+	 * @return string self::DARK_INK, self::LIGHT_INK, or '' when the colour cannot be read.
+	 */
+	public static function ink_for( string $color ): string {
+		$rgb = null;
+		if ( preg_match( '/^#([0-9a-f]{3,8})$/i', $color, $m ) ) {
+			$h = $m[1];
+			if ( strlen( $h ) <= 4 ) {
+				$h = $h[0] . $h[0] . $h[1] . $h[1] . $h[2] . $h[2];
+			}
+			if ( strlen( $h ) >= 6 ) {
+				$rgb = array( hexdec( substr( $h, 0, 2 ) ), hexdec( substr( $h, 2, 2 ) ), hexdec( substr( $h, 4, 2 ) ) );
+			}
+		} elseif ( preg_match( '/^rgba?\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)/i', $color, $m ) ) {
+			$rgb = array( (float) $m[1], (float) $m[2], (float) $m[3] );
+		}
+		if ( null === $rgb ) {
+			return '';
+		}
+		$lum = static function ( array $c ): float {
+			$c = array_map(
+				static fn( $v ) => ( $v /= 255 ) <= 0.03928 ? $v / 12.92 : ( ( $v + 0.055 ) / 1.055 ) ** 2.4,
+				$c
+			);
+			return 0.2126 * $c[0] + 0.7152 * $c[1] + 0.0722 * $c[2];
+		};
+		$bg    = $lum( $rgb );
+		$dark  = ( $bg + 0.05 ) / ( $lum( array( 0x1a, 0x1a, 0x2e ) ) + 0.05 );
+		$light = ( $lum( array( 0xf5, 0xf5, 0xf7 ) ) + 0.05 ) / ( $bg + 0.05 );
+		return $dark >= $light ? self::DARK_INK : self::LIGHT_INK;
 	}
 
 	/**

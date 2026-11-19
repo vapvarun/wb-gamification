@@ -36,13 +36,13 @@ You can rename or add levels at **WP Admin → Gamification → Levels**.
 <div class="wb-gam-profile-rank">
   <span class="wb-gam-rank-badge">Contributor</span>
   <span class="wb-gam-points-count">650 pts</span>
-  <div class="wb-gam-progress-bar" title="30%">
+  <div class="wb-gam-progress-bar" role="progressbar" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100">
     <div class="wb-gam-progress-fill" style="--wb-gam-fill:30%"></div>
   </div>
 </div>
 ```
 
-The fill width is driven by a CSS custom property `--wb-gam-fill`. Override it in your theme to change the bar colour or animation.
+The fill width is driven by the `--wb-gam-fill` custom property. The badge, points and bar take their colours from your theme (BuddyX, Reign and other Wbcom themes), and follow its dark mode.
 
 ## Styling with CSS Variables
 
@@ -55,30 +55,27 @@ The fill width is driven by a CSS custom property `--wb-gam-fill`. Override it i
 }
 ```
 
-## Opt-Out: Hiding the Rank
+## Who Sees It
 
-Members can hide their rank badge. The preference is stored in `wb_gam_member_prefs.show_rank` (default `1` = visible).
+The rank block shows only when all three are true:
 
-When `show_rank = 0`, the `render_rank()` method returns early and nothing is output. The `NULL` state (no row in the table) also defaults to visible.
+1. **The site shows it.** WB Gamification > Settings > Engagement > BuddyPress > "Show level, points and progress in the profile header" (on by default). Turn it off if your theme already shows rank in the header.
+2. **The member shows it.** Each member can untick "Show my level and points on my profile" under "Your gamification choices" on their own Achievements tab or public profile page.
+3. **The visitor may see the member's profile.** A member who made their profile private is never shown to other visitors. The member and site admins always see it.
 
-### Setting the preference via SQL (admin use only)
+### Setting a member's choice via REST
 
-```sql
--- Hide rank for user 42
-INSERT INTO wp_wb_gam_member_prefs (user_id, show_rank)
-VALUES (42, 0)
-ON DUPLICATE KEY UPDATE show_rank = 0;
-```
-
-### Setting the preference via REST API
+The member themself, or staff who can manage members:
 
 ```http
-POST /wp-json/wb-gamification/v1/members/42/prefs
-Authorization: Bearer <cookie nonce>
+POST /wp-json/wb-gamification/v1/members/42/preferences
 Content-Type: application/json
+X-WP-Nonce: <wp_rest nonce>
 
 { "show_rank": false }
 ```
+
+The same route takes `leaderboard_opt_out` (true keeps the member off every leaderboard) and `notification_mode` (`smart` sends reward emails, `none` sends none). `GET` on the same route returns all three.
 
 ## No Configuration Needed
 

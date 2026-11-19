@@ -26,7 +26,8 @@
 }
 
 .wb-gam-streak__flame {
-	font-size: 1.75rem;
+	display: inline-flex;
+	color: var(--wb-gam-color-fire);
 	line-height: 1;
 }
 
@@ -34,7 +35,7 @@
 	font-size: 2.25rem;
 	font-weight: 800;
 	line-height: 1;
-	color: var(--wb-gam-primary);
+	color: var(--wb-gam-primary-text);
 }
 
 .wb-gam-streak__number--longest {
@@ -56,7 +57,7 @@
 }
 
 .wb-gam-streak__nudge--elite {
-	color: var(--wb-gam-gold);
+	color: var(--wb-gam-color-gold-text);
 	font-weight: 600;
 }
 

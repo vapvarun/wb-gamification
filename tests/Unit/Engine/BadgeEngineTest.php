@@ -22,6 +22,7 @@ use WBGam\Engine\BadgeEngine;
 #[CoversMethod( \WBGam\Engine\BadgeEngine::class, 'get_user_earned_badge_ids' )]
 #[CoversMethod( \WBGam\Engine\BadgeEngine::class, 'award_badge' )]
 #[CoversMethod( \WBGam\Engine\BadgeEngine::class, 'repair_zero_date_expiry' )]
+#[CoversMethod( \WBGam\Engine\BadgeEngine::class, 'run_cron_pass' )]
 class BadgeEngineTest extends TestCase {
 
 	use MockeryPHPUnitIntegration;
@@ -341,5 +342,16 @@ class BadgeEngineTest extends TestCase {
 		$wpdb->shouldNotReceive( 'query' );
 
 		$this->assertSame( 0, BadgeEngine::repair_zero_date_expiry() );
+	}
+
+	/**
+	 * The fresh-install flag must end with the pass, or the site would stay silent for ever.
+	 */
+	#[Test]
+	public function first_check_flag_is_cleared_when_there_is_nothing_to_check(): void {
+		Functions\when( 'wp_cache_get' )->justReturn( array() );
+		Functions\expect( 'delete_option' )->once()->with( BadgeEngine::FIRST_CHECK_OPTION );
+
+		BadgeEngine::run_cron_pass();
 	}
 }

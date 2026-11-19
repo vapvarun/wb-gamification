@@ -12,6 +12,8 @@ namespace WBGam\BuddyPress;
 
 use WBGam\Engine\PointsEngine;
 use WBGam\Engine\MemberSurface;
+use WBGam\Engine\MemberPrefs;
+use WBGam\Engine\Privacy;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
@@ -132,30 +134,27 @@ final class ProfileIntegration {
 
 		// Surface markup is block SSR + escaped link; re-escaping would corrupt it.
 		echo MemberSurface::render( MemberSurface::blocks( $tags, $user_id ), $user_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+
+		// The member's own choices, on their own Achievements tab (owner-only inside).
+		MemberPrefs::render_controls( (int) $user_id );
 	}
 
 	/**
 	 * Output rank badge in the profile header.
-	 * Respects the member's show_rank preference.
+	 *
+	 * Shown only when the owner's switch is on, the member has not hidden it,
+	 * and the viewer may see the member's profile data.
 	 */
 	public static function render_rank(): void {
-		$user_id = bp_displayed_user_id();
-		if ( ! $user_id ) {
+		$user_id = (int) bp_displayed_user_id();
+		if ( ! $user_id || ! get_option( 'wb_gam_bp_profile_rank', 1 ) ) {
+			return;
+		}
+		if ( ! MemberPrefs::get( $user_id )['show_rank'] || ! Privacy::can_view_public_profile( $user_id ) ) {
 			return;
 		}
 
-		// Respect opt-out preference.
-		global $wpdb;
-		$show_rank = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT show_rank FROM {$wpdb->prefix}wb_gam_member_prefs WHERE user_id = %d",
-				$user_id
-			)
-		);
-		// Default to showing (NULL means no row = default on).
-		if ( '0' === $show_rank ) {
-			return;
-		}
+		wp_enqueue_style( 'wb-gamification' );
 
 		// Route through LevelEngine so the cached user_meta is self-healed
 		// when the points ledger has crossed a level threshold but the
@@ -189,7 +188,7 @@ final class ProfileIntegration {
 				?>
 			</span>
 			<?php if ( $next_level_points > 0 ) : ?>
-			<div class="wb-gam-progress-bar" title="<?php echo esc_attr( $progress_pct . '%' ); ?>">
+			<div class="wb-gam-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?php echo esc_attr( (string) $progress_pct ); ?>" aria-label="<?php esc_attr_e( 'Progress to the next level', 'wb-gamification' ); ?>">
 				<div class="wb-gam-progress-fill" style="--wb-gam-fill:<?php echo esc_attr( (string) $progress_pct ); ?>%"></div>
 			</div>
 			<?php endif; ?>

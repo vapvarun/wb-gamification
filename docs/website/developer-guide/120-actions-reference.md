@@ -17,7 +17,7 @@ See [Hooks and Filters Overview](110-hooks-overview.md) for how to add a listene
 | `wb_gam_redemption_refunded` | After a redemption is refunded - points credited back to the member and stock restored. | `int $redemption_id`, `int $user_id`, `int $cost`, `string $note` |
 | `wb_gam_points_spent` | After `wb_gam_spend_points()` successfully debits a member's balance for an external redemption (e.g. a BuddyNext membership tier, a marketplace purchase). Added in 1.6.1. | `int $user_id`, `int $amount`, `string $context`, `array $result` |
 | `wb_gam_point_type_converted` | After a member converts one point currency into another. Debit and credit ledger rows share an `event_id`. | `int $user_id`, `string $from`, `string $to`, `int $debit_amount`, `int $credit_amount`, `array $rule` |
-| `wb_gam_award_skipped` | When the engine intentionally skips an award (cooldown, cap reached, self-action, veto). Use it to surface a contextual hint so silent skips do not feel broken. | `int $user_id`, `string $action_id`, `string $reason`, `array $context` |
+| `wb_gam_award_skipped` | When the engine intentionally skips an award (cooldown, cap reached, not eligible, veto). Use it to surface a contextual hint so silent skips do not feel broken. | `int $user_id`, `string $action_id`, `string $reason`, `array $context` |
 | `wb_gam_points_decayed` | After each daily inactivity point-decay sweep (Settings > Points > Point expiry; off by default). `$count` is the number of members decayed this run. Added in 1.5.3. | `int $count` |
 
 ### `wb_gam_award_skipped` reason taxonomy (closed set)
@@ -28,7 +28,7 @@ See [Hooks and Filters Overview](110-hooks-overview.md) for how to add a listene
 | `non_repeatable` | `PointsEngine::passes_rate_limits()` non-repeatable branch | `point_type` |
 | `daily_cap` | `PointsEngine::passes_rate_limits()` daily-cap branch | `daily_cap_used`, `daily_cap_max`, `point_type` |
 | `weekly_cap` | `PointsEngine::passes_rate_limits()` weekly-cap branch | `weekly_cap_used`, `weekly_cap_max`, `point_type` |
-| `self_action` | `Registry` hook callback when `user_callback` returns 0 | (none) |
+| `not_eligible` | `Registry` hook callback when the action's `user_callback` returns 0: the event pays nobody (own content, a share, a waitlisted RSVP, a free plan, a copy already paid). `$user_id` is 0. Called `self_action` before 1.6.8. | (none) |
 | `sandboxed` | Jetonomy adapter, `wb_gam_sandboxed` user meta veto | `delta`, `adapter` |
 | `pre_change_veto` | Adapter `*_pre_change` filters that return 0 for non-sandbox reasons | adapter-specific |
 | `insufficient_balance` | Future debit-balance check | `requested`, `balance` |
@@ -86,6 +86,8 @@ See [Hooks and Filters Overview](110-hooks-overview.md) for how to add a listene
 | Hook | When it fires | Parameters |
 |------|---------------|------------|
 | `wb_gam_profile_visibility_set` | After a member changes their own public-profile visibility setting. Added in 1.5.5. | `int $user_id`, `bool $public` |
+| `wb_gam_member_prefs_saved` | After a member's preferences (show rank, leaderboard opt-out, reward emails) are saved, by the member or staff. Added in 1.6.8. | `int $user_id`, `array $prefs` |
+| `wb_gam_render_member_prefs` | Call it (do not hook it) where your theme or plugin builds a member's profile or settings screen: it prints the member's own choices (show my level and points, show me on leaderboards, email me about my rewards), saved as they change. Prints nothing for anyone but the logged-in member. Omit the id for the current member. Added in 1.6.8. | `int $user_id` (optional) |
 
 ## Integrations
 

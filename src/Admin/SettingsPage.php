@@ -52,6 +52,39 @@ final class SettingsPage {
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_test_event' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_emails_form' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_tools_assets' ) );
+		// After every page has enqueued its scripts (priority 10).
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'localize_admin_rest_utils' ), 100 );
+	}
+
+	/**
+	 * Shared strings for assets/js/admin-rest-utils.js, on every admin page that loads it.
+	 *
+	 * One place, so the confirm dialog and network errors are translated on every
+	 * screen (several pages never passed them, and showed English).
+	 *
+	 * @return void
+	 */
+	public static function localize_admin_rest_utils(): void {
+		if ( ! wp_script_is( 'wb-gam-admin-rest-utils', 'registered' ) ) {
+			return;
+		}
+		wp_localize_script(
+			'wb-gam-admin-rest-utils',
+			'wbGamAdminRestI18n',
+			array(
+				'confirm'      => __( 'Confirm', 'wb-gamification' ),
+				'cancel'       => __( 'Cancel', 'wb-gamification' ),
+				'close'        => __( 'Close', 'wb-gamification' ),
+				'areYouSure'   => __( 'Are you sure?', 'wb-gamification' ),
+				'failed'       => __( 'Request failed.', 'wb-gamification' ),
+				'timedOut'     => __( 'Request timed out. Please try again.', 'wb-gamification' ),
+				'networkError' => __( 'Network error. Please try again.', 'wb-gamification' ),
+				'saved'        => __( 'Saved.', 'wb-gamification' ),
+				'saveFailed'   => __( 'Save failed.', 'wb-gamification' ),
+				'actionFailed' => __( 'Action failed.', 'wb-gamification' ),
+				'notLoaded'    => __( 'This screen did not load completely. Reload the page and try again.', 'wb-gamification' ),
+			)
+		);
 	}
 
 	/**
@@ -372,7 +405,9 @@ final class SettingsPage {
 			}
 
 			$enabled_key = 'wb_gam_enabled_' . sanitize_key( $action_id );
-			update_option( 'wb_gam_enabled_' . $action_id, isset( $_POST[ $enabled_key ] ) ? true : false );
+			// 1/0, never true/false: update_option( key, false ) on a missing option matches the
+			// get_option() default and stores nothing, so "off" never saved.
+			update_option( 'wb_gam_enabled_' . $action_id, isset( $_POST[ $enabled_key ] ) ? 1 : 0 );
 
 			// Per-action currency override. Stored only when set and known —
 			// PointTypeService::resolve() falls back to primary for any
@@ -499,6 +534,7 @@ final class SettingsPage {
 			update_option( 'wb_gam_bp_stream_challenge_completed', isset( $_POST['wb_gam_bp_stream_challenge_completed'] ) ? 1 : 0 );
 			update_option( 'wb_gam_bp_stream_kudos_given', isset( $_POST['wb_gam_bp_stream_kudos_given'] ) ? 1 : 0 );
 			update_option( 'wb_gam_bp_stream_level_changed', isset( $_POST['wb_gam_bp_stream_level_changed'] ) ? 1 : 0 );
+			update_option( 'wb_gam_bp_profile_rank', isset( $_POST['wb_gam_bp_profile_rank'] ) ? 1 : 0 );
 		}
 
 		// Public profiles (site-wide). Only when gamification decides privacy itself; a host
@@ -679,9 +715,9 @@ final class SettingsPage {
 				<div class="wbgam-card-header">
 					<h2 class="wbgam-card-title">
 						<span class="icon-activity" aria-hidden="true"></span>
-						<?php esc_html_e( 'BuddyPress Activity Stream', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'BuddyPress', 'wb-gamification' ); ?>
 					</h2>
-					<p class="wbgam-card-desc"><?php esc_html_e( 'Choose which gamification events post to the BuddyPress activity feed. Applies only when BuddyPress is active.', 'wb-gamification' ); ?></p>
+					<p class="wbgam-card-desc"><?php esc_html_e( 'Choose which gamification events post to the BuddyPress activity feed, and what shows on member profiles.', 'wb-gamification' ); ?></p>
 				</div>
 				<div class="wbgam-card-body">
 					<?php foreach ( $bp_streams as $option_name => $label ) : ?>
@@ -690,6 +726,11 @@ final class SettingsPage {
 							<span><?php echo esc_html( $label ); ?></span>
 						</label>
 					<?php endforeach; ?>
+					<label class="wbgam-checkbox-option wbgam-stack-block">
+						<input type="checkbox" name="wb_gam_bp_profile_rank" value="1" <?php checked( (bool) get_option( 'wb_gam_bp_profile_rank', 1 ) ); ?> />
+						<span><?php esc_html_e( 'Show level, points and progress in the profile header', 'wb-gamification' ); ?></span>
+						<span class="description"><?php esc_html_e( 'Members can still hide it on their own profile. Turn off if your theme already shows rank there.', 'wb-gamification' ); ?></span>
+					</label>
 				</div>
 			</div>
 			<?php endif; ?>
@@ -867,19 +908,6 @@ final class SettingsPage {
 			WB_GAM_VERSION,
 			true
 		);
-		// Shared confirm/cancel modal button labels — confirmAction() falls back
-		// to these when a caller doesn't pass its own confirmText/cancelText.
-		// This settings page enqueues 'wb-gam-admin-rest-utils' from three
-		// separate callbacks (levels/tools/emails) that all guard on the same
-		// hook, so localizing it once here covers the whole page.
-		wp_localize_script(
-			'wb-gam-admin-rest-utils',
-			'wbGamAdminRestI18n',
-			array(
-				'confirm' => __( 'Confirm', 'wb-gamification' ),
-				'cancel'  => __( 'Cancel', 'wb-gamification' ),
-			)
-		);
 		wp_enqueue_script(
 			'wb-gam-admin-tools',
 			plugins_url( 'assets/js/admin-tools.js', WB_GAM_FILE ),
@@ -999,6 +1027,7 @@ final class SettingsPage {
 					'success' => __( 'Test event sent. Visit your Hub to see the welcome toast.', 'wb-gamification' ),
 					'viewHub' => __( 'Open Hub', 'wb-gamification' ),
 					'error'   => __( 'Could not send test event. Check the error log.', 'wb-gamification' ),
+					'note'    => __( 'Sent from the Setup Wizard test-event button.', 'wb-gamification' ),
 				),
 			)
 		);
@@ -1332,7 +1361,8 @@ final class SettingsPage {
 		$wb_gam_default_slug  = $wb_gam_pt_service->default_slug();
 		$wb_gam_default_pt    = $wb_gam_pt_service->get( $wb_gam_default_slug );
 		$wb_gam_default_label = $wb_gam_default_pt ? (string) $wb_gam_default_pt['label'] : __( 'Points', 'wb-gamification' );
-		$wb_gam_section_title = strtoupper( $wb_gam_default_label );
+		// Card titles are upper-cased by CSS (.wbgam-settings-card__title), never in PHP.
+		$wb_gam_section_title = $wb_gam_default_label;
 
 		// Multi-currency mode: when the site has > 1 point type, show a per-action
 		// currency picker in the settings table. Otherwise the currency column is
@@ -1384,12 +1414,12 @@ final class SettingsPage {
 						<summary class="wbgam-settings-card__head wbgam-accordion__head">
 							<span class="wbgam-accordion__chevron icon-chevron-right" aria-hidden="true"></span>
 							<span class="wbgam-accordion__head-text">
-								<span class="wbgam-settings-card__title"><?php echo esc_html( strtoupper( $plugin ) ); ?></span>
+								<span class="wbgam-settings-card__title"><?php echo esc_html( $plugin ); ?></span>
 								<span class="wbgam-settings-card__desc">
 									<?php
 									printf(
 										/* translators: %d = number of actions for this integration */
-										esc_html__( '%d actions from this integration.', 'wb-gamification' ),
+										esc_html( _n( '%d action from this integration.', '%d actions from this integration.', count( $plugin_actions ), 'wb-gamification' ) ),
 										count( $plugin_actions )
 									);
 									?>
@@ -1411,6 +1441,7 @@ final class SettingsPage {
 										<th class="wb-gam-col-flag"><?php esc_html_e( 'Cooldown (s)', 'wb-gamification' ); ?></th>
 										<th class="wb-gam-col-flag"><?php esc_html_e( 'Daily cap', 'wb-gamification' ); ?></th>
 										<th class="wb-gam-col-flag"><?php esc_html_e( 'Weekly cap', 'wb-gamification' ); ?></th>
+										<th class="wb-gam-col-flag"><?php esc_html_e( 'Members can submit', 'wb-gamification' ); ?></th>
 									</tr>
 									</thead>
 									<tbody>
@@ -1528,6 +1559,19 @@ final class SettingsPage {
 													aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Weekly cap for %s (0 = unlimited)', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
 												>
 											</td>
+											<td>
+												<?php
+												// Submit Achievement only offers actions the owner ticks here
+												// (or a manifest marks submittable). Off by default.
+												?>
+												<input
+													type="checkbox"
+													data-wb-gam-action-override="submittable"
+													data-wb-gam-action-id="<?php echo esc_attr( $action_id ); ?>"
+													<?php checked( \WBGam\Engine\Registry::is_submittable( $action_id ) ); ?>
+													aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Members can submit %s for review', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
+												>
+											</td>
 										</tr>
 									<?php endforeach; ?>
 									</tbody>
@@ -1541,7 +1585,7 @@ final class SettingsPage {
 
 				<div class="wbgam-settings-card">
 					<div class="wbgam-settings-card__head">
-						<p class="wbgam-settings-card__title"><?php esc_html_e( 'LOG RETENTION', 'wb-gamification' ); ?></p>
+						<p class="wbgam-settings-card__title"><?php esc_html_e( 'Log retention', 'wb-gamification' ); ?></p>
 						<p class="wbgam-settings-card__desc"><?php esc_html_e( 'Control how long points history is stored.', 'wb-gamification' ); ?></p>
 					</div>
 					<div class="wbgam-settings-card__body">
@@ -1928,7 +1972,7 @@ final class SettingsPage {
 						<ul class="wbgam-action-list" role="list">
 							<?php foreach ( array_slice( (array) $stats['top_actions'], 0, 6 ) as $row ) : ?>
 								<li class="wbgam-action-list__item">
-									<span class="wbgam-action-list__name"><?php echo esc_html( str_replace( '_', ' ', (string) ( $row['action_id'] ?? '' ) ) ); ?></span>
+									<span class="wbgam-action-list__name"><?php echo esc_html( Registry::label_for( (string) ( $row['action_id'] ?? '' ) ) ); ?></span>
 									<span class="wbgam-action-list__count">
 										<?php
 										printf(
@@ -2024,7 +2068,7 @@ final class SettingsPage {
 		?>
 		<div class="wbgam-settings-card">
 			<div class="wbgam-settings-card__head">
-				<p class="wbgam-settings-card__title"><?php esc_html_e( 'RANK AUTOMATION RULES', 'wb-gamification' ); ?></p>
+				<p class="wbgam-settings-card__title"><?php esc_html_e( 'Rank automation rules', 'wb-gamification' ); ?></p>
 				<p class="wbgam-settings-card__desc"><?php esc_html_e( 'Automatically trigger actions when a member reaches a level. One action per rule.', 'wb-gamification' ); ?></p>
 			</div>
 			<div class="wbgam-settings-card__body">
@@ -2082,7 +2126,7 @@ final class SettingsPage {
 
 		<div class="wbgam-settings-card">
 			<div class="wbgam-settings-card__head">
-				<p class="wbgam-settings-card__title"><?php esc_html_e( 'ADD NEW RULE', 'wb-gamification' ); ?></p>
+				<p class="wbgam-settings-card__title"><?php esc_html_e( 'Add new rule', 'wb-gamification' ); ?></p>
 				<p class="wbgam-settings-card__desc"><?php esc_html_e( 'Add multiple rules for the same level to stack actions.', 'wb-gamification' ); ?></p>
 			</div>
 			<div class="wbgam-settings-card__body">
@@ -2169,7 +2213,7 @@ final class SettingsPage {
 
 			<div class="wbgam-settings-card">
 				<div class="wbgam-settings-card__head">
-					<p class="wbgam-settings-card__title"><?php esc_html_e( 'KUDOS', 'wb-gamification' ); ?></p>
+					<p class="wbgam-settings-card__title"><?php esc_html_e( 'Kudos', 'wb-gamification' ); ?></p>
 					<p class="wbgam-settings-card__desc"><?php esc_html_e( 'Configure peer-to-peer kudos recognition settings.', 'wb-gamification' ); ?></p>
 				</div>
 				<div class="wbgam-settings-card__body">
@@ -2541,7 +2585,7 @@ final class SettingsPage {
 						<?php esc_html_e( 'Background features', 'wb-gamification' ); ?>
 					</h2>
 					<p class="wbgam-card-desc">
-						<?php esc_html_e( 'These run on a schedule rather than on a page: emails, nudges, retention sweeps, and the badges awarded automatically for tenure or for being first on the site. Turning one off stops its engine loading at all - no cron, no queries, no email. Nothing is deleted.', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'These run on a schedule rather than on a page: emails, nudges, retention sweeps and badge share cards. Turning one off stops its engine loading at all - no cron, no queries, no email. Nothing is deleted.', 'wb-gamification' ); ?>
 					</p>
 				</div>
 				<div class="wbgam-card-body">
@@ -2581,8 +2625,6 @@ final class SettingsPage {
 			'leaderboard_nudge'    => __( 'Leaderboard nudge email - tell a member when they are close to overtaking someone', 'wb-gamification' ),
 			'status_retention'     => __( 'Status retention - warn a member before inactivity costs them their level', 'wb-gamification' ),
 			'community_challenges' => __( 'Community challenges - whole-site goals members contribute to together', 'wb-gamification' ),
-			'site_first_badges'    => __( 'Site-first badges - awarded to the first member ever to do a thing', 'wb-gamification' ),
-			'tenure_badges'        => __( 'Tenure badges - awarded for time as a member', 'wb-gamification' ),
 			'badge_share'          => __( 'Badge sharing - public share cards for LinkedIn and similar', 'wb-gamification' ),
 		);
 
@@ -2909,7 +2951,7 @@ final class SettingsPage {
 				<p class="wbgam-card-desc"><?php esc_html_e( 'Toggle which gamification events trigger an email to the member. All emails respect each member\'s notification preference and use the theme template at YOUR-THEME/wb-gamification/emails/{slug}.php when present.', 'wb-gamification' ); ?></p>
 			</div>
 			<div class="wbgam-card-body">
-				<form data-wb-gam-rest-form="wbGamSettings"
+				<form method="post" data-wb-gam-rest-form="wbGamSettings"
 					data-wb-gam-rest-method="POST"
 					data-wb-gam-rest-path="/settings/emails"
 					data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Email settings saved.', 'wb-gamification' ); ?>"
@@ -2992,7 +3034,7 @@ final class SettingsPage {
 		?>
 		<div class="wbgam-settings-card">
 			<div class="wbgam-settings-card__head">
-				<p class="wbgam-settings-card__title"><?php esc_html_e( 'INTEGRATION STATUS', 'wb-gamification' ); ?></p>
+				<p class="wbgam-settings-card__title"><?php esc_html_e( 'Integration status', 'wb-gamification' ); ?></p>
 				<p class="wbgam-settings-card__desc"><?php esc_html_e( 'Integrations are auto-detected. Install and activate a plugin to enable its triggers.', 'wb-gamification' ); ?></p>
 			</div>
 			<div class="wbgam-settings-card__body">

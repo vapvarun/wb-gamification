@@ -58,27 +58,20 @@ if ( $wb_gam_user_id <= 0 ) {
 // when the viewer is the owner / admin. Otherwise zero out the user_id
 // so the block falls through to its empty-state path.
 if ( $wb_gam_user_id > 0 && ! Privacy::can_view_public_profile( $wb_gam_user_id ) ) {
+	// A logged-in viewer who may not see this member's data gets nothing, not a login prompt.
+	if ( is_user_logged_in() ) {
+		return;
+	}
 	$wb_gam_user_id = 0;
+}
+// The legacy accent_color attribute painted only the share button, so its label was picked for the
+// standard accent instead (black on #cc0000, 3.57:1). It now feeds the standard Accent setting when that
+// is unset, and every accent-derived token follows it.
+if ( empty( $wb_gam_attrs['accentColor'] ) && ! empty( $wb_gam_attrs['accent_color'] ) ) {
+	$wb_gam_attrs['accentColor'] = (string) sanitize_hex_color( (string) $wb_gam_attrs['accent_color'] );
 }
 WB_Gam_Block_CSS::add( $wb_gam_unique, $wb_gam_attrs );
 $wb_gam_visibility = WB_Gam_Block_CSS::get_visibility_classes( $wb_gam_attrs );
-
-$wb_gam_inline = '';
-if ( ! empty( $wb_gam_attrs['accentColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-accent: %s;', sanitize_text_field( (string) $wb_gam_attrs['accentColor'] ) );
-}
-if ( ! empty( $wb_gam_attrs['accent_color'] ) ) {
-	$wb_gam_color = sanitize_hex_color( (string) $wb_gam_attrs['accent_color'] );
-	if ( $wb_gam_color ) {
-		$wb_gam_inline .= sprintf( '--wb-gam-recap-accent: %s;', $wb_gam_color );
-	}
-}
-if ( ! empty( $wb_gam_attrs['cardBackground'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-white: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBackground'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-border: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBorderColor'] ) );
-}
 
 $wb_gam_classes = array_filter( array( 'wb-gam-year-recap', 'wb-gam-block-' . $wb_gam_unique, $wb_gam_visibility ) );
 
@@ -88,7 +81,6 @@ if ( ! $wb_gam_user_id ) {
 	$wb_gam_wrapper = get_block_wrapper_attributes(
 		array(
 			'class' => implode( ' ', $wb_gam_classes ),
-			'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		)
 	);
 		$wb_gam_empty = EmptyState::render(
@@ -107,6 +99,11 @@ $wb_gam_show_badges  = ! isset( $wb_gam_attrs['show_badges'] ) || ! empty( $wb_g
 $wb_gam_show_kudos   = ! isset( $wb_gam_attrs['show_kudos'] ) || ! empty( $wb_gam_attrs['show_kudos'] );
 
 $wb_gam_recap = RecapEngine::get_recap( $wb_gam_user_id, $wb_gam_year );
+// The default is last year. On a site in its first year (or for a member who joined this year) that
+// is empty, so show this year so far rather than tell an active member they have not earned points.
+if ( $wb_gam_year <= 0 && empty( $wb_gam_recap['points_this_year'] ) ) {
+	$wb_gam_recap = RecapEngine::get_recap( $wb_gam_user_id, (int) wp_date( 'Y' ) );
+}
 
 /**
  * Filter the year-recap data before render.
@@ -125,14 +122,15 @@ if ( ! $wb_gam_user || empty( $wb_gam_recap['points_this_year'] ) ) {
 	$wb_gam_wrapper = get_block_wrapper_attributes(
 		array(
 			'class' => implode( ' ', $wb_gam_classes ),
-			'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		)
 	);
-		$wb_gam_empty = EmptyState::render(
-		'year-recap',
-		$wb_gam_wrapper,
-		__( 'Your year in review will appear here once you start earning points.', 'wb-gamification' )
-	);
+	// A member who has points, just none in the year asked for, is told about that year; only a member
+	// with no points at all is told to start earning.
+	$wb_gam_message = $wb_gam_user && \WBGam\Engine\PointsEngine::get_total( $wb_gam_user_id ) > 0
+		/* translators: %d: the year the block shows, e.g. 2025. */
+		? sprintf( __( 'Nothing to recap for %d: no points were earned that year.', 'wb-gamification' ), (int) ( $wb_gam_recap['year'] ?? $wb_gam_year ) )
+		: __( 'Your year in review will appear here once you start earning points.', 'wb-gamification' );
+	$wb_gam_empty   = EmptyState::render( 'year-recap', $wb_gam_wrapper, $wb_gam_message );
 	echo $wb_gam_empty; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EmptyState escapes its message and CTA; the wrapper is get_block_wrapper_attributes() output.
 
 	return;
@@ -158,7 +156,6 @@ $wb_gam_root_ctx = wp_json_encode(
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
 		'class'                => implode( ' ', $wb_gam_classes ),
-		'style'                => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		'data-wp-interactive'  => 'wb-gamification/recap',
 		'data-wp-context'      => $wb_gam_root_ctx,
 	)
@@ -227,7 +224,17 @@ BlockHooks::before( 'year-recap', $wb_gam_attrs );
 	<?php if ( ! empty( $wb_gam_recap['peak_week'] ) ) : ?>
 		<div class="wb-gam-recap__peak-week">
 			<span class="wb-gam-recap__peak-week-label"><?php esc_html_e( 'Peak Week', 'wb-gamification' ); ?></span>
-			<span class="wb-gam-recap__peak-week-week"><?php echo esc_html( (string) ( $wb_gam_recap['peak_week']['week'] ?? '' ) ); ?></span>
+			<span class="wb-gam-recap__peak-week-week">
+				<?php
+				$wb_gam_week_start = (string) ( $wb_gam_recap['peak_week']['week_start'] ?? '' );
+				if ( '' !== $wb_gam_week_start ) {
+					/* translators: %s: the date the week starts on, in the site's date format, e.g. "9 November 2026". */
+					printf( esc_html__( 'Week of %s', 'wb-gamification' ), esc_html( wp_date( (string) get_option( 'date_format' ), ( new \DateTimeImmutable( $wb_gam_week_start, wp_timezone() ) )->getTimestamp() ) ) );
+				} else {
+					echo esc_html( (string) ( $wb_gam_recap['peak_week']['week'] ?? '' ) );
+				}
+				?>
+			</span>
 			<span class="wb-gam-recap__peak-week-pts">
 				<?php
 				echo esc_html( wb_gam_format_points( (int) ( $wb_gam_recap['peak_week']['points'] ?? 0 ) ) );

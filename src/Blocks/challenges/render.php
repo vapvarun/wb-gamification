@@ -59,24 +59,18 @@ if ( $wb_gam_user_id <= 0 ) {
 }
 
 if ( $wb_gam_user_id > 0 && ! Privacy::can_view_public_profile( $wb_gam_user_id ) ) {
+	// A logged-in viewer who may not see this member's data gets nothing, not a login prompt.
+	if ( is_user_logged_in() ) {
+		return;
+	}
 	$wb_gam_user_id = 0;
 }
 $wb_gam_show_completed = ! empty( $wb_gam_attrs['show_completed'] );
+$wb_gam_show_bar       = ! isset( $wb_gam_attrs['show_progress_bar'] ) || ! empty( $wb_gam_attrs['show_progress_bar'] );
 $wb_gam_limit          = (int) ( $wb_gam_attrs['limit'] ?? 0 );
 
 WB_Gam_Block_CSS::add( $wb_gam_unique, $wb_gam_attrs );
 $wb_gam_visibility = WB_Gam_Block_CSS::get_visibility_classes( $wb_gam_attrs );
-
-$wb_gam_inline = '';
-if ( ! empty( $wb_gam_attrs['accentColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-accent: %s;', sanitize_text_field( (string) $wb_gam_attrs['accentColor'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBackground'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-white: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBackground'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-border: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBorderColor'] ) );
-}
 
 $wb_gam_classes = array_filter( array( 'wb-gam-challenges', 'wb-gam-block-' . $wb_gam_unique, $wb_gam_visibility ) );
 
@@ -106,7 +100,6 @@ if ( $wb_gam_limit > 0 ) {
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
 		'class' => implode( ' ', $wb_gam_classes ),
-		'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 	)
 );
 
@@ -210,6 +203,7 @@ BlockHooks::before( 'challenges', $wb_gam_attrs );
 						</p>
 					<?php endif; ?>
 
+					<?php if ( $wb_gam_show_bar ) : ?>
 					<div class="wb-gam-challenges__bar-wrap"
 						role="progressbar"
 						aria-valuenow="<?php echo esc_attr( (string) $wb_gam_pct ); ?>"
@@ -221,6 +215,7 @@ BlockHooks::before( 'challenges', $wb_gam_attrs );
 						?>">
 						<div class="wb-gam-challenges__bar" style="--wb-gam-fill: <?php echo esc_attr( (string) $wb_gam_pct ); ?>%"></div>
 					</div>
+					<?php endif; ?>
 
 					<div class="wb-gam-challenges__meta">
 						<span class="wb-gam-challenges__progress-text">

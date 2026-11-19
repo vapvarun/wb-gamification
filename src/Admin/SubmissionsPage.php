@@ -37,7 +37,7 @@ final class SubmissionsPage {
 	}
 
 	public static function enqueue_assets( string $hook ): void {
-		if ( 'gamification_page_wb-gam-submissions' !== $hook ) {
+		if ( get_plugin_page_hookname( 'wb-gam-submissions', 'wb-gamification' ) !== $hook ) {
 			return;
 		}
 		wp_enqueue_style(
@@ -115,6 +115,10 @@ final class SubmissionsPage {
 							'<code>wb-gamification/submit-achievement</code>'
 						);
 						?>
+					</p>
+					<p>
+						<strong><?php esc_html_e( 'What members can submit:', 'wb-gamification' ); ?></strong>
+						<?php esc_html_e( 'Only the actions you tick under Points > Members can submit. Nothing is open until you tick one.', 'wb-gamification' ); ?>
 					</p>
 					<p>
 						<strong><?php esc_html_e( 'Anti-spam:', 'wb-gamification' ); ?></strong>

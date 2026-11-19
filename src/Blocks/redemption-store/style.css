@@ -24,7 +24,10 @@
 	   token is missing the cascade inherits from the parent / theme. */
 	--wb-gam-redemption-accent: var( --wb-gam-color-accent );
 	--wb-gam-redemption-accent-hover: var( --wb-gam-color-accent-hover );
-	--wb-gam-redemption-text-on-accent: var( --wb-gam-color-white );
+	/* Text in the accent (the cost) uses the --wb-gam-color-accent-text formula, so it stays readable
+	 * with a light theme or per-block accent. */
+	--wb-gam-redemption-accent-text: color-mix( in srgb, var( --wb-gam-redemption-accent ) 50%, var( --wb-gam-color-accent-ink ) );
+	--wb-gam-redemption-text-on-accent: var( --wb-gam-pop-accent-fg );
 	--wb-gam-redemption-card-bg: var( --wb-gam-color-white );
 	--wb-gam-redemption-card-border: var( --wb-gam-color-border );
 	--wb-gam-redemption-text: var( --wb-gam-color-text );
@@ -65,7 +68,9 @@
 	align-items: baseline;
 	gap: 6px;
 	background: var( --wb-gam-redemption-muted-bg );
-	color: var( --wb-gam-redemption-accent );
+	/* Accent text on the accent tint: accent-text (accent mixed toward the body text) reads
+	 * 4.9:1 to 6.8:1 on Reign and BuddyX; the raw accent was 3.8:1 or less. */
+	color: var( --wb-gam-color-accent-text );
 	padding: 8px 16px;
 	border-radius: var( --wb-gam-radius-full );
 	font-weight: var( --wb-gam-weight-semibold, 600 );
@@ -128,7 +133,7 @@
 .wb-gam-redemption__cost {
 	font-weight: var( --wb-gam-weight-bold, 700 );
 	font-size: var( --wb-gam-font-xl );
-	color: var( --wb-gam-redemption-accent );
+	color: var( --wb-gam-redemption-accent-text );
 	line-height: 1;
 }
 
@@ -206,7 +211,6 @@
 	.wb-gam-redemption[ data-columns="4" ] {
 		--wb-gam-redemption-cols: 2;
 	}
-	.wb-gam-hide-tablet { display: none !important; }
 }
 
 @media ( max-width: 640px ) {
@@ -222,12 +226,6 @@
 	.wb-gam-redemption__card {
 		padding: var( --wb-gam-space-md );
 	}
-	.wb-gam-hide-mobile { display: none !important; }
-}
-
-.wb-gam-hide-desktop { display: none !important; }
-@media ( max-width: 1024px ) and ( min-width: 641px ) {
-	.wb-gam-hide-desktop { display: revert !important; }
 }
 
 @media ( prefers-reduced-motion: reduce ) {

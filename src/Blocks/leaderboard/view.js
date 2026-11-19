@@ -113,6 +113,13 @@
 				many: root.getAttribute( 'data-wb-gam-points-label' ) || '',
 				one: root.getAttribute( 'data-wb-gam-points-label-one' ) || ''
 			};
+			var ordinals = [];
+			try {
+				ordinals = JSON.parse( root.getAttribute( 'data-wb-gam-ordinals' ) || '[]' );
+			} catch ( e ) {
+				ordinals = [];
+			}
+			ordinals.plain = root.getAttribute( 'data-wb-gam-rank-label' ) || '';
 
 			var existing = new Map();
 			Array.from( list.children ).forEach( function ( li ) {
@@ -131,7 +138,8 @@
 			var fragment = document.createDocumentFragment();
 
 			rows.forEach( function ( row, idx ) {
-				var rank = idx + 1;
+				// The server's rank: tied members share one, as on the API and Top Members.
+				var rank = parseInt( row.rank, 10 ) || idx + 1;
 				var uid  = String( row.user_id || 0 );
 				var li   = existing.get( uid );
 				if ( li ) {
@@ -139,7 +147,7 @@
 				} else {
 					li = buildRow( row, templateRow );
 				}
-				updateRow( li, row, rank, pointsLabel );
+				updateRow( li, row, rank, pointsLabel, ordinals );
 				fragment.appendChild( li );
 			} );
 
@@ -208,7 +216,7 @@
 			return li;
 		}
 
-		function updateRow( li, row, rank, pointsLabel ) {
+		function updateRow( li, row, rank, pointsLabel, ordinals ) {
 			// Rank class for podium colours.
 			li.className = ( 'wb-gam-leaderboard__entry wb-gam-rank-' + rank ).trim();
 			li.dataset.rank = String( rank );
@@ -228,6 +236,23 @@
 				} else {
 					rankCell.insertBefore( document.createTextNode( rankText ), rankCell.firstChild );
 				}
+
+				// The podium caption follows the number ("2nd place" for both members tied on 2).
+				var ordinal = rankCell.querySelector( '.wb-gam-leaderboard__rank-ordinal' );
+				var caption = ordinals[ rank - 1 ] || '';
+				if ( caption && ! ordinal ) {
+					ordinal = document.createElement( 'span' );
+					ordinal.className = 'wb-gam-leaderboard__rank-ordinal';
+					rankCell.appendChild( ordinal );
+				}
+				if ( ordinal ) {
+					if ( caption ) {
+						ordinal.textContent = caption;
+					} else {
+						ordinal.remove();
+					}
+				}
+				rankCell.setAttribute( 'aria-label', caption || ordinals.plain );
 			}
 
 			var nameCell = li.querySelector( '.wb-gam-leaderboard__name' );
@@ -265,9 +290,7 @@
 				}
 				if ( badgesCount ) {
 					var board      = li.closest( '[data-wb-gam-board="leaderboard"]' );
-				var badgeTmpl  = ( n === 1
-					? ( board && board.getAttribute( 'data-wb-gam-badges-one' ) ) || '%d badge'
-					: ( board && board.getAttribute( 'data-wb-gam-badges-other' ) ) || '%d badges' );
+				var badgeTmpl  = ( board && board.getAttribute( 'data-wb-gam-badges-label' ) ) || 'Badges: %d';
 				var badgesText = badgeTmpl.replace( '%d', n );
 					if ( badgesCount.textContent !== badgesText ) {
 						badgesCount.textContent = badgesText;

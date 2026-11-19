@@ -71,6 +71,107 @@ class TriggerDecisionsTest extends TestCase {
 	}
 
 	#[Test]
+	public function a_member_copied_into_a_buddynext_space_is_not_paid_the_join_again(): void {
+		require_once __DIR__ . '/Stubs/IntegrationActivityStub.php';
+		$cb = $this->trigger( 'buddynext.php', 'bn_space_joined' );
+		$this->assertSame( 16, $cb( 3, 16, 'member' ) );
+
+		\BuddyNext\Feed\IntegrationActivity::$mirror = true;
+		try {
+			$this->assertSame( 0, $cb( 3, 16, 'member' ) );
+		} finally {
+			\BuddyNext\Feed\IntegrationActivity::$mirror = false;
+		}
+	}
+
+	#[Test]
+	public function an_activity_comment_mediaverse_copied_from_a_photo_comment_earns_nothing(): void {
+		$cb       = $this->trigger( 'buddypress.php', 'bp_activity_comment' );
+		$activity = (object) array( 'id' => 5 );
+		$this->assertSame( 16, $cb( 9, array( 'user_id' => 16 ), $activity ), 'A genuine activity comment still pays.' );
+
+		Functions\when( 'doing_action' )->alias( fn( $h ) => 'mvs_comment_created' === $h );
+		$this->assertSame( 0, $cb( 9, array( 'user_id' => 16 ), $activity ) );
+	}
+
+	#[Test]
+	public function a_photo_comment_synced_from_an_activity_comment_earns_nothing(): void {
+		defined( 'MVS_VERSION' ) || define( 'MVS_VERSION', '1.0.0-test' );
+		$cb   = $this->trigger( 'wpmediaverse.php', 'mvs_give_comment' );
+		$text = 'A comment long enough to count.';
+		$this->assertSame( 16, $cb( 4, 16, 77, $text, '' ) );
+		$this->assertSame( 16, $cb( 4, 16, 77, $text ), 'MediaVerse before the source argument.' );
+		$this->assertSame( 0, $cb( 4, 16, 77, $text, 'bp_activity' ) );
+
+		$this->assertSame( 0, $this->trigger( 'wpmediaverse.php', 'mvs_receive_comment' )( 4, 16, 77, $text, 'bp_activity' ) );
+	}
+
+	#[Test]
+	public function a_free_order_does_not_use_up_the_first_purchase(): void {
+		require_once __DIR__ . '/Stubs/WooCommerceStub.php';
+		$order = static fn( float $total ) => new class( $total ) {
+			public function __construct( private float $total ) {}
+			public function get_customer_id(): int {
+				return 16;
+			}
+			public function get_total(): float {
+				return $this->total;
+			}
+		};
+		Functions\when( 'wc_get_order' )->justReturn( $order( 10 ) );
+		$cb = $this->trigger( 'woocommerce.php', 'wc_first_purchase' );
+
+		// Only a free order (and nothing unpaid: the query asks for date_paid) was paid before.
+		Functions\when( 'wc_get_orders' )->justReturn( array( $order( 0 ) ) );
+		$this->assertSame( 16, $cb( 9 ) );
+
+		Functions\when( 'wc_get_orders' )->justReturn( array( $order( 0 ), $order( 12.5 ) ) );
+		$this->assertSame( 0, $cb( 9 ), 'An earlier paid order means this is not the first.' );
+	}
+
+	#[Test]
+	public function a_listora_review_pays_when_published_and_follows_moderation(): void {
+		defined( 'WB_LISTORA_VERSION' ) || define( 'WB_LISTORA_VERSION', '1.0.0-test' );
+		$manifest = include dirname( __DIR__, 3 ) . '/integrations/wb-listora.php';
+		$review   = array_values( array_filter( $manifest['triggers'], static fn( $t ) => 'listora_review_written' === $t['id'] ) )[0];
+
+		$this->assertSame( 'wb_gam_listora_review_published', $review['hook'], 'Submitting a pending review must not pay.' );
+		$this->assertSame( 4, $review['reverse_on']['wb_listora_review_status_changed']( 4, 'rejected' ) );
+		$this->assertSame( 4, $review['reverse_on']['wb_listora_review_status_changed']( 4, 'pending' ) );
+		$this->assertSame( 0, $review['reverse_on']['wb_listora_review_status_changed']( 4, 'approved' ) );
+		$this->assertSame( 4, $review['reverse_on']['wb_listora_after_delete_review']( 4, 9, null ) );
+		$this->assertSame( 4, $review['restore_on']['wb_listora_review_status_changed']( 4, 'approved' ) );
+	}
+
+	#[Test]
+	public function buddypress_lists_no_trigger_that_can_never_register(): void {
+		$ids = array_column( ( include dirname( __DIR__, 3 ) . '/integrations/buddypress.php' )['triggers'], 'id' );
+
+		// wordpress.php always loads and its wp_publish_post supersedes bp_publish_post.
+		$this->assertNotContains( 'bp_publish_post', $ids );
+		$this->assertCount( 12, $ids );
+	}
+
+	#[Test]
+	public function a_listora_listing_follows_moderation(): void {
+		defined( 'WB_LISTORA_VERSION' ) || define( 'WB_LISTORA_VERSION', '1.0.0-test' );
+		Functions\when( 'get_post_type' )->justReturn( 'listora_listing' );
+		$manifest = include dirname( __DIR__, 3 ) . '/integrations/wb-listora.php';
+		$by_id    = array_column( $manifest['triggers'], null, 'id' );
+
+		foreach ( array( 'listora_listing_submitted', 'listora_listing_published' ) as $id ) {
+			$out  = $by_id[ $id ]['reverse_on']['wb_listora_listing_status_changed'];
+			$back = $by_id[ $id ]['restore_on']['wb_listora_listing_status_changed'];
+			$this->assertSame( 7, $out( 7, 'listora_rejected', 'pending' ), "$id: rejected" );
+			$this->assertSame( 7, $out( 7, 'trash', 'publish' ), "$id: trashed" );
+			$this->assertSame( 0, $out( 7, 'listora_expired', 'publish' ), "$id: expiry is not a removal" );
+			$this->assertSame( 7, $by_id[ $id ]['reverse_on']['before_delete_post']( 7 ), "$id: deleted" );
+			$this->assertSame( 7, $back( 7, 'publish', 'listora_rejected' ), "$id: published again" );
+			$this->assertSame( 0, $back( 7, 'pending', 'draft' ) );
+		}
+	}
+
+	#[Test]
 	public function learnomy_path_certificate_is_paid_by_path_completion(): void {
 		$cb = $this->trigger( 'learnomy.php', 'learnomy_certificate_issued' );
 		$this->assertSame( 16, $cb( 3, 16, 42 ) );

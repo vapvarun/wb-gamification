@@ -93,8 +93,10 @@ final class Registrar {
 		if ( '' === $name || 0 !== strpos( $name, 'wb-gamification/' ) ) {
 			return $block_content;
 		}
-		if ( wp_style_is( 'wb-gam-block-card', 'registered' ) ) {
-			wp_enqueue_style( 'wb-gam-block-card' );
+		foreach ( array( 'wb-gam-block-card', 'wb-gam-device-visibility' ) as $handle ) {
+			if ( wp_style_is( $handle, 'registered' ) ) {
+				wp_enqueue_style( $handle );
+			}
 		}
 		return $block_content;
 	}

@@ -101,27 +101,43 @@ $free_triggers = array(
 				'is_first'   => ! empty( $file_data['is_first'] ),
 			);
 		},
+		// A trashed or deleted upload takes its award back; restored from the trash gives it back.
+		'once_per_object'   => static fn( $media_id ): int => (int) $media_id,
+		'reverse_on'        => array(
+			'mvs_media_trashed' => static fn( $media_id ): int => (int) $media_id,
+			'mvs_media_deleted' => static fn( $media_id ): int => (int) $media_id,
+		),
+		'restore_on'        => array( 'mvs_media_restored' => static fn( $media_id ): int => (int) $media_id ),
 		'default_points'    => 10,
 		'category'          => 'media',
 		'icon'              => 'icon-camera',
 		'repeatable'        => true,
+		'async'             => false,
 		'cooldown'          => 5,
+		// 1.6.8: uploads had no daily limit, so a bulk upload paid for every file. A site that sets
+		// its own limit keeps it (the owner's setting wins).
+		'daily_cap'         => 20,
 	),
 
 	array(
-		'id'             => 'mvs_create_album',
-		'label'          => static fn(): string => __( 'Add items to an album', 'wb-gamification' ),
-		'description'    => static fn(): string => __( 'Awarded when a member adds media to an album (rewards the actor, not just the album owner).', 'wb-gamification' ),
-		'hook'           => 'mvs_album_items_added',
+		'id'              => 'mvs_create_album',
+		'label'           => static fn(): string => __( 'Add items to an album', 'wb-gamification' ),
+		'description'     => static fn(): string => __( 'Awarded when a member adds media to an album (rewards the actor, not just the album owner).', 'wb-gamification' ),
+		'hook'            => 'mvs_album_items_added',
 		// Signature (MVS 1.2.3+): ($album_id, $actor_id, $media_ids, $added).
-		'user_callback'  => function ( int $album_id, int $actor_id, array $media_ids, int $added ): int {
+		'user_callback'   => function ( int $album_id, int $actor_id, array $media_ids, int $added ): int {
 			return $actor_id;
 		},
-		'default_points' => 15,
-		'category'       => 'media',
-		'icon'           => 'icon-images',
-		'repeatable'     => true,
-		'cooldown'       => 10,
+		'once_per_object' => static fn( int $album_id ): int => $album_id,
+		'reverse_on'      => array(
+			'mvs_album_deleted' => static fn( $album_id ): int => (int) $album_id,
+		),
+		'async'           => false,
+		'default_points'  => 15,
+		'category'        => 'media',
+		'icon'            => 'icon-images',
+		'repeatable'      => true,
+		'cooldown'        => 10,
 	),
 
 	/*
@@ -147,6 +163,13 @@ $free_triggers = array(
 				'reaction_type' => $type,
 			);
 		},
+		'once_per_object'   => static fn( int $media_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $media_id ),
+		// Per liker and photo: an unlike takes the owner's points back.
+		'reverse_on'        => array(
+			'mvs_reaction_removed' => static fn( $media_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $media_id ),
+			// The REST toggle removes a like without mvs_reaction_removed; it reports action 'removed'.
+			'mvs_reaction_toggled' => static fn( $media_id, $user_id, $type = '', $action = '' ): int => 'removed' === $action ? \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $media_id ) : 0,
+		),
 		'default_points'    => 2,
 		'category'          => 'media',
 		'icon'              => 'icon-heart',
@@ -159,9 +182,10 @@ $free_triggers = array(
 		'label'             => static fn(): string => __( 'Receive a comment on a photo', 'wb-gamification' ),
 		'description'       => static fn(): string => __( 'Awarded to the media owner when someone comments on their photo.', 'wb-gamification' ),
 		'hook'              => 'mvs_comment_created',
-		'user_callback'     => function ( int $media_id, int $user_id, int $comment_id, string $content ): int {
-				// BuddyNext copy of a follow/comment another plugin already paid for.
-			if ( \WBGam\Engine\HostActivity::is_copy() ) {
+		'user_callback'     => function ( int $media_id, int $user_id, int $comment_id, string $content, string $source = '' ): int {
+			// BuddyNext copy of a follow/comment another plugin already paid for. A comment MediaVerse
+			// synced from a BuddyPress activity comment was paid there (bp_activity_comment).
+			if ( \WBGam\Engine\HostActivity::is_copy() || 'bp_activity' === $source ) {
 				return 0;
 			}
 			$author = wb_gam_mvs_media_author( $media_id );
@@ -175,6 +199,9 @@ $free_triggers = array(
 				'word_count' => str_word_count( wp_strip_all_tags( $content ) ),
 			);
 		},
+		'once_per_object'   => static fn( $media_id, $user_id, $comment_id ): int => (int) $comment_id,
+		// MediaVerse comments are WordPress comments of type mvs_comment, deleted with wp_delete_comment().
+		...\WBGam\Engine\Registry::comment_object_hooks( 'mvs_comment' ),
 		'default_points'    => 5,
 		'category'          => 'media',
 		'icon'              => 'icon-message-circle',
@@ -199,6 +226,11 @@ $free_triggers = array(
 				'follower_id' => $follower_id,
 			);
 		},
+		'once_per_object'   => static fn( int $follower_id, int $following_id ): int => \WBGam\Engine\Registry::object_key( $follower_id, $following_id ),
+		'reverse_on'        => array(
+			'mvs_user_unfollowed' => static fn( $follower_id, $following_id ): int => \WBGam\Engine\Registry::object_key( (int) $follower_id, (int) $following_id ),
+		),
+		'async'             => false,
 		'default_points'    => 3,
 		'category'          => 'social',
 		'icon'              => 'icon-users',
@@ -206,22 +238,27 @@ $free_triggers = array(
 	),
 
 	array(
-		'id'             => 'mvs_receive_favorite',
-		'label'          => static fn(): string => __( 'Have a photo bookmarked', 'wb-gamification' ),
-		'description'    => static fn(): string => __( 'Awarded to the media owner when someone bookmarks their photo.', 'wb-gamification' ),
-		'hook'           => 'mvs_favorite_toggled',
-		'user_callback'  => function ( int $media_id, int $user_id, string $action ): int {
+		'id'              => 'mvs_receive_favorite',
+		'label'           => static fn(): string => __( 'Have a photo bookmarked', 'wb-gamification' ),
+		'description'     => static fn(): string => __( 'Awarded to the media owner when someone bookmarks their photo.', 'wb-gamification' ),
+		'hook'            => 'mvs_favorite_toggled',
+		'user_callback'   => function ( int $media_id, int $user_id, string $action ): int {
 			if ( 'added' !== $action ) {
 				return 0;
 			}
 			$author = wb_gam_mvs_media_author( $media_id );
 			return ( $author && $author !== $user_id ) ? $author : 0;
 		},
-		'default_points' => 2,
-		'category'       => 'media',
-		'icon'           => 'icon-star',
-		'repeatable'     => true,
-		'async'          => false,
+		'once_per_object' => static fn( int $media_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $media_id ),
+		// MediaVerse fires one hook for add and remove; a removal takes that favourite's points back.
+		'reverse_on'      => array(
+			'mvs_favorite_toggled' => static fn( $media_id, $user_id, $action ): int => 'removed' === $action ? \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $media_id ) : 0,
+		),
+		'default_points'  => 2,
+		'category'        => 'media',
+		'icon'            => 'icon-star',
+		'repeatable'      => true,
+		'async'           => false,
 	),
 
 	/*
@@ -231,58 +268,31 @@ $free_triggers = array(
 	 */
 
 	array(
-		'id'             => 'mvs_give_comment',
-		'label'          => static fn(): string => __( 'Write a meaningful comment', 'wb-gamification' ),
-		'description'    => static fn(): string => __( 'Awarded when a member leaves a comment of 20+ characters.', 'wb-gamification' ),
-		'hook'           => 'mvs_comment_created',
-		'user_callback'  => function ( int $media_id, int $user_id, int $comment_id, string $content ): int {
-				// BuddyNext copy of a follow/comment another plugin already paid for.
-			if ( \WBGam\Engine\HostActivity::is_copy() ) {
+		'id'              => 'mvs_give_comment',
+		'label'           => static fn(): string => __( 'Write a meaningful comment', 'wb-gamification' ),
+		'description'     => static fn(): string => __( 'Awarded when a member leaves a comment of 20+ characters.', 'wb-gamification' ),
+		'hook'            => 'mvs_comment_created',
+		'user_callback'   => function ( int $media_id, int $user_id, int $comment_id, string $content, string $source = '' ): int {
+			// BuddyNext copy of a follow/comment another plugin already paid for. A comment MediaVerse
+			// synced from a BuddyPress activity comment was paid there (bp_activity_comment).
+			if ( \WBGam\Engine\HostActivity::is_copy() || 'bp_activity' === $source ) {
 				return 0;
 			}
 			// Only award for meaningful comments (20+ chars).
 			return strlen( $content ) >= 20 ? $user_id : 0;
 		},
-		'default_points' => 3,
-		'category'       => 'social',
-		'icon'           => 'icon-message-square',
-		'repeatable'     => true,
-		'cooldown'       => 30,
-		'daily_cap'      => 20,
-	),
-
-	array(
-		'id'             => 'mvs_give_follow',
-		'label'          => static fn(): string => __( 'Follow another member', 'wb-gamification' ),
-		'description'    => static fn(): string => __( 'Awarded when a member follows another user.', 'wb-gamification' ),
-		'hook'           => 'mvs_user_followed',
-		'user_callback'  => function ( int $follower_id, int $following_id ): int {
-				// BuddyNext copy of a follow/comment another plugin already paid for.
-			if ( \WBGam\Engine\HostActivity::is_copy() ) {
-				return 0;
-			}
-			return $follower_id;
-		},
-		'default_points' => 1,
-		'category'       => 'social',
-		'icon'           => 'icon-circle-plus',
-		'repeatable'     => true,
-		'daily_cap'      => 50,
-	),
-
-	array(
-		'id'             => 'mvs_bookmark_photo',
-		'label'          => static fn(): string => __( 'Bookmark a photo', 'wb-gamification' ),
-		'description'    => static fn(): string => __( 'Awarded when a member saves a photo to favorites.', 'wb-gamification' ),
-		'hook'           => 'mvs_favorite_toggled',
-		'user_callback'  => function ( int $media_id, int $user_id, string $action ): int {
-			return 'added' === $action ? $user_id : 0;
-		},
-		'default_points' => 1,
-		'category'       => 'social',
-		'icon'           => 'icon-bookmark',
-		'repeatable'     => true,
-		'daily_cap'      => 30,
+		'once_per_object' => static fn( $media_id, $user_id, $comment_id ): int => (int) $comment_id,
+		// MediaVerse comments are WordPress comments of type mvs_comment, deleted with wp_delete_comment().
+		...\WBGam\Engine\Registry::comment_object_hooks( 'mvs_comment' ),
+		// Commenting on your own photo earns nothing.
+		'owner_callback'  => static fn( $media_id ): int => (int) wb_gam_mvs_media_author( (int) $media_id ),
+		'default_points'  => 3,
+		'category'        => 'social',
+		'icon'            => 'icon-message-square',
+		'repeatable'      => true,
+		'async'           => false,
+		'cooldown'        => 30,
+		'daily_cap'       => 20,
 	),
 );
 
@@ -321,6 +331,7 @@ if ( $pro_active ) {
 					'loser_id'  => $loser_id,
 				);
 			},
+			'permanent'         => 'A win.',
 			'default_points'    => 100,
 			'category'          => 'competition',
 			'icon'              => 'icon-award',
@@ -342,6 +353,16 @@ if ( $pro_active ) {
 					'challenge_id' => $challenge_id,
 				);
 			},
+			'once_per_object'   => static fn( int $challenge_id, int $user_id, int $media_id ): int => $media_id,
+			// Keyed by the entry's photo: trashing or deleting it withdraws the entry.
+			'reverse_on'        => array(
+				'mvs_media_trashed' => static fn( $media_id ): int => (int) $media_id,
+				'mvs_media_deleted' => static fn( $media_id ): int => (int) $media_id,
+			),
+			'restore_on'        => array(
+				'mvs_media_restored' => static fn( $media_id ): int => (int) $media_id,
+			),
+			'async'             => false,
 			'default_points'    => 10,
 			'category'          => 'competition',
 			'icon'              => 'icon-megaphone',
@@ -368,6 +389,7 @@ if ( $pro_active ) {
 					'rank'         => $rank,
 				);
 			},
+			'permanent'         => 'A win.',
 			'default_points'    => 200,
 			'category'          => 'competition',
 			'icon'              => 'icon-trophy',
@@ -392,6 +414,7 @@ if ( $pro_active ) {
 					'match_id' => $match_id,
 				);
 			},
+			'permanent'         => 'A win.',
 			'default_points'    => 150,
 			'category'          => 'competition',
 			'icon'              => 'icon-shield',
@@ -416,6 +439,7 @@ if ( $pro_active ) {
 					'tournament_id' => $tournament_id,
 				);
 			},
+			'permanent'         => 'A win.',
 			'default_points'    => 500,
 			'category'          => 'competition',
 			'icon'              => 'icon-star',
@@ -445,6 +469,7 @@ if ( $pro_active ) {
 					'xp_bonus'    => $xp,
 				);
 			},
+			'permanent'         => 'A milestone reached.',
 			'default_points'    => 50,
 			'category'          => 'engagement',
 			'icon'              => 'icon-trending-up',

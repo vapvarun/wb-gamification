@@ -6,7 +6,7 @@ The Daily Login Bonus block shows a member their current login streak, the point
 
 In the block editor, search for "Daily Login Bonus" and place it on a member dashboard or homepage. It is found under the WB Gamification category.
 
-This block is block-only and has no shortcode equivalent. Use the block editor to add it.
+You can add it with the block editor, or with the shortcode `[wb_gam_daily_bonus]` in a page builder, a classic page or a widget. The shortcode takes no attributes.
 
 ## Settings
 

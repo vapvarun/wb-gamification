@@ -40,7 +40,6 @@ Note: The publish and comment actions in the WordPress category are only active 
 | Receive a reaction | 3 | Yes |
 | Create a poll | 10 | Yes |
 | Publish a member blog post | 25 | Yes |
-| Upload media | 5 | Yes |
 
 ### WooCommerce Actions
 
@@ -68,6 +67,20 @@ Additional integrations are available for bbPress, LifterLMS, MemberPress, GiveW
 Go to **Gamification > Settings** and find the Points section. Every active action is listed with its current point value. Click the value field, enter a new number, and save.
 
 Setting a value to 0 effectively disables point awards for that action without disabling the action itself (badge and challenge tracking still fires).
+
+## When Content Is Removed
+
+Points follow the content that earned them. When a member's post, comment, forum topic or reply, activity update, photo upload or service review is trashed, marked as spam or deleted, the points it earned come back off their balance. Their level and leaderboard rank update straight away. Badges they already earned stay.
+
+- **Trash, then delete for good:** the points come off once, not twice.
+- **Restored from the trash or marked "not spam":** the points come back. A blog post goes back to draft when restored, so it earns again when you publish it.
+- **The member already spent the points:** their balance can go below zero, and they earn their way back up. Nothing they redeemed is taken back.
+- **Deleting a member:** their content goes with them and their points history is removed, so nothing extra is recorded.
+- **Older content:** points earned before version 1.6.8 are not linked to the content, so removing that content leaves those points alone.
+
+Points history shows each change with the action name, for example "Publish a blog post (content removed)" and "Publish a blog post (content restored)".
+
+Photo uploads earn points for up to 20 uploads per member per day. To change it, edit the **Daily cap** for "Upload a photo" under **Gamification > Settings**.
 
 ## Where Members See Their Points
 

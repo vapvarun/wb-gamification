@@ -10,6 +10,7 @@
  * @var string   $name           Already-escaped display name.
  * @var string   $site_name      Site name (raw — escape on output).
  * @var string   $site_url       Site home URL.
+ * @var string   $hub_url           The member's Gamification Hub (panel when it fits); '' when no Hub page exists.
  * @var string   $old_level_name Previous level name (may be empty).
  * @var string   $new_level_name New level name.
  * @var int      $new_level_min  Points threshold for the new level.
@@ -67,7 +68,7 @@ defined( 'ABSPATH' ) || exit;
 						</p>
 					</div>
 					<p style="margin:24px 0 0;">
-						<a href="<?php echo esc_url( $site_url ); ?>" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">
+						<a href="<?php echo esc_url( ! empty( $hub_url ) ? $hub_url : $site_url ); ?>" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">
 							<?php esc_html_e( 'Keep going →', 'wb-gamification' ); ?>
 						</a>
 					</p>

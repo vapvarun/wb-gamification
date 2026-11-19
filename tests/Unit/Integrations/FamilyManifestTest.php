@@ -19,12 +19,12 @@ class FamilyManifestTest extends TestCase {
 
 	/** @var array<string,int> manifest file => expected trigger count */
 	private const MANIFESTS = array(
-		'buddynext.php'           => 16,
-		'learnomy.php'            => 7,
+		'buddynext.php'           => 13,
+		'learnomy.php'            => 6,
 		'learnomy-pro.php'        => 5,
 		'wp-career-board.php'     => 6,
 		'wp-career-board-pro.php' => 1,
-		'wb-listora.php'          => 6,
+		'wb-listora.php'          => 5,
 		'wb-listora-pro.php'      => 3,
 	);
 
@@ -84,17 +84,12 @@ class FamilyManifestTest extends TestCase {
 		$this->assertSame( 7, $triggers['learnomy_course_completed']( 5, 7, 9 ) );        // arg2
 		$this->assertSame( 7, $triggers['learnomy_quiz_passed']( 5, 7, 9, 88 ) );         // arg2 (attempt_id, user_id, quiz_id, score)
 		$this->assertSame( 99, $triggers['wcb_application_submitted']( 1, 2, 99 ) );      // arg3 candidate
-		$this->assertSame( 88, $triggers['listora_review_written']( 1, 2, 88 ) );         // arg3 reviewer
+		$this->assertSame( 88, $triggers['listora_review_written']( 1, 88, 2 ) );         // arg2 reviewer (bridge: review, user, listing)
 		$this->assertSame( 55, $triggers['bn_post_created']( 10, 55, 'text' ) );          // arg2 author
 
 		// bn_profile_completed (strength hook): awards only at exactly 100%.
 		$this->assertSame( 55, $triggers['bn_profile_completed']( 55, 100 ) );
 		$this->assertSame( 0, $triggers['bn_profile_completed']( 55, 80 ) );
-		// bn_profile_updated awards on every completion change: since the 100%
-		// milestone moved to the strength hook, the old "< 100" exclusion is
-		// gone — BuddyNext fires completion_changed only on real changes.
-		$this->assertSame( 55, $triggers['bn_profile_updated']( 55, 100 ) );
-		$this->assertSame( 55, $triggers['bn_profile_updated']( 55, 60 ) );
 	}
 
 	#[Test]

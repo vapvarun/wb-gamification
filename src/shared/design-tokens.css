@@ -1,4 +1,5 @@
-:root {
+:root,
+.wb-gam-scheme-light {
 	/* Spacing scale (used by SpacingControl) */
 	--wb-gam-space-0: 0;
 	--wb-gam-space-xs: 4px;
@@ -58,8 +59,11 @@
 	 * readable contrast against whichever surface the theme provides. */
 	--wb-gam-color-white: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff));
 	--wb-gam-color-text: var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e));
-	--wb-gam-color-text-muted: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e)) 70%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff)));
-	--wb-gam-color-text-light: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e)) 50%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff)));
+	/* Secondary text is the theme text faded toward the card, but never below WCAG AA: on BuddyX's
+	 * mid-grey #505050 text, 50% measured 2.4:1 and 70% 3.7:1; 80% clears 4.5:1 on the card and on
+	 * the Hub's tinted stat tiles. */
+	--wb-gam-color-text-muted: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e)) 84%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff)));
+	--wb-gam-color-text-light: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e)) 80%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff)));
 	--wb-gam-color-border: var(--bx-color-border, var(--reign-site-border-color, #e2e3ed));
 	--wb-gam-color-border-hover: var(--bx-color-border, var(--reign-site-border-color, #c8c9d9));
 	--wb-gam-color-surface: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff));
@@ -79,10 +83,15 @@
 	 * surface so they're a faint light tint in light mode and a faint dark
 	 * tint in dark mode — no opaque light blob on a dark card. */
 	--wb-gam-color-accent-light: color-mix(in srgb, var(--wb-gam-color-accent) 14%, var(--wb-gam-color-surface));
-	/* Accent label text blends toward the foreground so it stays readable on
-	 * the tinted chip in either mode. */
-	--wb-gam-color-accent-text: color-mix(in srgb, var(--wb-gam-color-accent) 65%, var(--wb-gam-color-text));
-	--wb-gam-color-accent-ring: rgba(91, 76, 219, 0.2);
+	/* Accent text (point numbers, labels) is the accent blended half-way into an ink: the theme's
+	 * text darkened toward black in light mode, the theme's light text in dark mode (redefined
+	 * there). Blending with BuddyX's mid-grey #505050 text alone left an orange accent at 4.07:1 and
+	 * yellow under 4:1; with the ink every accent tried (red, orange, yellow, green, cyan, violet)
+	 * measures at least 4.5:1 on the card and on tinted rows, and keeps its hue. */
+	--wb-gam-color-accent-ink: color-mix(in srgb, var(--wb-gam-color-text) 40%, #000000);
+	--wb-gam-color-accent-text: color-mix(in srgb, var(--wb-gam-color-accent) 50%, var(--wb-gam-color-accent-ink));
+	/* Follows the theme's accent, like every other accent tint (was a fixed brand-purple rgba). */
+	--wb-gam-color-accent-ring: color-mix(in srgb, var(--wb-gam-color-accent) 20%, transparent);
 
 	/* Colors — semantic. The solid hue stays constant; the `-bg` tint is
 	 * mixed over the theme surface so status chips / podium rows / pills
@@ -90,7 +99,8 @@
 	 * `-soft` rgba variants were already surface-agnostic.) */
 	--wb-gam-color-success: #0d9f6e;
 	--wb-gam-color-success-bg: color-mix(in srgb, var(--wb-gam-color-success) 12%, var(--wb-gam-color-surface));
-	--wb-gam-color-success-strong: #047857;
+	/* #047857 measured 4.27:1 on its own tint over a cream owner card; this holds 5:1 there, 5.6:1 on white. */
+	--wb-gam-color-success-strong: #046c4e;
 	--wb-gam-color-success-soft: rgba(13, 159, 110, 0.12);
 
 	/* League tier accents (cohort rank). These are deliberately literal -- bronze is
@@ -105,23 +115,28 @@
 	--wb-gam-tier-obsidian: #4b5563;
 	--wb-gam-color-warning: #c2770e;
 	--wb-gam-color-warning-bg: color-mix(in srgb, var(--wb-gam-color-warning) 12%, var(--wb-gam-color-surface));
-	--wb-gam-color-warning-strong: #b45309;
+	/* amber-800: #b45309 measured 3.97:1 as a bonus pill on the green tint of a completed challenge. */
+	--wb-gam-color-warning-strong: #92400e;
 	--wb-gam-color-warning-soft: rgba(245, 158, 11, 0.15);
 	--wb-gam-color-danger: #ef4444;
 	--wb-gam-color-danger-bg: color-mix(in srgb, var(--wb-gam-color-danger) 12%, var(--wb-gam-color-surface));
 	--wb-gam-color-danger-strong: #b91c1c;
 	--wb-gam-color-danger-soft: rgba(185, 28, 28, 0.10);
-	--wb-gam-color-info: #2563eb;
+	/* blue-700: #2563eb measured 4.37:1 as 11px text on its own tint. */
+	--wb-gam-color-info: #1d4ed8;
 	--wb-gam-color-info-bg: color-mix(in srgb, var(--wb-gam-color-info) 12%, var(--wb-gam-color-surface));
 	--wb-gam-color-info-soft: rgba(37, 99, 235, 0.10);
 
 	/* Extra neutrals — surface-muted is the "card lifted off a panel"
 	 * shade. Border-strong is the focus / hover stroke. Theme-mapped (see
 	 * the neutral palette note above). */
-	--wb-gam-color-surface-muted: var(--bx-color-bg-muted, var(--reign-site-secondary-bg-color, #f9fafb));
+	/* Rows on a card: the card's own surface, a step toward the ink. A theme's muted shade can sit on
+	 * either side of its card (BuddyX: #fafafa on #fff at 1.04:1 in light, #101010 under #161616 in dark),
+	 * so it cannot separate rows from their card in both modes. */
+	--wb-gam-color-surface-muted: color-mix(in srgb, var(--wb-gam-color-text) 5%, var(--wb-gam-color-surface));
 	--wb-gam-color-border-strong: var(--bx-color-border, var(--reign-site-border-color, #d1d5db));
 	--wb-gam-color-locked-soft: rgba(156, 163, 175, 0.16);
-	--wb-gam-color-primary-soft: rgba(91, 76, 219, 0.10);
+	--wb-gam-color-primary-soft: color-mix(in srgb, var(--wb-gam-color-accent) 10%, transparent);
 
 	/* Accent variants tied to per-block accent (fire, gold-soft). */
 	--wb-gam-color-fire: #f59e0b;
@@ -142,8 +157,16 @@
 
 	/* Rank/medal palette (used by leaderboard, top-members, year-recap) */
 	--wb-gam-color-gold: #b8860b;
-	--wb-gam-color-silver: #6b7280;
+	/* gray-600: #6b7280 measured 4.47:1 on the tinted leaderboard rows. */
+	--wb-gam-color-silver: #4b5563;
 	--wb-gam-color-bronze: #a0522d;
+	/* A light ground for uploaded badge art (often dark line-art on transparent). Fixed on
+	 * purpose: it does not flip in dark mode, because the art needs a light surface there most. */
+	--wb-gam-color-art-tile: #f8fafc;
+	/* Gold as TEXT (rank number, "1st place", badge counts, a badge behind white text). The medal
+	 * gold is 3.25:1 on white and 2.9:1 on the cream first-place row; this ink is 5.37:1 and
+	 * 4.78:1. Silver (4.83:1) and bronze (6.1:1) already pass. Dark mode uses the medal itself. */
+	--wb-gam-color-gold-text: color-mix(in srgb, #b8860b 75%, #000000);
 
 	/* Interaction states */
 	--wb-gam-color-disabled: var(--wb-gam-color-surface-alt);
@@ -216,7 +239,10 @@
 	--wb-gam-pop-line: var(--bn-line, var(--bn-border, var(--wb-gam-color-border)));
 	--wb-gam-pop-subtle: var(--bn-bg-subtle, var(--wb-gam-color-surface-alt));
 	--wb-gam-pop-accent: var(--bn-accent-500, var(--bn-accent, var(--wb-gam-color-accent)));
-	--wb-gam-pop-accent-fg: var(--bn-accent-fg, #ffffff);
+	/* Text ON the accent. Each theme pairs its button colour with a text colour (BuddyX's
+	 * accent-inverse, Reign's button text), so read that pair before assuming white: Reign dark's
+	 * #97c0ee button with white text measured 1.89:1, with Reign's own #111111 it is 9.97:1. */
+	--wb-gam-pop-accent-fg: var(--bn-accent-fg, var(--bx-color-accent-inverse, var(--reign-site-button-text-color, #ffffff)));
 	--wb-gam-pop-accent-100: var(--bn-accent-100, color-mix(in srgb, var(--wb-gam-pop-accent) 12%, var(--wb-gam-pop-surface)));
 	--wb-gam-pop-accent-200: var(--bn-accent-200, color-mix(in srgb, var(--wb-gam-pop-accent) 24%, var(--wb-gam-pop-surface)));
 	--wb-gam-pop-success: var(--bn-success, var(--wb-gam-color-success));
@@ -303,9 +329,14 @@
  * cascade from --wb-gam-color-accent, so they follow automatically. */
 :root[data-bx-mode="dark"],
 :root[data-theme="dark"],
-body.buddyx-dark-theme {
+body.buddyx-dark-theme,
+.wb-gam-scheme-dark {
+	/* An owner's own accent (block setting) is any colour at all: #cc0000 half-mixed into the ink read
+	 * 3.10:1 on Reign's dark surface. Pull it further toward the ink in dark; the theme accent keeps 50%. */
+	--wb-gam-owner-accent-mix: 35%;
 	--wb-gam-color-accent: var(--wbcom-link-color, var(--bn-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff)))));
 	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bn-accent-600, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, color-mix(in srgb, #5b4cdb 45%, #ffffff)))));
+	--wb-gam-color-accent-ink: var(--wb-gam-color-text);
 
 	/* Lift the dark medals. Bronze (#b45309) and Obsidian (#4b5563) are dark enough to
 	 * sink into a dark surface -- the member's own league tier becomes the one thing
@@ -322,11 +353,30 @@ body.buddyx-dark-theme {
 	 * under the 4.5:1 WCAG AA floor. Gold clears it at 5.56:1 and is left as it is. */
 	--wb-gam-color-silver: color-mix(in srgb, #6b7280 45%, #ffffff);
 	--wb-gam-color-bronze: color-mix(in srgb, #a0522d 50%, #ffffff);
+	--wb-gam-color-gold-text: color-mix(in srgb, var(--wb-gam-color-gold) 70%, #ffffff);
+
+	/* Text on the lightened brand accent: white on it is 2.68:1, this ink is 6.37:1. A theme's
+	 * own pair still wins. */
+	--wb-gam-pop-accent-fg: var(--bn-accent-fg, var(--bx-color-accent-inverse, var(--reign-site-button-text-color, #1a1a2e)));
+
+	/* Lift the "-strong" status inks, info and the deepest heatmap step for a dark surface. The
+	 * light values measure 2.3:1 to 3.6:1 on #161616 / #1f2937 / #15181f (heatmap-4 1.3:1); the
+	 * mixes below measure at least 5.2:1 on all three (heatmap-4 4.5:1), and stay recognisably
+	 * green, amber, red, blue and violet. Warning is lifted to 50% so a bonus pill on the green tint
+	 * of a completed challenge still clears 4.5:1 (60% measured 4.34:1 there). */
+	--wb-gam-color-success-strong: color-mix(in srgb, #047857 60%, #ffffff);
+	--wb-gam-color-warning-strong: color-mix(in srgb, #b45309 50%, #ffffff);
+	--wb-gam-color-danger-strong: color-mix(in srgb, #b91c1c 55%, #ffffff);
+	--wb-gam-color-fire-strong: color-mix(in srgb, #b45309 60%, #ffffff);
+	--wb-gam-color-info: color-mix(in srgb, #2563eb 60%, #ffffff);
+	--wb-gam-color-heatmap-4: color-mix(in srgb, #4c1d95 55%, #ffffff);
 }
 @media (prefers-color-scheme: dark) {
 	:root[data-bx-mode="auto"] {
+		--wb-gam-owner-accent-mix: 35%;
 		--wb-gam-color-accent: var(--wbcom-link-color, var(--bn-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff)))));
 		--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bn-accent-600, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, color-mix(in srgb, #5b4cdb 45%, #ffffff)))));
+		--wb-gam-color-accent-ink: var(--wb-gam-color-text);
 
 		/* Auto-mode is a dark surface too. Lifting the medals only on the explicit dark
 		 * selectors would leave every owner who never touched the toggle reading 3.2:1 bronze. */
@@ -335,5 +385,68 @@ body.buddyx-dark-theme {
 		--wb-gam-tier-obsidian: color-mix(in srgb, #4b5563 55%, #ffffff);
 		--wb-gam-color-silver: color-mix(in srgb, #6b7280 45%, #ffffff);
 		--wb-gam-color-bronze: color-mix(in srgb, #a0522d 50%, #ffffff);
+		--wb-gam-color-gold-text: color-mix(in srgb, var(--wb-gam-color-gold) 70%, #ffffff);
+		/* Text on the lightened brand accent: white on it is 2.68:1, this ink is 6.37:1. A theme's
+		 * own pair still wins. */
+		--wb-gam-pop-accent-fg: var(--bn-accent-fg, var(--bx-color-accent-inverse, var(--reign-site-button-text-color, #1a1a2e)));
+
+		/* Lift the "-strong" status inks, info and the deepest heatmap step for a dark surface. The
+		 * light values measure 2.3:1 to 3.6:1 on #161616 / #1f2937 / #15181f (heatmap-4 1.3:1); the
+		 * mixes below measure at least 5.2:1 on all three (heatmap-4 4.5:1), and stay recognisably
+		 * green, amber, red, blue and violet. */
+		--wb-gam-color-success-strong: color-mix(in srgb, #047857 60%, #ffffff);
+		--wb-gam-color-warning-strong: color-mix(in srgb, #b45309 50%, #ffffff);
+		--wb-gam-color-danger-strong: color-mix(in srgb, #b91c1c 55%, #ffffff);
+		--wb-gam-color-fire-strong: color-mix(in srgb, #b45309 60%, #ffffff);
+		--wb-gam-color-info: color-mix(in srgb, #2563eb 60%, #ffffff);
+		--wb-gam-color-heatmap-4: color-mix(in srgb, #4c1d95 55%, #ffffff);
 	}
+}
+
+/* Label colour on accent buttons, picked from the accent's own lightness: dark text on a light accent
+ * (white on an orange theme accent measured 2.59:1), white on a dark one. Overrides a theme's button
+ * text pair, which is the one that failed. Browsers without relative colours keep the value above. */
+@supports (color: oklch(from red l c h)) {
+	/* The dark selectors too: they restore the theme's pair (BuddyX dark: white on its orange, 3.36:1). */
+	:root,
+	:root[data-bx-mode="dark"],
+	:root[data-theme="dark"],
+	body.buddyx-dark-theme,
+	.wb-gam-scheme-light,
+	.wb-gam-scheme-dark {
+		--wb-gam-pop-accent-fg: oklch(from var(--wb-gam-pop-accent) round(1.07 - l) 0 0);
+	}
+	@media (prefers-color-scheme: dark) {
+		:root[data-bx-mode="auto"] {
+			--wb-gam-pop-accent-fg: oklch(from var(--wb-gam-pop-accent) round(1.07 - l) 0 0);
+		}
+	}
+}
+
+/* ── Owner card colour ──────────────────────────────────────────────────────
+ * A block whose owner set a Card background carries .wb-gam-scheme-light or
+ * .wb-gam-scheme-dark, picked from that colour (WBGam\Blocks\CSS::ink_for()). The
+ * light or dark token set above is declared again on the block, so every token
+ * built from the surface or the text resolves against the owner's card instead of
+ * the page's mode: a cream card on a dark page reads as a light card. The block's
+ * own rule (CSS.php) then pins text and surfaces to that card.
+ * Popups and headings here follow the card, not BuddyNext or the theme. */
+.wb-gam-scheme-light {
+	color-scheme: light;
+}
+.wb-gam-scheme-dark {
+	color-scheme: dark;
+}
+.wb-gam-scheme-light,
+.wb-gam-scheme-dark {
+	--wb-gam-pop-surface: var(--wb-gam-color-surface);
+	--wb-gam-pop-text: var(--wb-gam-color-text);
+	--wb-gam-pop-text-2: var(--wb-gam-color-text-muted);
+	--wb-gam-pop-text-3: var(--wb-gam-color-text-light);
+	--wb-gam-pop-subtle: var(--wb-gam-color-surface-alt);
+	--wb-gam-pop-inv-bg: var(--wb-gam-color-text);
+}
+.wb-gam-scheme-light :is(h1, h2, h3, h4, h5, h6),
+.wb-gam-scheme-dark :is(h1, h2, h3, h4, h5, h6) {
+	color: inherit;
 }

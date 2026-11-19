@@ -56,6 +56,16 @@ final class Registry {
 	private static array $challenge_types = array();
 
 	/**
+	 * Content-removal bindings: mode ('reverse'|'restore') => hook => action id => object-id callback.
+	 *
+	 * One listener per hook serves every action bound to it, so a deleted comment costs one ledger
+	 * read however many comment actions are registered.
+	 *
+	 * @var array<string, array<string, array<string, callable>>>
+	 */
+	private static array $object_hooks = array();
+
+	/**
 	 * Whether the registry has already been initialised.
 	 *
 	 * @var bool
@@ -92,6 +102,18 @@ final class Registry {
 	 *   @type string   $description    Optional description.
 	 *   @type string   $hook           WordPress action hook to listen to.
 	 *   @type callable $user_callback  Returns the user_id from hook arguments.
+	 *   @type callable $once_per_object Optional. Returns the object id from hook arguments; a member earns once per object.
+	 *   @type array    $reverse_on     Optional. Hook => callable returning the removed object id (or ids) from that
+	 *                                  hook's arguments. Takes the award back for that object ({@see PointsEngine::reverse_object_awards()}).
+	 *                                  Needs `once_per_object`, and `async => false` so the award exists before a delete can arrive.
+	 *   @type array    $restore_on     Optional. Hook => callable returning the returned object id (or ids), 0 to skip.
+	 *                                  Gives a taken-back award back ({@see PointsEngine::restore_object_awards()}).
+	 *   @type string   $permanent      Why the award is never taken back (a milestone such as a course completed, a
+	 *                                  win, a sign-up). Every trigger declares its exit: `reverse_on` or `permanent`.
+	 *   @type callable $owner_callback Optional. Returns whose content the hook is about, from the hook arguments. The
+	 *                                  award is skipped (`own_content`) when that is the member being paid.
+	 *   @type callable $object_date    Optional. Object id => when the content was created (UTC 'Y-m-d H:i:s'). Content
+	 *                                  from before the 1.6.8 update is treated as paid ({@see PointsEngine::is_legacy_object()}).
 	 *   @type int      $default_points Default points awarded. Admin can override.
 	 *   @type string   $category       Optional category (buddypress, commerce, etc.).
 	 *   @type string   $icon           Dashicon name or URL.
@@ -152,25 +174,170 @@ final class Registry {
 		add_action(
 			$action['hook'],
 			static function ( ...$params ) use ( $action ) {
-				// A trigger runs inside another plugin's request (their do_action). If its
-				// callback throws - a partner changed an argument type - log it and move on;
-				// failing to award points must never fail the partner's save.
-				try {
-					self::fire( $action, $params );
-				} catch ( \Throwable $e ) {
-					Log::error(
-						'Gamification trigger failed; no points awarded.',
-						array(
-							'action_id' => (string) $action['id'],
-							'hook'      => (string) $action['hook'],
-							'error'     => $e->getMessage(),
-						)
-					);
-				}
+				self::guarded( (string) $action['id'], (string) $action['hook'], static fn() => self::fire( $action, $params ) );
 			},
 			10,
 			10
 		);
+
+		foreach ( array(
+			'reverse_on' => 'reverse',
+			'restore_on' => 'restore',
+		) as $key => $mode ) {
+			foreach ( (array) ( $action[ $key ] ?? array() ) as $hook => $object_callback ) {
+				if ( ! is_callable( $object_callback ) ) {
+					continue;
+				}
+				if ( ! isset( self::$object_hooks[ $mode ][ $hook ] ) ) {
+					add_action(
+						$hook,
+						static function ( ...$params ) use ( $mode, $hook ) {
+							self::guarded( $mode, (string) $hook, static fn() => self::fire_object_hook( $mode, (string) $hook, $params ) );
+						},
+						10,
+						10
+					);
+				}
+				self::$object_hooks[ $mode ][ $hook ][ $action['id'] ] = $object_callback;
+			}
+		}
+	}
+
+	/**
+	 * `reverse_on` / `restore_on` for a trigger whose object is a WordPress comment.
+	 *
+	 * A trashed, spammed or deleted comment takes its award back. An untrashed or unspammed one that
+	 * is approved again gives it back, unless its award hook already paid again on the way back in.
+	 * Shared by every comment-based manifest (WordPress, WooCommerce reviews, MediaVerse comments).
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param string $comment_type Only comments of this type (e.g. MediaVerse's 'mvs_comment'); '' for any.
+	 * @return array{object_date: callable, reverse_on: array<string, callable>, restore_on: array<string, callable>}
+	 */
+	public static function comment_object_hooks( string $comment_type = '' ): array {
+		$ours     = static fn( $comment ): bool => $comment instanceof \WP_Comment && ( '' === $comment_type || $comment_type === $comment->comment_type );
+		$removed  = static fn( $comment_id ): int => $ours( get_comment( (int) $comment_id ) ) ? (int) $comment_id : 0;
+		$returned = static function ( $comment_id ) use ( $ours ): int {
+			$comment = get_comment( (int) $comment_id );
+			return $ours( $comment ) && '1' === (string) $comment->comment_approved ? (int) $comment_id : 0;
+		};
+		return array(
+			'object_date' => static fn( $comment_id ): string => (string) get_comment( (int) $comment_id )?->comment_date_gmt,
+			'reverse_on'  => array(
+				'trashed_comment' => $removed,
+				'spammed_comment' => $removed,
+				'delete_comment'  => $removed,
+			),
+			'restore_on'  => array(
+				'untrashed_comment' => $returned,
+				'unspammed_comment' => $returned,
+			),
+		);
+	}
+
+	/**
+	 * `object_date` for a trigger whose object is a WordPress post: when it was published.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @return callable Post id => post_date_gmt ('0000-00-00 00:00:00' for an unpublished draft).
+	 */
+	public static function post_object_date(): callable {
+		return static fn( $post_id ): string => (string) get_post_field( 'post_date_gmt', (int) $post_id );
+	}
+
+	/**
+	 * `object_date` + `reverse_on` for a trigger whose object is a WordPress post of one type: trash
+	 * or delete takes the award back; publishing again pays again through the trigger's own hook.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param string $post_type Post type the trigger pays for.
+	 * @return array{object_date: callable, reverse_on: array<string, callable>}
+	 */
+	public static function post_object_hooks( string $post_type ): array {
+		$removed = static fn( $post_id ): int => get_post_type( (int) $post_id ) === $post_type ? (int) $post_id : 0;
+		return array(
+			'object_date' => self::post_object_date(),
+			'reverse_on'  => array(
+				'wp_trash_post'      => $removed,
+				'before_delete_post' => $removed,
+			),
+		);
+	}
+
+	/**
+	 * One object id for an award that is about a pair, not a row: a member in a group, a follow, a
+	 * reaction by one member on one item.
+	 *
+	 * A reversal takes back every award for its action and object id, so the id must be unique to
+	 * the award: key a course, group or space seat with the member, never by the shared id alone.
+	 * Build the same key on the way in (`once_per_object`) and out (`reverse_on`).
+	 *
+	 * 60 bits of md5 (object_id is BIGINT UNSIGNED), so keys stay distinct at any realistic site
+	 * size; a collision would let one member's removal take back another member's award.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param int|string ...$parts The pair, e.g. ( $user_id, $group_id ) or ( $reactor, 'post', $item ).
+	 * @return int Positive key.
+	 */
+	public static function object_key( ...$parts ): int {
+		return max( 1, (int) hexdec( substr( md5( implode( ':', array_map( 'strval', $parts ) ) ), 0, 15 ) ) );
+	}
+
+	/**
+	 * Run a listener inside another plugin's request without letting it fail that request.
+	 *
+	 * A trigger runs inside the partner's do_action. If its callback throws - a partner changed an
+	 * argument type - log it and move on: failing to award or reverse points must never fail the
+	 * partner's save or delete.
+	 *
+	 * @param string   $what Action id, or 'reverse' / 'restore'.
+	 * @param string   $hook Hook that fired.
+	 * @param callable $run  The work.
+	 * @return void
+	 */
+	private static function guarded( string $what, string $hook, callable $run ): void {
+		try {
+			$run();
+		} catch ( \Throwable $e ) {
+			Log::error(
+				'Gamification trigger failed; points unchanged.',
+				array(
+					'action_id' => $what,
+					'hook'      => $hook,
+					'error'     => $e->getMessage(),
+				)
+			);
+		}
+	}
+
+	/**
+	 * Content was removed or returned: reverse or restore every bound action's award for it.
+	 *
+	 * @param string $mode   'reverse' or 'restore'.
+	 * @param string $hook   Hook that fired.
+	 * @param array  $params Its arguments.
+	 * @return void
+	 */
+	private static function fire_object_hook( string $mode, string $hook, array $params ): void {
+		$targets = array();
+		foreach ( self::$object_hooks[ $mode ][ $hook ] ?? array() as $action_id => $object_callback ) {
+			$ids = array_filter( array_map( 'intval', (array) call_user_func_array( $object_callback, $params ) ) );
+			if ( $ids ) {
+				$targets[ $action_id ] = $ids;
+			}
+		}
+		if ( ! $targets ) {
+			return;
+		}
+		if ( 'reverse' === $mode ) {
+			PointsEngine::reverse_object_awards( $targets );
+		} else {
+			PointsEngine::restore_object_awards( $targets );
+		}
 	}
 
 	/**
@@ -188,9 +355,17 @@ final class Registry {
 				'wb_gam_award_skipped',
 				$user_id,
 				(string) $action['id'],
-				'self_action',
+				'not_eligible',
 				array()
 			);
+			return;
+		}
+
+		// Acting on your own content earns nothing: owner_callback names whose content the hook is
+		// about, and a member is never paid for their own.
+		if ( isset( $action['owner_callback'] ) && is_callable( $action['owner_callback'] ) && (int) call_user_func_array( $action['owner_callback'], $params ) === $user_id ) {
+			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			do_action( 'wb_gam_award_skipped', $user_id, (string) $action['id'], 'own_content', array() );
 			return;
 		}
 
@@ -231,6 +406,7 @@ final class Registry {
 			array(
 				'action_id' => $action['id'],
 				'user_id'   => $user_id,
+				'object_id' => isset( $action['once_per_object'] ) ? (int) call_user_func_array( $action['once_per_object'], $params ) : 0,
 				'metadata'  => $metadata,
 			)
 		);
@@ -526,6 +702,30 @@ final class Registry {
 	}
 
 	/**
+	 * Whether members may submit this action for review (Submit Achievement).
+	 *
+	 * The owner's tick wins both ways: when `wb_gam_action_overrides[ $id ]['submittable']` is set,
+	 * that is the answer. Only when the owner has not chosen does the manifest's
+	 * `'submittable' => true` open it. Everything else is closed: nothing is submittable until the
+	 * owner opens it.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param string $id Action ID.
+	 * @return bool False for an unregistered action.
+	 */
+	public static function is_submittable( string $id ): bool {
+		if ( ! isset( self::$actions[ $id ] ) ) {
+			return false;
+		}
+		$overrides = self::get_overrides();
+		if ( isset( $overrides[ $id ]['submittable'] ) ) {
+			return (bool) $overrides[ $id ]['submittable'];
+		}
+		return true === ( self::$actions[ $id ]['submittable'] ?? false );
+	}
+
+	/**
 	 * Resolve an action_id to a human-readable label.
 	 *
 	 * Used by surfaces that display history rows (points-history block,
@@ -565,31 +765,83 @@ final class Registry {
 
 		if ( '' === $label ) {
 			$built_in = array(
-				'manual'                        => __( 'Manual award', 'wb-gamification' ),
-				'manual_award'                  => __( 'Manual award', 'wb-gamification' ),
-				'manual_admin'                  => __( 'Manual award', 'wb-gamification' ),
-				'manual_debit'                  => __( 'Manual adjustment', 'wb-gamification' ),
-				'manual_admin_deduct'           => __( 'Manual adjustment', 'wb-gamification' ),
-				'debit'                         => __( 'Debit', 'wb-gamification' ),
-				'redemption'                    => __( 'Redemption', 'wb-gamification' ),
-				'give_kudos'                    => __( 'Gave kudos', 'wb-gamification' ),
-				'receive_kudos'                 => __( 'Received kudos', 'wb-gamification' ),
+				'manual'                            => __( 'Manual award', 'wb-gamification' ),
+				'manual_award'                      => __( 'Manual award', 'wb-gamification' ),
+				'manual_admin'                      => __( 'Manual award', 'wb-gamification' ),
+				'manual_debit'                      => __( 'Manual adjustment', 'wb-gamification' ),
+				'manual_admin_deduct'               => __( 'Manual adjustment', 'wb-gamification' ),
+				'debit'                             => __( 'Debit', 'wb-gamification' ),
+				'redemption'                        => __( 'Redemption', 'wb-gamification' ),
+				'give_kudos'                        => __( 'Gave kudos', 'wb-gamification' ),
+				'receive_kudos'                     => __( 'Received kudos', 'wb-gamification' ),
 				// Awarded by the engine itself, never registered as actions. Without a translated
 				// label here they fell through to the title-cased id ("Login Bonus") in every language.
-				'login_bonus'                   => __( 'Daily login bonus', 'wb-gamification' ),
-				'streak_milestone'              => __( 'Streak milestone', 'wb-gamification' ),
-				'challenge_completed'           => __( 'Completed a challenge', 'wb-gamification' ),
-				'community_challenge_completed' => __( 'Community challenge completed', 'wb-gamification' ),
-				'level_up'                      => __( 'Reached a new level', 'wb-gamification' ),
-				'badge_earned'                  => __( 'Earned a badge', 'wb-gamification' ),
-				'points_redeemed'               => __( 'Redeemed a reward', 'wb-gamification' ),
-				'redemption_refund'             => __( 'Reward refunded', 'wb-gamification' ),
-				'kudos_revoked'                 => __( 'Kudos withdrawn', 'wb-gamification' ),
-				'manual_bulk_award'             => __( 'Manual award', 'wb-gamification' ),
-				'manual_admin_reset'            => __( 'Points reset by an admin', 'wb-gamification' ),
-				'points_decay'                  => __( 'Points expired', 'wb-gamification' ),
+				'login_bonus'                       => __( 'Daily login bonus', 'wb-gamification' ),
+				'streak_milestone'                  => __( 'Streak milestone', 'wb-gamification' ),
+				'challenge_completed'               => __( 'Completed a challenge', 'wb-gamification' ),
+				'community_challenge_completed'     => __( 'Community challenge completed', 'wb-gamification' ),
+				'level_up'                          => __( 'Reached a new level', 'wb-gamification' ),
+				'badge_earned'                      => __( 'Earned a badge', 'wb-gamification' ),
+				'points_redeemed'                   => __( 'Redeemed a reward', 'wb-gamification' ),
+				'redemption_refund'                 => __( 'Reward refunded', 'wb-gamification' ),
+				'kudos_revoked'                     => __( 'Kudos withdrawn', 'wb-gamification' ),
+				'manual_bulk_award'                 => __( 'Manual award', 'wb-gamification' ),
+				'manual_admin_reset'                => __( 'Points reset by an admin', 'wb-gamification' ),
+				'points_decay'                      => __( 'Points expired', 'wb-gamification' ),
+				'wc_order_refunded'                 => __( 'Order refunded', 'wb-gamification' ),
+				'wc_order_completed_removed'        => __( 'Order refunded', 'wb-gamification' ),
+				// Actions since removed: their past points still show in history, the Dashboard,
+				// analytics and exports, so they keep their names instead of a title-cased id.
+				'bn_connection_requested'           => __( 'Send a connection request', 'wb-gamification' ),
+				'bn_dm_sent'                        => __( 'Send a direct message', 'wb-gamification' ),
+				'bn_profile_updated'                => __( 'Update your profile', 'wb-gamification' ),
+				'bp_media_upload'                   => __( 'Upload media', 'wb-gamification' ),
+				'bp_publish_post'                   => __( 'Publish a member blog post', 'wb-gamification' ),
+				'give_recurring_donation'           => __( 'Make a recurring donation payment', 'wb-gamification' ),
+				'jetonomy_pro_conversation_created' => __( 'Start a Jetonomy conversation', 'wb-gamification' ),
+				'jetonomy_pro_dm_received'          => __( 'Receive a Jetonomy private message', 'wb-gamification' ),
+				'jetonomy_pro_message_sent'         => __( 'Send a Jetonomy private message', 'wb-gamification' ),
+				'learnomy_instructor_application'   => __( 'Apply to teach', 'wb-gamification' ),
+				'listora_favorite_added'            => __( 'Favourite a listing', 'wb-gamification' ),
+				'mvs_bookmark_photo'                => __( 'Bookmark a photo', 'wb-gamification' ),
+				'mvs_give_follow'                   => __( 'Follow another member', 'wb-gamification' ),
+				'wpss_review_approved'              => __( 'Review approved by a moderator', 'wb-gamification' ),
+				// Actions the starter badges, challenges and wizard templates name, so they read
+				// right on sites where that integration is not active (same words as its manifest).
+				'bn_post_created'                   => __( 'Create a post', 'wb-gamification' ),
+				'bn_comment_created'                => __( 'Write a comment', 'wb-gamification' ),
+				'bn_reaction_received'              => __( 'Receive a reaction on your content', 'wb-gamification' ),
+				'bn_connected'                      => __( 'Have a connection request accepted', 'wb-gamification' ),
+				'bn_space_joined'                   => __( 'Join a space', 'wb-gamification' ),
+				'bn_profile_completed'              => __( 'Complete your profile', 'wb-gamification' ),
+				'bp_activity_update'                => __( 'Post an activity update', 'wb-gamification' ),
+				'bp_activity_comment'               => __( 'Comment on an activity', 'wb-gamification' ),
+				'bp_friends_accepted'               => __( 'Accept a friendship', 'wb-gamification' ),
+				'bp_groups_join'                    => __( 'Join a group', 'wb-gamification' ),
+				'bp_groups_create'                  => __( 'Create a group', 'wb-gamification' ),
+				'bp_profile_complete'               => __( 'Complete extended profile', 'wb-gamification' ),
+				'bp_reactions_received'             => __( 'Receive a reaction', 'wb-gamification' ),
+				'bp_polls_created'                  => __( 'Create a poll', 'wb-gamification' ),
+				'learnomy_lesson_completed'         => __( 'Complete a lesson', 'wb-gamification' ),
+				'learnomy_course_completed'         => __( 'Complete a course', 'wb-gamification' ),
+				'learnomy_student_enrolled'         => __( 'Enrol in a course', 'wb-gamification' ),
+				'learnomy_certificate_issued'       => __( 'Earn a certificate', 'wb-gamification' ),
 			);
 			$label    = $built_in[ $action_id ] ?? '';
+		}
+
+		// A reversal row reads as the action it takes back: "Publish a blog post (content removed)".
+		if ( '' === $label ) {
+			foreach ( array(
+				PointsEngine::REMOVED_SUFFIX  => /* translators: %s: the action that earned the points, e.g. "Publish a blog post". */ __( '%s (content removed)', 'wb-gamification' ),
+				PointsEngine::RESTORED_SUFFIX => /* translators: %s: the action that earned the points, e.g. "Publish a blog post". */ __( '%s (content restored)', 'wb-gamification' ),
+			) as $suffix => $format ) {
+				$base = substr( $action_id, 0, -strlen( $suffix ) );
+				if ( '' !== $base && str_ends_with( $action_id, $suffix ) ) {
+					$label = sprintf( $format, self::label_for( $base ) );
+					break;
+				}
+			}
 		}
 
 		/**

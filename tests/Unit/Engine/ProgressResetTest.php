@@ -57,4 +57,24 @@ class ProgressResetTest extends TestCase {
 			$this->assertContains( $table, $wiped );
 		}
 	}
+
+	#[Test]
+	public function every_personal_record_key_is_reset(): void {
+		$ref      = new ReflectionClass( ProgressReset::class );
+		$literals = (array) $ref->getConstant( 'PROGRESS_META' );
+		$prefixes = (array) $ref->getConstant( 'PROGRESS_META_PREFIXES' );
+		$keys     = array_filter(
+			(array) ( new ReflectionClass( \WBGam\Engine\MemberData::class ) )->getConstant( 'USER_META_KEYS' ),
+			static fn( $k ) => str_starts_with( $k, 'wb_gam_pr_' )
+		);
+		$this->assertCount( 6, $keys, 'best and run for day, week, month' );
+
+		foreach ( $keys as $key ) {
+			$covered = in_array( $key, $literals, true );
+			foreach ( $prefixes as $prefix ) {
+				$covered = $covered || str_starts_with( $key, $prefix );
+			}
+			$this->assertTrue( $covered, "{$key} survives a reset and would announce a stale personal record." );
+		}
+	}
 }

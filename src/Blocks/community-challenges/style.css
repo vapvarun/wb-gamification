@@ -62,8 +62,10 @@
 .wb-gam-community-challenges__bonus {
 	font-size: 0.8125rem;
 	font-weight: 600;
-	color: var(--wb-gam-gold, #b45309);
-	background: rgba(180, 83, 9, 0.08);
+	/* Same inks as the Challenges bonus pill: dark mode lifts them (was gold on a fixed tint, 3.76:1
+	 * in Reign dark). */
+	color: var(--wb-gam-color-warning-strong);
+	background: var(--wb-gam-color-warning-soft);
 	padding: 0.1875rem 0.625rem;
 	border-radius: 999px;
 	white-space: nowrap;
@@ -96,7 +98,7 @@
 
 .wb-gam-community-challenges__count {
 	font-weight: 600;
-	color: var(--wb-gam-primary, #5b4cdb);
+	color: var(--wb-gam-primary-text);
 }
 
 .wb-gam-community-challenges__time-left {
@@ -133,7 +135,7 @@
 
 .wb-gam-community-challenges__status-badge--completed {
 	background: var(--wb-gam-color-success-bg, #ecfdf5);
-	color: var(--wb-gam-color-success, #047857);
+	color: var(--wb-gam-color-success-strong);
 }
 
 .wb-gam-community-challenges__status-badge .icon-circle-check {

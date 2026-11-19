@@ -49,6 +49,21 @@ body.admin-bar .wb-gam-status-bar--floating.wb-gam-status-bar--pos-top-left {
 	}
 }
 
+/* A phone has no free corner: a fixed pill sat over the page title and breadcrumb. Below
+ * 640px a floating bar stays where the block was placed, in the page flow, full width. */
+@media ( max-width: 640px ) {
+	.wb-gam-status-bar--floating {
+		position: static;
+		max-width: none;
+	}
+
+	.wb-gam-status-bar--floating .wb-gam-status-bar__inner {
+		display: flex;
+		width: 100%;
+		box-sizing: border-box;
+	}
+}
+
 .wb-gam-status-bar--sticky-top {
 	position: sticky;
 	top: 0;
@@ -152,10 +167,12 @@ body.admin-bar .wb-gam-status-bar--sticky-top {
 	font-weight: 600;
 }
 
-.wb-gam-status-bar__stat--points    { color: var( --wb-gam-status-accent ); }
+/* Text-safe accent: the raw accent measured 2.3-2.6:1 on white with an orange theme accent. */
+.wb-gam-status-bar__stat--points    { color: var(--wb-gam-primary-text); }
 .wb-gam-status-bar__stat--level     { color: var( --wb-gam-status-fg ); }
-.wb-gam-status-bar__stat--badges    { color: var(--wb-gam-gold); }
-.wb-gam-status-bar__stat--streak    { color: var(--wb-gam-color-fire); }
+.wb-gam-status-bar__stat--badges    { color: var(--wb-gam-color-gold-text); }
+/* Text-safe inks: amber fire was 2.15:1 on white, fire-strong is 5.02:1 (lifted in dark). */
+.wb-gam-status-bar__stat--streak    { color: var(--wb-gam-color-fire-strong); }
 
 .wb-gam-status-bar__icon {
 	flex-shrink: 0;

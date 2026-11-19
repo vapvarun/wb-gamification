@@ -57,6 +57,12 @@ final class BadgeEngine {
 	public const CRON_PASS = 'wb_gam_badge_cron_pass';
 
 	/**
+	 * Set on a fresh install, until the first daily pass has finished. That pass catches up on
+	 * members who already qualify, which is history and not news, so it does not announce them.
+	 */
+	public const FIRST_CHECK_OPTION = 'wb_gam_badge_first_check_pending';
+
+	/**
 	 * Retroactive backfill for one badge.
 	 */
 	public const BACKFILL_HOOK = 'wb_gam_badge_backfill_page';
@@ -353,6 +359,7 @@ final class BadgeEngine {
 		);
 
 		if ( ! $rules ) {
+			delete_option( self::FIRST_CHECK_OPTION );
 			return;
 		}
 
@@ -365,18 +372,28 @@ final class BadgeEngine {
 		);
 
 		if ( ! $user_ids ) {
+			delete_option( self::FIRST_CHECK_OPTION );
 			return;
 		}
 
-		foreach ( $user_ids as $user_id ) {
-			$user_id = (int) $user_id;
-			$earned  = self::get_user_earned_badge_ids( $user_id );
-			$total   = PointsEngine::get_earned( $user_id, null );
+		$evaluate = static function () use ( $user_ids, $rules ): void {
+			foreach ( $user_ids as $user_id ) {
+				$user_id = (int) $user_id;
+				$earned  = self::get_user_earned_badge_ids( $user_id );
+				$total   = PointsEngine::get_earned( $user_id, null );
 
-			self::evaluate_for_signals( $user_id, array( 'cron' ), null, $rules, $earned, $total );
+				self::evaluate_for_signals( $user_id, array( 'cron' ), null, $rules, $earned, $total );
+			}
+		};
+
+		if ( get_option( self::FIRST_CHECK_OPTION ) ) {
+			ImportMode::run( $evaluate );
+		} else {
+			$evaluate();
 		}
 
 		if ( count( $user_ids ) < self::CRON_PAGE_SIZE ) {
+			delete_option( self::FIRST_CHECK_OPTION );
 			return; // Short page: done.
 		}
 
@@ -475,10 +492,11 @@ final class BadgeEngine {
 			add_action( 'init', array( __CLASS__, 'maybe_schedule_cron_pass' ) );
 		}
 
-		// Awarding a badge changes every badge's rarity denominator-share, so the
-		// cached map is dropped on award. Priority 5 = before the display-side
-		// listeners, so anything rendering in the same request recomputes fresh.
-		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'flush_rarity_cache' ), 5, 0 );
+		// An award adds one holder to one badge, so the cached map is updated in place. Dropping it
+		// made every award rebuild the map (a COUNT over wp_users plus a GROUP BY over every earned
+		// badge) because BadgeStream reads it in the same request. Priority 5 = before the
+		// display-side listeners. The 15-minute TTL still corrects any drift.
+		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'note_rarity_award' ), 5, 3 );
 		// Cache integrity, not an announcement: an import writes thousands of badges and every one of
 		// them moves rarity. If only the awarded hook flushed, rarity would be wrong until something
 		// else happened to award a badge.
@@ -508,8 +526,8 @@ final class BadgeEngine {
 	 * could trigger a `COUNT(DISTINCT user_id) GROUP BY badge_id` over millions of
 	 * rows, plus a `COUNT(*)` over wp_users, as often as they liked.
 	 *
-	 * Correctness is preserved two ways: the cache is dropped on every badge award
-	 * (see init()) and on the delete paths, and the TTL means even a missed
+	 * Correctness is preserved two ways: every badge award updates the cached map
+	 * in place (see init()), the delete paths drop it, and the TTL means even a missed
 	 * invalidation self-heals within 15 minutes.
 	 *
 	 * @since 1.6.4
@@ -563,6 +581,59 @@ final class BadgeEngine {
 	 */
 	public static function flush_rarity_cache(): void {
 		wp_cache_delete( self::RARITY_CACHE_KEY, 'wb_gamification' );
+	}
+
+	/**
+	 * Add one holder to a badge in the cached rarity map, if the map is cached.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param int    $user_id  Member who earned the badge (unused).
+	 * @param mixed  $def      Badge definition (unused).
+	 * @param string $badge_id Badge earned.
+	 */
+	public static function note_rarity_award( $user_id, $def, $badge_id ): void {
+		$map   = wp_cache_get( self::RARITY_CACHE_KEY, 'wb_gamification' );
+		$users = (int) get_user_count();
+		if ( ! is_array( $map ) || $users <= 0 ) {
+			return;
+		}
+		$badge_id         = (string) $badge_id;
+		$map[ $badge_id ] = (float) ( $map[ $badge_id ] ?? 0.0 ) + 100 / $users;
+		wp_cache_set( self::RARITY_CACHE_KEY, $map, 'wb_gamification', self::RARITY_CACHE_TTL );
+	}
+
+	/**
+	 * Whether a badge is held by this share of members or fewer.
+	 *
+	 * Reads the cached rarity map when there is one. Without it (no persistent object
+	 * cache, so every request starts cold) it counts the badge's holders on idx_badge_id,
+	 * stopping one past the limit, instead of rebuilding the whole map.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param string $badge_id    Badge slug.
+	 * @param float  $max_percent Share of members, 0-100.
+	 */
+	public static function held_by_at_most( string $badge_id, float $max_percent ): bool {
+		$map = wp_cache_get( self::RARITY_CACHE_KEY, 'wb_gamification' );
+		if ( is_array( $map ) ) {
+			return (float) ( $map[ $badge_id ] ?? 0.0 ) <= $max_percent;
+		}
+
+		$max = (int) floor( (int) get_user_count() * $max_percent / 100 );
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- bounded range read on idx_badge_id; must see the award just made.
+		$held = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM ( SELECT 1 FROM {$wpdb->prefix}wb_gam_user_badges WHERE badge_id = %s LIMIT %d ) AS holders",
+				$badge_id,
+				$max + 1
+			)
+		);
+
+		return $held <= $max;
 	}
 
 	// ── Award pipeline ─────────────────────────────────────────────────────────
@@ -1578,6 +1649,31 @@ final class BadgeEngine {
 	}
 
 	/**
+	 * Badges no member on this site can earn, because every way to earn them goes through an action no
+	 * active integration registers (BuddyPress defaults on a site without BuddyPress). Members are not
+	 * shown these as "locked" forever; the owner still sees them in the Badge Library, marked.
+	 *
+	 * @return array<string, true> Badge ids, as keys.
+	 */
+	public static function unearnable_badge_ids(): array {
+		static $memo = null;
+		if ( null !== $memo ) {
+			return $memo;
+		}
+
+		$actions = Registry::get_actions();
+		$memo    = array();
+		foreach ( self::get_active_rules() as $rule ) {
+			$config = json_decode( (string) $rule['rule_config'], true );
+			if ( is_array( $config ) && ! BadgeRule::is_earnable( $config, $actions ) ) {
+				$memo[ (string) $rule['badge_id'] ] = true;
+			}
+		}
+
+		return $memo;
+	}
+
+	/**
 	 * Get all badge definitions with earned status for a user.
 	 *
 	 * Unearned badges are included (greyed-out in UI) so members can see
@@ -1620,6 +1716,15 @@ final class BadgeEngine {
 				);
 			}
 		}
+
+		// A badge nobody here can earn is left out, unless this member already holds it.
+		$unearnable = self::unearnable_badge_ids();
+		$defs       = array_values(
+			array_filter(
+				$defs,
+				static fn( array $def ): bool => ! isset( $unearnable[ $def['id'] ] ) || isset( $badge_data[ $def['id'] ] )
+			)
+		);
 
 		return array_map(
 			static function ( array $def ) use ( $badge_data, $now ): array {

@@ -589,7 +589,10 @@ final class LeaderboardEngine {
 		// SNAPSHOT_DEPTH deep, and it ranks on the ledger sum while the totals table ranks on `earned`.
 		// If page one came from one and page two from the other, a member the two disagree about could
 		// be skipped or served twice at the boundary. One source for every page of a walk.
-		if ( '' === $scope_type && 0 === $scope_id && ( $period_start || ! $paged ) ) {
+		// The ALL-TIME board never uses it, paged or not: it ranks on the indexed totals table, which
+		// is live and cheap, and the snapshot would make it up to five minutes older than the API
+		// pages and the rank strip (Basecamp 10389379202).
+		if ( '' === $scope_type && 0 === $scope_id && $period_start ) {
 			$snapshot_rows = self::read_from_snapshot( $period, $limit, $resolved_type, $cursor );
 			if ( null !== $snapshot_rows ) {
 				return $snapshot_rows;
@@ -843,25 +846,24 @@ final class LeaderboardEngine {
 			return $result;
 		}
 
+		// The all-time board is always the live totals table (fetch_raw() never serves it from the
+		// snapshot), so the all-time rank reads that same table: one answer on every surface.
+		if ( ! $period_start ) {
+			$result = self::totals_standing( $user_id, $resolved_type, $scope_ids );
+			wp_cache_set( $cache_key, $result, 'wb_gamification', 120 );
+			return $result;
+		}
+
 		// Get user's own total for the period — scoped by currency so the
 		// rank computation matches what the public leaderboard sees.
-		if ( $period_start ) {
-			$user_total_sql = $wpdb->prepare(
-				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
-				 WHERE user_id = %d AND point_type = %s AND is_spend = 0 AND created_at >= %s",
-				$user_id,
-				$resolved_type,
-				$period_start
-			);
-		} else {
-			$user_total_sql = $wpdb->prepare(
-				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
-				 WHERE user_id = %d AND point_type = %s AND is_spend = 0",
-				$user_id,
-				$resolved_type
-			);
-		}
-		$user_total = (int) $wpdb->get_var( $user_total_sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$user_total_sql = $wpdb->prepare(
+			"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
+			 WHERE user_id = %d AND point_type = %s AND is_spend = 0 AND created_at >= %s",
+			$user_id,
+			$resolved_type,
+			$period_start
+		);
+		$user_total     = (int) $wpdb->get_var( $user_total_sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
 		// THE PAGE MUST NOT SHOW TWO NUMBERS FOR ONE METRIC.
 		//
@@ -901,6 +903,43 @@ final class LeaderboardEngine {
 		return $result;
 	}
 
+	/**
+	 * A member's all-time rank, points and gap to the next rank, from the totals table.
+	 *
+	 * Same table, column (`earned`) and eligibility rules as the all-time board
+	 * ({@see build_totals_query()}), so the strip can never disagree with the board.
+	 * Counts are range reads on idx_type_earned.
+	 *
+	 * @param int    $user_id    Member.
+	 * @param string $point_type Resolved currency slug.
+	 * @param int[]  $scope_ids  Members to restrict to, empty = site-wide.
+	 * @return array{rank: int, points: int, points_to_next: int|null}
+	 */
+	private static function totals_standing( int $user_id, string $point_type, array $scope_ids ): array {
+		global $wpdb;
+
+		$table  = $wpdb->prefix . 'wb_gam_user_totals';
+		$earned = (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT earned FROM {$table} WHERE user_id = %d AND point_type = %s", $user_id, $point_type ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		);
+
+		[ $excl_clause, $excl_values ] = self::exclusion_sql( 'ut' );
+		$scope_clause                  = empty( $scope_ids )
+			? ''
+			: 'AND ut.user_id IN (' . implode( ',', array_fill( 0, count( $scope_ids ), '%d' ) ) . ')';
+		$where                         = "FROM {$table} ut WHERE ut.point_type = %s AND ut.earned > %d {$excl_clause} {$scope_clause}";
+		$binds                         = array_merge( array( $point_type, $earned ), $excl_values, $scope_ids );
+
+		$above = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) {$where}", $binds ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$next  = $wpdb->get_var( $wpdb->prepare( "SELECT MIN(ut.earned) {$where}", $binds ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		return array(
+			'rank'           => $above + 1,
+			'points'         => $earned,
+			'points_to_next' => null !== $next ? (int) $next - $earned : null,
+		);
+	}
+
 	// ── Snapshot writer ────────────────────────────────────────────────────────
 
 	/**
@@ -929,8 +968,9 @@ final class LeaderboardEngine {
 		// straggler DELETE alike, so the prune can never disagree with the rows it just wrote.
 		$started = current_time( 'mysql', true );
 
+		// No all-time pass: that board reads the live totals table (see fetch_raw()), so it has no
+		// reader here. Rows from before 1.6.8 go with the straggler purge below.
 		$periods = array(
-			'all'   => null,
 			'month' => self::get_period_start( 'month' ),
 			'week'  => self::get_period_start( 'week' ),
 			'day'   => self::get_period_start( 'day' ),
@@ -953,10 +993,7 @@ final class LeaderboardEngine {
 				// snapshot, and RANK() still counted them, so snapshot_standing() served a rank the
 				// fallback disagreed with. One opt-out was enough to make the two paths differ for 153
 				// of 154 members.
-				$where = $wpdb->prepare( 'WHERE p.point_type = %s AND p.is_spend = 0', $slug );
-				if ( null !== $period_start ) {
-					$where .= $wpdb->prepare( ' AND p.created_at >= %s', $period_start );
-				}
+				$where = $wpdb->prepare( 'WHERE p.point_type = %s AND p.is_spend = 0 AND p.created_at >= %s', $slug, $period_start );
 
 				// Existence + opt-out + owner-excluded users/roles, in one fragment, from the one place
 				// that knows what "eligible" means. No second argument: this query has no JOIN to
@@ -1045,7 +1082,7 @@ final class LeaderboardEngine {
 	 * Only used for global (unscoped) leaderboard requests since the snapshot
 	 * does not respect per-request opt-outs or scopes.
 	 *
-	 * @param string                                     $period     Period key: 'all', 'month', 'week', 'day'.
+	 * @param string                                     $period     Period key: 'month', 'week', 'day'.
 	 * @param int                                        $limit      Maximum rows to return.
 	 * @param string                                     $point_type Resolved currency slug.
 	 * @param array{p: int, u: int, n: int, r: int}|null $cursor     Start strictly after this member, or null.
@@ -1062,11 +1099,9 @@ final class LeaderboardEngine {
 			return null;
 		}
 
-		$period_key = in_array( $period, array( 'all', 'month', 'week', 'day' ), true ) ? $period : 'all';
-
 		// Build opt-out exclusion for snapshot read.
 		$opt_out_clause = '';
-		$query_values   = array( $period_key, $point_type );
+		$query_values   = array( $period, $point_type );
 
 		if ( '' !== $excl_sql ) {
 			$opt_out_clause = $excl_sql;
@@ -1186,7 +1221,7 @@ final class LeaderboardEngine {
 	 *
 	 * @since 1.6.5
 	 *
-	 * @param string $period     'week'|'month'|'day' (an 'all' caller uses the totals table instead).
+	 * @param string $period     'week'|'month'|'day'.
 	 * @param string $point_type Resolved currency slug.
 	 * @return int|null Member count on the current snapshot, or null if it is unusable.
 	 */
@@ -1200,7 +1235,6 @@ final class LeaderboardEngine {
 		$cache_table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
 		// true = existence is enforced by this query's own JOIN to wp_users, matching read_from_snapshot().
 		[ $excl_sql, $excl_values ] = self::exclusion_sql( 'c', true );
-		$period_key                 = in_array( $period, array( 'all', 'month', 'week', 'day' ), true ) ? $period : 'all';
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return (int) $wpdb->get_var(
@@ -1208,7 +1242,7 @@ final class LeaderboardEngine {
 				"SELECT COUNT(*) FROM {$cache_table} c
 				   JOIN {$wpdb->users} u ON u.ID = c.user_id
 				  WHERE c.period = %s AND c.point_type = %s {$excl_sql}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				array_merge( array( $period_key, $point_type ), $excl_values )
+				array_merge( array( $period, $point_type ), $excl_values )
 			)
 		);
 	}
@@ -1388,15 +1422,13 @@ final class LeaderboardEngine {
 			return null;
 		}
 
-		$period_key = in_array( $period, array( 'all', 'month', 'week', 'day' ), true ) ? $period : 'all';
-
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT total_points, `rank` FROM {$cache_table}
 				  WHERE user_id = %d AND period = %s AND point_type = %s",
 				$user_id,
-				$period_key,
+				$period,
 				$point_type
 			),
 			ARRAY_A
@@ -1415,7 +1447,7 @@ final class LeaderboardEngine {
 			$wpdb->prepare(
 				"SELECT MIN(total_points) FROM {$cache_table}
 				  WHERE period = %s AND point_type = %s AND total_points > %d",
-				$period_key,
+				$period,
 				$point_type,
 				$points
 			)

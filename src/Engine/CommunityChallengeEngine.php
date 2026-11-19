@@ -154,7 +154,12 @@ final class CommunityChallengeEngine {
 		// 60s of staleness means a challenge the owner just switched on can take up to a minute to
 		// start counting contributions. That is the same trade the sibling already makes, and nobody
 		// has ever noticed, because a community challenge runs for days.
-		foreach ( self::active_challenges_for_action( (string) $event->action_id ) as $challenge ) {
+		$challenges = self::active_challenges_for_action( (string) $event->action_id );
+		// The same object counts once (see ChallengeEngine::on_points_awarded()).
+		if ( ! $challenges || PointsEngine::is_repeat_object_award( $user_id, (string) $event->action_id, (int) $event->object_id ) ) {
+			return;
+		}
+		foreach ( $challenges as $challenge ) {
 			self::record_contribution( (int) $challenge['id'], $user_id, $event );
 		}
 	}

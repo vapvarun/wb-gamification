@@ -178,6 +178,7 @@ final class TransactionalEmailEngine {
 				'name'           => esc_html( (string) $user->display_name ),
 				'site_name'      => (string) get_bloginfo( 'name' ),
 				'site_url'       => home_url( '/' ),
+				'hub_url'        => MemberUrl::hub_url(),
 				'old_level_name' => (string) ( $old_level['name'] ?? '' ),
 				'new_level_name' => (string) ( $new_level['name'] ?? '' ),
 				'new_level_min'  => (int) ( $new_level['min_points'] ?? 0 ),
@@ -227,11 +228,12 @@ final class TransactionalEmailEngine {
 				'name'              => esc_html( (string) $user->display_name ),
 				'site_name'         => (string) get_bloginfo( 'name' ),
 				'site_url'          => home_url( '/' ),
+				'hub_url'           => MemberUrl::hub_url( 'badges' ),
 				'badge_id'          => $badge_id,
 				'badge_name'        => (string) ( $def['name'] ?? $badge_id ),
 				'badge_description' => (string) ( $def['description'] ?? '' ),
 				'badge_image_url'   => (string) ( $def['image_url'] ?? '' ),
-				'share_url'         => home_url( '/badge/' . rawurlencode( $badge_id ) . '/' . $user_id ),
+				'share_url'         => BadgeSharePage::get_share_url( $badge_id, $user_id ),
 			)
 		);
 
@@ -278,6 +280,7 @@ final class TransactionalEmailEngine {
 				'name'                  => esc_html( (string) $user->display_name ),
 				'site_name'             => (string) get_bloginfo( 'name' ),
 				'site_url'              => home_url( '/' ),
+				'hub_url'               => MemberUrl::hub_url( 'challenges' ),
 				'challenge_title'       => (string) ( $challenge['title'] ?? '' ),
 				'challenge_description' => (string) ( $challenge['description'] ?? '' ),
 				'reward_label'          => $reward_label,
@@ -336,6 +339,7 @@ final class TransactionalEmailEngine {
 				'name'          => esc_html( (string) $user->display_name ),
 				'site_name'     => (string) get_bloginfo( 'name' ),
 				'site_url'      => home_url( '/' ),
+				'hub_url'       => MemberUrl::hub_url(),
 				'redemption_id' => (int) $redemption_id,
 				'reward_title'  => (string) ( $item['title'] ?? __( 'Your reward', 'wb-gamification' ) ),
 				'reward_type'   => (string) ( $item['reward_type'] ?? 'custom' ),
@@ -394,16 +398,7 @@ final class TransactionalEmailEngine {
 		// Step 2 — opt-out gate. Skip the DB read when step 1 already
 		// disabled the email type — no point checking prefs we won't honour.
 		if ( $enabled ) {
-			global $wpdb;
-			$mode = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT notification_mode FROM {$wpdb->prefix}wb_gam_member_prefs WHERE user_id = %d",
-					$user_id
-				)
-			);
-			if ( 'none' === $mode ) {
-				$enabled = false;
-			}
+			$enabled = 'none' !== MemberPrefs::get( $user_id )['notification_mode'];
 		}
 
 		/**

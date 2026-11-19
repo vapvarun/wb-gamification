@@ -60,6 +60,12 @@ return [
 | `hook` | string | Yes | WordPress action hook name to listen on |
 | `user_callback` | callable | Yes | Receives the hook arguments. Must return the WordPress user ID to award points to |
 | `metadata_callback` | callable | No | Receives the hook arguments. Returns an array merged into event metadata (available in `wb_gam_points_for_action` filter) |
+| `once_per_object` | callable | No | Receives the hook arguments. Returns an object ID, such as a lesson or quiz. A member earns this action once per object, so a retake earns nothing |
+| `reverse_on` | array | No | Hook name => callable that receives that hook's arguments and returns the removed object ID (or IDs, or `0` to skip). When the content is trashed, rejected or deleted, the award for it is taken back once. Needs `once_per_object` and `async => false`. Added in 1.6.8 |
+| `restore_on` | array | No | Same shape as `reverse_on`, for hooks that bring the content back (untrash, unspam). Gives back exactly the award that was taken. Added in 1.6.8 |
+| `permanent` | string | One of this or `reverse_on` | Why the award is never taken back, for milestones such as a course completed, a quiz passed or a sign-up. Every trigger declares its exit: `reverse_on` for anything that can be removed, `permanent` for what cannot. Added in 1.6.8 |
+| `owner_callback` | callable | No | Receives the hook's arguments and returns the user ID that owns the content (the post's author for a reaction, the poll's creator for a vote). When it is the member being paid, the award is skipped with reason `own_content`. Added in 1.6.8 |
+| `object_date` | callable | No | Receives the object ID and returns when the content was created, as a UTC `Y-m-d H:i:s` string. Content created before the site updated to 1.6.8 counts as already paid and never pays again. Use `\WBGam\Engine\Registry::post_object_date()` for WordPress posts; comment manifests get it from `Registry::comment_object_hooks()`. Added in 1.6.8 |
 | `default_points` | int | Yes | Default points awarded. Admins can override this in the settings UI |
 | `category` | string | No | Category slug for grouping in the admin UI (e.g. `buddypress`, `woocommerce`) |
 | `icon` | string | No | Lucide icon class (e.g. `icon-heart`), shown on the member-facing How to Earn cards. A `dashicons-*` class also renders. |

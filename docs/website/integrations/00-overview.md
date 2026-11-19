@@ -15,13 +15,14 @@ Each integration is a PHP file that returns an array of trigger definitions. Whe
 | Plugin | Actions | Manifest Location |
 |---|---|---|
 | WordPress Core | 8 | `integrations/wordpress.php` |
-| BuddyPress | 14 | `integrations/buddypress.php` |
+| BuddyPress | 13 | `integrations/buddypress.php` |
 | bbPress | 3 | `integrations/bbpress.php` |
 | WooCommerce | 5 | `integrations/woocommerce.php` |
-| LearnDash | 5 | `integrations/learndash.php` |
-| LifterLMS | 5 | `integrations/contrib/lifterlms.php` |
+| LearnDash | 8 | `integrations/learndash.php` |
+| LifterLMS | 7 | `integrations/contrib/lifterlms.php` |
+| Tutor LMS | 6 | `integrations/tutor-lms.php` |
 | MemberPress | 3 | `integrations/contrib/memberpress.php` |
-| GiveWP | 4 | `integrations/contrib/givewp.php` |
+| GiveWP | 3 | `integrations/contrib/givewp.php` |
 | The Events Calendar | 3 | `integrations/contrib/the-events-calendar.php` |
 | Jetonomy | 4 | `integrations/jetonomy.php` |
 | Jetonomy Pro | 7 | `integrations/jetonomy-pro.php` |

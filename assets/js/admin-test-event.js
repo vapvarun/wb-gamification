@@ -47,7 +47,9 @@
 		status.textContent = i18n.sending || 'Awarding…';
 		status.className = 'wbgam-test-event-status wbgam-test-event-status--pending';
 
-		fetch( cfg.restUrl + 'points/award', {
+		const url = cfg.restUrl + 'points/award';
+		// _locale=user: replies in the admin's language (core apiFetch does the same); rest_url() may already carry ?rest_route=.
+		fetch( url + ( url.includes( '?' ) ? '&' : '?' ) + '_locale=user', {
 			signal: ( typeof AbortSignal !== 'undefined' && AbortSignal.timeout ) ? AbortSignal.timeout( 15000 ) : undefined,
 			method: 'POST',
 			headers: {
@@ -59,7 +61,7 @@
 				user_id: cfg.userId,
 				points: points,
 				reason: 'wizard_test_event',
-				note: 'Sent from the Setup Wizard test-event button.',
+				note: i18n.note || 'Sent from the Setup Wizard test-event button.',
 			} ),
 		} )
 			.then( function ( res ) {

@@ -23,6 +23,12 @@ if ( ! defined( 'BUDDYNEXT_VERSION' ) && ! class_exists( '\\BuddyNext\\Plugin' )
 	return array();
 }
 
+// Who wrote a BuddyNext post: acting on your own post (comment, vote, bookmark, share) earns nothing.
+$wb_gam_bn_post_owner = static function ( $post_id ): int {
+	global $wpdb;
+	return (int) $wpdb->get_var( $wpdb->prepare( "SELECT user_id FROM {$wpdb->prefix}bn_posts WHERE id = %d", (int) $post_id ) );
+};
+
 return array(
 	'plugin'   => 'BuddyNext',
 	'version'  => '1.0.0',
@@ -58,6 +64,10 @@ return array(
 					'type'    => $type,
 				);
 			},
+			// A deleted post takes its award back. BuddyNext passes the deleter (0 for a system delete),
+			// so the award is found by the post, not by that user.
+			'once_per_object'   => static fn( $post_id ): int => (int) $post_id,
+			'reverse_on'        => array( 'buddynext_post_deleted' => static fn( $post_id ): int => (int) $post_id ),
 			'default_points'    => 5,
 			'category'          => 'content',
 			'icon'              => 'icon-file-text',
@@ -76,12 +86,14 @@ return array(
 			'user_callback'     => function ( int $share_id, int $post_id, int $user_id ): int {
 				return $user_id;
 			},
+			'owner_callback'    => static fn( $share_id, $post_id ): int => $wb_gam_bn_post_owner( $post_id ),
 			'metadata_callback' => function ( int $share_id, int $post_id, int $user_id ): array {
 				return array(
 					'share_id' => $share_id,
 					'post_id'  => $post_id,
 				);
 			},
+			'permanent'         => 'No removal hook in BuddyNext 1.3.0: ShareService::unshare() deletes with no action (card on the BuddyNext board).',
 			'default_points'    => 5,
 			'category'          => 'content',
 			'icon'              => 'icon-share-2',
@@ -117,6 +129,9 @@ return array(
 					'object_id'   => $object_id,
 				);
 			},
+			'once_per_object'   => static fn( $comment_id ): int => (int) $comment_id,
+			'reverse_on'        => array( 'buddynext_comment_deleted' => static fn( $comment_id ): int => (int) $comment_id ),
+			'owner_callback'    => static fn( $comment_id, $object_type, $object_id ): int => 'post' === $object_type ? $wb_gam_bn_post_owner( $object_id ) : 0,
 			'default_points'    => 3,
 			'category'          => 'content',
 			'icon'              => 'icon-message-square',
@@ -142,6 +157,11 @@ return array(
 					'emoji'      => $emoji,
 				);
 			},
+			'once_per_object'   => static fn( int $object_id, int $author_id, int $reactor_id ): int => \WBGam\Engine\Registry::object_key( $reactor_id, 'post', $object_id ),
+			// Per reactor and post: removing the reaction takes the author's points back.
+			'reverse_on'        => array(
+				'buddynext_reaction_removed' => static fn( $object_type, $object_id, $user_id ): int => 'post' === $object_type ? \WBGam\Engine\Registry::object_key( (int) $user_id, 'post', (int) $object_id ) : 0,
+			),
 			'default_points'    => 2,
 			'category'          => 'content',
 			'icon'              => 'icon-heart',
@@ -165,6 +185,8 @@ return array(
 					'option_id' => $option_id,
 				);
 			},
+			'permanent'         => 'No removal hook in BuddyNext 1.3.0: PollService removes a vote with no action (card on the BuddyNext board).',
+			'owner_callback'    => static fn( $post_id ): int => $wb_gam_bn_post_owner( $post_id ),
 			'default_points'    => 1,
 			'category'          => 'content',
 			'icon'              => 'icon-chart-no-axes-column',
@@ -177,14 +199,19 @@ return array(
 			'id'                => 'bn_post_bookmarked',
 			'label'             => static fn(): string => __( 'Bookmark a post', 'wb-gamification' ),
 			'description'       => static fn(): string => __( 'Awarded the first time a member bookmarks a post. Daily cap limits farming.', 'wb-gamification' ),
-			// Fires: do_action( 'buddynext_post_bookmarked', int $post_id, int $user_id ) - only on first bookmark per post/user pair.
+			// Fires: do_action( 'buddynext_post_bookmarked', int $post_id, int $user_id ), again after a remove and re-add.
 			'hook'              => 'buddynext_post_bookmarked',
+			'once_per_object'   => static fn( int $post_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $post_id ),
 			'user_callback'     => function ( int $post_id, int $user_id ): int {
 				return $user_id;
 			},
 			'metadata_callback' => function ( int $post_id, int $user_id ): array {
 				return array( 'post_id' => $post_id );
 			},
+			'reverse_on'        => array(
+				'buddynext_post_unbookmarked' => static fn( $post_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $post_id ),
+			),
+			'owner_callback'    => static fn( $post_id ): int => $wb_gam_bn_post_owner( $post_id ),
 			'default_points'    => 1,
 			'category'          => 'content',
 			'icon'              => 'icon-bookmark',
@@ -214,6 +241,11 @@ return array(
 			'metadata_callback' => function ( int $following_id, int $follower_id ): array {
 				return array( 'follower_id' => $follower_id );
 			},
+			'once_per_object'   => static fn( int $following_id, int $follower_id ): int => \WBGam\Engine\Registry::object_key( $follower_id, $following_id ),
+			// Per follower and followed member: an unfollow takes it back, a refollow pays again.
+			'reverse_on'        => array(
+				'buddynext_user_unfollowed' => static fn( $follower_id, $following_id ): int => \WBGam\Engine\Registry::object_key( (int) $follower_id, (int) $following_id ),
+			),
 			'default_points'    => 5,
 			'category'          => 'social',
 			'icon'              => 'icon-user-plus',
@@ -235,6 +267,7 @@ return array(
 				}
 				return $follower_id;
 			},
+			'permanent'      => 'A one-time milestone.',
 			'default_points' => 5,
 			'category'       => 'social',
 			'icon'           => 'icon-star',
@@ -243,8 +276,8 @@ return array(
 
 		array(
 			'id'                => 'bn_connected',
-			'label'             => static fn(): string => __( 'Accept a connection', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded to the initiating user (user_a) when a connection request is accepted. Note: the manifest engine awards one user_id per trigger; only user_a is awarded here. Sites needing bilateral awards can wire a second trigger on the same hook returning $user_b.', 'wb-gamification' ),
+			'label'             => static fn(): string => __( 'Have a connection request accepted', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded to the member who sent a connection request when it is accepted.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_connection_accepted', int $connection_id, int $user_a, int $user_b ).
 			'hook'              => 'buddynext_connection_accepted',
 			'user_callback'     => function ( int $connection_id, int $user_a, int $user_b ): int {
@@ -257,57 +290,16 @@ return array(
 					'peer_id'       => $user_b,
 				);
 			},
+			'once_per_object'   => static fn( int $connection_id, int $user_a, int $user_b ): int => \WBGam\Engine\Registry::object_key( min( $user_a, $user_b ), max( $user_a, $user_b ) ),
+			// Keyed by the pair, lower id first: BuddyNext reports a removal by the two members, not the connection id.
+			'reverse_on'        => array(
+				'buddynext_connection_removed' => static fn( $user_a, $user_b ): int => \WBGam\Engine\Registry::object_key( min( (int) $user_a, (int) $user_b ), max( (int) $user_a, (int) $user_b ) ),
+			),
 			'default_points'    => 10,
 			'category'          => 'social',
 			'icon'              => 'icon-link',
 			'repeatable'        => true,
 			'async'             => false,
-		),
-
-		array(
-			'id'                => 'bn_connection_requested',
-			'label'             => static fn(): string => __( 'Send a connection request', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded when a member sends a connection request. Daily cap prevents spam-requesting.', 'wb-gamification' ),
-			// Fires: do_action( 'buddynext_connection_requested', int $connection_id, int $requester_id, int $recipient_id, string $note ).
-			'hook'              => 'buddynext_connection_requested',
-			'user_callback'     => function ( int $connection_id, int $requester_id, int $recipient_id, string $note = '' ): int {
-				return $requester_id;
-			},
-			'metadata_callback' => function ( int $connection_id, int $requester_id, int $recipient_id, string $note = '' ): array {
-				return array(
-					'connection_id' => $connection_id,
-					'recipient_id'  => $recipient_id,
-				);
-			},
-			'default_points'    => 1,
-			'category'          => 'social',
-			'icon'              => 'icon-send',
-			'repeatable'        => true,
-			'async'             => false,
-			'daily_cap'         => 5,
-		),
-
-		array(
-			'id'                => 'bn_dm_sent',
-			'label'             => static fn(): string => __( 'Send a direct message', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded when a member sends a DM. Daily cap keeps points proportional to real engagement.', 'wb-gamification' ),
-			// Fires: do_action( 'buddynext_dm_sent', int $sender_id, int $message_id, int $conversation_id, array $recipients ).
-			'hook'              => 'buddynext_dm_sent',
-			'user_callback'     => function ( int $sender_id, int $message_id, int $conversation_id, array $recipients ): int {
-				return $sender_id;
-			},
-			'metadata_callback' => function ( int $sender_id, int $message_id, int $conversation_id, array $recipients ): array {
-				return array(
-					'message_id'      => $message_id,
-					'conversation_id' => $conversation_id,
-				);
-			},
-			'default_points'    => 1,
-			'category'          => 'social',
-			'icon'              => 'icon-mail',
-			'repeatable'        => true,
-			'async'             => false,
-			'daily_cap'         => 10,
 		),
 
 		// -----------------------------------------------------------------------
@@ -321,7 +313,9 @@ return array(
 			// Fires: do_action( 'buddynext_space_member_joined', int $space_id, int $user_id, string $role ).
 			'hook'              => 'buddynext_space_member_joined',
 			'user_callback'     => function ( int $space_id, int $user_id, string $role ): int {
-				return $user_id;
+				// A member BuddyNext copies into a space from its linked forum joined once, and was
+				// paid there (jetonomy_space_joined).
+				return \WBGam\Engine\HostActivity::is_copy() ? 0 : $user_id;
 			},
 			'metadata_callback' => function ( int $space_id, int $user_id, string $role ): array {
 				return array(
@@ -329,6 +323,11 @@ return array(
 					'role'     => $role,
 				);
 			},
+			'once_per_object'   => static fn( int $space_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $space_id ),
+			'reverse_on'        => array(
+				'buddynext_space_member_left'    => static fn( $space_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $space_id ),
+				'buddynext_space_member_removed' => static fn( $space_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $space_id ),
+			),
 			'default_points'    => 5,
 			'category'          => 'community',
 			'icon'              => 'icon-users',
@@ -349,6 +348,10 @@ return array(
 			'metadata_callback' => function ( int $space_id, int $owner_id ): array {
 				return array( 'space_id' => $space_id );
 			},
+			'once_per_object'   => static fn( int $space_id ): int => $space_id,
+			'reverse_on'        => array(
+				'buddynext_space_deleted' => static fn( $space_id ): int => (int) $space_id,
+			),
 			'default_points'    => 10,
 			'category'          => 'community',
 			'icon'              => 'icon-panels-top-left',
@@ -359,30 +362,6 @@ return array(
 		// -----------------------------------------------------------------------
 		// Profile & Onboarding
 		// -----------------------------------------------------------------------
-
-		array(
-			'id'                => 'bn_profile_updated',
-			'label'             => static fn(): string => __( 'Update your profile', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded when a member changes their profile completion percentage.', 'wb-gamification' ),
-			// Fires: do_action( 'buddynext_profile_completion_changed', int $user_id, int $percent ).
-			// BuddyNext fires this only on an actual percentage change (1.0.6+),
-			// so every fire is a real profile edit. The old "< 100" exclusion
-			// existed to avoid double-awarding with bn_profile_completed on the
-			// same hook; that milestone now listens to the strength hook instead.
-			'hook'              => 'buddynext_profile_completion_changed',
-			'user_callback'     => function ( int $user_id, int $percent ): int {
-				return $user_id;
-			},
-			'metadata_callback' => function ( int $user_id, int $percent ): array {
-				return array( 'percent' => $percent );
-			},
-			'default_points'    => 2,
-			'category'          => 'community',
-			'icon'              => 'icon-user',
-			'repeatable'        => true,
-			'async'             => false,
-			'cooldown'          => 300,
-		),
 
 		array(
 			'id'             => 'bn_profile_completed',
@@ -398,6 +377,7 @@ return array(
 			'user_callback'  => function ( int $user_id, int $percent ): int {
 				return 100 === (int) $percent ? $user_id : 0;
 			},
+			'permanent'      => 'A one-time profile milestone.',
 			'default_points' => 25,
 			'category'       => 'community',
 			'icon'           => 'icon-circle-check',
@@ -413,6 +393,7 @@ return array(
 			'user_callback'  => function ( int $user_id ): int {
 				return $user_id;
 			},
+			'permanent'      => 'A one-time milestone.',
 			'default_points' => 20,
 			'category'       => 'community',
 			'icon'           => 'icon-flag',

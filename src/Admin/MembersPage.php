@@ -24,7 +24,7 @@ defined( 'ABSPATH' ) || exit;
 final class MembersPage {
 
 	private const PAGE_SLUG = 'wb-gamification-members';
-	private const HOOK      = 'gamification_page_wb-gamification-members';
+	private const PAGE      = 'wb-gamification-members';
 
 	/**
 	 * Hook the admin menu + asset enqueue.
@@ -54,7 +54,7 @@ final class MembersPage {
 	 * @param string $hook_suffix Current admin page hook.
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( self::HOOK !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( self::PAGE, 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 
@@ -71,16 +71,6 @@ final class MembersPage {
 			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
-		);
-		// Shared confirm/cancel modal button labels — confirmAction() falls back
-		// to these when a caller doesn't pass its own confirmText/cancelText.
-		wp_localize_script(
-			'wb-gam-admin-rest-utils',
-			'wbGamAdminRestI18n',
-			array(
-				'confirm' => __( 'Confirm', 'wb-gamification' ),
-				'cancel'  => __( 'Cancel', 'wb-gamification' ),
-			)
 		);
 		wp_enqueue_script(
 			'wb-gam-admin-members',
@@ -106,6 +96,7 @@ final class MembersPage {
 					'actions'       => __( 'Actions', 'wb-gamification' ),
 					'active'        => __( 'Earning', 'wb-gamification' ),
 					'excluded'      => __( 'Excluded', 'wb-gamification' ),
+					'offBoards'     => __( 'Off leaderboards', 'wb-gamification' ),
 					'exclude'       => __( 'Exclude', 'wb-gamification' ),
 					'include'       => __( 'Include', 'wb-gamification' ),
 					'reset'         => __( 'Reset points', 'wb-gamification' ),

@@ -336,7 +336,7 @@ final class WebhookDispatcher {
 		$decoded    = json_decode( $payload, true );
 		$event_type = $decoded['event'] ?? 'unknown';
 
-		$response = wp_remote_post(
+		$response = wp_safe_remote_post(
 			$url,
 			array(
 				'body'    => $payload,
@@ -462,7 +462,7 @@ final class WebhookDispatcher {
 			return;
 		}
 
-		$response = wp_remote_post(
+		$response = wp_safe_remote_post(
 			$url,
 			array(
 				'body'    => $payload,

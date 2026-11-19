@@ -38,7 +38,7 @@ final class PointTypesPage {
 	 * @param string $hook_suffix Current admin page hook.
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( 'gamification_page_wb-gam-point-types' !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( 'wb-gam-point-types', 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 
@@ -55,16 +55,6 @@ final class PointTypesPage {
 			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
-		);
-		// Shared confirm/cancel modal button labels — confirmAction() falls back
-		// to these when a caller doesn't pass its own confirmText/cancelText.
-		wp_localize_script(
-			'wb-gam-admin-rest-utils',
-			'wbGamAdminRestI18n',
-			array(
-				'confirm' => __( 'Confirm', 'wb-gamification' ),
-				'cancel'  => __( 'Cancel', 'wb-gamification' ),
-			)
 		);
 		wp_enqueue_script(
 			'wb-gam-admin-rest-form',
@@ -186,10 +176,10 @@ final class PointTypesPage {
 											<?php endif; ?>
 										</td>
 										<td><?php echo (int) $type['position']; ?></td>
-										<td class="wb-gam-pt-actions">
+										<td><div class="wb-gam-pt-actions">
 											<details class="wb-gam-pt-rename">
 												<summary class="button button-small"><?php esc_html_e( 'Rename', 'wb-gamification' ); ?></summary>
-												<form class="wb-gam-pt-rename__form"
+												<form method="post" class="wb-gam-pt-rename__form"
 													data-wb-gam-rest-form="wbGamPointTypesSettings"
 													data-wb-gam-rest-method="PUT"
 													data-wb-gam-rest-path="/point-types/<?php echo esc_attr( $slug ); ?>"
@@ -217,7 +207,7 @@ final class PointTypesPage {
 											<?php else : ?>
 												<span class="description"><?php esc_html_e( 'Default - protected', 'wb-gamification' ); ?></span>
 											<?php endif; ?>
-										</td>
+										</div></td>
 									</tr>
 								<?php endforeach; ?>
 							</tbody>
@@ -233,7 +223,7 @@ final class PointTypesPage {
 					<h3 class="wbgam-card-title"><?php esc_html_e( 'Add New Point Type', 'wb-gamification' ); ?></h3>
 				</div>
 				<div class="wbgam-card-body">
-					<form data-wb-gam-rest-form="wbGamPointTypesSettings"
+					<form method="post" data-wb-gam-rest-form="wbGamPointTypesSettings"
 						data-wb-gam-rest-method="POST"
 						data-wb-gam-rest-path="/point-types"
 						data-wb-gam-rest-success-toast="<?php esc_attr_e( 'Point type created.', 'wb-gamification' ); ?>"

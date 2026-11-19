@@ -47,17 +47,6 @@ $wb_gam_show_bar = ! empty( $wb_gam_attrs['show_progress_bar'] );
 WB_Gam_Block_CSS::add( $wb_gam_unique, $wb_gam_attrs );
 $wb_gam_visibility = WB_Gam_Block_CSS::get_visibility_classes( $wb_gam_attrs );
 
-$wb_gam_inline = '';
-if ( ! empty( $wb_gam_attrs['accentColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-accent: %s;', sanitize_text_field( (string) $wb_gam_attrs['accentColor'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBackground'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-white: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBackground'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-border: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBorderColor'] ) );
-}
-
 $wb_gam_classes = array_filter( array( 'wb-gam-community-challenges', 'wb-gam-block-' . $wb_gam_unique, $wb_gam_visibility ) );
 
 wp_enqueue_style( 'wb-gam-tokens' );
@@ -86,7 +75,6 @@ $wb_gam_challenges = (array) apply_filters( 'wb_gam_block_community_challenges_d
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
 		'class' => implode( ' ', $wb_gam_classes ),
-		'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 	)
 );
 

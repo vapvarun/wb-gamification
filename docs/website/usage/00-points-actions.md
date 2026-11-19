@@ -13,7 +13,7 @@ The table has five columns:
 | Column | What it controls |
 |--------|-----------------|
 | **On** | Checkbox. Uncheck to disable the action entirely. Disabled actions earn zero points and fire no badges or challenges. |
-| **Action** | The name and description of the behavior, e.g. "Publish a post" or "Upload media." |
+| **Action** | The name and description of the behavior, e.g. "Publish a post" or "Join a group." |
 | **Points** | How many points a member earns each time this action fires. Enter any whole number from 0 to 9999. |
 | **Repeat** | Whether the action can be earned more than once. **Yes** means every occurrence earns points. **Once** means the member earns points only the first time. This is set per-action in the manifest and cannot be changed from the admin. |
 | **Daily cap** | The maximum number of times this action counts in a single day. Shows a number or ∞ (unlimited). Like Repeat, this is defined in the manifest and is read-only in the table. |
@@ -58,6 +58,8 @@ If a category does not appear, the plugin that provides it is not active on your
 Both **Cooldown** and **Daily cap** are editable directly in the actions table. Type a new value and click outside the field - the change saves automatically (no Save button needed). A short green flash confirms the save.
 
 Setting either field to `0` is itself a saved override that turns the limit off - it does **not** restore the manifest default value. To revert to the manifest default (for example, to put a 60-second cooldown back after you set it to `0`), call `DELETE /wp-json/wb-gamification/v1/actions/{action_id}/overrides` via REST or remove the action's row from the `wb_gam_action_overrides` site option.
+
+**Members can submit** - *New in 1.6.8.* Tick it to let members claim the action through the Submit Achievement form, for you to approve. Every action starts unticked. The tick saves straight away. See [Submissions](../features/120-submissions.md#choose-what-members-can-submit).
 
 Overrides are stored in the `wb_gam_action_overrides` site option, keyed by action ID. The engine merges overrides on top of the manifest values, so the same effective values are used by rate-limit checks, the admin display, and REST consumers.
 

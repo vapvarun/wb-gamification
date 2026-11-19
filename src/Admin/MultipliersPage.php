@@ -72,7 +72,7 @@ final class MultipliersPage {
 	 * @return void
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( 'gamification_page_' . self::SLUG !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( self::SLUG, 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 		// The shared admin CSS stack (tokens/components/utilities) is already
@@ -84,14 +84,6 @@ final class MultipliersPage {
 			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
-		);
-		wp_localize_script(
-			'wb-gam-admin-rest-utils',
-			'wbGamAdminRestI18n',
-			array(
-				'confirm' => __( 'Confirm', 'wb-gamification' ),
-				'cancel'  => __( 'Cancel', 'wb-gamification' ),
-			)
 		);
 		wp_enqueue_script(
 			'wb-gam-admin-rest-form',
@@ -164,6 +156,7 @@ final class MultipliersPage {
 				</div>
 				<div class="wbgam-card-body">
 					<form
+						method="post"
 						data-wb-gam-rest-form="wbGamMultiplierSettings"
 						data-wb-gam-rest-method="<?php echo $editing ? 'PATCH' : 'POST'; ?>"
 						data-wb-gam-rest-path="<?php echo esc_attr( $rest_path ); ?>"
@@ -185,15 +178,16 @@ final class MultipliersPage {
 							<tr>
 								<th><label for="wb-gam-mult-target"><?php esc_html_e( 'Applies to', 'wb-gamification' ); ?></label></th>
 								<td>
-									<input type="text" name="target_id" id="wb-gam-mult-target" class="regular-text wbgam-input"
-										list="wb-gam-actions" value="<?php echo esc_attr( $edit_target ); ?>"
-										placeholder="<?php esc_attr_e( 'All actions', 'wb-gamification' ); ?>">
-									<datalist id="wb-gam-actions">
+									<select name="target_id" id="wb-gam-mult-target" class="wbgam-input">
+										<option value=""><?php esc_html_e( 'All actions', 'wb-gamification' ); ?></option>
+										<?php if ( '' !== $edit_target && ! isset( $actions[ $edit_target ] ) ) : // An action whose plugin is no longer active. ?>
+											<option value="<?php echo esc_attr( $edit_target ); ?>" selected><?php echo esc_html( \WBGam\Engine\Registry::label_for( $edit_target ) ); ?></option>
+										<?php endif; ?>
 										<?php foreach ( array_keys( $actions ) as $aid ) : ?>
-											<option value="<?php echo esc_attr( $aid ); ?>"></option>
+											<option value="<?php echo esc_attr( $aid ); ?>" <?php selected( $edit_target, $aid ); ?>><?php echo esc_html( \WBGam\Engine\Registry::label_for( (string) $aid ) ); ?></option>
 										<?php endforeach; ?>
-									</datalist>
-									<p class="description"><?php esc_html_e( 'Leave blank to multiply every action. Enter an action ID to scope the multiplier to one action only.', 'wb-gamification' ); ?></p>
+									</select>
+									<p class="description"><?php esc_html_e( 'Multiply every action, or pick one action to multiply only that one.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 						</table>
@@ -239,7 +233,7 @@ final class MultipliersPage {
 									?>
 									<tr>
 										<td><strong><?php echo esc_html( number_format_i18n( $factor, 2 ) ); ?>x</strong></td>
-										<td><?php echo '' === $target ? esc_html__( 'All actions', 'wb-gamification' ) : '<code>' . esc_html( $target ) . '</code>'; ?></td>
+										<td><?php echo esc_html( '' === $target ? __( 'All actions', 'wb-gamification' ) : \WBGam\Engine\Registry::label_for( $target ) ); ?></td>
 										<td>
 											<?php if ( $has_condition ) : ?>
 												<code><?php echo esc_html( $condition_lbl ); ?></code>

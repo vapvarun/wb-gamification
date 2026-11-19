@@ -59,6 +59,10 @@ if ( $wb_gam_user_id <= 0 ) {
 $wb_gam_can_t1 = $wb_gam_user_id > 0 && Privacy::can_view_public_profile( $wb_gam_user_id );
 $wb_gam_can_t2 = $wb_gam_user_id > 0 && Privacy::can_view_private_history( $wb_gam_user_id );
 if ( ! $wb_gam_can_t1 ) {
+	// A logged-in viewer who may not see this member's data gets nothing, not a login prompt.
+	if ( $wb_gam_user_id > 0 && is_user_logged_in() ) {
+		return;
+	}
 	$wb_gam_user_id = 0;
 }
 
@@ -73,17 +77,6 @@ $wb_gam_classes = array_filter(
 	)
 );
 
-$wb_gam_inline = '';
-if ( ! empty( $wb_gam_attrs['accentColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-accent: %s;', sanitize_text_field( (string) $wb_gam_attrs['accentColor'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBackground'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-white: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBackground'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-border: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBorderColor'] ) );
-}
-
 wp_enqueue_style( 'wb-gam-tokens' );
 
 if ( ! $wb_gam_user_id ) {
@@ -91,7 +84,6 @@ if ( ! $wb_gam_user_id ) {
 	$wb_gam_wrapper   = get_block_wrapper_attributes(
 		array(
 			'class' => implode( ' ', $wb_gam_classes ),
-			'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		)
 	);
 	BlockHooks::before( 'streak', $wb_gam_attrs );
@@ -154,7 +146,6 @@ foreach ( $wb_gam_milestones as $wb_gam_ms ) {
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
 		'class' => implode( ' ', $wb_gam_classes ),
-		'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 	)
 );
 
@@ -163,7 +154,7 @@ BlockHooks::before( 'streak', $wb_gam_attrs );
 <div <?php echo $wb_gam_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 	<div class="wb-gam-streak__stats">
 		<div class="wb-gam-streak__stat wb-gam-streak__stat--current">
-			<span class="wb-gam-streak__flame" aria-hidden="true">&#x1F525;</span>
+			<span class="wb-gam-streak__flame" aria-hidden="true"><?php echo \WBGam\Admin\Icon::svg( 'flame', array( 'size' => 28 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG from a fixed allowlist. ?></span>
 			<span class="wb-gam-streak__number"><?php echo esc_html( number_format_i18n( $wb_gam_current ) ); ?></span>
 			<span class="wb-gam-streak__label"><?php esc_html_e( 'Day streak', 'wb-gamification' ); ?></span>
 		</div>

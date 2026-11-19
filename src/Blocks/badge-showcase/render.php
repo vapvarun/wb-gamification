@@ -64,6 +64,10 @@ if ( 0 === $wb_gam_user_id ) {
 
 // Privacy gate — see plan/PRIVACY-MODEL.md.
 if ( $wb_gam_user_id > 0 && ! Privacy::can_view_public_profile( $wb_gam_user_id ) ) {
+	// A logged-in viewer who may not see this member's data gets nothing, not a login prompt.
+	if ( is_user_logged_in() ) {
+		return;
+	}
 	$wb_gam_user_id = 0;
 }
 
@@ -79,17 +83,6 @@ if ( $wb_gam_user_id <= 0 && ! $wb_gam_show_locked ) {
 
 WB_Gam_Block_CSS::add( $wb_gam_unique, $wb_gam_attrs );
 $wb_gam_visibility = WB_Gam_Block_CSS::get_visibility_classes( $wb_gam_attrs );
-
-$wb_gam_inline = '';
-if ( ! empty( $wb_gam_attrs['accentColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-accent: %s;', sanitize_text_field( (string) $wb_gam_attrs['accentColor'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBackground'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-white: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBackground'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-border: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBorderColor'] ) );
-}
 
 $wb_gam_classes = array_filter( array( 'wb-gam-badge-showcase', 'wb-gam-block-' . $wb_gam_unique, $wb_gam_visibility ) );
 
@@ -151,7 +144,6 @@ $wb_gam_progress_pct = $wb_gam_total_count > 0
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
 		'class' => implode( ' ', $wb_gam_classes ),
-		'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 	)
 );
 
@@ -177,7 +169,10 @@ $wb_gam_format_date = static function ( string $iso ): string {
 		/* translators: %s: human-readable time difference. */
 		return sprintf( esc_html__( '%s ago', 'wb-gamification' ), human_time_diff( $ts, $now ) );
 	}
-	return wp_date( get_option( 'date_format' ) ?: 'M j, Y', $ts );
+	// A short date: the site's long format ("September 23, 2026") wrapped inside the pill on a
+	// phone. The format is translatable so each locale keeps its own order.
+	/* translators: short date format for a badge's earned date, see https://www.php.net/manual/datetime.format.php */
+	return wp_date( _x( 'M j, Y', 'badge earned date format', 'wb-gamification' ), $ts );
 };
 
 BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
@@ -261,7 +256,7 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 								width="56" height="56"
 								loading="lazy" />
 						<?php else : ?>
-							<span class="wb-gam-badge-showcase__placeholder">&#x1F3C5;</span>
+							<span class="wb-gam-badge-showcase__placeholder"><?php echo \WBGam\Admin\Icon::svg( 'medal', array( 'size' => 32 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG from a fixed allowlist. ?></span>
 						<?php endif; ?>
 
 						<?php if ( $wb_gam_is_earned ) : ?>
@@ -324,6 +319,19 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 							);
 							?>
 						</button>
+						<?php
+						// Once shared, the member needs the link itself: to open it, or to paste it
+						// elsewhere. Rendered for a badge already shared; view.js fills it in on share.
+						$wb_gam_share_url = $wb_gam_shared ? \WBGam\Engine\BadgeSharePage::get_share_url( (string) $wb_gam_badge['id'], $wb_gam_user_id ) : '';
+						?>
+						<span class="wb-gam-badge-showcase__share-link" data-wb-gam-share-link <?php echo $wb_gam_shared ? '' : 'hidden'; ?>>
+							<a href="<?php echo esc_url( $wb_gam_share_url ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Open share page', 'wb-gamification' ); ?></a>
+							<button type="button" class="wb-gam-badge-showcase__copy"
+								data-wb-gam-share-copy
+								data-label-copied="<?php esc_attr_e( 'Copied', 'wb-gamification' ); ?>"
+								data-label-failed="<?php esc_attr_e( 'Copy failed - open the link instead', 'wb-gamification' ); ?>"><?php esc_html_e( 'Copy link', 'wb-gamification' ); ?></button>
+							<span class="screen-reader-text" role="status" aria-live="polite"></span>
+						</span>
 					<?php endif; ?>
 				</li>
 			<?php endforeach; ?>

@@ -3,7 +3,7 @@
     "info": {
         "title": "WB Gamification API",
         "description": "Gamification engine REST API for points, badges, levels, leaderboards, challenges, kudos, and more.",
-        "version": "1.6.6",
+        "version": "1.6.8",
         "contact": {
             "name": "Wbcom Designs",
             "url": "https://wbcomdesigns.com"
@@ -11,7 +11,7 @@
     },
     "servers": [
         {
-            "url": "http://buddynext.local/wp-json/wb-gamification/v1"
+            "url": "http://localhost:10013/wp-json/wb-gamification/v1"
         }
     ],
     "paths": {
@@ -219,6 +219,67 @@
                         "description": "Successful response"
                     }
                 }
+            }
+        },
+        "/members/{id}/preferences": {
+            "get": {
+                "summary": "Get members",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            },
+            "post": {
+                "summary": "Create members",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "show_rank": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    },
+                                    "leaderboard_opt_out": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    },
+                                    "notification_mode": {
+                                        "type": "string",
+                                        "description": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
             }
         },
         "/members/me/profile-visibility": {
@@ -1527,6 +1588,14 @@
                                     "weekly_cap": {
                                         "type": "integer",
                                         "description": ""
+                                    },
+                                    "enabled": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    },
+                                    "submittable": {
+                                        "type": "boolean",
+                                        "description": "Whether members may claim this action through Submit Achievement. Off until the owner turns it on (or the manifest says so)."
                                     }
                                 },
                                 "required": [
@@ -1575,6 +1644,14 @@
                                     "weekly_cap": {
                                         "type": "integer",
                                         "description": ""
+                                    },
+                                    "enabled": {
+                                        "type": "boolean",
+                                        "description": ""
+                                    },
+                                    "submittable": {
+                                        "type": "boolean",
+                                        "description": "Whether members may claim this action through Submit Achievement. Off until the owner turns it on (or the manifest says so)."
                                     }
                                 },
                                 "required": [
@@ -2226,6 +2303,21 @@
                         "description": "Successful response"
                     }
                 },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "here": {
+                                        "type": "boolean",
+                                        "description": "Run one page in this request instead of handing the run to the background queue."
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
                 "parameters": [
                     {
                         "name": "source",
@@ -2768,6 +2860,16 @@
                 ]
             }
         },
+        "/issuer": {
+            "get": {
+                "summary": "Get issuer",
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                }
+            }
+        },
         "/redemptions/items": {
             "get": {
                 "summary": "Get redemptions",
@@ -2820,6 +2922,10 @@
                                             "null"
                                         ],
                                         "description": "Remaining stock. Null means unlimited; 0 means sold out."
+                                    },
+                                    "stock_mode": {
+                                        "type": "string",
+                                        "description": "Unlimited clears the stock count; limited uses stock."
                                     },
                                     "is_active": {
                                         "type": "boolean",
@@ -2900,6 +3006,10 @@
                                         ],
                                         "description": "Remaining stock. Null means unlimited; 0 means sold out."
                                     },
+                                    "stock_mode": {
+                                        "type": "string",
+                                        "description": "Unlimited clears the stock count; limited uses stock."
+                                    },
                                     "is_active": {
                                         "type": "boolean",
                                         "description": ""
@@ -2964,6 +3074,10 @@
                                         ],
                                         "description": "Remaining stock. Null means unlimited; 0 means sold out."
                                     },
+                                    "stock_mode": {
+                                        "type": "string",
+                                        "description": "Unlimited clears the stock count; limited uses stock."
+                                    },
                                     "is_active": {
                                         "type": "boolean",
                                         "description": ""
@@ -3027,6 +3141,10 @@
                                             "null"
                                         ],
                                         "description": "Remaining stock. Null means unlimited; 0 means sold out."
+                                    },
+                                    "stock_mode": {
+                                        "type": "string",
+                                        "description": "Unlimited clears the stock count; limited uses stock."
                                     },
                                     "is_active": {
                                         "type": "boolean",

@@ -128,15 +128,15 @@ final class DirectoryIntegration {
 		if ( is_array( self::$prefs ) && array_key_exists( (int) $user_id, self::$prefs ) ) {
 			$show_rank = self::$prefs[ (int) $user_id ];
 		} else {
-			global $wpdb;
-			$show_rank = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT show_rank FROM {$wpdb->prefix}wb_gam_member_prefs WHERE user_id = %d",
-					$user_id
-				)
-			);
+			$show_rank = \WBGam\Engine\MemberPrefs::get( (int) $user_id )['show_rank'] ? '1' : '0';
 		}
 		if ( '0' === $show_rank ) {
+			return;
+		}
+
+		// Same rule as the profile header: a private profile shows no rank to other viewers.
+		// (Member meta is primed by the members loop, so this adds no per-row query.)
+		if ( ! \WBGam\Engine\Privacy::can_view_public_profile( (int) $user_id ) ) {
 			return;
 		}
 

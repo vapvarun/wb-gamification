@@ -81,4 +81,21 @@ class ActionLabelTest extends TestCase {
 		$this->assertSame( 'Streak milestone', Registry::label_for( 'streak_milestone' ), 'Ids the filter does not handle keep their label.' );
 		$this->assertSame( 'Replied in the forum', Registry::label_for( 'jetonomy_reply_created' ), 'Integrations still name their ids.' );
 	}
+
+	#[Test]
+	public function removed_actions_keep_their_names_in_history(): void {
+		// Card 10519284489: points from actions removed in 1.6.8 read "Bn Dm Sent" in history.
+		$this->assertSame( 'Send a direct message', Registry::label_for( 'bn_dm_sent' ) );
+		$this->assertSame( 'Start a Jetonomy conversation', Registry::label_for( 'jetonomy_pro_conversation_created' ) );
+		$this->assertSame( 'Follow another member (content removed)', Registry::label_for( 'mvs_give_follow_removed' ) );
+	}
+
+	/**
+	 * Starter badges and challenges name actions of integrations that may be inactive.
+	 */
+	#[Test]
+	public function inactive_integration_actions_keep_their_names(): void {
+		$this->assertSame( 'Post an activity update', Registry::label_for( 'bp_activity_update' ) );
+		$this->assertSame( 'Create a post', Registry::label_for( 'bn_post_created' ) );
+	}
 }

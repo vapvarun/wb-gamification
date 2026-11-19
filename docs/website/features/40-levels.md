@@ -28,7 +28,7 @@ Level is never stored independently - it is always derived from the points ledge
 
 When a member advances to a new level, they receive:
 
-- A **toast notification** in the bottom-right corner of the page with the new level name and icon
+- A **toast notification** at the bottom-center of the page (or the placement set in Settings > Realtime) with the new level name and icon
 - A **BuddyPress notification** (if BuddyPress is active)
 - An **activity feed post** announcing the level-up to the community (if BuddyPress is active)
 

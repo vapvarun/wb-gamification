@@ -11,7 +11,7 @@
 	"attributes": {
 		"uniqueId":         { "type": "string",  "default": "" },
 		"layout":           { "type": "string",  "default": "floating" },
-		"position":         { "type": "string",  "default": "top-right" },
+		"position":         { "type": "string",  "default": "bottom-right" },
 		"showLevel":        { "type": "boolean", "default": true },
 		"showBadges":       { "type": "boolean", "default": true },
 		"showStreak":       { "type": "boolean", "default": true },

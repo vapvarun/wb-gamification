@@ -13,6 +13,7 @@ Endpoints for badge definitions, the level ladder, leaderboards, and year-in-rev
 | `DELETE` | `/badges/{id}` | `manage_options` |
 | `POST` | `/badges/{id}/award` | `manage_options` |
 | `GET` | `/badges/{id}/credential/{user}` | Public (badge must be published by the member) |
+| `GET` | `/issuer` | Public |
 | `POST` | `/badges/{id}/share` | Must be logged in (self only) |
 | `DELETE` | `/badges/{id}/share` | Must be logged in (self only) |
 | `GET` | `/badges/{id}/share/{user}` | Public (badge must be published by the member) |
@@ -130,7 +131,7 @@ curl https://example.com/wp-json/wb-gamification/v1/badges/top_contributor/share
 
 ### GET /badges/{id}/credential/{user}
 
-Public OpenBadges 3.0 verifiable credential (JSON-LD) for a badge award, suitable for LinkedIn's "Add Certification" flow or any OB3-aware wallet. Requires the badge to have `is_credential` set AND the member to have published it via `POST /badges/{id}/share` - the same publish gate as the share card. Returns 404 if the badge is not a credential, not found, not shared, or not earned; returns 410 Gone if the credential has expired (`expires_at` in the past).
+Public OpenBadges 3.0 verifiable credential (JSON-LD) for a badge award, suitable for LinkedIn's "Add Certification" flow or any OB3-aware wallet. Requires the badge to have `is_credential` set AND the member to have published it via `POST /badges/{id}/share` - the same publish gate as the share card. Returns 403 if the badge is not a credential; 404 if it is not found, not shared, or not earned; returns 410 Gone if the credential has expired (`expires_at` in the past).
 
 ```bash
 curl https://example.com/wp-json/wb-gamification/v1/badges/top_contributor/credential/42
@@ -149,12 +150,30 @@ curl https://example.com/wp-json/wb-gamification/v1/badges/top_contributor/crede
     "id": "https://example.com/?author=42",
     "type": "AchievementSubject",
     "name": "Jane Smith",
-    "achievement": { "id": "https://example.com/wp-json/wb-gamification/v1/badges/top_contributor", "type": "Achievement", "name": "Top Contributor", "description": "...", "image": "https://...", "criteria": { "narrative": "..." }, "issuer": { "id": "https://example.com/wp-json/wb-gamification/v1/issuer", "type": "Profile", "name": "Example" } }
+    "achievement": { "id": "https://example.com/wp-json/wb-gamification/v1/badges/top_contributor", "type": "Achievement", "name": "Top Contributor", "description": "...", "image": "https://...", "criteria": { "narrative": "..." }, "issuer": { "id": "https://example.com/wp-json/wb-gamification/v1/issuer", "type": "Profile", "name": "Example", "url": "https://example.com" } }
   }
 }
 ```
 
 The response is served with `Content-Type: application/ld+json`. `issuanceDate` and `expirationDate` are ISO 8601, converted from the UTC `earned_at`/`expires_at` stored on the badge award.
+
+### GET /issuer
+
+Public. The OpenBadges 3.0 issuer Profile that every credential's `issuer.id` points at: your site's name and address, nothing about any member. Served as `application/ld+json`.
+
+```bash
+curl https://example.com/wp-json/wb-gamification/v1/issuer
+```
+
+```json
+{
+  "@context": "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json",
+  "id": "https://example.com/wp-json/wb-gamification/v1/issuer",
+  "type": "Profile",
+  "name": "Example",
+  "url": "https://example.com"
+}
+```
 
 ## Levels
 

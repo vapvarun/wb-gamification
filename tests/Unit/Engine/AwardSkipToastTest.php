@@ -155,7 +155,7 @@ class AwardSkipToastTest extends TestCase {
 	/**
 	 * T4 — an engine-internal veto can NEVER be surfaced, whatever an owner filters in.
 	 *
-	 * `sandboxed`, `self_action`, `pre_change_veto` and `excluded` describe a decision the SITE made
+	 * `sandboxed`, `not_eligible`, `pre_change_veto` and `excluded` describe a decision the SITE made
 	 * about the member. They are not feedback and they are not the member's business.
 	 *
 	 * 1.6.3 PROMISED this in its docblock ("never eligible regardless of this filter") and did not

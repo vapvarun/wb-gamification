@@ -71,7 +71,6 @@ final class ProgressReset {
 		'wb_gam_level_id',
 		'wb_gam_level_name',
 		'wb_gam_league_tier',
-		'wb_gam_pr_best_week',
 		'wb_gam_seen_first_earn_toast',
 		// Both are downstream of the ledger this reset truncates: the note describes an award that no
 		// longer exists, and the decay marker dates a balance that is now zero. Leaving them behind
@@ -91,6 +90,10 @@ final class ProgressReset {
 	 */
 	private const PROGRESS_META_PREFIXES = array(
 		'wb_gam_notif_cursor_', // NotificationBridge::CURSOR_META_PREFIX.
+		// Personal records: best and running totals for day, week and month (PersonalRecordEngine).
+		// Only best_week was listed, so after a reset the old best day and month, and the running
+		// totals, survived and the next award announced a "new personal record" against them.
+		'wb_gam_pr_',
 	);
 
 	/**
@@ -123,9 +126,24 @@ final class ProgressReset {
 			}
 		}
 
-		// Delete progress meta across all users in one statement.
+		// Members whose cached meta must be dropped after the raw deletes below (a persistent object
+		// cache would otherwise keep serving the old bests). Read only when the cache cannot drop the
+		// whole user_meta group at once.
 		$placeholders = implode( ',', array_fill( 0, count( self::PROGRESS_META ), '%s' ) );
-		$meta_rows    = (int) $wpdb->query(
+		$meta_users   = array();
+		if ( ! wp_cache_supports( 'flush_group' ) ) {
+			$like       = array_map( static fn( string $prefix ): string => $wpdb->esc_like( $prefix ) . '%', self::PROGRESS_META_PREFIXES );
+			$like_sql   = str_repeat( ' OR meta_key LIKE %s', count( $like ) );
+			$meta_users = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT DISTINCT user_id FROM {$wpdb->usermeta} WHERE meta_key IN ($placeholders){$like_sql}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders built from fixed-length constant lists.
+					array_merge( self::PROGRESS_META, $like )
+				)
+			);
+		}
+
+		// Delete progress meta across all users in one statement.
+		$meta_rows = (int) $wpdb->query(
 			$wpdb->prepare(
 				"DELETE FROM {$wpdb->usermeta} WHERE meta_key IN ($placeholders)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders built from a fixed-length constant list.
 				self::PROGRESS_META
@@ -140,6 +158,14 @@ final class ProgressReset {
 					$wpdb->esc_like( $prefix ) . '%'
 				)
 			);
+		}
+
+		if ( wp_cache_supports( 'flush_group' ) ) {
+			wp_cache_flush_group( 'user_meta' );
+		} else {
+			foreach ( $meta_users as $meta_user ) {
+				wp_cache_delete( (int) $meta_user, 'user_meta' );
+			}
 		}
 
 		// Drop the leaderboard snapshot caches so reads reflect the empty state.

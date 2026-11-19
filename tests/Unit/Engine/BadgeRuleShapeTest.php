@@ -193,4 +193,18 @@ class BadgeRuleShapeTest extends TestCase {
 			'The chip must always say what the evaluator will actually do with this row.'
 		);
 	}
+
+	public function test_is_earnable_reads_which_actions_this_site_registers(): void {
+		$actions = array( 'wp_publish_post' => array() );
+		$bp      = array( 'type' => 'action_count', 'action_id' => 'bp_activity_update', 'count' => 1 );
+		$wp      = array( 'type' => 'action_count', 'action_id' => 'wp_publish_post', 'count' => 1 );
+		$points  = array( 'type' => 'point_milestone', 'points' => 100 );
+
+		$this->assertFalse( BadgeRule::is_earnable( array( 'match' => 'all', 'conditions' => array( $bp ) ), $actions ), 'BuddyPress-only badge on a site without BuddyPress' );
+		$this->assertTrue( BadgeRule::is_earnable( array( 'match' => 'all', 'conditions' => array( $wp ) ), $actions ) );
+		$this->assertFalse( BadgeRule::is_earnable( array( 'match' => 'all', 'conditions' => array( $wp, $bp ) ), $actions ), 'ALL needs every condition' );
+		$this->assertTrue( BadgeRule::is_earnable( array( 'match' => 'any', 'conditions' => array( $bp, $wp ) ), $actions ), 'ANY needs one live condition' );
+		$this->assertTrue( BadgeRule::is_earnable( array( 'match' => 'all', 'conditions' => array( $points ) ), $actions ), 'non-action conditions are always reachable' );
+		$this->assertTrue( BadgeRule::is_earnable( array(), $actions ), 'no rule: manual badge, stays visible' );
+	}
 }

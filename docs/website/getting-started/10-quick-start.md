@@ -21,7 +21,7 @@ Go to **Gamification > Settings**. You will see every action that is currently a
 
 Log in as a regular member. Do one of the active actions - for example, post an activity update on a BuddyPress community page, or leave a comment on a blog post.
 
-Within a few seconds, a toast notification appears in the bottom-right corner showing how many points were earned.
+Within a few seconds, a toast notification appears at the bottom-center of the screen showing how many points were earned.
 
 ## Step 4: Check the Member's Points (30 seconds)
 

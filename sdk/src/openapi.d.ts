@@ -340,6 +340,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/members/{id}/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get members */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Create members */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        show_rank?: boolean;
+                        leaderboard_opt_out?: boolean;
+                        notification_mode?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/members/me/profile-visibility": {
         parameters: {
             query?: never;
@@ -1587,6 +1651,9 @@ export interface paths {
                         cooldown?: number;
                         daily_cap?: number;
                         weekly_cap?: number;
+                        enabled?: boolean;
+                        /** @description Whether members may claim this action through Submit Achievement. Off until the owner turns it on (or the manifest says so). */
+                        submittable?: boolean;
                     };
                 };
             };
@@ -1617,6 +1684,9 @@ export interface paths {
                         cooldown?: number;
                         daily_cap?: number;
                         weekly_cap?: number;
+                        enabled?: boolean;
+                        /** @description Whether members may claim this action through Submit Achievement. Off until the owner turns it on (or the manifest says so). */
+                        submittable?: boolean;
                     };
                 };
             };
@@ -2367,7 +2437,14 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @description Run one page in this request instead of handing the run to the background queue. */
+                        here?: boolean;
+                    };
+                };
+            };
             responses: {
                 /** @description Successful response */
                 200: {
@@ -2941,6 +3018,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/issuer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get issuer */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Successful response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/redemptions/items": {
         parameters: {
             query?: never;
@@ -2988,6 +3099,8 @@ export interface paths {
                         reward_config?: Record<string, never>;
                         /** @description Remaining stock. Null means unlimited; 0 means sold out. */
                         stock?: number | null;
+                        /** @description Unlimited clears the stock count; limited uses stock. */
+                        stock_mode?: string;
                         is_active?: boolean;
                     };
                 };
@@ -3058,6 +3171,8 @@ export interface paths {
                         reward_config?: Record<string, never>;
                         /** @description Remaining stock. Null means unlimited; 0 means sold out. */
                         stock?: number | null;
+                        /** @description Unlimited clears the stock count; limited uses stock. */
+                        stock_mode?: string;
                         is_active?: boolean;
                     };
                 };
@@ -3094,6 +3209,8 @@ export interface paths {
                         reward_config?: Record<string, never>;
                         /** @description Remaining stock. Null means unlimited; 0 means sold out. */
                         stock?: number | null;
+                        /** @description Unlimited clears the stock count; limited uses stock. */
+                        stock_mode?: string;
                         is_active?: boolean;
                     };
                 };
@@ -3153,6 +3270,8 @@ export interface paths {
                         reward_config?: Record<string, never>;
                         /** @description Remaining stock. Null means unlimited; 0 means sold out. */
                         stock?: number | null;
+                        /** @description Unlimited clears the stock count; limited uses stock. */
+                        stock_mode?: string;
                         is_active?: boolean;
                     };
                 };

@@ -42,7 +42,7 @@ final class ApiKeysPage {
 	 * @return void
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( 'gamification_page_wb-gam-api-keys' !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( 'wb-gam-api-keys', 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 
@@ -59,16 +59,6 @@ final class ApiKeysPage {
 			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
-		);
-		// Shared confirm/cancel modal button labels — confirmAction() falls back
-		// to these when a caller doesn't pass its own confirmText/cancelText.
-		wp_localize_script(
-			'wb-gam-admin-rest-utils',
-			'wbGamAdminRestI18n',
-			array(
-				'confirm' => __( 'Confirm', 'wb-gamification' ),
-				'cancel'  => __( 'Cancel', 'wb-gamification' ),
-			)
 		);
 		wp_enqueue_script(
 			'wb-gam-admin-api-keys',

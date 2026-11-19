@@ -59,17 +59,6 @@ $wb_gam_unique  = ! empty( $wb_gam_attrs['uniqueId'] )
 WB_Gam_Block_CSS::add( $wb_gam_unique, $wb_gam_attrs );
 $wb_gam_visibility = WB_Gam_Block_CSS::get_visibility_classes( $wb_gam_attrs );
 
-$wb_gam_inline = '';
-if ( ! empty( $wb_gam_attrs['accentColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-accent: %s;', sanitize_text_field( (string) $wb_gam_attrs['accentColor'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBackground'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-white: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBackground'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-border: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBorderColor'] ) );
-}
-
 $wb_gam_classes = array_filter(
 	array(
 		'gam-page',
@@ -98,7 +87,6 @@ if ( 0 === $wb_gam_user_id ) {
 	$wb_gam_wrapper   = get_block_wrapper_attributes(
 		array(
 			'class' => implode( ' ', $wb_gam_classes ),
-			'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		)
 	);
 
@@ -227,8 +215,8 @@ $wb_gam_rank       = (int) ( $wb_gam_rank_data['rank'] ?? 0 );
 $wb_gam_kudos_recv = (int) KudosEngine::get_received_count( $wb_gam_user_id );
 $wb_gam_badge_cnt  = count( $wb_gam_badges );
 
-global $wpdb;
-$wb_gam_total_defs = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_badge_defs" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+// The member's catalog: badges this site can award, plus any they already hold.
+$wb_gam_total_defs = count( BadgeEngine::get_all_badges_for_user( $wb_gam_user_id ) );
 $wb_gam_locked     = max( 0, $wb_gam_total_defs - $wb_gam_badge_cnt );
 
 $wb_gam_current_streak = (int) ( $wb_gam_streak['current_streak'] ?? 0 );
@@ -398,7 +386,6 @@ foreach ( $wb_gam_cards as $wb_gam_title_key => $wb_gam_title_card ) {
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
 		'class'                    => implode( ' ', $wb_gam_classes ),
-		'style'                    => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		'data-wp-interactive'      => 'wb-gamification/hub',
 		'data-wp-context'          => $wb_gam_context,
 		'data-wp-init'             => 'callbacks.init',

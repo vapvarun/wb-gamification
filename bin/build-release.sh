@@ -336,6 +336,7 @@ cat > "${EXCLUDES_FILE}" <<'EXCLUDES_EOF'
 # tree, never the shipped copy.
 .contract-audit-baseline.json
 .wbcom-i18n.json
+.wbcom-i18n-glossary.json
 .idea/
 .vscode/
 .husky/
@@ -420,7 +421,9 @@ rsync -a --delete --exclude-from="${EXCLUDES_FILE}" "${ROOT_DIR}/" "${STAGE}/"
 for required in \
     "libs/woocommerce/action-scheduler/action-scheduler.php" \
     "libs/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php" \
-    "libs/easy-digital-downloads/edd-sl-sdk/vendor/autoload.php"; do
+    "libs/easy-digital-downloads/edd-sl-sdk/src/Versions.php" \
+    "libs/easy-digital-downloads/edd-sl-sdk/src/Requests/API.php" \
+    "libs/package-signatures/package-signatures.php"; do
     if [ ! -f "${STAGE}/${required}" ]; then
         echo "✗ Release aborted: ${required} missing from staged build — the zip would not boot." >&2
         echo "  Bundled runtime deps live in committed libs/; verify they are present and tracked in git." >&2

@@ -10,7 +10,10 @@
  */
 
 /* === THEME-INDEPENDENT COLOR SYSTEM === */
-:root {
+/* Declared on .gam-page as well as :root: a custom property resolves where it is declared, so on
+ * :root alone the Hub never saw its own block's Accent or Card background (card 10523784929). */
+:root,
+.gam-page {
   /* Neutrals mapped to the host theme's tokens so the Hub follows the
    * theme's light/dark mode. Fallback CHAIN, in order:
    *   BuddyX / BuddyX Pro  --bx-color-*        (72 tokens, flip on [data-bx-mode="dark"])
@@ -20,13 +23,13 @@
    * family, so before 1.6.4 every lookup fell through to the literal and the
    * plugin painted its own palette on top of the theme instead of following it.
    * Brand colors below stay constant. */
-  --gam-text: var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e));
-  --gam-text-secondary: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e)) 70%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff)));
-  --gam-text-muted: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #1a1a2e)) 50%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff)));
-  --gam-surface: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff));
-  --gam-surface-hover: var(--bx-color-bg-muted, var(--reign-site-secondary-bg-color, #f7f7fb));
-  --gam-border: var(--bx-color-border, var(--reign-site-border-color, #e2e3ed));
-  --gam-border-hover: var(--bx-color-border, var(--reign-site-border-color, #c8c9d9));
+  --gam-text: var(--wb-gam-color-text);
+  --gam-text-secondary: var(--wb-gam-color-text-muted);
+  --gam-text-muted: var(--wb-gam-color-text-light);
+  --gam-surface: var(--wb-gam-color-surface);
+  --gam-surface-hover: var(--wb-gam-color-surface-hover);
+  --gam-border: var(--wb-gam-color-border);
+  --gam-border-hover: var(--wb-gam-color-border-hover);
   /* Accent bridges to the standard --wb-gam-color-accent token so the
    * site owner's Settings > Appearance accent (WBGam\Engine\Appearance)
    * re-tints the Hub too. Falls back to the brand purple when unset, which
@@ -37,7 +40,8 @@
   /* Tints mixed over --gam-surface so icon chips / status pills adapt to
    * dark mode (faint dark tint) instead of staying opaque light. */
   --gam-accent-light: color-mix(in srgb, var(--gam-accent) 14%, var(--gam-surface));
-  --gam-accent-text: color-mix(in srgb, var(--gam-accent) 65%, var(--gam-text));
+  /* Same formula as --wb-gam-color-accent-text (design-tokens.css): AA on the card in either mode. */
+  --gam-accent-text: color-mix(in srgb, var(--gam-accent) 50%, var(--wb-gam-color-accent-ink));
   --gam-success: #0d9f6e;
   --gam-success-bg: color-mix(in srgb, var(--gam-success) 12%, var(--gam-surface));
   --gam-warning: #c2770e;
@@ -93,9 +97,13 @@
   font-size: 18px;
 }
 
+/* Eyebrow on its own line above the sentence: the label and text are spans, so without this
+ * they ran together ("SUGGESTED FOR YOU You earned 5 new badges!"). */
 .gam-nudge__body {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .gam-nudge__label {
@@ -122,7 +130,7 @@
   align-items: center;
   gap: 6px;
   background: var(--gam-accent);
-  color: #fff;
+  color: var(--wb-gam-pop-accent-fg);
   border: none;
   border-radius: var(--gam-radius-sm);
   padding: 8px 16px;
@@ -350,17 +358,17 @@
 
 .gam-pill--success {
   background: var(--gam-success-bg);
-  color: var(--gam-success);
+  color: var(--wb-gam-color-success-strong);
 }
 
 .gam-pill--warning {
   background: var(--gam-warning-bg);
-  color: var(--gam-warning);
+  color: var(--wb-gam-color-warning-strong);
 }
 
 .gam-pill--info {
   background: var(--gam-info-bg);
-  color: var(--gam-info);
+  color: var(--wb-gam-color-info);
 }
 
 .gam-pill--accent {
@@ -578,7 +586,7 @@
 .gam-list-item__pts {
   font-weight: 600;
   font-size: 13px;
-  color: var(--gam-success);
+  color: var(--wb-gam-color-success-strong);
   white-space: nowrap;
 }
 
@@ -676,7 +684,7 @@
 
 .gam-lb-avatar--you {
   background: var(--gam-accent);
-  color: #fff;
+  color: var(--wb-gam-pop-accent-fg);
 }
 
 .gam-lb-avatar i {
@@ -715,7 +723,7 @@
 .gam-lb-pill--active {
   border-color: var(--gam-accent);
   background: var(--gam-accent);
-  color: #fff;
+  color: var(--wb-gam-pop-accent-fg);
 }
 
 /* Kudos inside panel */
@@ -803,7 +811,7 @@
 .gam-stat__convert:hover,
 .gam-stat__convert:focus-visible {
   background: var(--wb-gam-color-accent, #2563eb);
-  color: #fff;
+  color: var(--wb-gam-pop-accent-fg);
   border-color: var(--wb-gam-color-accent, #2563eb);
 }
 .gam-stat__convert:focus-visible {
@@ -862,8 +870,8 @@
 :root[data-theme="dark"] .gam-page,
 body.buddyx-dark-theme .gam-page {
   --gam-text: var(--bx-color-fg, var(--reign-site-body-text-color, #e8e8f0));
-  --gam-text-secondary: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #e8e8f0)) 75%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #262a34)));
-  --gam-text-muted: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #e8e8f0)) 55%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #262a34)));
+  --gam-text-secondary: var(--wb-gam-color-text-muted);
+  --gam-text-muted: var(--wb-gam-color-text-light);
   --gam-surface: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #262a34));
   --gam-surface-hover: var(--bx-color-bg-muted, var(--reign-site-secondary-bg-color, #2f343f));
   --gam-border: var(--bx-color-border, var(--reign-site-border-color, #363b47));
@@ -873,12 +881,20 @@ body.buddyx-dark-theme .gam-page {
 @media (prefers-color-scheme: dark) {
   :root[data-bx-mode="auto"] .gam-page {
     --gam-text: var(--bx-color-fg, var(--reign-site-body-text-color, #e8e8f0));
-    --gam-text-secondary: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #e8e8f0)) 75%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #262a34)));
-    --gam-text-muted: color-mix(in srgb, var(--bx-color-fg, var(--reign-site-body-text-color, #e8e8f0)) 55%, var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #262a34)));
+    --gam-text-secondary: var(--wb-gam-color-text-muted);
+    --gam-text-muted: var(--wb-gam-color-text-light);
     --gam-surface: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #262a34));
     --gam-surface-hover: var(--bx-color-bg-muted, var(--reign-site-secondary-bg-color, #2f343f));
     --gam-border: var(--bx-color-border, var(--reign-site-border-color, #363b47));
     --gam-border-hover: var(--bx-color-border, var(--reign-site-border-color, #454b59));
     --gam-accent: var(--wb-gam-color-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff))));
   }
+}
+/* A Hub whose owner set a Card background follows that card, not the page's mode: the dark rules
+ * above carry dark fallbacks for themes with no tokens, so they are overridden here (0,3,0). */
+:root .gam-page.wb-gam-scheme-light,
+:root .gam-page.wb-gam-scheme-dark {
+  --gam-text: var(--wb-gam-color-text);
+  --gam-surface: var(--wb-gam-color-surface);
+  --gam-surface-hover: var(--wb-gam-color-surface-hover);
 }

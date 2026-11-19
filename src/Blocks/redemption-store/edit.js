@@ -11,7 +11,7 @@
  */
 
 import { __, _n, sprintf } from '@wordpress/i18n';
-import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
+import { useBlockProps, InspectorControls, ContrastChecker } from '@wordpress/block-editor';
 import {
 	PanelBody,
 	RangeControl,
@@ -261,6 +261,8 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 							__nextHasNoMarginBottom
 						/>
 					</BaseControl>
+					{ /* The owner's pair is applied as chosen; core's checker warns when it is hard to read. */ }
+					<ContrastChecker textColor={ buttonTextColor } backgroundColor={ accentColor } />
 
 					<BaseControl
 						id={ `wb-gam-card-bg-${ uniqueId }` }
@@ -316,10 +318,10 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 					status={
 						limit > 0
 							? sprintf(
-									/* translators: %d: number of items shown. */
+									/* translators: 1: number of rewards shown, 2: number of columns. */
 									_n(
-										'Showing up to %d reward in %s columns',
-										'Showing up to %d rewards in %s columns',
+										'Showing up to %1$d reward in %2$s columns',
+										'Showing up to %1$d rewards in %2$s columns',
 										limit,
 										'wb-gamification'
 									),

@@ -711,10 +711,18 @@ final class ScaleCommand {
 		// the query LOG, not the counter, and WP-CLI has no flag to define it anyway. So the gate
 		// skipped itself on every run and printed a tidy yellow SKIPPED that nobody would read twice.
 		// A gate that cannot fail is not a gate; this one had that defect for about four minutes.
-		PointsEngine::award( $uid, 'wp_leave_comment', 5, 0, null, true ); // Warm caches; the first award of a request pays for everyone.
-		$before = $wpdb->num_queries;
-		PointsEngine::award( $uid, 'wp_leave_comment', 5, 0, null, true );
+		//
+		// And the award measured must be a real one. It used to be a second wp_leave_comment inside
+		// that action's 60 s cooldown: the engine refused it after a few reads, and the gate counted
+		// the queries of a refusal as "one award". wp_publish_post has no cooldown or cap; the award
+		// must return true and add exactly one ledger row, or the measurement fails.
+		$rows_for      = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d", $uid ) );
+		PointsEngine::award( $uid, 'wp_publish_post', 5, 0, null, true ); // Warm caches; the first award of a request pays for everyone.
+		$rows_before   = $rows_for();
+		$before        = $wpdb->num_queries;
+		$awarded       = PointsEngine::award( $uid, 'wp_publish_post', 5, 0, null, true );
 		$award_queries = $wpdb->num_queries - $before;
+		$award_written = $awarded && $rows_for() === $rows_before + 1;
 
 		// Render.
 		$failures = 0;
@@ -739,7 +747,7 @@ final class ScaleCommand {
 			);
 		}
 
-		$award_pass = $award_queries <= self::AWARD_QUERY_CEILING;
+		$award_pass = $award_written && $award_queries <= self::AWARD_QUERY_CEILING;
 
 		if ( ! $award_pass ) {
 			++$failures;
@@ -752,7 +760,9 @@ final class ScaleCommand {
 				str_pad( 'award_query_count', 30 ),
 				str_pad( $award_queries . ' q', 12 ),
 				str_pad( self::AWARD_QUERY_CEILING . ' q', 12 ),
-				$award_pass ? "\033[32mPASS\033[0m" : "\033[31mFAIL (over by " . ( $award_queries - self::AWARD_QUERY_CEILING ) . " queries)\033[0m"
+				$award_pass ? "\033[32mPASS\033[0m" : ( $award_written
+					? "\033[31mFAIL (over by " . ( $award_queries - self::AWARD_QUERY_CEILING ) . " queries)\033[0m"
+					: "\033[31mFAIL (the award was refused or wrote no row; nothing was measured)\033[0m" )
 			)
 		);
 
@@ -775,11 +785,15 @@ final class ScaleCommand {
 			'pass'         => 0 === $failures,
 		);
 		$path   = WB_GAM_PATH . 'audit/.last-scale-pass.json';
-		file_put_contents( $path, wp_json_encode( $report, JSON_PRETTY_PRINT ) . "\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-		\WP_CLI::line( 'Wrote audit/.last-scale-pass.json (read by the release gate).' );
+		$folder = dirname( $path );
+		if ( wp_is_writable( $folder ) && false !== file_put_contents( $path, wp_json_encode( $report, JSON_PRETTY_PRINT ) . "\n" ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+			\WP_CLI::line( 'Wrote audit/.last-scale-pass.json (read by the release gate).' );
+		} else {
+			\WP_CLI::warning( "Could not write audit/.last-scale-pass.json ({$folder} is not writable), so the release gate will not see this run." );
+		}
 
 		if ( 0 === $failures ) {
-			\WP_CLI::success( 'All queries within budget — 100k-ready against this dataset.' );
+			\WP_CLI::success( sprintf( 'All queries within budget against this dataset: %s ledger rows across %s members.', number_format( $ledger_rows ), number_format( $user_rows ) ) );
 		} else {
 			\WP_CLI::error( "{$failures} query(s) over budget (" . implode( ', ', $failed ) . ') — investigate before shipping to a large site.' );
 		}

@@ -45,9 +45,9 @@ $wb_gam_unique = ! empty( $wb_gam_attrs['uniqueId'] )
 $wb_gam_layout       = in_array( $wb_gam_attrs['layout'] ?? 'floating', array( 'floating', 'sticky-top', 'inline' ), true )
 	? (string) $wb_gam_attrs['layout']
 	: 'floating';
-$wb_gam_position     = in_array( $wb_gam_attrs['position'] ?? 'top-right', array( 'top-right', 'top-left', 'bottom-right', 'bottom-left' ), true )
+$wb_gam_position     = in_array( $wb_gam_attrs['position'] ?? 'bottom-right', array( 'top-right', 'top-left', 'bottom-right', 'bottom-left' ), true )
 	? (string) $wb_gam_attrs['position']
-	: 'top-right';
+	: 'bottom-right';
 $wb_gam_show_level    = ! empty( $wb_gam_attrs['showLevel'] );
 $wb_gam_show_badges   = ! empty( $wb_gam_attrs['showBadges'] );
 $wb_gam_show_streak   = ! empty( $wb_gam_attrs['showStreak'] );
@@ -74,7 +74,6 @@ $wb_gam_classes = array_filter(
 		'wb-gam-status-bar',
 		'wb-gam-status-bar--' . $wb_gam_layout,
 		'wb-gam-status-bar--pos-' . $wb_gam_position,
-		'wb-gam-block-' . $wb_gam_unique,
 		$wb_gam_visibility,
 	)
 );
@@ -105,7 +104,12 @@ BlockHooks::before( 'user-status-bar', $wb_gam_attrs );
 	data-show-streak="<?php echo $wb_gam_show_streak ? '1' : '0'; ?>"
 	data-show-progress="<?php echo $wb_gam_show_progress ? '1' : '0'; ?>">
 
-	<div class="wb-gam-status-bar__inner">
+	<?php
+	// The per-instance design (padding, radius, shadow from the block's settings) belongs to the
+	// pill, the bar's only frame. On the positioning wrapper it drew a second, shadowed band
+	// around the pill.
+	?>
+	<div class="wb-gam-status-bar__inner wb-gam-block-<?php echo esc_attr( $wb_gam_unique ); ?>">
 		<?php if ( $wb_gam_collapsible ) : ?>
 			<button type="button"
 				class="wb-gam-status-bar__toggle"

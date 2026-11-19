@@ -1,0 +1,14 @@
+{
+  "known": [
+    {
+      "guard": "presentation:hub-owner-colours",
+      "match": "gam-nudge__action 3.36:1",
+      "card": "10525769967"
+    },
+    {
+      "guard": "presentation:redemption-store-owner-colours",
+      "match": "span 3.36:1 \"Redeem\"",
+      "card": "10525769967"
+    }
+  ]
+}

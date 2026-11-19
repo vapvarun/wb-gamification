@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.6.7
+Stable tag: 1.6.8
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -19,9 +19,9 @@ The engine awards points automatically when members perform actions on your site
 = Why WB Gamification? =
 
 * **Zero config** - 5 starter templates pre-configure everything. Pick one and go.
-* **Universal** - Works with plain WordPress, BuddyPress, WooCommerce, LearnDash, bbPress, and 5 more plugins. Auto-detects what you have installed.
+* **Universal** - Works with plain WordPress, BuddyPress, WooCommerce, LearnDash, bbPress and 18 more plugins. Auto-detects what you have installed.
 * **Scalable** - Async award pipeline, snapshot-cached leaderboards, object caching everywhere. Built for 100K+ members.
-* **API-first** - 78 REST endpoints, outbound webhooks, WP Abilities API. Mobile apps, headless frontends, and AI agents are first-class consumers. Admin UI is REST-driven internally - what the admin saves is what the API exposes (no parallel form-post surface).
+* **API-first** - 80 REST endpoints, outbound webhooks, WP Abilities API. Mobile apps, headless frontends, and AI agents are first-class consumers. Admin UI is REST-driven internally - what the admin saves is what the API exposes (no parallel form-post surface).
 * **No add-on model** - Every integration, every advanced engagement mechanic, every admin surface ships free. No paid extensions for BuddyPress support, cohort leagues, redemption store, or webhooks.
 
 = Core Features (Free) =
@@ -34,13 +34,13 @@ The engine awards points automatically when members perform actions on your site
 * **Streaks** - Daily activity tracking with grace periods, milestone detection (7, 30, 100, 365 days), and bonus rewards.
 * **Peer Kudos** - Members recognize each other with kudos. Configurable daily limits and point awards for both sender and receiver.
 * **19 Gutenberg Blocks** - Leaderboard, member points, badge showcase, level progress, challenges, streak, top members, kudos feed, year recap, points history, earning guide, hub, redemption store, community challenges, cohort rank, daily bonus, give kudos, submit achievement, user status bar. Every block follows the Wbcom Block Quality Standard (apiVersion 3, per-side spacing × 3 breakpoints, hover/focus states, design tokens, per-instance scoped CSS).
-* **17 Shortcodes** - Every customer-facing block is also available as a shortcode for classic editor and page builders (Elementor, Beaver Builder, Bricks).
-* **REST API** - 78 endpoints across 28 controllers. Full CRUD for all resources. API key authentication for cross-site setups. Admin UI consumes the same REST API as 3rd-party integrations.
+* **18 Shortcodes** - Every customer-facing block is also available as a shortcode for classic editor and page builders (Elementor, Beaver Builder, Bricks).
+* **REST API** - 80 endpoints across 28 controllers. Full CRUD for all resources. API key authentication for cross-site setups. Admin UI consumes the same REST API as 3rd-party integrations.
 * **BuddyPress Integration** - Profile rank display, activity feed events, member directory badges, notification bridge.
-* **Toast Notifications** - Real-time bottom-right popups when members earn points, badges, or level up. 6 notification types with auto-dismiss. Promise-based confirm modals replace native browser dialogs (a11y-friendly).
+* **Toast Notifications** - Real-time popups (bottom-center by default, placement set in Settings > Realtime) when members earn points, badges, or level up. 6 notification types with auto-dismiss. Promise-based confirm modals replace native browser dialogs (a11y-friendly).
 * **Analytics Dashboard** - 6 KPI cards, top actions, top earners, daily points sparkline. Period selector (7/30/90 days).
 * **WP-CLI Commands** - `points award`, `member status`, `actions list`, `logs prune`, `export user`, `qa seed_pages`, `doctor` readiness check, plus a release-zip builder.
-* **Developer Hooks** - 77 action hooks and 95 filter hooks for extending every write path. Every REST endpoint fires `before_*` filters (return WP_Error to abort) and `after_*` actions.
+* **Developer Hooks** - 96 action hooks and 96 filter hooks for extending every write path. Every REST endpoint fires `before_*` filters (return WP_Error to abort) and `after_*` actions.
 * **Cohort Leagues** - Duolingo-style weekly competitions with promotion/demotion percentages and per-cohort leaderboards.
 * **Community Challenges** - Team goals with global progress (Pokemon GO model). Members contribute to a shared counter; everyone earns when the target is hit.
 * **Redemption Store** - Members spend points on rewards. Built-in support for custom rewards (your hook), WooCommerce coupons, and Wbcom Credits SDK.
@@ -54,17 +54,19 @@ The engine awards points automatically when members perform actions on your site
 
 All integrations are auto-detected and require zero configuration. Install the plugin - gamification actions appear automatically.
 
-* **BuddyPress** - Activity updates, comments, friendships, groups, profile completion, reactions, polls, member blog (10 actions)
-* **bbPress** - New topics, replies, resolved topics (3 actions)
-* **WooCommerce** - Orders, first purchase, product reviews, wishlists (4 actions)
-* **LearnDash** - Courses, lessons, topics, quizzes, assignments (5 actions)
-* **LifterLMS** - Courses, lessons, quizzes, achievements, certificates (5 actions)
-* **MemberPress** - Memberships, renewals, first signup (3 actions)
-* **GiveWP** - Donations, first donation, recurring gifts, campaign goals (4 actions)
-* **The Events Calendar** - RSVPs, tickets, check-ins (3 actions)
-* **WPMediaVerse Pro** - Photo uploads, albums, comments, likes, follows, battles, challenges, tournaments (17 actions)
+* **WordPress** - Registration, first login, profile completion, posts, comments (always on)
+* **BuddyPress** - Activity updates, comments, friendships, groups, profile completion, reactions, polls, member blog, photos and messages
+* **bbPress** - New topics, replies, closed (resolved) topics
+* **WooCommerce** - Orders, first purchase, product reviews, wishlists, add to cart
+* **LearnDash** - Courses, lessons, topics, quizzes, assignments, enrollment, groups
+* **LifterLMS** - Courses, lessons, quizzes, enrollment, memberships, achievements, certificates
+* **Tutor LMS** - Courses, lessons, quizzes, enrollment, reviews, questions
+* **MemberPress** - Memberships, renewals, first signup
+* **GiveWP** - Donations, first donation, campaign goals
+* **The Events Calendar** - RSVPs, tickets, check-ins
+* **Wbcom plugins** - BuddyNext, WPMediaVerse, Jetonomy and Jetonomy Pro, Learnomy and Learnomy Pro, Eventonomy and Eventonomy Pro, Listora and Listora Pro, WP Career Board and WP Career Board Pro, WP Sell Services
 
-**Total: 62 gamification actions** across 10 integration manifests.
+How many actions you get depends on the plugins you run: 8 on plain WordPress, up to 126 with every supported plugin active. Settings > Points lists exactly the actions your own site has.
 
 = Roadmap =
 
@@ -105,7 +107,7 @@ Yes. WB Gamification works on any WordPress site. BuddyPress adds social trigger
 
 = How do members see their gamification status? =
 
-Three ways: (1) Automatically on BuddyPress profiles - level name, points, and progress bar appear in the profile header. (2) Via Gutenberg blocks or shortcodes placed on any page. (3) Real-time toast notifications (bottom-right popups) when they earn points or badges.
+Three ways: (1) Automatically on BuddyPress profiles - level name, points, and progress bar appear in the profile header. (2) Via Gutenberg blocks or shortcodes placed on any page. (3) Real-time toast notifications (bottom-center by default) when they earn points or badges.
 
 = Can I customize point values? =
 
@@ -144,6 +146,46 @@ Daily caps, weekly caps and per-action cooldowns are enforced silently. A member
 Since 1.6.4 a badge is private until the member shares it, so links published before the upgrade stop resolving until the member presses Share on their badge board. That is what stops strangers enumerating badge pages by guessing IDs. If you deliberately run an open community and want the old links working again, `wp wb-gamification share grandfather` publishes every existing badge in one pass, and `wp wb-gamification share reset` makes them private again.
 
 == Changelog ==
+
+= 1.6.8 - November 2026 =
+
+Fair earning across every integration: removed content takes its points back, nobody earns from their own content, and the plugin now speaks five languages.
+
+* New      - German, French, Spanish, Italian and Brazilian Portuguese translations, including every block's settings in the editor.
+* New      - Tutor LMS integration: complete a course or lesson, pass a quiz, enrol, review a course and ask a question.
+* New      - LearnDash adds enrol, assignment upload and group completion; LifterLMS adds enrol and membership, and its course, lesson and quiz awards now fire.
+* New      - Setup wizard: a BuddyPress Community starter template.
+* New      - Members choose on their profile whether their rank shows, whether they appear on leaderboards and how they hear about awards.
+* New      - Settings > Points: a Members can submit tick per action; Submit Achievement lists only the actions you opened.
+* New      - Shortcode `[wb_gam_daily_bonus]`, and a Copy button on shared badge links.
+* Improve  - Course, lesson, quiz and similar awards pay once per member per item, however often it is retaken.
+* Improve  - Block design settings now apply on the page: spacing, border, shadow, colours, Hide on device and Show progress bar.
+* Improve  - Every block meets WCAG AA contrast in light and dark mode, including accent-coloured text and buttons.
+* Improve  - Email buttons open the Gamification Hub on the matching panel.
+* Improve  - Activity cards show as one compact card on BuddyPress, BuddyBoss and BuddyNext.
+* Improve  - Members with equal points share a rank on the Leaderboard, Top Members and Cohort Rank blocks.
+* Improve  - Eleven built-in actions that rewarded behaviour owners did not want to pay for were removed; past awards keep their names in history and reports.
+* Improve  - Badges that need a plugin the site does not run, such as BuddyPress badges on a site without BuddyPress, are hidden from members, and the Badge Library marks them Not earnable here.
+* Fix      - Deleting, trashing, rejecting or refunding content takes back the points it earned, and restoring it pays them back once.
+* Fix      - Acting on your own content (comments, votes, bookmarks, reactions, reviews) no longer earns points.
+* Fix      - Content created before this update, or copied by BuddyNext or WPMediaVerse, is never paid a second time.
+* Fix      - Reviews and comments held for moderation pay when they are approved, not when they are submitted.
+* Fix      - WooCommerce: free and unpaid orders no longer pay or use up the first-purchase award, and a refund takes back what that order paid.
+* Fix      - A Learnomy quiz pays once per member, and deleting a group takes back its cover-photo award.
+* Fix      - Reactions pay the amount you set instead of a forced minimum of 5.
+* Fix      - Year Recap names a year with no points and leaves removed content out of its totals.
+* Fix      - Redemption Store rewards save the status, quantity and limit you set.
+* Fix      - Import waits for a run already going in another tab instead of starting a second one.
+* Fix      - Private profiles hide their rank in the members directory, and an unknown and a private profile answer the same way.
+* Fix      - Reward toasts wait while a dialog is open, and the moment card no longer blocks the page.
+* Fix      - A block's own Card background and Accent stay readable in dark mode on Reign, BuddyX and BuddyX Pro, and list rows stay visible on their card.
+* Fix      - Every Gamification admin screen works in a translated admin, and messages from the server show in the admin's own language.
+* Fix      - Community challenges updated through the REST API keep their reward and action, and one created without dates runs for 14 days instead of never counting.
+* Fix      - Webhooks keep the active setting you choose, editing one no longer turns it back on, and a refused address says why.
+* Security - Webhook URLs that point at the server itself or a private network address are refused, and deliveries use WordPress's safe request so they cannot reach internal services.
+* Security - Update packages are checked against their release signature before WordPress installs them, and licence and update checks use the Wbcom update server with automatic fallback.
+* Dev      - New REST routes `GET|POST /members/{id}/preferences` and `GET /issuer` (OpenBadges 3.0 issuer profile).
+* Dev      - New action `wb_gam_render_member_prefs` prints a member's choices form; new filter `wb_gam_profile_publicly_visible`.
 
 = 1.6.7 - October 2026 =
 

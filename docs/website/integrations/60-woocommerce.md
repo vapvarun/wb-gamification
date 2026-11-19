@@ -8,13 +8,15 @@ The WooCommerce integration rewards purchasing behavior and product engagement. 
 |---|---|---|---|
 | `wc_order_completed` | Complete a purchase | 25 | Yes |
 | `wc_first_purchase` | Complete first purchase ever | 50 | No (once only) |
-| `wc_product_reviewed` | Leave a product review | 15 | Yes (1/product/day) |
+| `wc_product_reviewed` | Leave a product review | 15 | Yes (once per review, one a day) |
 | `wc_wishlist_add` | Add a product to wishlist | 5 | Yes (5min cooldown) |
 
 ### Notes
 
-- `wc_first_purchase` fires on the same hook as `wc_order_completed` but checks whether this is the customer's first completed order. It only awards points when exactly one completed order exists for that customer.
-- `wc_product_reviewed` fires on `comment_post` with a guard that checks the post type is `product` and the comment is approved. This prevents double-awarding if you also have the WordPress Core comment action active.
+- `wc_order_completed` pays once per order. Card and other online payments earn when the gateway confirms payment. Cash on delivery, bank transfer and check orders earn when you mark the order **Completed**.
+- `wc_first_purchase` pays at the customer's first confirmed paid order: when it is paid and no other order of theirs has been paid for. A free order (a 100% coupon, a free trial) and a cash-on-delivery order still waiting in **Processing** do not count. If two orders wait for manual payment, the one you confirm first is the first purchase, even if it is the newer one.
+- A free order, such as a free trial or a 100% coupon, earns neither action.
+- `wc_product_reviewed` pays when a review on a `product` is approved, whether that happens when it is posted or later from moderation. Unapproving and approving it again earns nothing more. Guest reviews are not rewarded.
 - `wc_wishlist_add` requires the **YITH WooCommerce Wishlist** plugin. It fires on `yith_wcwl_added_to_wishlist`.
 
 ## Preventing Double Points on Reviews

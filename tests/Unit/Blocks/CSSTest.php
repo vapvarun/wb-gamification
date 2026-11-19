@@ -164,4 +164,30 @@ class CSSTest extends TestCase {
 
 		$this->assertSame( '/* filtered */', $css );
 	}
+
+	public function test_ink_for_picks_the_readable_text_for_a_card(): void {
+		$this->assertSame( '#1a1a2e', CSS::ink_for( '#ffeedd' ) );
+		$this->assertSame( '#1a1a2e', CSS::ink_for( '#fff' ) );
+		$this->assertSame( '#f5f5f7', CSS::ink_for( '#1f1f1f' ) );
+		$this->assertSame( '#f5f5f7', CSS::ink_for( 'rgb(204, 0, 0)' ) );
+		$this->assertSame( '', CSS::ink_for( 'var(--brand)' ) );
+	}
+
+	public function test_light_card_background_pins_dark_text_in_every_mode(): void {
+		$css = CSS::generate( 'c1', array( 'cardBackground' => '#ffeedd' ) );
+
+		$this->assertStringContainsString( '--wb-gam-color-text: #1a1a2e;', $css );
+		$this->assertStringContainsString( '--wb-gam-color-text-muted: color-mix(in srgb, #1a1a2e 84%, #ffeedd);', $css );
+		$this->assertStringContainsString( 'background-color: #ffeedd;', $css );
+		$this->assertSame( 'wb-gam-scheme-light', CSS::get_visibility_classes( array( 'cardBackground' => '#ffeedd' ) ) );
+		$this->assertSame( 'wb-gam-scheme-dark', CSS::get_visibility_classes( array( 'cardBackground' => '#101418' ) ) );
+	}
+
+	public function test_card_background_from_a_css_variable_keeps_the_theme_text(): void {
+		$css = CSS::generate( 'c2', array( 'cardBackground' => 'var(--brand-surface)' ) );
+
+		$this->assertStringContainsString( 'background-color: var(--brand-surface);', $css );
+		$this->assertStringNotContainsString( '--wb-gam-color-text:', $css );
+		$this->assertSame( '', CSS::get_visibility_classes( array( 'cardBackground' => 'var(--brand-surface)' ) ) );
+	}
 }

@@ -60,6 +60,10 @@ if ( $wb_gam_user_id <= 0 ) {
 // when the viewer is the owner / admin. Otherwise zero out the user_id
 // so the block falls through to its empty-state path.
 if ( $wb_gam_user_id > 0 && ! Privacy::can_view_public_profile( $wb_gam_user_id ) ) {
+	// A logged-in viewer who may not see this member's data gets nothing, not a login prompt.
+	if ( is_user_logged_in() ) {
+		return;
+	}
 	$wb_gam_user_id = 0;
 }
 WB_Gam_Block_CSS::add( $wb_gam_unique, $wb_gam_attrs );
@@ -73,17 +77,6 @@ $wb_gam_classes = array_filter(
 	)
 );
 
-$wb_gam_inline = '';
-if ( ! empty( $wb_gam_attrs['accentColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-accent: %s;', sanitize_text_field( (string) $wb_gam_attrs['accentColor'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBackground'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-white: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBackground'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-border: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBorderColor'] ) );
-}
-
 wp_enqueue_style( 'wb-gam-tokens' );
 
 if ( ! $wb_gam_user_id ) {
@@ -91,7 +84,6 @@ if ( ! $wb_gam_user_id ) {
 	$wb_gam_wrapper   = get_block_wrapper_attributes(
 		array(
 			'class' => implode( ' ', $wb_gam_classes ),
-			'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		)
 	);
 	BlockHooks::before( 'level-progress', $wb_gam_attrs );
@@ -148,7 +140,6 @@ if ( ! $wb_gam_level ) {
 	$wb_gam_wrapper   = get_block_wrapper_attributes(
 		array(
 			'class' => implode( ' ', $wb_gam_classes ),
-			'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		)
 	);
 	BlockHooks::before( 'level-progress', $wb_gam_attrs );
@@ -166,7 +157,6 @@ if ( ! $wb_gam_level ) {
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
 		'class' => implode( ' ', $wb_gam_classes ),
-		'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 	)
 );
 

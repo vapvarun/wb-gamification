@@ -3,7 +3,7 @@
  * Plugin Name: WB Gamification
  * Plugin URI:  https://wbcomdesigns.com/
  * Description: Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.
- * Version:     1.6.7
+ * Version:     1.6.8
  * Author:      Wbcom Designs
  * Author URI:  https://wbcomdesigns.com/
  * License:     GPL-2.0+
@@ -33,7 +33,7 @@ if ( defined( 'WB_GAM_VERSION' ) ) {
 // Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-define( 'WB_GAM_VERSION', '1.6.7' );
+define( 'WB_GAM_VERSION', '1.6.8' );
 define( 'WB_GAM_FILE', __FILE__ );
 define( 'WB_GAM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WB_GAM_URL', plugin_dir_url( __FILE__ ) );
@@ -78,26 +78,29 @@ require_once WB_GAM_PATH . 'libs/woocommerce/action-scheduler/action-scheduler.p
 // item_id 1662147 = WB Gamification on EDD.
 const WB_GAM_LICENSE_PRESET_KEY = 'wbcomfree6e2a9c1d7b4f3c8a0e5d9b2f1a7c6e11';
 const WB_GAM_EDD_ITEM_ID        = 1662147;
-const WB_GAM_EDD_STORE_URL      = 'https://wbcomdesigns.com';
+// Licence and update host; the SDK falls back to https://wbcomdesigns.com when it cannot be reached.
+const WB_GAM_LICENCE_HOST = 'https://updates.wbcomdesigns.com';
+
 
 add_action(
 	'edd_sl_sdk_registry',
 	static function ( $registry ): void {
 		$registry->register(
 			array(
-				'id'      => 'wb-gamification',
-				'url'     => WB_GAM_EDD_STORE_URL,
-				'item_id' => WB_GAM_EDD_ITEM_ID,
-				'version' => WB_GAM_VERSION,
-				'file'        => WB_GAM_FILE,
-				'license'     => WB_GAM_LICENSE_PRESET_KEY,
+				'id'           => 'wb-gamification',
+				'url'          => WB_GAM_LICENCE_HOST,
+				'fallback_url' => 'https://wbcomdesigns.com',
+				'item_id'      => WB_GAM_EDD_ITEM_ID,
+				'version'      => WB_GAM_VERSION,
+				'file'         => WB_GAM_FILE,
+				'license'      => WB_GAM_LICENSE_PRESET_KEY,
 				// The SDK ignores `license` and reads the key from an option,
 				// "{id}_license_key" by default. LicenseActivator stores the
 				// preset in `wb_gam_license_key`, so without this the SDK found
 				// no key and never built the updater: sites were not offered
 				// updates (8 of 382 checking, Oct 2026). Must match
 				// LicenseActivator::KEY_OPTION.
-				'option_name' => 'wb_gam_license_key',
+				'option_name'  => 'wb_gam_license_key',
 			)
 		);
 	}
@@ -122,7 +125,6 @@ add_action(
 // Licensing only ever authorises update downloads here — it gates no feature —
 // so a member-facing site keeps working exactly as before.
 if ( file_exists( WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php' )
-	&& file_exists( WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/vendor/autoload.php' )
 	&& file_exists( WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/src/Versions.php' ) ) {
 	require_once WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php';
 } elseif ( is_admin() ) {
@@ -133,6 +135,24 @@ if ( file_exists( WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/edd-sl-s
 				. esc_html__( 'WB Gamification: the bundled licensing and update SDK is incomplete, so automatic updates are turned off. Reinstall the plugin from a complete package to restore them. Every other feature works normally.', 'wb-gamification' )
 				. '</p></div>';
 		}
+	);
+}
+
+// Package Signatures (libs/package-signatures, vapvarun/package-signatures): checks that each update package
+// carries the release signature before WordPress installs it. Warn mode: the result is logged (option
+// package_signatures_log) and the update installs either way. The product name is the STORE slug the release
+// is signed with, never the repo name.
+if ( file_exists( WB_GAM_PATH . 'libs/package-signatures/package-signatures.php' ) ) {
+	require_once WB_GAM_PATH . 'libs/package-signatures/package-signatures.php';
+	package_signatures_register(
+		array(
+			'product'  => 'wordpress-gamification-plugin',
+			'plugin'   => plugin_basename( WB_GAM_FILE ),
+			'hosts'    => array( 'wbcomdesigns.com', 'updates.wbcomdesigns.com' ),
+			'keys'     => array( 'wbcom-2026-1' => 'kr+2P1WqRbENpZw0BXZmwFnA2tMLi6MlHbBa6jB13U4=' ),
+			'mode'     => 'warn',
+			'fallback' => 'https://wbcomdesigns.com/package-signatures/{product}/{version}/',
+		)
 	);
 }
 
@@ -369,6 +389,23 @@ final class WB_Gamification {
 		add_action( 'bp_loaded', array( DirectoryIntegration::class, 'init' ) );
 		add_action( 'bp_loaded', array( BPActivity::class, 'init' ) );
 
+		// Without BuddyPress (BuddyNext alone), the stream posters still run so the
+		// wb_gam_activity_post action fires for the host feed; each poster returns
+		// before any BuddyPress call when bp_activity_add() is missing.
+		add_action(
+			'plugins_loaded',
+			static function (): void {
+				if ( function_exists( 'buddypress' ) ) {
+					return;
+				}
+				\WBGam\BuddyPress\Stream\BadgeStream::init();
+				\WBGam\BuddyPress\Stream\LevelStream::init();
+				\WBGam\BuddyPress\Stream\KudosStream::init();
+				\WBGam\BuddyPress\Stream\ChallengeStream::init();
+			},
+			20
+		);
+
 		if ( is_admin() ) {
 			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 			// Lucide font is required on every admin screen so the WB Gam menu
@@ -427,15 +464,7 @@ final class WB_Gamification {
 			return;
 		}
 
-		global $wpdb;
-		$wpdb->replace(
-			$wpdb->prefix . 'wb_gam_member_prefs',
-			array(
-				'user_id'           => $uid,
-				'notification_mode' => 'none',
-			),
-			array( '%d', '%s' )
-		);
+		\WBGam\Engine\MemberPrefs::set( $uid, array( 'notification_mode' => 'none' ) );
 
 		wp_safe_redirect( add_query_arg( 'wb_gam_unsub_done', '1', home_url() ) );
 		exit;
@@ -621,6 +650,7 @@ final class WB_Gamification {
 			array( 'wb-gam-tokens' ),
 			WB_GAM_VERSION
 		);
+		wp_register_style( 'wb-gam-device-visibility', WB_GAM_URL . 'src/shared/device-visibility.css', array(), WB_GAM_VERSION );
 
 		// Register but don't enqueue — blocks and shortcodes will enqueue as needed.
 		wp_register_style(
@@ -1054,6 +1084,12 @@ register_deactivation_hook(
 		wp_clear_scheduled_hook( \WBGam\Engine\SideEffectDispatcher::RECONCILE_CRON );
 		wp_clear_scheduled_hook( \WBGam\Engine\IntelligenceProjector::COMPUTE_CRON );
 		wp_clear_scheduled_hook( \WBGam\Engine\NotificationBridge::PRUNE_CRON );
+
+		// The 1.6.8 activity-card backfill runs through Action Scheduler, falling back to WP-Cron.
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			as_unschedule_all_actions( \WBGam\BuddyPress\Stream\Backfiller::HOOK );
+		}
+		wp_clear_scheduled_hook( \WBGam\BuddyPress\Stream\Backfiller::HOOK );
 
 		flush_rewrite_rules();
 	}

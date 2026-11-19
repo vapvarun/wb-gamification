@@ -55,17 +55,6 @@ $wb_gam_show_avatars = ! isset( $wb_gam_attrs['show_avatars'] ) || ! empty( $wb_
 WB_Gam_Block_CSS::add( $wb_gam_unique, $wb_gam_attrs );
 $wb_gam_visibility = WB_Gam_Block_CSS::get_visibility_classes( $wb_gam_attrs );
 
-$wb_gam_inline = '';
-if ( ! empty( $wb_gam_attrs['accentColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-accent: %s;', sanitize_text_field( (string) $wb_gam_attrs['accentColor'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBackground'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-white: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBackground'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-border: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBorderColor'] ) );
-}
-
 $wb_gam_classes = array_filter( array( 'wb-gam-leaderboard', 'wb-gam-block-' . $wb_gam_unique, $wb_gam_visibility ) );
 
 wp_enqueue_style( 'wb-gam-tokens' );
@@ -116,10 +105,15 @@ $wb_gam_board_sig = sprintf(
 	$wb_gam_unique
 );
 
+$wb_gam_ordinals = array(
+	1 => __( '1st place', 'wb-gamification' ),
+	2 => __( '2nd place', 'wb-gamification' ),
+	3 => __( '3rd place', 'wb-gamification' ),
+);
+
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
 		'class'                    => implode( ' ', $wb_gam_classes ),
-		'style'                    => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		'data-wb-gam-board'        => 'leaderboard',
 		'data-wb-gam-board-sig'    => $wb_gam_board_sig,
 		'data-wb-gam-period'       => $wb_gam_period,
@@ -129,13 +123,13 @@ $wb_gam_wrapper = get_block_wrapper_attributes(
 		'data-wb-gam-point-type'   => (string) ( $wb_gam_attrs['pointType'] ?? '' ),
 		'data-wb-gam-points-label' => $wb_gam_points_label,
 		'data-wb-gam-points-label-one' => $wb_gam_points_one,
-		// Singular/plural badge-count templates (with a %d placeholder) so the
-		// live heartbeat re-render shows a translated label instead of hardcoded
-		// English. Kept as two forms to match the classic script's 1-vs-many test.
-		/* translators: %d: number of badges earned. */
-		'data-wb-gam-badges-one'   => __( '%d badge', 'wb-gamification' ),
-		/* translators: %d: number of badges earned. */
-		'data-wb-gam-badges-other' => __( '%d badges', 'wb-gamification' ),
+		// Badge-count label for the live heartbeat re-render. A label form with one
+		// number has no plural, so JS never applies English 1-vs-many rules.
+		/* translators: %d: number of badges. */
+		'data-wb-gam-badges-label' => __( 'Badges: %d', 'wb-gamification' ),
+		// Podium captions for the live re-render, so a rank that changes keeps its matching caption.
+		'data-wb-gam-ordinals'     => (string) wp_json_encode( array_values( $wb_gam_ordinals ) ),
+		'data-wb-gam-rank-label'   => __( 'Rank', 'wb-gamification' ),
 	)
 );
 
@@ -166,14 +160,7 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 			\WBGam\Engine\MemberUrl::prime( array_column( $wb_gam_rows, 'user_id' ) );
 			foreach ( $wb_gam_rows as $wb_gam_row ) :
 				$wb_gam_rank_num   = (int) ( $wb_gam_row['rank'] ?? 0 );
-				$wb_gam_rank_label = '';
-				if ( 1 === $wb_gam_rank_num ) {
-					$wb_gam_rank_label = __( '1st place', 'wb-gamification' );
-				} elseif ( 2 === $wb_gam_rank_num ) {
-					$wb_gam_rank_label = __( '2nd place', 'wb-gamification' );
-				} elseif ( 3 === $wb_gam_rank_num ) {
-					$wb_gam_rank_label = __( '3rd place', 'wb-gamification' );
-				}
+				$wb_gam_rank_label = $wb_gam_ordinals[ $wb_gam_rank_num ] ?? '';
 				$wb_gam_rank_aria = $wb_gam_rank_label ? $wb_gam_rank_label : __( 'Rank', 'wb-gamification' );
 				?>
 				<li class="wb-gam-leaderboard__entry wb-gam-rank-<?php echo (int) $wb_gam_rank_num; ?>"
@@ -244,8 +231,8 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 						<span class="wb-gam-leaderboard__badges-count">
 							<?php
 							printf(
-								/* translators: %d: number of badges earned. */
-								esc_html( _n( '%d badge', '%d badges', max( 1, $wb_gam_badge_count ), 'wb-gamification' ) ),
+								/* translators: %d: number of badges. */
+								esc_html__( 'Badges: %d', 'wb-gamification' ),
 								(int) $wb_gam_badge_count
 							);
 							?>
@@ -282,7 +269,7 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 							<?php
 							printf(
 								/* translators: %s: points needed to move up one rank, e.g. "3 Points". */
-								esc_html__( '%s from the next rank', 'wb-gamification' ),
+								esc_html__( '%s to the next rank', 'wb-gamification' ),
 								esc_html( $wb_gam_pt_service->format( (int) $wb_gam_my_rank['points_to_next'], $wb_gam_resolved_pt ) )
 							);
 							?>

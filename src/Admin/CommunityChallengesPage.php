@@ -73,8 +73,8 @@ final class CommunityChallengesPage {
 			$hook_suffix,
 			array(
 				'admin_page_wb-gam-community-challenges',
-				'gamification_page_wb-gam-community-challenges',
-				'gamification_page_wb-gam-challenges',
+				get_plugin_page_hookname( 'wb-gam-community-challenges', 'wb-gamification' ),
+				get_plugin_page_hookname( 'wb-gam-challenges', 'wb-gamification' ),
 			),
 			true
 		) || 'wb-gam-community-challenges' === $page;
@@ -93,16 +93,6 @@ final class CommunityChallengesPage {
 			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
-		);
-		// Shared confirm/cancel modal button labels — confirmAction() falls back
-		// to these when a caller doesn't pass its own confirmText/cancelText.
-		wp_localize_script(
-			'wb-gam-admin-rest-utils',
-			'wbGamAdminRestI18n',
-			array(
-				'confirm' => __( 'Confirm', 'wb-gamification' ),
-				'cancel'  => __( 'Cancel', 'wb-gamification' ),
-			)
 		);
 		wp_enqueue_script(
 			'wb-gam-admin-rest-form',
@@ -258,6 +248,7 @@ final class CommunityChallengesPage {
 					$cc_rest_path = $editing ? '/community-challenges/' . (int) $editing : '/community-challenges';
 					?>
 					<form
+						method="post"
 						data-wb-gam-rest-form="wbGamCommunityChallengesSettings"
 						data-wb-gam-rest-method="POST"
 						data-wb-gam-rest-path="<?php echo esc_attr( $cc_rest_path ); ?>"
@@ -376,10 +367,7 @@ final class CommunityChallengesPage {
 						<tbody>
 						<?php foreach ( $challenges as $c ) : ?>
 							<?php
-							$action_label = '*' === $c['target_action'] ? __( 'Any action', 'wb-gamification' ) : $c['target_action'];
-							if ( '*' !== $c['target_action'] && isset( $actions[ $c['target_action'] ]['label'] ) ) {
-								$action_label = $actions[ $c['target_action'] ]['label'];
-							}
+							$action_label = '*' === $c['target_action'] ? __( 'Any action', 'wb-gamification' ) : Registry::label_for( (string) $c['target_action'] );
 							$progress     = (int) $c['global_progress'];
 							$target       = max( 1, (int) $c['target_count'] );
 							$pct          = min( 100, round( ( $progress / $target ) * 100 ) );
@@ -404,7 +392,7 @@ final class CommunityChallengesPage {
 								<td><?php echo esc_html( $c['bonus_points'] ); ?></td>
 								<td>
 									<span class="wbgam-pill wbgam-pill--<?php echo esc_attr( $status_class ); ?>">
-										<?php echo esc_html( ucfirst( $c['status'] ) ); ?>
+										<?php echo esc_html( ChallengeManagerPage::status_label( (string) $c['status'] ) ); ?>
 									</span>
 								</td>
 								<td>

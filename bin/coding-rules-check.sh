@@ -537,6 +537,24 @@ check_animations_respect_reduced_motion() {
     fi
 }
 
+# Rule 18: admin screens never compare a hard-coded submenu hook name.
+#
+# WordPress builds a submenu hook from the parent menu's TITLE, so in a translated admin
+# "gamification_page_wb-gam-webhooks" becomes e.g. "ludification_page_wb-gam-webhooks" (French).
+# A literal compare then never matches: the screen's scripts never load and its REST forms fall
+# back to a browser GET (data in the URL). Every Gamification submenu screen was affected in
+# 1.6.8 QA. Use get_plugin_page_hookname( $slug, 'wb-gamification' ) instead.
+check_no_literal_submenu_hook() {
+    local hits
+    hits=$(grep -rnE "['\"]gamification_page_" src includes integrations 2>/dev/null | grep -vE "^[^:]+:[0-9]+:\s*(//|\*|#)" || true)
+    if [ -n "$hits" ]; then
+        violation "Rule 18 — literal submenu hook name (breaks in translated admin); use get_plugin_page_hookname():
+$hits"
+    else
+        ok "Rule 18 — no literal submenu hook names"
+    fi
+}
+
 check_no_native_cap_check_for_plugin_abilities
 check_unauthenticated_rest_allowlist
 check_public_routes_gate_user_data
@@ -551,6 +569,7 @@ check_no_raw_post_to_update_option
 check_blocks_have_empty_state
 check_fetch_has_timeout
 check_animations_respect_reduced_motion
+check_no_literal_submenu_hook
 
 echo ""
 COUNT=$(violations_count)

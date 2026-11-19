@@ -12,6 +12,11 @@
 	font-weight: 600;
 }
 
+/* The composer sits above the list (or the empty state); keep them apart. */
+.wb-gam-kudos-feed .wb-gam-give-kudos {
+	margin-block-end: var(--wb-gam-space-lg, 24px);
+}
+
 .wb-gam-kudos-feed__list {
 	list-style: none;
 	margin: 0;
@@ -55,13 +60,34 @@
 	text-decoration: underline;
 }
 
+.wb-gam-kudos-feed__to {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	min-width: 0;
+}
+
+.wb-gam-kudos-feed__to .wb-gam-kudos-feed__receiver {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
 .wb-gam-kudos-feed__arrow {
-	color: var(--wb-gam-primary);
+	color: var(--wb-gam-primary-text);
 	font-size: 1rem;
 	flex-shrink: 0;
 }
 
-.wb-gam-kudos-feed__message {
+/* The arrow points from giver to receiver, so it turns round in right-to-left. */
+[dir="rtl"] .wb-gam-kudos-feed__arrow {
+	display: inline-block;
+	transform: scaleX(-1);
+}
+
+/* Two classes, and no background: Reign styles `q` in dark mode with its own panel, which on an owner's
+ * light card put dark text on a dark quote panel (1.20:1). The left rule below is this quote's styling. */
+.wb-gam-kudos-feed .wb-gam-kudos-feed__message {
+	background: none;
 	flex-basis: 100%;
 	font-size: 0.875rem;
 	font-style: italic;

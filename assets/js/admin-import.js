@@ -144,17 +144,22 @@
 		var detail = el( 'p', 'wb-gam-import__note' );
 		var alert = el( 'div', 'wb-gam-import__alert' );
 		alert.hidden = true;
+		// A plain note that paint() leaves alone (it rebuilds the alert on every poll).
+		var notice = el( 'p', 'wb-gam-import__note' );
+		notice.hidden = true;
 		var result = el( 'div', 'wb-gam-import__result-body' );
 		panel.appendChild( status );
 		panel.appendChild( bar );
 		panel.appendChild( detail );
 		panel.appendChild( alert );
+		panel.appendChild( notice );
 		panel.appendChild( result );
 		box.appendChild( panel );
 
 		var timer = 0;
 		var delay = POLL_MIN_MS;
 		var finished = false;
+		var pumping = false;
 
 		function phaseLabel( r ) {
 			var labels = {
@@ -191,13 +196,16 @@
 				alert.hidden = false;
 				var message = r.status === 'failed'
 					? fmt( t( 'failed', 'The import paused at its last checkpoint: %1$s' ), [ r.error || '' ] )
-					: t( 'stalled', 'The background queue has stopped moving. Resume to continue from where it stopped. If this keeps happening, WP-Cron may be disabled: run the import from WP-CLI with --sync.' );
+					: t( 'stalled', 'The background queue is not running, so the import cannot move on its own. WP-Cron may be disabled or loopback requests blocked on this site. Run it in this window (keep the tab open), or resume it in the background once the queue works.' );
 				alert.appendChild( el( 'p', 'wb-gam-import__warning', message ) );
 				var resume = el( 'button', 'button button-primary', t( 'resume', 'Resume import' ) );
 				resume.type = 'button';
 				resume.addEventListener( 'click', function () {
 					resume.disabled = true;
 					api.apiFetch( 'POST', '/import/' + slug + '/resume', {}, settings ).then( function ( res ) {
+						if ( lateClick( res ) ) {
+							return;
+						}
 						if ( ! res.ok ) {
 							resume.disabled = false;
 							alert.appendChild( el( 'p', 'wb-gam-import__bad', errorText( res ) ) );
@@ -208,6 +216,18 @@
 					} );
 				} );
 				alert.appendChild( resume );
+
+				// The queue is not running: drive the pages from this tab, one request per page.
+				var here = el( 'button', 'button', t( 'runHere', 'Run it in this window' ) );
+				here.type = 'button';
+				here.addEventListener( 'click', function () {
+					here.disabled = true;
+					resume.disabled = true;
+					window.clearTimeout( timer );
+					pumping = true;
+					pump();
+				} );
+				alert.appendChild( here );
 			}
 
 			if ( r.status === 'complete' ) {
@@ -246,7 +266,61 @@
 			} );
 		}
 
+		/**
+		 * A click that lands after the run finished, or after another tab or the queue picked it
+		 * up again, is not a failure: say so plainly and show the run as it is now.
+		 *
+		 * @param {Object} res apiFetch result.
+		 * @return {boolean} True when the reply was handled here.
+		 */
+		function lateClick( res ) {
+			var code = ! res.ok && res.data && res.data.code;
+			if ( 'wb_gam_import_nothing_to_resume' !== code && 'wb_gam_import_running' !== code ) {
+				return false;
+			}
+			pumping = false;
+			notice.textContent = 'wb_gam_import_running' === code
+				? t( 'alreadyRunning', 'This import is already running. Showing its progress.' )
+				: t( 'alreadyFinished', 'This import has already finished.' );
+			notice.hidden = false;
+			delay = POLL_MIN_MS;
+			schedule( 0 );
+			return true;
+		}
+
+		function pump() {
+			api.apiFetch( 'POST', '/import/' + slug + '/resume', { here: true }, settings ).then( function ( res ) {
+				if ( lateClick( res ) ) {
+					return;
+				}
+				if ( ! res.ok ) {
+					pumping = false;
+					alert.hidden = false;
+					alert.appendChild( el( 'p', 'wb-gam-import__bad', errorText( res ) ) );
+					return;
+				}
+				paint( res.data );
+				if ( isActive( res.data.status ) ) {
+					// No page ran here (another tab or the queue holds the lock): wait before asking
+					// again instead of hammering the server. The other tab moves seq on, so only the
+					// server's `ran` says whether this request did the work.
+					if ( ! res.data.ran ) {
+						timer = window.setTimeout( pump, POLL_MIN_MS );
+					} else {
+						pump();
+					}
+					return;
+				}
+				pumping = false;
+				finished = true;
+				done( res.data );
+			} );
+		}
+
 		function schedule( ms ) {
+			if ( pumping ) {
+				return;
+			}
 			window.clearTimeout( timer );
 			timer = window.setTimeout( step, ms );
 		}

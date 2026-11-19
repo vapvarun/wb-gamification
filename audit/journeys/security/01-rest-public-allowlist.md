@@ -37,6 +37,7 @@ Each `GET` must return 200 with a JSON body. List taken from `audit/ROLE_MATRIX.
 | `/wb-gamification/v1/openapi.json` | 200 — OpenAPI 3.0 spec, valid JSON |
 | `/wb-gamification/v1/redemptions/items` | 200 — redemption catalog |
 | `/wb-gamification/v1/kudos` | 200 — public kudos feed |
+| `/wb-gamification/v1/issuer` | 200 — OpenBadges issuer Profile (site name and URL only); every credential's `issuer.id` |
 
 For each: `curl -fsS $SITE_URL/wp-json{route}` returns 200 and parseable JSON.
 

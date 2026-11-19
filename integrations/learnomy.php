@@ -18,6 +18,17 @@ if ( ! defined( 'LEARNOMY_VERSION' ) && ! class_exists( '\\Learnomy\\Plugin' ) )
 	return array();
 }
 
+// A review pays once it is published: at once when Learnomy auto-approves reviews, otherwise when a
+// moderator approves it. Learnomy fires learnomy_review_submitted for pending reviews too.
+$wb_gam_learnomy_review_published = static function ( $review_id ): void {
+	$review = class_exists( '\Learnomy\Models\Review' ) ? \Learnomy\Models\Review::find( (int) $review_id ) : null;
+	if ( $review && 'approved' === (string) $review->status ) {
+		do_action( 'wb_gam_learnomy_review_published', (int) $review_id, (int) $review->user_id, (int) $review->course_id );
+	}
+};
+add_action( 'learnomy_review_submitted', $wb_gam_learnomy_review_published );
+add_action( 'learnomy_review_approved', $wb_gam_learnomy_review_published );
+
 return array(
 	'plugin'   => 'Learnomy',
 	'version'  => '1.0.0',
@@ -38,6 +49,7 @@ return array(
 					'course_id' => $course_id,
 				);
 			},
+			'permanent'         => 'A completion. Learnomy resets progress only as an admin repair.',
 			'default_points'    => 10,
 			'category'          => 'learning',
 			'icon'              => 'icon-book-open',
@@ -49,7 +61,7 @@ return array(
 		array(
 			'id'                => 'learnomy_quiz_passed',
 			'label'             => static fn(): string => __( 'Pass a quiz', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded when a member passes a quiz. Fires only on a passing attempt (failed attempts award nothing); cooldown limits retake farming.', 'wb-gamification' ),
+			'description'       => static fn(): string => __( 'Awarded once per quiz when a member passes it. Failed attempts and retakes award nothing.', 'wb-gamification' ),
 			// Free fires: do_action( 'learnomy_quiz_passed', int $attempt_id, int $user_id, int $quiz_id, float $score ) - score is a percentage.
 			'hook'              => 'learnomy_quiz_passed',
 			'user_callback'     => function ( int $attempt_id, int $user_id, int $quiz_id, float $score = 0 ): int {
@@ -61,6 +73,8 @@ return array(
 					'score'   => $score,
 				);
 			},
+			'permanent'         => 'A completion. Learnomy resets progress only as an admin repair.',
+			'once_per_object'   => static fn( int $attempt_id, int $user_id, int $quiz_id ): int => \WBGam\Engine\Registry::object_key( $user_id, 'quiz', $quiz_id ),
 			'default_points'    => 25,
 			'category'          => 'learning',
 			'icon'              => 'icon-circle-check',
@@ -84,6 +98,7 @@ return array(
 					'course_id'     => $course_id,
 				);
 			},
+			'permanent'         => 'A completion. Learnomy resets progress only as an admin repair.',
 			'default_points'    => 100,
 			'category'          => 'learning',
 			'icon'              => 'icon-award',
@@ -106,6 +121,13 @@ return array(
 					'source'    => $source,
 				);
 			},
+			'once_per_object'   => static fn( int $enrollment_id, int $user_id, int $course_id ): int => $course_id > 0 ? \WBGam\Engine\Registry::object_key( $user_id, $course_id ) : 0,
+			// Per member and course: unenrolling or losing access takes it back; enrolling again pays again.
+			// An enrolment that simply expires ran its course and keeps its points.
+			'reverse_on'        => array(
+				'learnomy_student_unenrolled' => static fn( $enrollment_id, $user_id, $course_id, $access_remains = false ): int => $access_remains ? 0 : \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $course_id ),
+				'learnomy_access_revoked'     => static fn( $enrollment_id, $user_id, $course_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $course_id ),
+			),
 			'default_points'    => 5,
 			'category'          => 'learning',
 			'icon'              => 'icon-log-in',
@@ -131,6 +153,11 @@ return array(
 					'course_id'      => $course_id,
 				);
 			},
+			'once_per_object'   => static fn( int $certificate_id ): int => $certificate_id,
+			// A revoked certificate takes its points back; one that expires keeps them.
+			'reverse_on'        => array(
+				'learnomy_certificate_revoked' => static fn( $certificate_id ): int => (int) $certificate_id,
+			),
 			'default_points'    => 50,
 			'category'          => 'learning',
 			'icon'              => 'icon-file-badge',
@@ -141,36 +168,32 @@ return array(
 		array(
 			'id'                => 'learnomy_review_submitted',
 			'label'             => static fn(): string => __( 'Review a course', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded when a member writes a course review. Cooldown limits review farming.', 'wb-gamification' ),
-			// Free fires: do_action( 'learnomy_review_submitted', int $review_id, int $user_id, int $course_id ).
-			'hook'              => 'learnomy_review_submitted',
+			'description'       => static fn(): string => __( 'Awarded when a member\'s course review is published (approved). Cooldown limits review farming.', 'wb-gamification' ),
+			// Fires: the bridge above, ( int $review_id, int $user_id, int $course_id ), once the review is approved.
+			'hook'              => 'wb_gam_learnomy_review_published',
 			'user_callback'     => function ( int $review_id, int $user_id, int $course_id ): int {
 				return $user_id;
 			},
 			'metadata_callback' => function ( int $review_id, int $user_id, int $course_id ): array {
 				return array( 'course_id' => $course_id );
 			},
+			// Once per member and course while the review is published (so a review deleted and written
+			// again can never pay twice; Learnomy fires no hook on delete): rejected or marked spam takes
+			// the points back, approved again gives them back.
+			'once_per_object'   => static fn( int $review_id, int $user_id, int $course_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $course_id ),
+			'reverse_on'        => array(
+				'learnomy_review_rejected'    => static fn( $review_id, $course_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $course_id ),
+				'learnomy_review_marked_spam' => static fn( $review_id, $course_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $course_id ),
+			),
+			'restore_on'        => array(
+				'learnomy_review_approved' => static fn( $review_id, $course_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $course_id ),
+			),
 			'default_points'    => 8,
 			'category'          => 'learning',
 			'icon'              => 'icon-star',
 			'repeatable'        => true,
 			'async'             => false,
 			'cooldown'          => 300,
-		),
-
-		array(
-			'id'             => 'learnomy_instructor_application',
-			'label'          => static fn(): string => __( 'Apply to teach', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded once when a member applies to become an instructor.', 'wb-gamification' ),
-			// Free fires: do_action( 'learnomy_instructor_application_submitted', int $application_id, int $user_id ).
-			'hook'           => 'learnomy_instructor_application_submitted',
-			'user_callback'  => function ( int $application_id, int $user_id ): int {
-				return $user_id;
-			},
-			'default_points' => 5,
-			'category'       => 'learning',
-			'icon'           => 'icon-user-plus',
-			'repeatable'     => false,
 		),
 
 	),

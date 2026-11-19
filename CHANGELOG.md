@@ -6,6 +6,58 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [1.6.8] - 2026-11-18
+
+Fair earning across every integration: removed content takes its points back, nobody earns from their own content, and the plugin now speaks five languages.
+
+### Added
+
+- German, French, Spanish, Italian and Brazilian Portuguese translations, including every block's settings in the editor.
+- Tutor LMS integration: complete a course or lesson, pass a quiz, enrol, review a course and ask a question.
+- LearnDash adds enrol, assignment upload and group completion; LifterLMS adds enrol and membership, and its course, lesson and quiz awards now fire.
+- Setup wizard: a BuddyPress Community starter template.
+- Members choose on their profile whether their rank shows, whether they appear on leaderboards and how they hear about awards.
+- Settings > Points: a Members can submit tick per action; Submit Achievement lists only the actions you opened.
+- Shortcode `[wb_gam_daily_bonus]`, and a Copy button on shared badge links.
+- New REST routes `GET|POST /members/{id}/preferences` and `GET /issuer` (OpenBadges 3.0 issuer profile).
+- New action `wb_gam_render_member_prefs` prints a member's choices form; new filter `wb_gam_profile_publicly_visible`.
+
+### Changed
+
+- Course, lesson, quiz and similar awards pay once per member per item, however often it is retaken.
+- Block design settings now apply on the page: spacing, border, shadow, colours, Hide on device and Show progress bar.
+- Every block meets WCAG AA contrast in light and dark mode, including accent-coloured text and buttons.
+- Email buttons open the Gamification Hub on the matching panel.
+- Activity cards show as one compact card on BuddyPress, BuddyBoss and BuddyNext.
+- Members with equal points share a rank on the Leaderboard, Top Members and Cohort Rank blocks.
+- Eleven built-in actions that rewarded behaviour owners did not want to pay for were removed; past awards keep their names in history and reports.
+- Badges that need a plugin the site does not run, such as BuddyPress badges on a site without BuddyPress, are hidden from members, and the Badge Library marks them Not earnable here.
+
+
+### Fixed
+
+- Deleting, trashing, rejecting or refunding content takes back the points it earned, and restoring it pays them back once.
+- Acting on your own content (comments, votes, bookmarks, reactions, reviews) no longer earns points.
+- Content created before this update, or copied by BuddyNext or WPMediaVerse, is never paid a second time.
+- Reviews and comments held for moderation pay when they are approved, not when they are submitted.
+- WooCommerce: free and unpaid orders no longer pay or use up the first-purchase award, and a refund takes back what that order paid.
+- A Learnomy quiz pays once per member, and deleting a group takes back its cover-photo award.
+- Reactions pay the amount you set instead of a forced minimum of 5.
+- Year Recap names a year with no points and leaves removed content out of its totals.
+- Redemption Store rewards save the status, quantity and limit you set.
+- Import waits for a run already going in another tab instead of starting a second one.
+- Private profiles hide their rank in the members directory, and an unknown and a private profile answer the same way.
+- Reward toasts wait while a dialog is open, and the moment card no longer blocks the page.
+- A block's own Card background and Accent stay readable in dark mode on Reign, BuddyX and BuddyX Pro, and list rows stay visible on their card.
+- Every Gamification admin screen works in a translated admin, and messages from the server show in the admin's own language.
+- Community challenges updated through the REST API keep their reward and action, and one created without dates runs for 14 days instead of never counting.
+- Webhooks keep the active setting you choose, editing one no longer turns it back on, and a refused address says why.
+
+### Security
+
+- Webhook URLs that point at the server itself or a private network address are refused, and deliveries use WordPress's safe request so they cannot reach internal services.
+- Update packages are checked against their release signature before WordPress installs them, and licence and update checks use the Wbcom update server with automatic fallback.
+
 ## [1.6.6] - 2026-10-09
 
 ### Added

@@ -81,7 +81,12 @@ final class MemberData {
 	 * @var string[]
 	 */
 	private const USER_META_KEYS = array(
+		'wb_gam_pr_best_day',
 		'wb_gam_pr_best_week',
+		'wb_gam_pr_best_month',
+		'wb_gam_pr_run_day',
+		'wb_gam_pr_run_week',
+		'wb_gam_pr_run_month',
 		'wb_gam_login_streak',
 		'wb_gam_login_streak_max',
 		'wb_gam_login_last_award',
@@ -171,6 +176,9 @@ final class MemberData {
 	public static function init(): void {
 		add_action( 'deleted_user', array( __CLASS__, 'on_user_deleted' ), 10, 1 );
 		add_action( 'wpmu_delete_user', array( __CLASS__, 'on_user_deleted' ), 10, 1 );
+		// Both fire before WordPress deletes the member's content: no reversal rows for a ledger about to go.
+		add_action( 'delete_user', array( PointsEngine::class, 'skip_reversals_for' ), 10, 1 );
+		add_action( 'wpmu_delete_user', array( PointsEngine::class, 'skip_reversals_for' ), 9, 1 );
 	}
 
 	/**

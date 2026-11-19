@@ -301,7 +301,7 @@ final class NotificationBridge {
 		}
 
 		// The ONLY reasons a member may ever be shown. An engine-internal veto (`sandboxed`,
-		// `self_action`, `pre_change_veto`, `excluded`) describes a decision the SITE made about the
+		// `not_eligible`, `pre_change_veto`, `excluded`) describes a decision the SITE made about the
 		// member -- it is not feedback, and it is not the member's business.
 		//
 		// 1.6.3 promised exactly this in its docblock ("never eligible regardless of this filter")
@@ -1251,6 +1251,7 @@ final class NotificationBridge {
 	 * @return array Payloads to deliver.
 	 */
 	private static function summarize( int $user_id, array $events, bool $truncated ): array {
+		$events  = self::latest_moments( $events );
 		$moments = array();
 		$toasts  = array();
 		foreach ( $events as $event ) {
@@ -1321,6 +1322,46 @@ final class NotificationBridge {
 		);
 
 		return array_merge( $moments, array( $summary ) );
+	}
+
+	/**
+	 * Keep only the moment that still matters where a newer one supersedes the older.
+	 *
+	 * A member who climbed Member then Contributor while away was shown "Level up / Member" and
+	 * then "Level up / Contributor", six seconds each; four levels meant 24 seconds of stale
+	 * cards. Only climbs are queued, so the newest level_up is the highest level reached; the
+	 * streak card worth showing is the longest streak. Other moment types (league promotion,
+	 * community goal) and every toast pass through unchanged. Applied in read_pending(), the one
+	 * reader behind the page load, the heartbeat and the REST poll, so all three agree.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param array $events Payloads, oldest first.
+	 * @return array Payloads, oldest first, older superseded moments removed.
+	 */
+	public static function latest_moments( array $events ): array {
+		$keep = array(); // Moment type => index of the event that stays.
+		foreach ( $events as $i => $event ) {
+			$type = (string) ( $event['type'] ?? '' );
+			if ( 'level_up' === $type ) {
+				$keep[ $type ] = $i;
+			} elseif ( 'streak_milestone' === $type ) {
+				$best = $keep[ $type ] ?? null;
+				if ( null === $best || (int) ( $event['days'] ?? 0 ) >= (int) ( $events[ $best ]['days'] ?? 0 ) ) {
+					$keep[ $type ] = $i;
+				}
+			}
+		}
+
+		$out = array();
+		foreach ( $events as $i => $event ) {
+			$type = (string) ( $event['type'] ?? '' );
+			if ( isset( $keep[ $type ] ) && $keep[ $type ] !== $i ) {
+				continue;
+			}
+			$out[] = $event;
+		}
+		return $out;
 	}
 
 	/**

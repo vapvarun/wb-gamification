@@ -28,6 +28,12 @@
 		return;
 	}
 
+	// Translated strings shared by every admin page, localized once by
+	// SettingsPage::localize_admin_rest_utils(). Read late: a page may localize after load.
+	function i18n() {
+		return window.wbGamAdminRestI18n || {};
+	}
+
 	/**
 	 * Surface a transient toast message through the shared renderer (assets/js/toast-core.js).
 	 *
@@ -56,9 +62,12 @@
 	 */
 	async function apiFetch( method, path, body, settings ) {
 		if ( ! settings || ! settings.restUrl || ! settings.nonce ) {
-			return { ok: false, status: 0, data: { message: 'wbGam admin: missing settings' } };
+			return { ok: false, status: 0, data: { message: i18n().notLoaded || 'This screen did not load completely. Reload the page and try again.' } };
 		}
-		const url = settings.restUrl.replace( /\/$/, '' ) + path;
+		// _locale=user: answer in the admin's own language, as core's apiFetch does. Without it REST
+		// replies (field errors included) come back in the site language.
+		const raw = settings.restUrl.replace( /\/$/, '' ) + path;
+		const url = raw + ( raw.includes( '?' ) ? '&' : '?' ) + '_locale=user';
 		const init = {
 			method: method,
 			credentials: 'same-origin',
@@ -86,7 +95,7 @@
 			return {
 				ok: false,
 				status: 0,
-				data: { message: timedOut ? 'Request timed out. Please try again.' : ( ( e && e.message ) || 'Network error.' ) },
+				data: { message: timedOut ? ( i18n().timedOut || 'Request timed out. Please try again.' ) : ( i18n().networkError || 'Network error. Please try again.' ) },
 			};
 		}
 		let data = null;
@@ -129,9 +138,9 @@
 		// every admin page that enqueues this script — see the wp_localize_script()
 		// call attached to the 'wb-gam-admin-rest-utils' handle. Falls back to the
 		// English literal only if a page hasn't localized it (or JS ran pre-DOM).
-		const g            = window.wbGamAdminRestI18n || {};
+		const g            = i18n();
 		const title        = opts.title || '';
-		const message      = opts.message || 'Are you sure?';
+		const message      = opts.message || g.areYouSure || 'Are you sure?';
 		const confirmText  = opts.confirmText || g.confirm || 'Confirm';
 		const cancelText   = opts.cancelText || g.cancel || 'Cancel';
 		const tone         = opts.tone === 'primary' ? 'primary' : 'danger';
@@ -227,9 +236,14 @@
 	 * @param {string} fallback Default text when no `data.message` is present.
 	 */
 	function toastError( result, fallback ) {
-		const msg = result && result.data && result.data.message
-			? result.data.message
-			: ( fallback || 'Request failed.' );
+		const data = result && result.data;
+		// A rejected field carries its own reason under data.params; the top-level message is only
+		// core's "Invalid parameter(s): url".
+		const params = data && data.data && data.data.params;
+		const fieldMsg = params ? Object.values( params ).find( ( m ) => typeof m === 'string' && m ) : '';
+		const msg = fieldMsg || ( data && data.message
+			? data.message
+			: ( fallback || i18n().failed || 'Request failed.' ) );
 		toast( msg, 'error' );
 	}
 

@@ -24,7 +24,7 @@ defined( 'ABSPATH' ) || exit;
 final class ImportPage {
 
 	private const PAGE_SLUG = 'wb-gamification-import';
-	private const HOOK      = 'gamification_page_wb-gamification-import';
+	private const PAGE      = 'wb-gamification-import';
 
 	/**
 	 * Hook the submenu + assets.
@@ -54,7 +54,7 @@ final class ImportPage {
 	 * @param string $hook_suffix Current admin page hook.
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( self::HOOK !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( self::PAGE, 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 
@@ -113,8 +113,11 @@ final class ImportPage {
 					'phaseDone'           => __( 'Finished', 'wb-gamification' ),
 					/* translators: %s: the error message. */
 					'failed'              => __( 'The import paused at its last checkpoint: %1$s', 'wb-gamification' ),
-					'stalled'             => __( 'The background queue has stopped moving. Resume to continue from where it stopped. If this keeps happening, WP-Cron may be disabled: run the import from WP-CLI with --sync.', 'wb-gamification' ),
+					'stalled'             => __( 'The background queue is not running, so the import cannot move on its own. WP-Cron may be disabled or loopback requests blocked on this site. Run it in this window (keep the tab open), or resume it in the background once the queue works.', 'wb-gamification' ),
 					'resume'              => __( 'Resume import', 'wb-gamification' ),
+					'runHere'             => __( 'Run it in this window', 'wb-gamification' ),
+					'alreadyFinished'     => __( 'This import has already finished.', 'wb-gamification' ),
+					'alreadyRunning'      => __( 'This import is already running. Showing its progress.', 'wb-gamification' ),
 					'undo'                => __( 'Undo import', 'wb-gamification' ),
 					'cancel'              => __( 'Cancel', 'wb-gamification' ),
 					'checking'            => __( 'Checking what would be removed...', 'wb-gamification' ),

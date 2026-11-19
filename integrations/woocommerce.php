@@ -5,12 +5,10 @@
  * Auto-loaded by ManifestLoader. Fires only when WooCommerce is active.
  *
  * Actions covered:
- *   Order paid             — woocommerce_payment_complete (fires once
- *                            per order when payment succeeds — handles
- *                            both stores that move paid orders to
- *                            "processing" awaiting shipment AND stores
- *                            that auto-complete digital orders).
- *   First purchase ever    — woocommerce_payment_complete (once only)
+ *   Order paid             — wb_gam_wc_order_paid bridge (once per order,
+ *                            when a gateway confirms payment or when the
+ *                            store marks a manual-payment order completed).
+ *   First purchase ever    — wb_gam_wc_order_paid (once only)
  *   Product reviewed       — comment_post on product post type
  *   Wishlist item added    — yith_wcwl_added_to_wishlist (YITH Wishlist)
  *   Add to cart            — woocommerce_add_to_cart
@@ -31,6 +29,8 @@
  * add_to_cart not firing." Moving to `woocommerce_payment_complete`
  * fires once when payment succeeds regardless of subsequent
  * status — payment_complete is WC's canonical "money in hand" hook.
+ * Cash on delivery, bank transfer and check orders never call it, so
+ * the bridge below also treats "completed" as paid for those orders.
  *
  * @package WB_Gamification
  * @see     https://woocommerce.github.io/code-reference/
@@ -42,17 +42,35 @@ if ( ! class_exists( 'WooCommerce' ) ) {
 	return [];
 }
 
+// A trigger listens to one hook, so both ways an order gets paid funnel into
+// one. Free orders (a free trial, a 100% coupon) were not paid for and earn nothing.
+$wb_gam_wc_order_paid = static function ( $order_id ): void {
+	$order = wc_get_order( $order_id );
+	if ( $order && (float) $order->get_total() > 0 ) {
+		do_action( 'wb_gam_wc_order_paid', (int) $order_id );
+	}
+};
+add_action( 'woocommerce_payment_complete', $wb_gam_wc_order_paid, 10, 1 );
+add_action( 'woocommerce_order_status_completed', $wb_gam_wc_order_paid, 10, 1 );
+
 return [
 	'plugin'   => 'WooCommerce',
 	'version'  => '1.0.0',
 	'triggers' => [
 
 		[
-			'id'             => 'wc_order_completed',
-			'label'          => static fn(): string => __( 'Pay for an order', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded each time a customer pays for an order (fires once per order on payment success).', 'wb-gamification' ),
-			'hook'           => 'woocommerce_payment_complete',
-			'user_callback'  => function ( int $order_id ): int {
+			'id'              => 'wc_order_completed',
+			'label'           => static fn(): string => __( 'Pay for an order', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded each time a customer pays for an order, once per order. Manual payments such as cash or bank transfer count when the store marks the order completed.', 'wb-gamification' ),
+			'hook'            => 'wb_gam_wc_order_paid',
+			// A gateway order is announced on payment and again when it completes.
+			'once_per_object' => static fn( int $order_id ): int => $order_id,
+			// A refund takes back what that order paid, once, from whoever was paid. Orders paid
+			// before 1.6.8 carry no order id; RefundHandler covers those.
+			'reverse_on'      => array(
+				'woocommerce_order_status_refunded' => static fn( $order_id ): int => (int) $order_id,
+			),
+			'user_callback'   => function ( int $order_id ): int {
 				$order = wc_get_order( $order_id );
 				if ( ! $order ) {
 					return 0;
@@ -72,25 +90,23 @@ return [
 				}
 				return 0;
 			},
-			'default_points' => 25,
-			'category'       => 'commerce',
-			'icon'           => 'icon-shopping-cart',
-			'repeatable'     => true,
-			'cooldown'       => 0,
-			// One award per order completion — already deduplicated by the
-			// hook itself (status_completed only fires when an order moves
-			// to completed). Running sync removes the Action Scheduler
+			'default_points'  => 25,
+			'category'        => 'commerce',
+			'icon'            => 'icon-shopping-cart',
+			'repeatable'      => true,
+			'cooldown'        => 0,
+			// Running sync removes the Action Scheduler
 			// dependency that turned a "complete checkout → see points"
 			// expectation into a "wait for the next AS tick" surprise.
-			'async'          => false,
+			'async'           => false,
 		],
 
 		[
-			'id'             => 'wc_first_purchase',
-			'label'          => static fn(): string => __( 'Make your first purchase', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded once on a customer\'s very first paid order.', 'wb-gamification' ),
-			'hook'           => 'woocommerce_payment_complete',
-			'user_callback'  => function ( int $order_id ): int {
+			'id'              => 'wc_first_purchase',
+			'label'           => static fn(): string => __( 'Make your first purchase', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded once on a customer\'s very first paid order.', 'wb-gamification' ),
+			'hook'            => 'wb_gam_wc_order_paid',
+			'user_callback'   => function ( int $order_id ): int {
 				$order = wc_get_order( $order_id );
 				if ( ! $order ) {
 					return 0;
@@ -106,36 +122,55 @@ return [
 				if ( ! $customer_id ) {
 					return 0;
 				}
-				// Count all PAID orders for this customer (processing OR
-				// completed). woocommerce_payment_complete fires after the
-				// current order has already moved to its paid state, so
-				// the count includes it. count === 1 → this IS the first
-				// paid order; > 1 means the customer has paid before.
-				$paid = wc_get_orders(
-					[
-						'customer' => $customer_id,
-						'status'   => array( 'processing', 'completed' ),
-						'limit'    => 2,
-						'return'   => 'ids',
-					]
-				);
-				return count( $paid ) === 1 ? $customer_id : 0;
+				// First means no other order of theirs was paid for. Paid = WooCommerce stamped it paid
+				// (date_paid: a gateway confirmed it, or the store confirmed a manual payment) and it
+				// cost something. A free order, or a cash-on-delivery order still waiting in
+				// Processing, is not a purchase. Whichever order is confirmed first is the first.
+				// Pages of 20 so a customer with many free orders cannot make this one huge read;
+				// the first page answers it for nearly everyone.
+				// ponytail: stops after 1,000 other orders and pays nothing; raise if a store needs it.
+				for ( $page = 1; $page <= 50; $page++ ) {
+					$others = wc_get_orders(
+						[
+							'customer'  => $customer_id,
+							'status'    => array( 'processing', 'completed' ),
+							'date_paid' => '>0',
+							'exclude'   => array( $order_id ),
+							'limit'     => 20,
+							'page'      => $page,
+						]
+					);
+					foreach ( $others as $other ) {
+						if ( (float) $other->get_total() > 0 ) {
+							return 0;
+						}
+					}
+					if ( count( $others ) < 20 ) {
+						return $customer_id;
+					}
+				}
+				return 0;
 			},
-			'default_points' => 50,
-			'category'       => 'commerce',
-			'icon'           => 'icon-star',
-			'repeatable'     => false,
+			'once_per_object' => static fn( int $order_id ): int => $order_id,
+			// Refunding the first order takes the first-purchase award back.
+			'reverse_on'      => array(
+				'woocommerce_order_status_refunded' => static fn( $order_id ): int => (int) $order_id,
+			),
+			'async'           => false,
+			'default_points'  => 50,
+			'category'        => 'commerce',
+			'icon'            => 'icon-star',
+			'repeatable'      => false,
 		],
 
 		[
-			'id'             => 'wc_product_reviewed',
-			'label'          => static fn(): string => __( 'Leave a product review', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded when an approved product review is posted.', 'wb-gamification' ),
-			'hook'           => 'comment_post',
-			'user_callback'  => function ( int $comment_id, int|string $approved ): int {
-				if ( 1 !== (int) $approved ) {
-					return 0;
-				}
+			'id'              => 'wc_product_reviewed',
+			'label'           => static fn(): string => __( 'Leave a product review', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded when a product review is approved.', 'wb-gamification' ),
+			'hook'            => 'wb_gam_comment_approved',
+			'once_per_object' => static fn( int $comment_id ): int => $comment_id,
+			...\WBGam\Engine\Registry::comment_object_hooks(),
+			'user_callback'   => function ( int $comment_id ): int {
 				$comment = get_comment( $comment_id );
 				if ( ! $comment || empty( $comment->user_id ) ) {
 					return 0;
@@ -146,30 +181,36 @@ return [
 				}
 				return (int) $comment->user_id;
 			},
-			'default_points' => 15,
-			'category'       => 'commerce',
-			'icon'           => 'icon-star-half',
-			'repeatable'     => true,
-			'cooldown'       => 86400, // One review point per product per day.
+			'default_points'  => 15,
+			'category'        => 'commerce',
+			'icon'            => 'icon-star-half',
+			'repeatable'      => true,
+			'cooldown'        => 86400, // One review point per day.
 			// Review submission is user-initiated and low-frequency. Run
 			// sync so the reviewer's points appear immediately after the
 			// comment posts.
-			'async'          => false,
+			'async'           => false,
 		],
 
 		[
-			'id'             => 'wc_wishlist_add',
-			'label'          => static fn(): string => __( 'Add a product to wishlist (YITH)', 'wb-gamification' ),
-			'description'    => static fn(): string => __( 'Awarded when a member adds any product to their YITH wishlist.', 'wb-gamification' ),
-			'hook'           => 'yith_wcwl_added_to_wishlist',
-			'user_callback'  => function ( int $product_id, int $wishlist_id, int $user_id ): int {
+			'id'              => 'wc_wishlist_add',
+			'label'           => static fn(): string => __( 'Add a product to wishlist (YITH)', 'wb-gamification' ),
+			'description'     => static fn(): string => __( 'Awarded when a member adds any product to their YITH wishlist.', 'wb-gamification' ),
+			'hook'            => 'yith_wcwl_added_to_wishlist',
+			'user_callback'   => function ( int $product_id, int $wishlist_id, int $user_id ): int {
 				return $user_id > 0 ? $user_id : (int) get_current_user_id();
 			},
-			'default_points' => 5,
-			'category'       => 'commerce',
-			'icon'           => 'icon-heart',
-			'repeatable'     => true,
-			'cooldown'       => 300,
+			'once_per_object' => static fn( int $product_id, int $wishlist_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $product_id ),
+			// Per member and product: removing it from the wishlist takes the points back.
+			'reverse_on'      => array(
+				'yith_wcwl_removed_from_wishlist' => static fn( $product_id, $wishlist_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $product_id ),
+			),
+			'async'           => false,
+			'default_points'  => 5,
+			'category'        => 'commerce',
+			'icon'            => 'icon-heart',
+			'repeatable'      => true,
+			'cooldown'        => 300,
 		],
 
 		[
@@ -185,6 +226,7 @@ return [
 			'metadata_callback' => function ( string $cart_item_key, int $product_id ): array {
 				return array( 'product_id' => $product_id );
 			},
+			'permanent'         => 'Cart items also leave at checkout and when the session expires, so a removal is not an undo.',
 			'default_points'    => 1,
 			'category'          => 'commerce',
 			'icon'              => 'icon-shopping-cart',

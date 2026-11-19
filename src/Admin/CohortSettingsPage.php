@@ -70,7 +70,7 @@ final class CohortSettingsPage {
 		// hook is preserved so any third-party that still routes to it
 		// works during the transition.
 		$is_cohort_surface = 'toplevel_page_wb-gamification' === $hook_suffix
-			|| 'gamification_page_wb-gam-cohort' === $hook_suffix;
+			|| get_plugin_page_hookname( 'wb-gam-cohort', 'wb-gamification' ) === $hook_suffix;
 		if ( ! $is_cohort_surface ) {
 			return;
 		}

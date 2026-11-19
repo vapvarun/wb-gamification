@@ -29,6 +29,9 @@
  *
  * Rules: three visible at most, 4s then fade, paused while the pointer or focus is on it, the
  * host is a manual popover so it sits in the top layer above any native dialog opened later.
+ * While any modal or dialog is open (ours or another plugin's), toasts wait: a new one joins the
+ * queue and one already showing is taken off screen and put back at the front, so a toast never
+ * covers a popup's buttons. They show once the dialog closes. Nothing is dropped.
  *
  * @package WB_Gamification
  * @since   1.6.5
@@ -52,11 +55,13 @@
 	// Phones show one toast at a time, in order: three stacked covered about a quarter of the
 	// screen, over the form being filled in. Same rule as BuddyNext's stack.
 	var ONE_AT_A_TIME = '(max-width: 640px)';
-	var waiting       = []; // { opts, real, handle }, oldest first.
+	var waiting       = []; // { opts, real, handle, held }, oldest first.
 	var DISMISS_MS  = 4000;
 	var RESUME_MS   = 2000;
 	var EXIT_MS     = 250;
 	var GAP         = 16; // Matches the 1rem breathing room in the stylesheet fallback.
+	var MODAL_CHECK_MS = 500;
+	var watchTimer     = 0;
 
 	var DEFAULT_ICON = {
 		reward: 'icon-sparkles',
@@ -155,7 +160,8 @@
 	function arm( handle, ms ) {
 		clearTimeout( handle.timer );
 		// A merge or a late arm must not start the countdown under the pointer; mouseleave re-arms.
-		if ( handle.persist || handle.el.matches( ':hover' ) ) {
+		// A toast held off screen behind a dialog starts its countdown when it shows again.
+		if ( handle.persist || handle.held || handle.el.matches( ':hover' ) ) {
 			return;
 		}
 		handle.timer = setTimeout( function () {
@@ -172,6 +178,8 @@
 		if ( handle.key && live[ handle.key ] === handle ) {
 			delete live[ handle.key ];
 		}
+		// A toast held off screen while a dialog was open sits in the queue as itself.
+		waiting = waiting.filter( function ( e ) { return e.real !== handle; } );
 		handle.el.classList.add( 'wb-gam-toast--exit' );
 		setTimeout( function () {
 			if ( handle.el.parentNode ) {
@@ -190,7 +198,8 @@
 	 * @return {Object} { el, gone, update, dismiss }
 	 */
 	function waitTurn( opts, host ) {
-		var same = opts.key ? waiting.filter( function ( e ) { return e.opts.key === opts.key; } )[ 0 ] : null;
+		watch();
+		var same = opts.key ? waiting.filter( function ( e ) { return e.opts && e.opts.key === opts.key; } )[ 0 ] : null;
 		if ( same ) {
 			same.opts = opts;
 			return same.handle;
@@ -218,7 +227,7 @@
 
 		// The toast on screen must not hold the line: one that would stay open (it carries a
 		// link) now times out like the rest.
-		var showing = host.lastElementChild && host.lastElementChild._wbGamToast;
+		var showing = host && host.lastElementChild && host.lastElementChild._wbGamToast;
 		if ( showing && showing.persist ) {
 			showing.persist = false;
 			arm( showing, DISMISS_MS );
@@ -226,13 +235,106 @@
 		return entry.handle;
 	}
 
-	/** Show the next waiting toast, if any. */
+	/** Show the next waiting toast, if any. Waits while a dialog is open. */
 	function nextToast() {
-		var entry = waiting.shift();
-		if ( entry ) {
-			entry.real      = toast( entry.opts );
-			entry.handle.el = entry.real.el;
+		if ( ! waiting.length || modalOpen() ) {
+			if ( waiting.length ) {
+				watch();
+			}
+			return;
 		}
+		var entry = waiting.shift();
+		if ( entry.held ) {
+			// A toast taken off screen while a dialog was open: the same element and handle come
+			// back, so the caller's handle still updates and dismisses it.
+			entry.real.held = false;
+			// Same rule as waitTurn(): on a phone a toast with a link must not hold the line.
+			if ( waiting.length && window.matchMedia( ONE_AT_A_TIME ).matches ) {
+				entry.real.persist = false;
+			}
+			ensureContainer().appendChild( entry.real.el );
+			raise();
+			arm( entry.real, DISMISS_MS );
+			return;
+		}
+		entry.real      = toast( entry.opts );
+		entry.handle.el = entry.real.el;
+	}
+
+	/**
+	 * Is a modal or dialog open on the page (ours or another plugin's)? Our own toast host is a
+	 * popover, not a dialog, and is skipped. A dialog counts only when it is visible on screen: a
+	 * closed drawer left in the DOM (display:none, or parked off-screen with a transform, like
+	 * WPMediaVerse's chat panel) must not hold the queue forever.
+	 *
+	 * @return {boolean}
+	 */
+	function modalOpen() {
+		var nodes = document.querySelectorAll( 'dialog[open], [aria-modal="true"], [role="dialog"]' );
+		for ( var i = 0; i < nodes.length; i++ ) {
+			var node = nodes[ i ];
+			if ( container && container.contains( node ) ) {
+				continue;
+			}
+			if ( ! onScreen( node ) || 'hidden' === window.getComputedStyle( node ).visibility ) {
+				continue;
+			}
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Does the element have a box that overlaps the viewport?
+	 *
+	 * @param {Element} node Element.
+	 * @return {boolean}
+	 */
+	function onScreen( node ) {
+		var r = node.getBoundingClientRect();
+		return r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < window.innerHeight && r.left < window.innerWidth;
+	}
+
+	/**
+	 * While a toast is showing or waiting, check every half second for an open dialog. Showing
+	 * toasts are taken off screen (front of the queue, newest last so order is kept); when the
+	 * dialog closes the queue drains. The check stops once nothing is showing or waiting.
+	 */
+	function watch() {
+		if ( watchTimer ) {
+			return;
+		}
+		watchTimer = setInterval( function () {
+			var showingEls = container ? Array.prototype.slice.call( container.children ) : [];
+			if ( ! showingEls.length && ! waiting.length ) {
+				clearInterval( watchTimer );
+				watchTimer = 0;
+				return;
+			}
+			if ( modalOpen() ) {
+				var held = [];
+				showingEls.forEach( function ( el ) {
+					var h = el._wbGamToast;
+					if ( ! h || h.gone || el.classList.contains( 'wb-gam-toast--exit' ) ) {
+						return;
+					}
+					clearTimeout( h.timer );
+					h.held = true;
+					el.remove();
+					held.push( { opts: null, real: h, handle: h, held: true } );
+				} );
+				waiting = held.concat( waiting );
+				return;
+			}
+			// The dialog closed: show what waited, one at a time on a phone, up to three otherwise.
+			var phone = window.matchMedia( ONE_AT_A_TIME ).matches;
+			while ( waiting.length && ( phone ? ! showingEls.length : ensureContainer().children.length < MAX_VISIBLE ) ) {
+				nextToast();
+				if ( phone ) {
+					break;
+				}
+			}
+		}, MODAL_CHECK_MS );
 	}
 
 	/** Fill (or refill) the text, link and shape of a toast from an options object. */
@@ -367,6 +469,11 @@
 			return live[ opts.key ];
 		}
 
+		// A dialog is open, or toasts are already waiting for one to close: join the queue.
+		if ( modalOpen() || waiting.some( function ( e ) { return e.held; } ) ) {
+			return waitTurn( opts, null );
+		}
+
 		if ( host.children.length && window.matchMedia( ONE_AT_A_TIME ).matches ) {
 			return waitTurn( opts, host );
 		}
@@ -400,6 +507,7 @@
 		host.appendChild( handle.el );
 		raise();
 		arm( handle, DISMISS_MS );
+		watch();
 
 		if ( typeof opts.onShow === 'function' ) {
 			window.requestAnimationFrame( function () { opts.onShow( handle.el, handle ); } );

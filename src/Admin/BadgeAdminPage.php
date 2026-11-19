@@ -91,16 +91,6 @@ final class BadgeAdminPage {
 			WB_GAM_VERSION,
 			true
 		);
-		// Shared confirm/cancel modal button labels — confirmAction() falls back
-		// to these when a caller doesn't pass its own confirmText/cancelText.
-		wp_localize_script(
-			'wb-gam-admin-rest-utils',
-			'wbGamAdminRestI18n',
-			array(
-				'confirm' => __( 'Confirm', 'wb-gamification' ),
-				'cancel'  => __( 'Cancel', 'wb-gamification' ),
-			)
-		);
 		wp_enqueue_script(
 			'wb-gam-admin-rest-form',
 			plugins_url( 'assets/js/admin-rest-form.js', WB_GAM_FILE ),
@@ -425,6 +415,7 @@ final class BadgeAdminPage {
 						$rest_path = $is_new ? '/badges' : '/badges/' . rawurlencode( $editing );
 						?>
 						<form
+						method="post"
 							data-wb-gam-rest-form="wbGamBadgesSettings"
 							data-wb-gam-rest-method="POST"
 							data-wb-gam-rest-path="<?php echo esc_attr( $rest_path ); ?>"
@@ -495,9 +486,18 @@ final class BadgeAdminPage {
 									<th><label for="wb-gam-badge-category"><?php esc_html_e( 'Category', 'wb-gamification' ); ?></label></th>
 									<td>
 										<select name="category" id="wb-gam-badge-category" class="wbgam-select">
-											<?php foreach ( array( 'general', 'points', 'wordpress', 'buddypress', 'special' ) as $cat ) : ?>
+											<?php
+											$wb_gam_categories = array(
+												'general' => __( 'General', 'wb-gamification' ),
+												'points'  => __( 'Points', 'wb-gamification' ),
+												'wordpress' => __( 'WordPress', 'wb-gamification' ),
+												'buddypress' => __( 'BuddyPress', 'wb-gamification' ),
+												'special' => __( 'Special', 'wb-gamification' ),
+											);
+											?>
+											<?php foreach ( $wb_gam_categories as $cat => $wb_gam_cat_label ) : ?>
 												<option value="<?php echo esc_attr( $cat ); ?>" <?php selected( $badge['category'] ?? 'general', $cat ); ?>>
-													<?php echo esc_html( ucfirst( $cat ) ); ?>
+													<?php echo esc_html( $wb_gam_cat_label ); ?>
 												</option>
 											<?php endforeach; ?>
 										</select>
@@ -721,6 +721,7 @@ final class BadgeAdminPage {
 										?>
 									</p>
 									<form
+						method="post"
 										data-wb-gam-rest-form="wbGamBadgesSettings"
 										data-wb-gam-rest-method="POST"
 										data-wb-gam-rest-path="/badges/<?php echo esc_attr( rawurlencode( $editing ) ); ?>/award"
@@ -773,6 +774,7 @@ final class BadgeAdminPage {
 			<!-- Badge Grid -->
 			<?php if ( ! empty( $badges ) ) : ?>
 			<div class="wbgam-grid-4">
+				<?php $wb_gam_unearnable = \WBGam\Engine\BadgeEngine::unearnable_badge_ids(); ?>
 				<?php foreach ( $badges as $b ) : ?>
 					<?php
 					$config   = json_decode( $b['condition'] ?? '{}', true ) ?: array();
@@ -797,9 +799,15 @@ final class BadgeAdminPage {
 							);
 							?>
 						</p>
-						<span class="wbgam-pill <?php echo $has_rule ? 'wbgam-pill--active' : 'wbgam-pill--inactive'; ?>">
-							<?php echo $has_rule ? esc_html__( 'Auto-award', 'wb-gamification' ) : esc_html__( 'Manual', 'wb-gamification' ); ?>
-						</span>
+						<?php if ( isset( $wb_gam_unearnable[ $b['id'] ] ) ) : ?>
+							<span class="wbgam-pill wbgam-pill--inactive" title="<?php esc_attr_e( 'Its actions come from a plugin that is not active, so members cannot earn it and do not see it.', 'wb-gamification' ); ?>">
+								<?php esc_html_e( 'Not earnable here', 'wb-gamification' ); ?>
+							</span>
+						<?php else : ?>
+							<span class="wbgam-pill <?php echo $has_rule ? 'wbgam-pill--active' : 'wbgam-pill--inactive'; ?>">
+								<?php echo $has_rule ? esc_html__( 'Auto-award', 'wb-gamification' ) : esc_html__( 'Manual', 'wb-gamification' ); ?>
+							</span>
+						<?php endif; ?>
 					</a>
 				<?php endforeach; ?>
 			</div>

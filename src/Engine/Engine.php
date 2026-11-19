@@ -91,6 +91,20 @@ final class Engine {
 		add_action( 'updated_option', array( __CLASS__, 'maybe_flush_enabled_cache' ), 10, 1 );
 		add_action( 'added_option', array( __CLASS__, 'maybe_flush_enabled_cache' ), 10, 1 );
 		add_action( 'deleted_option', array( __CLASS__, 'maybe_flush_enabled_cache' ), 10, 1 );
+
+		// A revoked kudos leaves the members' Year Recap (cached for an hour) at once.
+		add_action( 'wb_gam_kudos_revoked', array( RecapEngine::class, 'forget_kudos' ), 10, 3 );
+
+		/*
+		 * A host community prints the member's own gamification choices (show my level, leaderboards,
+		 * reward emails) where it builds its profile, e.g. BuddyNext's Achievements tab:
+		 *
+		 *     do_action( 'wb_gam_render_member_prefs', int $user_id ); // Omit the id for the current member.
+		 *
+		 * Prints nothing unless $user_id is the logged-in member. Same controls as the standalone
+		 * profile and the BuddyPress tab; saved on change through REST. @since 1.6.8
+		 */
+		add_action( 'wb_gam_render_member_prefs', array( MemberPrefs::class, 'render_controls' ), 10, 1 );
 	}
 
 	/**
@@ -398,7 +412,7 @@ final class Engine {
 			if ( ! self::is_action_enabled( $event->action_id ) ) {
 				return false;
 			}
-			if ( ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action ) ) {
+			if ( ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action, $event->object_id ) ) {
 				return false;
 			}
 		}
@@ -508,7 +522,7 @@ final class Engine {
 			if ( ! self::is_action_enabled( $event->action_id ) ) {
 				return false;
 			}
-			if ( ! $is_import && ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action ) ) {
+			if ( ! $is_import && ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action, $event->object_id ) ) {
 				return false;
 			}
 		}
@@ -653,7 +667,7 @@ final class Engine {
 		// window between this check and the insert. For absolute caps
 		// (e.g. anti-fraud) callers should add a UNIQUE constraint on
 		// the relevant key shape — see plan/v1.1-rate-limit-hardening.
-		if ( null !== $action && ! $is_import && ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action ) ) {
+		if ( null !== $action && ! $is_import && ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action, $event->object_id ) ) {
 			$wpdb->query( 'ROLLBACK' );
 			return false;
 		}

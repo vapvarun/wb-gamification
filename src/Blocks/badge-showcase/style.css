@@ -132,6 +132,13 @@
 	color: var( --wb-gam-color-white );
 }
 
+/* White on the amber accent is 3.54:1; pick dark or light from the accent's own lightness. */
+@supports (color: oklch(from red l c h)) {
+	.wb-gam-badge-showcase__filter.is-active .wb-gam-badge-showcase__filter-count {
+		color: oklch(from var( --wb-gam-badge-accent ) round(1.07 - l) 0 0);
+	}
+}
+
 .wb-gam-badge-showcase__filter:focus-visible {
 	outline: 2px solid var( --wb-gam-badge-accent );
 	outline-offset: 2px;
@@ -244,7 +251,7 @@
 }
 
 .wb-gam-badge-showcase__placeholder {
-	font-size: 2.25rem;
+	color: var( --wb-gam-color-gold-text );
 	line-height: 1;
 	display: flex;
 	align-items: center;
@@ -296,11 +303,16 @@
 
 .wb-gam-badge-showcase__earned-at {
 	display: inline-block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 	padding: 3px 10px;
 	border-radius: 999px;
 	font-size: 0.75rem;
 	font-weight: 600;
-	color: var( --wb-gam-badge-success );
+	/* success-strong, not success: 5:1 or more on the tint instead of 2.95:1 (lifted in dark). */
+	color: var( --wb-gam-color-success-strong );
 	background: var( --wb-gam-badge-success-soft );
 	margin-top: auto;
 }
@@ -458,7 +470,48 @@ body.buddyx-dark-theme .wb-gam-badge-showcase__badge--locked .wb-gam-badge-showc
 	cursor: progress;
 }
 
+.wb-gam-badge-showcase__share-link {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 4px 10px;
+	margin-top: 6px;
+	font-size: 0.75rem;
+}
+
+.wb-gam-badge-showcase__share-link[hidden] {
+	display: none;
+}
+
+.wb-gam-badge-showcase__share-link a {
+	color: var( --wb-gam-color-accent-text );
+	text-decoration: underline;
+}
+
+.wb-gam-badge-showcase__copy {
+	min-height: 32px;
+	padding: 4px 10px;
+	border: 1px solid var( --wb-gam-badge-border );
+	border-radius: 999px;
+	background: transparent;
+	color: var( --wb-gam-badge-text );
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.wb-gam-badge-showcase__copy:focus-visible,
+.wb-gam-badge-showcase__share-link a:focus-visible {
+	outline: 2px solid var( --wb-gam-color-accent );
+	outline-offset: 2px;
+}
+
 @media ( max-width: 480px ) {
+	.wb-gam-badge-showcase__copy {
+		min-height: 40px;
+	}
+
 	.wb-gam-badge-showcase__share {
 		/* Thumb-sized on a phone: 4px padding is a target you miss. */
 		padding: 8px 12px;

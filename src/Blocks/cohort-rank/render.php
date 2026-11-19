@@ -54,23 +54,16 @@ if ( $wb_gam_user_id <= 0 ) {
 // when the viewer is the owner / admin. Otherwise zero out the user_id
 // so the block falls through to its empty-state path.
 if ( $wb_gam_user_id > 0 && ! Privacy::can_view_public_profile( $wb_gam_user_id ) ) {
+	// A logged-in viewer who may not see this member's data gets nothing, not a login prompt.
+	if ( is_user_logged_in() ) {
+		return;
+	}
 	$wb_gam_user_id = 0;
 }
 $wb_gam_limit = max( 1, min( 50, (int) ( $wb_gam_attrs['limit'] ?? 5 ) ) );
 
 WB_Gam_Block_CSS::add( $wb_gam_unique, $wb_gam_attrs );
 $wb_gam_visibility = WB_Gam_Block_CSS::get_visibility_classes( $wb_gam_attrs );
-
-$wb_gam_inline = '';
-if ( ! empty( $wb_gam_attrs['accentColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-accent: %s;', sanitize_text_field( (string) $wb_gam_attrs['accentColor'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBackground'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-white: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBackground'] ) );
-}
-if ( ! empty( $wb_gam_attrs['cardBorderColor'] ) ) {
-	$wb_gam_inline .= sprintf( '--wb-gam-color-border: %s;', sanitize_text_field( (string) $wb_gam_attrs['cardBorderColor'] ) );
-}
 
 $wb_gam_classes = array_filter( array( 'wb-gam-cohort-rank', 'wb-gam-block-' . $wb_gam_unique, $wb_gam_visibility ) );
 
@@ -81,7 +74,6 @@ if ( ! $wb_gam_user_id ) {
 	$wb_gam_wrapper   = get_block_wrapper_attributes(
 		array(
 			'class' => implode( ' ', $wb_gam_classes ),
-			'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		)
 	);
 		$wb_gam_empty = EmptyState::render(
@@ -101,7 +93,6 @@ if ( null === $wb_gam_standing ) {
 	$wb_gam_wrapper   = get_block_wrapper_attributes(
 		array(
 			'class' => implode( ' ', $wb_gam_classes ),
-			'style' => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		)
 	);
 		$wb_gam_empty = EmptyState::render(
@@ -142,7 +133,6 @@ foreach ( $wb_gam_standing['standings'] ?? array() as $wb_gam_entry ) {
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
 		'class'     => implode( ' ', $wb_gam_classes ),
-		'style'     => '' !== $wb_gam_inline ? $wb_gam_inline : null,
 		'data-tier' => (string) (int) ( $wb_gam_standing['tier'] ?? 0 ),
 	)
 );
@@ -177,12 +167,17 @@ BlockHooks::before(
 		echo \WBGam\Blocks\EmptyState::body( 'cohort-rank', __( 'No standings available yet - your cohort will populate as members earn points this week.', 'wb-gamification' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in EmptyState.
 		?>
 	<?php else : ?>
+		<?php
+		// One query for every row's user (avatars), not one per row.
+		cache_users( array_map( static fn( $e ) => (int) ( $e['user_id'] ?? 0 ), $wb_gam_standings ) );
+		?>
 		<ol class="wb-gam-cohort-rank__list" role="list">
 			<?php foreach ( $wb_gam_standings as $wb_gam_entry ) :
 				$wb_gam_is_self = ( (int) ( $wb_gam_entry['user_id'] ?? 0 ) === $wb_gam_user_id );
 				?>
 				<li class="wb-gam-cohort-rank__item<?php echo $wb_gam_is_self ? ' wb-gam-cohort-rank__item--self' : ''; ?>">
 					<span class="wb-gam-cohort-rank__rank">#<?php echo esc_html( (string) ( $wb_gam_entry['rank'] ?? '' ) ); ?></span>
+					<span class="wb-gam-cohort-rank__avatar"><?php echo get_avatar( (int) ( $wb_gam_entry['user_id'] ?? 0 ), 32, '', '' ); ?></span>
 					<span class="wb-gam-cohort-rank__name"><?php echo esc_html( (string) ( $wb_gam_entry['display_name'] ?? '' ) ); ?></span>
 					<span class="wb-gam-cohort-rank__points">
 						<?php

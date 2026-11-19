@@ -56,7 +56,7 @@ final class RedemptionStorePage {
 	 * @return void
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( 'gamification_page_wb-gam-redemption' !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( 'wb-gam-redemption', 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 		wp_enqueue_style(
@@ -71,16 +71,6 @@ final class RedemptionStorePage {
 			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
-		);
-		// Shared confirm/cancel modal button labels — confirmAction() falls back
-		// to these when a caller doesn't pass its own confirmText/cancelText.
-		wp_localize_script(
-			'wb-gam-admin-rest-utils',
-			'wbGamAdminRestI18n',
-			array(
-				'confirm' => __( 'Confirm', 'wb-gamification' ),
-				'cancel'  => __( 'Cancel', 'wb-gamification' ),
-			)
 		);
 		wp_enqueue_script(
 			'wb-gam-admin-rest-form',
@@ -221,6 +211,7 @@ final class RedemptionStorePage {
 					$reward_rest_path = $editing ? '/redemptions/items/' . (int) $editing : '/redemptions/items';
 					?>
 					<form
+						method="post"
 						data-wb-gam-rest-form="wbGamRedemptionSettings"
 						data-wb-gam-rest-method="POST"
 						data-wb-gam-rest-path="<?php echo esc_attr( $reward_rest_path ); ?>"
@@ -514,7 +505,7 @@ final class RedemptionStorePage {
 					?>
 			</div>
 			<?php else : ?>
-			<div class="wbgam-empty">
+			<div class="wbgam-empty wbgam-stack-block">
 				<div class="wbgam-empty-icon"><span class="icon-shopping-cart wbgam-icon-xl"></span></div>
 				<div class="wbgam-empty-title"><?php esc_html_e( 'No rewards yet', 'wb-gamification' ); ?></div>
 				<p><?php esc_html_e( 'Create your first reward above to open the redemption store for your members.', 'wb-gamification' ); ?></p>

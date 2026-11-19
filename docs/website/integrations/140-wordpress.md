@@ -9,7 +9,7 @@ The WordPress Core integration rewards everyday site activity such as registerin
 | `wp_user_register` | Register an account on the site | 15 |
 | `wp_first_login` | Log in for the very first time | 10 |
 | `wp_profile_complete` | Save a WordPress profile that includes a bio | 10 |
-| `wp_post_receives_comment` | Post author earns when an approved comment lands on their content | 3 |
+| `wp_post_receives_comment` | Post author earns when a comment on their content is approved | 3 |
 | `wp_publish_post` | Publish a new blog post | 25 |
 | `wp_first_post` | Publish your first post ever | 20 |
 | `wp_leave_comment` | Leave an approved comment | 5 |

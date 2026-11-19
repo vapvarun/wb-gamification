@@ -58,7 +58,7 @@ final class ChallengeManagerPage {
 	 * @return void
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		if ( 'gamification_page_wb-gam-challenges' !== $hook_suffix ) {
+		if ( get_plugin_page_hookname( 'wb-gam-challenges', 'wb-gamification' ) !== $hook_suffix ) {
 			return;
 		}
 		wp_enqueue_style(
@@ -73,16 +73,6 @@ final class ChallengeManagerPage {
 			array( 'wb-gam-dialog', 'wb-gam-toast-core' ),
 			WB_GAM_VERSION,
 			true
-		);
-		// Shared confirm/cancel modal button labels — confirmAction() falls back
-		// to these when a caller doesn't pass its own confirmText/cancelText.
-		wp_localize_script(
-			'wb-gam-admin-rest-utils',
-			'wbGamAdminRestI18n',
-			array(
-				'confirm' => __( 'Confirm', 'wb-gamification' ),
-				'cancel'  => __( 'Cancel', 'wb-gamification' ),
-			)
 		);
 		wp_enqueue_script(
 			'wb-gam-admin-rest-form',
@@ -201,6 +191,7 @@ final class ChallengeManagerPage {
 					$challenge_rest_path = $editing ? '/challenges/' . (int) $editing : '/challenges';
 					?>
 					<form
+						method="post"
 						data-wb-gam-rest-form="wbGamChallengesSettings"
 						data-wb-gam-rest-method="POST"
 						data-wb-gam-rest-path="<?php echo esc_attr( $challenge_rest_path ); ?>"
@@ -307,10 +298,7 @@ final class ChallengeManagerPage {
 							<tbody>
 							<?php foreach ( $challenges as $c ) : ?>
 								<?php
-								$action_label = $c['action_id'];
-								if ( isset( $actions[ $c['action_id'] ]['label'] ) ) {
-									$action_label = $actions[ $c['action_id'] ]['label'];
-								}
+								$action_label = Registry::label_for( (string) $c['action_id'] );
 								$status_class = 'active' === $c['status'] ? 'active' : 'info';
 								?>
 								<tr>
@@ -320,7 +308,7 @@ final class ChallengeManagerPage {
 									<td><?php echo esc_html( $c['bonus_points'] ); ?></td>
 									<td>
 										<span class="wbgam-pill wbgam-pill--<?php echo esc_attr( $status_class ); ?>">
-											<?php echo esc_html( ucfirst( $c['status'] ) ); ?>
+											<?php echo esc_html( self::status_label( (string) $c['status'] ) ); ?>
 										</span>
 									</td>
 									<td>
@@ -365,6 +353,21 @@ final class ChallengeManagerPage {
 			<?php endif; ?>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Translated label for a challenge status code (individual and community lists).
+	 *
+	 * @param string $status Stored status code.
+	 * @return string
+	 */
+	public static function status_label( string $status ): string {
+		$labels = array(
+			'active'    => __( 'Active', 'wb-gamification' ),
+			'inactive'  => __( 'Inactive', 'wb-gamification' ),
+			'completed' => __( 'Completed', 'wb-gamification' ),
+		);
+		return $labels[ $status ] ?? $status;
 	}
 
 	// handle_save() / handle_delete() removed in 1.0.0 (Tier 0.C). Challenges

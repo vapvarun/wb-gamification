@@ -28,9 +28,8 @@ package.json
 package-lock.json
 
 # ── Build tooling & dev scripts (NOT shipped, NOT audited) ────────────
+# src/shared is NOT listed: its CSS is enqueued at runtime and ships (bin/build-release.sh).
 bin
-src/shared
-src/sdk
 Gruntfile.js
 webpack.config.js
 *.dist
@@ -64,6 +63,7 @@ README.md
 # ── Build output / packaging ──────────────────────────────────────────
 dist
 .wordpress-org
+.wbcom-i18n-glossary.json
 
 # ── Editor / OS cruft ─────────────────────────────────────────────────
 .DS_Store

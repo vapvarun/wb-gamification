@@ -64,15 +64,36 @@ if ( ! is_user_logged_in() ) {
 	return;
 }
 
-// Pass REST URL + nonce + actions list as data attrs so view.js can use them
-// without a separate wp_localize_script — keeps the block self-contained.
+// Only the actions the site owner lets members submit (Registry::is_submittable(): a manifest
+// `submittable => true` or the owner's tick). Listing every action let a member ask to be paid
+// for "Publish a post" by hand. The engine half ships in the same release.
 $wb_gam_actions = array_map(
 	static fn( $a ) => array(
 		'id'    => (string) $a['id'],
 		'label' => (string) ( $a['label'] ?? $a['id'] ),
 	),
-	array_values( Registry::get_actions() )
+	array_values(
+		array_filter(
+			Registry::get_actions(),
+			static fn( $a ) => Registry::is_submittable( (string) $a['id'] )
+		)
+	)
 );
+
+if ( ! $wb_gam_actions ) {
+	BlockHooks::before( 'submit-achievement', $wb_gam_attrs );
+	$wb_gam_empty = \WBGam\Blocks\EmptyState::render(
+		'submit-achievement',
+		get_block_wrapper_attributes( array( 'class' => implode( ' ', $wb_gam_classes ) ) ),
+		__( 'There is nothing to submit for review right now. Points for your activity are added automatically.', 'wb-gamification' )
+	);
+	echo $wb_gam_empty; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- EmptyState escapes its message and CTA; the wrapper is get_block_wrapper_attributes() output.
+	BlockHooks::after( 'submit-achievement', $wb_gam_attrs );
+	return;
+}
+
+// Pass REST URL + nonce + actions list as data attrs so view.js can use them
+// without a separate wp_localize_script — keeps the block self-contained.
 
 $wb_gam_wrapper = get_block_wrapper_attributes( array(
 	'class'                => implode( ' ', $wb_gam_classes ),

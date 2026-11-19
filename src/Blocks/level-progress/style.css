@@ -44,7 +44,7 @@
 
 .wb-gam-level-progress__points {
 	font-size: 0.875rem;
-	color: var(--wb-gam-primary);
+	color: var(--wb-gam-primary-text);
 	font-weight: 500;
 }
 
@@ -75,6 +75,6 @@
 }
 
 .wb-gam-level-progress__next--max {
-	color: var(--wb-gam-gold);
+	color: var(--wb-gam-color-gold-text);
 	font-weight: 600;
 }
