@@ -4,6 +4,7 @@
 
 ## What you should do
 
+- If you saved **Gamification > Dashboard > Points** on 1.6.8 before this fix and have actions from other plugins with capitals, slashes or dots in their id, re-check those actions: the old save could switch them off.
 - Open **Gamification > Dashboard > Points** and look at your actions. Eleven built-in actions that rewarded behaviour owners did not want to pay for were removed. Past awards keep their names in history and reports.
 - If you want members to claim actions through the Submit Achievement form, tick **Members can submit** on those actions. Every action starts unticked.
 - If you use webhooks, check that each destination is a public `https://` address. See [Outbound Webhooks](../features/180-webhooks.md).
@@ -47,6 +48,9 @@
 - A block's own **Card background** and **Accent** colours stay readable in dark mode on Reign, BuddyX and BuddyX Pro, and list rows stay visible on their card.
 - Every Gamification admin screen works in a translated admin, and messages from the server show in the admin's own language.
 - Community challenges updated through the REST API keep their reward and action. One created without dates runs for 14 days instead of never counting.
+- The currency you pick for an action in **Dashboard > Points** is the one its awards land in. Deleting a currency clears that choice on every action that used it. See [Multiple Currencies](../features/10-multi-currency-points.md#action-configuration).
+- Each balance shows its own currency's icon in the members directory, the profile, the leaderboard, the status bar and the Member Points block. The leaderboard block's **Your rank** line uses the block's currency.
+- Rank, points and badges show in the BuddyBoss members directory once per member, and the rank line sits centred under the name in the member grid on phones.
 - Webhooks keep the active setting you choose, editing one no longer turns it back on, and a refused address says why.
 
 ## Security
