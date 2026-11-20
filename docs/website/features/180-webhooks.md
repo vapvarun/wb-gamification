@@ -22,6 +22,10 @@ Outbound Webhooks let WB Gamification send real-time event data to external serv
 3. Check the **events** you want this endpoint to receive.
 4. Click **Save**. The plugin generates a secret key for this webhook.
 
+The destination must be a public `https://` address. WB Gamification refuses an address that is not https, a host it cannot find, and any address that points at your own server or a private network, and the message tells you which one it is. Deliveries use WordPress's safe request, so a webhook cannot reach internal services.
+
+A webhook keeps the active setting you choose. Editing a paused webhook does not turn it back on.
+
 You can create multiple webhooks for different destinations or event subsets.
 
 ## Payload Format

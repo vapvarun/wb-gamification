@@ -1,6 +1,6 @@
 # Challenge Manager
 
-Go to **WB Gamification > Challenges** in your admin menu.
+Go to **Gamification > Challenges** in your admin menu.
 
 Challenges give members a time-limited goal: perform a specific action a set number of times before the deadline to earn bonus points. Progress counts only while the challenge is active.
 

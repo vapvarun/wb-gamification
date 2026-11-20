@@ -1,6 +1,6 @@
 # Member Access (Earning Exclusion)
 
-Go to **WB Gamification > Settings > Access** in your admin sidebar.
+Go to **Gamification > Dashboard > Access** in your admin sidebar.
 
 This section decides who is allowed to earn. Most communities exclude administrators, staff, support agents, and bots so internal testing and service accounts do not skew the leaderboard. Added in 1.5.3.
 

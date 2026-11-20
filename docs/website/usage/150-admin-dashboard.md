@@ -1,6 +1,6 @@
 # Admin Dashboard
 
-Go to **WB Gamification > Dashboard** in your admin menu (`admin.php?page=wb-gamification`).
+Go to **Gamification > Dashboard** in your admin menu (`admin.php?page=wb-gamification`).
 
 The Dashboard answers one question: is gamification running, and who is winning? It shows the last 30 days at a glance. Every card links to the screen where you can change what you see.
 
@@ -69,8 +69,8 @@ Three buttons sit under the number cards.
 
 | Button | Where it goes |
 |---|---|
-| **Full Analytics** | **WB Gamification > Analytics** |
-| **Award Points** | **WB Gamification > Award Points**. See [Manual Point Awards](60-manual-awards.md). |
+| **Full Analytics** | **Gamification > Analytics** |
+| **Award Points** | **Gamification > Award Points**. See [Manual Point Awards](60-manual-awards.md). |
 | **Configure Points** | The Points section of this same screen |
 
 ## The Menu on the Left

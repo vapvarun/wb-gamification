@@ -42,6 +42,11 @@
       "name": "Troubleshooting",
       "folder": "troubleshooting",
       "description": "Fix common problems such as missing points, toasts that do not appear or empty leaderboards."
+    },
+    {
+      "name": "What's New",
+      "folder": "whats-new",
+      "description": "What changed in each release and what you should do after updating."
     }
   ]
 }
