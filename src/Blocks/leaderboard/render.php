@@ -193,8 +193,8 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 
 					<span class="wb-gam-leaderboard__points" aria-label="<?php echo esc_attr( $wb_gam_points_label ); ?>">
 						<?php
-						// Inline SVG so the icon renders without a font dependency.
-						echo \WBGam\Admin\Icon::svg( 'sparkles', array( 'size' => 16, 'class' => 'wb-gam-leaderboard__points-icon' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static SVG built from fixed allowlist.
+						// The point type's own icon, from the same row as its label.
+						echo $wb_gam_pt_service->icon( $wb_gam_resolved_pt, 'wb-gam-leaderboard__points-icon', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built and escaped in PointTypeService::icon().
 						?>
 						<span class="wb-gam-leaderboard__points-number">
 							<?php

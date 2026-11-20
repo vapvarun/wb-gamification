@@ -153,6 +153,7 @@ BlockHooks::before( 'member-points', $wb_gam_attrs );
 ?>
 <div <?php echo $wb_gam_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 	<div class="wb-gam-member-points__total">
+		<?php echo $wb_gam_pt_service->icon( $wb_gam_resolved_pt, 'wb-gam-member-points__icon', 20 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built and escaped in PointTypeService::icon(). ?>
 		<span class="wb-gam-member-points__number"><?php echo esc_html( number_format_i18n( $wb_gam_points ) ); ?></span>
 		<span class="wb-gam-member-points__label"><?php echo esc_html( $wb_gam_points_label ); ?></span>
 	</div>

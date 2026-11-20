@@ -893,4 +893,21 @@ final class Registry {
 		}
 		return (string) ( $action['point_type'] ?? '' );
 	}
+
+	/**
+	 * Drop every per-action currency mapping that points at a deleted point type,
+	 * so no action keeps a stale `wb_gam_point_type_<action_id>` option.
+	 *
+	 * Covers registered actions. A mapping left by a plugin that is not active is
+	 * harmless: PointsEngine::resolve_type() sends an unknown slug to the default type.
+	 *
+	 * @param string $slug Slug of the point type that was deleted.
+	 */
+	public static function clear_point_type_overrides( string $slug ): void {
+		foreach ( array_keys( self::$actions ) as $action_id ) {
+			if ( (string) get_option( 'wb_gam_point_type_' . $action_id, '' ) === $slug ) {
+				delete_option( 'wb_gam_point_type_' . $action_id );
+			}
+		}
+	}
 }

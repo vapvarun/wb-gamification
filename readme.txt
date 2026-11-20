@@ -182,6 +182,10 @@ Fair earning across every integration: removed content takes its points back, no
 * Fix      - Every Gamification admin screen works in a translated admin, and messages from the server show in the admin's own language.
 * Fix      - Community challenges updated through the REST API keep their reward and action, and one created without dates runs for 14 days instead of never counting.
 * Fix      - Webhooks keep the active setting you choose, editing one no longer turns it back on, and a refused address says why.
+* Fix      - Rank, points and badges show in the BuddyBoss members directory, once per member, without extra queries.
+* Fix      - The currency you pick for an action in Settings > Points is the one its awards land in, including actions whose id has capitals, slashes or dots; saving the tab no longer switches those actions off.
+* Fix      - Deleting a point type clears the currency choice of every action that used it.
+* Fix      - Each balance shows its own point type's icon in the members directory, the profile, the leaderboard, the status bar and the Member Points block.
 * Security - Webhook URLs that point at the server itself or a private network address are refused, and deliveries use WordPress's safe request so they cannot reach internal services.
 * Security - Update packages are checked against their release signature before WordPress installs them, and licence and update checks use the Wbcom update server with automatic fallback.
 * Dev      - New REST routes `GET|POST /members/{id}/preferences` and `GET /issuer` (OpenBadges 3.0 issuer profile).

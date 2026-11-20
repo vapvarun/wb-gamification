@@ -388,6 +388,19 @@ final class SettingsPage {
 	}
 
 	/**
+	 * Form field name for a per-action setting. Render and save both call this, so the two
+	 * can never disagree. Action ids such as "myplugin/Action.name" are not safe POST keys
+	 * (sanitize_key() strips "/" and capitals, PHP rewrites "." and spaces), so every unsafe
+	 * character becomes "_". The stored option name stays the raw action id.
+	 *
+	 * @param string $prefix    Field prefix, e.g. 'wb_gam_point_type_'.
+	 * @param string $action_id Registered action id.
+	 */
+	public static function field_name( string $prefix, string $action_id ): string {
+		return $prefix . preg_replace( '/[^A-Za-z0-9_]/', '_', $action_id );
+	}
+
+	/**
 	 * Persist per-action point values and enable/disable toggles from the Points tab.
 	 * Nonce is verified by check_admin_referer() in handle_save().
 	 */
@@ -397,14 +410,14 @@ final class SettingsPage {
 		$pt_service = new \WBGam\Services\PointTypeService();
 
 		foreach ( $actions as $action_id => $action ) {
-			$key    = 'wb_gam_points_' . sanitize_key( $action_id );
+			$key    = self::field_name( 'wb_gam_points_', (string) $action_id );
 			$points = isset( $_POST[ $key ] ) ? absint( wp_unslash( $_POST[ $key ] ) ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 			if ( null !== $points && $points >= 0 ) {
 				update_option( 'wb_gam_points_' . $action_id, $points );
 			}
 
-			$enabled_key = 'wb_gam_enabled_' . sanitize_key( $action_id );
+			$enabled_key = self::field_name( 'wb_gam_enabled_', (string) $action_id );
 			// 1/0, never true/false: update_option( key, false ) on a missing option matches the
 			// get_option() default and stores nothing, so "off" never saved.
 			update_option( 'wb_gam_enabled_' . $action_id, isset( $_POST[ $enabled_key ] ) ? 1 : 0 );
@@ -413,7 +426,7 @@ final class SettingsPage {
 			// PointTypeService::resolve() falls back to primary for any
 			// unknown slug, so we don't write garbage. Empty submit clears
 			// the override (action falls back to manifest declaration).
-			$type_key = 'wb_gam_point_type_' . sanitize_key( $action_id );
+			$type_key = self::field_name( 'wb_gam_point_type_', (string) $action_id );
 			if ( isset( $_POST[ $type_key ] ) ) {
 				$raw_type = sanitize_key( wp_unslash( $_POST[ $type_key ] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				if ( '' === $raw_type ) {
@@ -1471,7 +1484,7 @@ final class SettingsPage {
 												<label class="wbgam-switch">
 													<input
 														type="checkbox"
-														name="<?php echo esc_attr( 'wb_gam_enabled_' . $action_id ); ?>"
+														name="<?php echo esc_attr( self::field_name( 'wb_gam_enabled_', (string) $action_id ) ); ?>"
 														aria-label="<?php /* translators: %s: gamification action label */ echo esc_attr( sprintf( __( 'Enable %s', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
 														<?php checked( $enabled ); ?>
 													>
@@ -1489,7 +1502,7 @@ final class SettingsPage {
 											<td>
 												<input
 													type="number"
-													name="<?php echo esc_attr( 'wb_gam_points_' . $action_id ); ?>"
+													name="<?php echo esc_attr( self::field_name( 'wb_gam_points_', (string) $action_id ) ); ?>"
 													aria-label="<?php /* translators: %s: gamification action label */ echo esc_attr( sprintf( __( 'Amount for %s', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
 													value="<?php echo esc_attr( (string) $pts ); ?>"
 													min="0"
@@ -1500,7 +1513,7 @@ final class SettingsPage {
 											<?php if ( $wb_gam_multi_currency ) : ?>
 												<td>
 													<select
-														name="<?php echo esc_attr( 'wb_gam_point_type_' . $action_id ); ?>"
+														name="<?php echo esc_attr( self::field_name( 'wb_gam_point_type_', (string) $action_id ) ); ?>"
 														class="wbgam-select wbgam-select--sm"
 														aria-label="<?php /* translators: %s: gamification action label */ echo esc_attr( sprintf( __( 'Currency for %s', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
 													>
