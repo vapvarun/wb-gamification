@@ -19,6 +19,7 @@ Each currency has:
 - **Display name** - shown in member-facing UIs ("250 Coins")
 - **Name for one** - optional singular ("1 Coin"); leave it blank for names that read the same at any amount, like XP or Karma
 - **Symbol** - optional prefix (`⭐`, `🪙`, `💎`)
+- **Icon** - optional Lucide icon name; each balance shows its own currency's icon in the members directory, the profile, the leaderboard, the status bar and the Member Points block
 - **Default flag** - exactly one currency is the site default; if action manifests don't specify, this is what they award
 
 The default site has one currency: `points`, named Points / Point. To add more, go to **Gamification → Point Types** and create them. To rename a currency (including the default), use **Rename** on its row.
@@ -72,7 +73,7 @@ Set the currency for an action via the action manifest entry:
 
 If `point_type` is omitted, the action awards the site default currency.
 
-The site owner can override per-action via the Settings → Points page - change the dropdown next to each action's point value.
+The site owner can override per-action via the Settings → Points page - change the **Currency** dropdown next to each action's point value (shown once you have more than one currency). The award lands in the currency you pick, and saving the tab does not switch actions off. Deleting a currency clears the choice on every action that used it; those actions then award the default currency.
 
 ## Materialised Totals
 

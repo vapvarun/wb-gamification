@@ -19,7 +19,7 @@ Points, badges, levels, leaderboards, challenges, streaks and kudos for WordPres
 
 **Where members see it**
 
-- 19 Gutenberg blocks and 17 shortcodes (full lists in [For developers](#for-developers)).
+- 19 Gutenberg blocks and 18 shortcodes (full lists in [For developers](#for-developers)).
 - An "Achievements" tab on BuddyPress profiles, an "Achievements" endpoint in WooCommerce My Account, and a LearnDash profile section.
 - Public member profiles at `/{slug}/{user}`, toast notifications (WP Heartbeat by default, server-sent events as an option), and six email templates including a weekly recap.
 
@@ -31,7 +31,7 @@ Points, badges, levels, leaderboards, challenges, streaks and kudos for WordPres
 
 **Integrations** (auto-detected, no configuration)
 
-WordPress core, BuddyPress, BuddyNext, bbPress, WooCommerce, LearnDash, LifterLMS, MemberPress, GiveWP, The Events Calendar, Eventonomy, Jetonomy, Learnomy, Listora, WP Career Board, WP Sell Services and WPMediaVerse, including the Pro editions where a manifest ships. Two platform integrations load when their plugin is active: ActivityPub and WPGraphQL.
+WordPress core, BuddyPress, BuddyNext, bbPress, WooCommerce, LearnDash, LifterLMS, Tutor LMS, MemberPress, GiveWP, The Events Calendar, Eventonomy, Jetonomy, Learnomy, Listora, WP Career Board, WP Sell Services and WPMediaVerse, including the Pro editions where a manifest ships. Two platform integrations load when their plugin is active: ActivityPub and WPGraphQL.
 
 ## Who it is for
 
@@ -69,7 +69,7 @@ Site owners who run a community, course site, store or membership site and want 
 
 **Blocks (19).** `badge-showcase`, `challenges`, `cohort-rank`, `community-challenges`, `daily-bonus`, `earning-guide`, `give-kudos`, `hub`, `kudos-feed`, `leaderboard`, `level-progress`, `member-points`, `points-history`, `redemption-store`, `streak`, `submit-achievement`, `top-members`, `user-status-bar`, `year-recap`. Each lives in `src/Blocks/<name>/` with a `block.json`.
 
-**Shortcodes (17).** `wb_gam_leaderboard`, `wb_gam_member_points`, `wb_gam_badge_showcase`, `wb_gam_level_progress`, `wb_gam_challenges`, `wb_gam_streak`, `wb_gam_top_members`, `wb_gam_kudos_feed`, `wb_gam_give_kudos`, `wb_gam_year_recap`, `wb_gam_points_history`, `wb_gam_earning_guide`, `wb_gam_hub`, `wb_gam_community_challenges`, `wb_gam_cohort_rank`, `wb_gam_redemption_store`, `wb_gam_my_rewards`.
+**Shortcodes (18).** `wb_gam_leaderboard`, `wb_gam_member_points`, `wb_gam_badge_showcase`, `wb_gam_level_progress`, `wb_gam_challenges`, `wb_gam_streak`, `wb_gam_top_members`, `wb_gam_kudos_feed`, `wb_gam_give_kudos`, `wb_gam_year_recap`, `wb_gam_points_history`, `wb_gam_earning_guide`, `wb_gam_hub`, `wb_gam_community_challenges`, `wb_gam_cohort_rank`, `wb_gam_redemption_store`, `wb_gam_daily_bonus`, `wb_gam_my_rewards`.
 
 **REST API.** Namespace `wb-gamification/v1`, with controllers in `src/API/` for members, points, badges, levels, leaderboard, challenges, kudos, redemption, webhooks, API keys and more. An OpenAPI description is served at `/wp-json/wb-gamification/v1/openapi.json`, and a TypeScript client lives in `sdk/`. Reference: https://docs.wbcomdesigns.com/products/wb-gamification/developer-guide/140-rest-overview/
 
