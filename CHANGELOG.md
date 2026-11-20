@@ -52,6 +52,13 @@ Fair earning across every integration: removed content takes its points back, no
 - Every Gamification admin screen works in a translated admin, and messages from the server show in the admin's own language.
 - Community challenges updated through the REST API keep their reward and action, and one created without dates runs for 14 days instead of never counting.
 - Webhooks keep the active setting you choose, editing one no longer turns it back on, and a refused address says why.
+- Rank, points and badges show in the BuddyBoss members directory, once per member, without extra queries.
+- The currency you pick for an action in Settings > Points is the one its awards land in, including actions whose id has capitals, slashes or dots; saving the tab no longer switches those actions off.
+- Deleting a point type clears the currency choice of every action that used it.
+- Each balance shows its own point type's icon in the members directory, the profile, the leaderboard, the status bar and the Member Points block.
+- The leaderboard block's Your rank line uses the block's point type instead of the primary one.
+- The rank line sits centred under the name in the BuddyBoss member grid on phones.
+- If you saved Settings > Points on 1.6.8 and have actions from other plugins whose id has capitals, slashes or dots, re-check those actions there: the old save could switch them off.
 
 ### Security
 

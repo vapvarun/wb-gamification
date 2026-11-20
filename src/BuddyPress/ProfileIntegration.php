@@ -184,6 +184,7 @@ final class ProfileIntegration {
 			<span class="wb-gam-rank-badge"><?php echo esc_html( $level_name ); ?></span>
 			<span class="wb-gam-points-count">
 				<?php
+				echo ( new \WBGam\Services\PointTypeService() )->icon( null, 'wb-gam-points-icon', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built and escaped in PointTypeService::icon().
 				echo esc_html( wb_gam_format_points( (int) $points ) );
 				?>
 			</span>

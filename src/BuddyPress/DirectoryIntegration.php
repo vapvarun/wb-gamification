@@ -33,25 +33,41 @@ final class DirectoryIntegration {
 	private static ?array $prefs = null;
 
 	/**
+	 * Object id (spl_object_id) of the members template the prefs map was primed for.
+	 *
+	 * @var int|null
+	 */
+	private static ?int $primed_for = null;
+
+	/**
+	 * Rows already rendered, keyed "<template id>:<row index>", so a theme that fires both
+	 * member-row hooks never prints the rank twice.
+	 *
+	 * @var array<string, true>
+	 */
+	private static array $rendered = array();
+
+	/**
 	 * Register hooks when BuddyPress is active.
 	 */
 	public static function init(): void {
 		if ( ! function_exists( 'buddypress' ) ) {
 			return;
 		}
-		// Prime ALL per-member rank data once, before the loop renders, so
-		// each row does zero queries. Without this the directory is a 3-4x
-		// query N+1 that grows with community size.
-		add_action( 'bp_before_directory_members_list', array( __CLASS__, 'prime_directory' ) );
+		// BuddyPress Nouveau fires bp_directory_members_item per row; the BuddyBoss members loop
+		// fires bp_member_members_list_meta instead. Both run the same renderer, which prints once
+		// per row and primes the whole page lazily on the first row (BuddyBoss never fires
+		// bp_before_directory_members_list), so each row does zero queries.
 		add_action( 'bp_directory_members_item', array( __CLASS__, 'render_rank_in_directory' ) );
+		add_action( 'bp_member_members_list_meta', array( __CLASS__, 'render_rank_in_directory' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_directory_styles' ) );
 	}
 
 	/**
 	 * Batch-warm every per-member rank read for the current directory page.
 	 *
-	 * Fires on bp_before_directory_members_list (after the member loop is
-	 * queried, before the list HTML). Collects the page's member IDs and
+	 * Runs on the first row of a members loop (see render_rank_in_directory()),
+	 * after the loop is queried. Collects the page's member IDs and
 	 * warms points totals, earned-badge counts, level user_meta, and the
 	 * show_rank preference in a fixed handful of queries — turning
 	 * render_rank_in_directory()'s former O(rows) queries into O(1).
@@ -59,7 +75,13 @@ final class DirectoryIntegration {
 	 * @return void
 	 */
 	public static function prime_directory(): void {
-		$members = isset( $GLOBALS['members_template']->members ) ? $GLOBALS['members_template']->members : array();
+		$template = $GLOBALS['members_template'] ?? null;
+		if ( ! is_object( $template ) || self::$primed_for === spl_object_id( $template ) ) {
+			return;
+		}
+		self::$primed_for = spl_object_id( $template );
+
+		$members = isset( $template->members ) ? $template->members : array();
 		if ( empty( $members ) || ! is_array( $members ) ) {
 			return;
 		}
@@ -122,6 +144,16 @@ final class DirectoryIntegration {
 			return;
 		}
 
+		$template = $GLOBALS['members_template'] ?? null;
+		if ( is_object( $template ) ) {
+			$row = spl_object_id( $template ) . ':' . (int) ( $template->current_member ?? 0 );
+			if ( isset( self::$rendered[ $row ] ) ) {
+				return;
+			}
+			self::$rendered[ $row ] = true;
+			self::prime_directory();
+		}
+
 		// Respect opt-out preference. Use the per-page primed map (set by
 		// prime_directory on bp_before_directory_members_list); fall back to
 		// a single lookup only if this rendered outside the normal loop.
@@ -159,13 +191,7 @@ final class DirectoryIntegration {
 		if ( $points_total > 0 ) {
 			$parts[] = sprintf(
 				'<span class="wb-gam-directory-points">%1$s %2$s</span>',
-				\WBGam\Admin\Icon::svg(
-					'sparkles',
-					array(
-						'size'  => 14,
-						'class' => 'wb-gam-directory-icon',
-					)
-				),
+				( new \WBGam\Services\PointTypeService() )->icon( null, 'wb-gam-directory-icon', 14 ),
 				esc_html( number_format_i18n( $points_total ) )
 			);
 		}
