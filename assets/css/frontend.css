@@ -306,6 +306,10 @@
 }
 .wb-gam-directory-points .wb-gam-directory-icon { color: var(--wb-gam-primary, #1d4ed8); }
 .wb-gam-directory-badges .wb-gam-directory-icon { color: var(--wb-gam-accent, #f59e0b); }
+/* Grid cards centre the name and meta; BuddyBoss makes the rank line a block-level flex box that would sit at the start edge. */
+.bp-list.grid .wb-gam-directory-rank {
+	justify-content: center;
+}
 @media (max-width: 640px) {
 	.wb-gam-directory-rank { gap: 6px; font-size: 12px; }
 	.wb-gam-directory-icon { width: 12px; height: 12px; }

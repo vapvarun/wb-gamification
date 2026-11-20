@@ -186,6 +186,9 @@ Fair earning across every integration: removed content takes its points back, no
 * Fix      - The currency you pick for an action in Settings > Points is the one its awards land in, including actions whose id has capitals, slashes or dots; saving the tab no longer switches those actions off.
 * Fix      - Deleting a point type clears the currency choice of every action that used it.
 * Fix      - Each balance shows its own point type's icon in the members directory, the profile, the leaderboard, the status bar and the Member Points block.
+* Fix      - The leaderboard block's Your rank line uses the block's point type instead of the primary one.
+* Fix      - The rank line sits centred under the name in the BuddyBoss member grid on phones.
+* Fix      - If you saved Settings > Points on 1.6.8 and have actions from other plugins whose id has capitals, slashes or dots, re-check those actions there: the old save could switch them off.
 * Security - Webhook URLs that point at the server itself or a private network address are refused, and deliveries use WordPress's safe request so they cannot reach internal services.
 * Security - Update packages are checked against their release signature before WordPress installs them, and licence and update checks use the Wbcom update server with automatic fallback.
 * Dev      - New REST routes `GET|POST /members/{id}/preferences` and `GET /issuer` (OpenBadges 3.0 issuer profile).

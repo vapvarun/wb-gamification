@@ -56,6 +56,9 @@ Fair earning across every integration: removed content takes its points back, no
 - The currency you pick for an action in Settings > Points is the one its awards land in, including actions whose id has capitals, slashes or dots; saving the tab no longer switches those actions off.
 - Deleting a point type clears the currency choice of every action that used it.
 - Each balance shows its own point type's icon in the members directory, the profile, the leaderboard, the status bar and the Member Points block.
+- The leaderboard block's Your rank line uses the block's point type instead of the primary one.
+- The rank line sits centred under the name in the BuddyBoss member grid on phones.
+- If you saved Settings > Points on 1.6.8 and have actions from other plugins whose id has capitals, slashes or dots, re-check those actions there: the old save could switch them off.
 
 ### Security
 
