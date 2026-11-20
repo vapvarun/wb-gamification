@@ -73,7 +73,7 @@ Set the currency for an action via the action manifest entry:
 
 If `point_type` is omitted, the action awards the site default currency.
 
-The site owner can override per-action via the Settings → Points page - change the **Currency** dropdown next to each action's point value (shown once you have more than one currency). The award lands in the currency you pick, and saving the tab does not switch actions off. Deleting a currency clears the choice on every action that used it; those actions then award the default currency.
+The site owner can override per-action via the Settings → Points page - change the **Currency** dropdown next to each action's point value (shown once you have more than one currency). The award lands in the currency you pick, and saving the tab does not switch actions off. Deleting a currency clears the choice on every action that used it; those actions go back to the currency their manifest sets, or the default currency.
 
 ## Materialised Totals
 
