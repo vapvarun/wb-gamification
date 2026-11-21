@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - Jetonomy forum events are now real actions on Settings > Points: topic, reply, upvotes, accepted answer, planned idea, upheld report, and the penalties (downvote, report, removed by a moderator). Set the amount, switch each off, and add a cooldown or a daily or weekly cap. Until you save a number they pay what Jetonomy already pays, so no amount changes on update.
 - Penalties are a new kind of action: they take points, never below zero, and give back exactly what was taken when the penalty is lifted. They are not listed in the public earning guide.
 - A deleted or moderator-removed topic or reply takes its participation points back, and restoring it gives them back. A withdrawn vote takes back that vote's points only.
+- Deleting or removing a topic also takes back the points of its replies (published and accepted), in background batches of 200, and approving the topic gives them back. A moderator removal takes the topic's participation points back first, then the penalty from what is left, so a small balance ends at zero, never below.
 
 ### Added
 
