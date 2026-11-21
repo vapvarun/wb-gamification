@@ -123,7 +123,7 @@ BlockHooks::before( 'user-status-bar', $wb_gam_attrs );
 
 		<div id="wb-gam-status-bar-body-<?php echo esc_attr( $wb_gam_unique ); ?>" class="wb-gam-status-bar__body">
 			<div class="wb-gam-status-bar__stat wb-gam-status-bar__stat--points">
-				<?php echo \WBGam\Admin\Icon::svg( 'sparkles', array( 'size' => 16, 'class' => 'wb-gam-status-bar__icon' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				<?php echo $wb_gam_pt_service->icon( $wb_gam_primary_slug, 'wb-gam-status-bar__icon', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built and escaped in PointTypeService::icon(). ?>
 				<span class="wb-gam-status-bar__value" data-wb-gam-bind="primary_total"><?php echo esc_html( number_format_i18n( $wb_gam_points_total ) ); ?></span>
 				<span class="wb-gam-status-bar__label" data-wb-gam-bind="primary_label"><?php echo esc_html( $wb_gam_primary_lab ); ?></span>
 			</div>

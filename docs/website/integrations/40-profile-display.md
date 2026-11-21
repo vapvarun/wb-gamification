@@ -59,7 +59,7 @@ The fill width is driven by the `--wb-gam-fill` custom property. The badge, poin
 
 The rank block shows only when all three are true:
 
-1. **The site shows it.** WB Gamification > Settings > Engagement > BuddyPress > "Show level, points and progress in the profile header" (on by default). Turn it off if your theme already shows rank in the header.
+1. **The site shows it.** Gamification > Dashboard > Habits & Profiles > BuddyPress > "Show level, points and progress in the profile header" (on by default). Turn it off if your theme already shows rank in the header.
 2. **The member shows it.** Each member can untick "Show my level and points on my profile" under "Your gamification choices" on their own Achievements tab or public profile page.
 3. **The visitor may see the member's profile.** A member who made their profile private is never shown to other visitors. The member and site admins always see it.
 

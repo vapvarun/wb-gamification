@@ -39,7 +39,7 @@ Visitors who are not logged in see a prompt to log in instead of the form.
 
 ## Admin Flow
 
-Go to **WB Gamification > Submissions**.
+Go to **Gamification > Submissions**.
 
 The queue lists every pending submission with the member, the action, the details and any link. Each row has **Approve** and **Reject** buttons. Approving pays the points set for the action and runs everything that follows from them: badges, level-ups and streaks. Rejecting records your reason for the member.
 

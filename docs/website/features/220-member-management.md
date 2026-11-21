@@ -4,7 +4,7 @@ WB Gamification gives site owners a dedicated place to see and manage every memb
 
 ## Members Roster
 
-Go to **WB Gamification > Members** in your admin sidebar.
+Go to **Gamification > Members** in your admin sidebar.
 
 The Members page is a searchable, paginated table of every member, showing each one's points, level, and badges. It is admin-only (`manage_options`) and is built to stay fast on large communities - the per-page points and badge data are primed in a fixed number of queries, so the row loop never runs N+1.
 
@@ -32,7 +32,7 @@ All admin-only (`manage_options`), under `wb-gamification/v1`:
 
 ## Bulk Award
 
-Go to **WB Gamification > Award Points** and find the **Bulk Award** card.
+Go to **Gamification > Award Points** and find the **Bulk Award** card.
 
 Bulk Award grants the same number of points to every member of a chosen role, or to all members at once. Use it for community-wide rewards - a launch bonus, a milestone celebration, a thank-you to everyone in a role.
 

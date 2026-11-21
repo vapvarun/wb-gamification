@@ -29,7 +29,7 @@ A profile that is opted out (per-user flag `0`) shows a short page that says "Th
 
 ## URL Structure
 
-There is one URL: `/u/{user_login}`. It always shows the full page above; there is no `/badges`-only or per-year variant. The slug uses `user_login` (the WordPress login name), which is stable - username changes are not allowed in WordPress core, so the URL never breaks. The `u` prefix is configurable under **WB Gamification > Settings > Habits & Profiles > Slug base**; re-save Permalinks after changing it.
+There is one URL: `/u/{user_login}`. It always shows the full page above; there is no `/badges`-only or per-year variant. The slug uses `user_login` (the WordPress login name), which is stable - username changes are not allowed in WordPress core, so the URL never breaks. The `u` prefix is configurable under **Gamification > Dashboard > Habits & Profiles > Slug base**; re-save Permalinks after changing it.
 
 ## SEO + Social
 

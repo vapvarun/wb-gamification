@@ -415,7 +415,8 @@ final class ProfilePage {
 		echo '<div class="wb-gam-profile-page__head">';
 		echo '<h1 class="wb-gam-profile-page__name">' . esc_html( $user->display_name ) . '</h1>';
 		printf(
-			'<p class="wb-gam-profile-page__stats">%s</p>',
+			'<p class="wb-gam-profile-page__stats">%s%s</p>',
+			$pt_service->icon( $pt_service->default_slug(), 'wb-gam-profile-page__icon', 18 ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built and escaped in PointTypeService::icon().
 			esc_html(
 				sprintf(
 					/* translators: 1: amount, 2: currency, 3: badge count with label, 4: level */

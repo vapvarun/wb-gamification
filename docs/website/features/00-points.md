@@ -64,7 +64,7 @@ Additional integrations are available for bbPress, LifterLMS, MemberPress, GiveW
 
 ## Changing Point Values
 
-Go to **Gamification > Settings** and find the Points section. Every active action is listed with its current point value. Click the value field, enter a new number, and save.
+Go to **Gamification > Dashboard > Points**. Every active action is listed with its current point value. Click the value field, enter a new number, and save.
 
 Setting a value to 0 effectively disables point awards for that action without disabling the action itself (badge and challenge tracking still fires).
 
@@ -80,7 +80,7 @@ Points follow the content that earned them. When a member's post, comment, forum
 
 Points history shows each change with the action name, for example "Publish a blog post (content removed)" and "Publish a blog post (content restored)".
 
-Photo uploads earn points for up to 20 uploads per member per day. To change it, edit the **Daily cap** for "Upload a photo" under **Gamification > Settings**.
+Photo uploads earn points for up to 20 uploads per member per day. To change it, edit the **Daily cap** for "Upload a photo" under **Gamification > Dashboard > Points**.
 
 ## Where Members See Their Points
 
@@ -96,7 +96,7 @@ The Earning Guide block and shortcode (`[wb_gam_earning_guide]`) displays a form
 
 ## Manual Point Awards
 
-Admins can award or adjust points manually. Go to **Gamification > Manual Award**, select a member, enter a point amount and reason, and click **Award Points**. The award is logged in the member's point history with the reason you entered.
+Admins can award or adjust points manually. Go to **Gamification > Award Points**, select a member, enter a point amount and reason, and click **Award Points**. The award is logged in the member's point history with the reason you entered.
 
 Manual awards show up in point history the same way as automatic awards.
 

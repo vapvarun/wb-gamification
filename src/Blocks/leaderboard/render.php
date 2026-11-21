@@ -193,8 +193,8 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 
 					<span class="wb-gam-leaderboard__points" aria-label="<?php echo esc_attr( $wb_gam_points_label ); ?>">
 						<?php
-						// Inline SVG so the icon renders without a font dependency.
-						echo \WBGam\Admin\Icon::svg( 'sparkles', array( 'size' => 16, 'class' => 'wb-gam-leaderboard__points-icon' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static SVG built from fixed allowlist.
+						// The point type's own icon, from the same row as its label.
+						echo $wb_gam_pt_service->icon( $wb_gam_resolved_pt, 'wb-gam-leaderboard__points-icon', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built and escaped in PointTypeService::icon().
 						?>
 						<span class="wb-gam-leaderboard__points-number">
 							<?php
@@ -248,7 +248,7 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 	if ( $wb_gam_current_uid > 0 && ! empty( $wb_gam_rows ) ) {
 		$wb_gam_visible_ids = array_column( $wb_gam_rows, 'user_id' );
 		if ( ! in_array( $wb_gam_current_uid, $wb_gam_visible_ids, true ) ) {
-			$wb_gam_my_rank = LeaderboardEngine::get_user_rank( $wb_gam_current_uid, $wb_gam_period, $wb_gam_scope_type, $wb_gam_scope_id );
+			$wb_gam_my_rank = LeaderboardEngine::get_user_rank( $wb_gam_current_uid, $wb_gam_period, $wb_gam_scope_type, $wb_gam_scope_id, $wb_gam_resolved_pt );
 			if ( ! empty( $wb_gam_my_rank ) && (int) ( $wb_gam_my_rank['points'] ?? 0 ) > 0 ) :
 				?>
 				<div class="wb-gam-leaderboard__my-rank">

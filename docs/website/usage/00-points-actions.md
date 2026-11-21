@@ -2,7 +2,7 @@
 
 ![The Points settings screen with the actions table](../images/points-settings.webp)
 
-Go to **WB Gamification > Points** in your admin sidebar.
+Go to **Gamification > Dashboard > Points** in your admin sidebar.
 
 ## The Actions Table
 

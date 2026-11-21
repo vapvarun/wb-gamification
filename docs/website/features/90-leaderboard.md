@@ -30,7 +30,7 @@ Leaderboard positions are calculated from the points ledger and stored in a snap
 - Very recent activity may take a short time to appear on the leaderboard
 - Page loads are fast because the ranking query runs against the cached snapshot rather than recounting points from scratch
 
-If you award points manually and need the leaderboard to update immediately, you can clear the snapshot cache from **Gamification > Settings**.
+If you award points manually and need the leaderboard to update immediately, you can rebuild it from **Gamification > Dashboard > Tools**.
 
 ## Browsing the Whole Leaderboard
 
@@ -46,7 +46,7 @@ When a logged-in member views the leaderboard, the block highlights their curren
 
 ## Member Opt-Out
 
-Members can opt out of appearing on the leaderboard from their notification preferences. An opted-out member is excluded from all leaderboard snapshots. Admins cannot override a member's opt-out choice.
+Members can opt out of appearing on the leaderboard by unticking **Show me on leaderboards** under **Your gamification choices** on their own profile. An opted-out member is excluded from all leaderboard snapshots. Admins cannot override a member's opt-out choice.
 
 See the Privacy documentation for more details on how to access preference settings.
 

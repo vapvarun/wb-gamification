@@ -16,6 +16,8 @@ Individual challenges are per-member: each person has their own progress bar and
 6. Set the **bonus points** awarded to every member on completion.
 7. Click **Publish**.
 
+If you create a community challenge through the REST API without dates, it starts now and runs for 14 days. Updating one through the API with only a new title keeps its reward and action.
+
 The `CommunityChallengeEngine` hooks into the event bus. Each time the chosen action fires, it increments the global counter by one.
 
 ## What Members See

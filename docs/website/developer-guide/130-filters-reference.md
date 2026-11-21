@@ -97,7 +97,7 @@ See [Customizing gamification emails](210-email-customization.md) for worked exa
 |--------|-----------------|------------|--------|
 | `wb_gam_sse_allowed` | Whether the Server-Sent Events long-poll transport may run on this host. Default `false` - SSE pins a PHP-FPM worker per connection, so it stays off unless the host is provisioned for long-lived streaming. When `false`, realtime falls back to WP Heartbeat. Added in 1.5.2. | `bool $allowed` | `bool` whether SSE is permitted |
 | `wb_gam_celebration_style` | Whether celebrations use confetti. Default `'confetti'`; return `'none'` for a community where it does not fit. Members with reduced motion never see confetti regardless. Added in 1.6.5. | `string $style` | `string` `'confetti'` or `'none'` |
-| `wb_gam_toast_position` | The on-screen corner reward toasts slide in from. Filters the stored `wb_gam_toast_position` option (Settings > Realtime). One of `bottom-center` (default since 1.6.5), `bottom-right`, `bottom-left`, `top-right`, `top-center`. Added in 1.5.2. | `string $position` | `string` toast position |
+| `wb_gam_toast_position` | The on-screen corner reward toasts slide in from. Filters the stored `wb_gam_toast_position` option (Gamification > Dashboard > Realtime). One of `bottom-center` (default since 1.6.5), `bottom-right`, `bottom-left`, `top-right`, `top-center`. Added in 1.5.2. | `string $position` | `string` toast position |
 
 ## Community notification contract
 
@@ -109,7 +109,7 @@ Part of the same contract as `wb_gam_notification_created` (see the [Actions ref
 
 ## Access and modules
 
-Site-owner controls added in 1.5.3 (Settings > Access and Settings > Modules).
+Site-owner controls added in 1.5.3 (Gamification > Dashboard > Access and Gamification > Dashboard > Modules).
 
 | Filter | What it filters | Parameters | Return |
 |--------|-----------------|------------|--------|
@@ -220,7 +220,7 @@ add_filter(
 add_filter( 'wb_gam_sse_allowed', '__return_true' );
 
 // Move reward toasts to the top-right corner for everyone, ignoring the
-// admin Settings > Realtime selection.
+// admin Gamification > Dashboard > Realtime selection.
 add_filter(
 	'wb_gam_toast_position',
 	static function (): string {

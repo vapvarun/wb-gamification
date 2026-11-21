@@ -7701,8 +7701,8 @@
         "type": "buddypress",
         "hooks": [
           "add_action( 'bp_register_activity_actions'",
-          "add_action( 'bp_before_directory_members_list'",
           "add_action( 'bp_directory_members_item'",
+          "add_action( 'bp_member_members_list_meta'",
           "add_action( 'bp_before_member_header_meta'",
           "add_action( 'bp_setup_nav'",
           "add_action( 'bp_template_content'",

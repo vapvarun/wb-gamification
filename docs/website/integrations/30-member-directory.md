@@ -6,7 +6,7 @@ WB Gamification adds a compact rank badge next to each member's name in the Budd
 
 ## What Appears in the Directory
 
-A single `<span>` with the level name is injected via the `bp_directory_members_item` action hook:
+A single `<span>` with the level name is injected via the `bp_directory_members_item` action hook (BuddyPress) or `bp_member_members_list_meta` (BuddyBoss). A theme that fires both still prints it once per member:
 
 ```html
 <span class="wb-gam-directory-rank">Contributor</span>

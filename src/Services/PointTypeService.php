@@ -138,6 +138,50 @@ final class PointTypeService {
 	}
 
 	/**
+	 * The point type's icon, from the same row as its label.
+	 *
+	 * One resolver for every surface that shows a balance, so a label and its icon can never
+	 * come from different point types. The icon is a Lucide name the owner typed in Point Types,
+	 * rendered with the bundled Lucide font like the hub tiles. A name the font does not have,
+	 * or none, falls back to the plugin's default glyph, so this never returns an empty icon.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param string|null $slug  Point type; null or '' for the primary type.
+	 * @param string      $class Extra class for the wrapper.
+	 * @param int         $size  Icon size in px.
+	 * @return string Trusted HTML (built here from a validated name); echo as is.
+	 */
+	public function icon( ?string $slug = null, string $class = '', int $size = 16 ): string {
+		$record = $this->get( $this->resolve( '' === $slug ? null : $slug ) );
+		$name   = is_array( $record ) ? strtolower( trim( (string) ( $record['icon'] ?? '' ) ) ) : '';
+		$class  = trim( 'wb-gam-pt-icon ' . $class );
+		$style  = sprintf( 'display:inline-flex;align-items:center;flex-shrink:0;line-height:1;margin-inline-end:.3em;font-size:%dpx', max( 8, $size ) );
+
+		if ( '' !== $name && 1 === preg_match( '/^[a-z0-9-]+$/', $name ) && self::font_has( $name ) ) {
+			wp_enqueue_style( 'lucide-icons' );
+			// The wb-gam wrapper is what scopes the Lucide font rules (lucide.css), so the glyph renders anywhere.
+			return '<span class="' . esc_attr( $class ) . '" style="' . esc_attr( $style ) . '" aria-hidden="true"><i class="icon-' . esc_attr( $name ) . '"></i></span>';
+		}
+
+		return '<span class="' . esc_attr( $class ) . '" style="' . esc_attr( $style ) . '" aria-hidden="true">' . \WBGam\Admin\Icon::svg( 'sparkles', array( 'size' => '1em' ) ) . '</span>';
+	}
+
+	/**
+	 * Whether the bundled Lucide font has a glyph for this icon name.
+	 *
+	 * @param string $name Validated icon name.
+	 */
+	private static function font_has( string $name ): bool {
+		static $css = null;
+		if ( null === $css ) {
+			// Local plugin file, read once per request and only when an owner configured an icon.
+			$css = (string) file_get_contents( WB_GAM_PATH . 'assets/fonts/lucide.css' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		}
+		return str_contains( $css, '.icon-' . $name . ':before' );
+	}
+
+	/**
 	 * Create a new point type. Returns a structured result.
 	 *
 	 * @param array<string,mixed> $input Untrusted input (sanitised here).
@@ -278,6 +322,7 @@ final class PointTypeService {
 				'error' => 'delete_failed',
 			);
 		}
+		\WBGam\Engine\Registry::clear_point_type_overrides( $slug );
 		return array( 'ok' => true );
 	}
 

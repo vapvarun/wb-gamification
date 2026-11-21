@@ -1,6 +1,6 @@
 # Modules
 
-Go to **WB Gamification > Settings > Modules** in your admin sidebar.
+Go to **Gamification > Dashboard > Modules** in your admin sidebar.
 
 Not every community wants every mechanic. This section turns optional engagement modules on or off so you only ship what your members will actually use. Added in 1.5.3.
 

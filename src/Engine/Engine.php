@@ -538,8 +538,7 @@ final class Engine {
 		 *     Registry action definition, not from metadata). Mutating
 		 *     metadata['point_type'] here has NO effect on which currency
 		 *     the resulting award lands in. To change the awarded currency
-		 *     for an action, override via the Registry layer or
-		 *     `wb_gam_resolve_action_point_type` filter (if exposed).
+		 *     for an action, set it in Settings > Points or declare `point_type` on the action.
 		 *
 		 *   - The filter fires OUTSIDE the award transaction. Listeners
 		 *     should perform read-only enrichment only — no DB writes,

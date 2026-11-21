@@ -17,6 +17,14 @@ A block is a ready-made display element. You add it in the WordPress editor, adj
 
 All WB Gamification blocks are grouped under the **Widgets** category in the inserter, and their names start with "Gamification" or the feature name.
 
+## Colours and dark mode
+
+Blocks follow your theme's light and dark mode and keep text and buttons readable in both. If you set a block's own **Card background** or **Accent** colour, the text and list rows on it stay readable in dark mode on Reign, BuddyX and BuddyX Pro. Leave a colour empty to use your theme's.
+
+## Languages
+
+The plugin ships with German, French, Spanish, Italian and Brazilian Portuguese translations, including each block's settings in the editor. Set your site language under **Settings > General > Site Language**. Every Gamification admin screen works in a translated admin, and messages from the server show in the language of the admin who is signed in.
+
 ## The 19 blocks
 
 | Block | What it shows |

@@ -1,6 +1,6 @@
 # Kudos Settings
 
-Go to **WB Gamification > Kudos** in your admin sidebar.
+Go to **Gamification > Dashboard > Kudos** in your admin sidebar.
 
 Kudos is a peer-recognition system. Members send kudos to each other to say "great work." Both the giver and the receiver can earn points, which encourages participation on both sides.
 

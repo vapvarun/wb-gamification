@@ -1,6 +1,6 @@
 # Rank Automation Rules
 
-Go to **WB Gamification > Rules** in your admin sidebar.
+Go to **Gamification > Dashboard > Rules** in your admin sidebar.
 
 Rank Automation rules trigger actions automatically when a member reaches a specific level. Use them to onboard members into groups, grant role upgrades, or send congratulatory messages - all without writing any code.
 

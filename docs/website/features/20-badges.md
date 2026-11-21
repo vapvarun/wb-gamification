@@ -21,17 +21,17 @@ A fresh install includes these 37 badges. You can edit, delete or add to them.
 | Tenure (4) | 1-Year Member, 2-Year Member, 5-Year Member, 10-Year Member | Being a member for 1, 2, 5 and 10 years |
 | Site-first (3) | First Champion, First to 10,000, Century Streak Pioneer | Going to the one member who gets there first |
 
-The BuddyPress badges can only be earned while BuddyPress is active, because the actions they count come from BuddyPress. For tenure and site-first badges, see [Tenure and First-Time Badges](../usage/160-tenure-and-first-time-badges.md).
+The BuddyPress badges can only be earned while BuddyPress is active, because the actions they count come from BuddyPress. On a site without BuddyPress, members do not see those badges at all, unless they already earned one. In **Gamification > Badges** the badge shows a **Not earnable here** label instead of **Auto-award**. The same applies to any badge that needs a plugin the site does not run. For tenure and site-first badges, see [Tenure and First-Time Badges](../usage/160-tenure-and-first-time-badges.md).
 
 ## How Badges Are Awarded
 
 **Automatically.** A badge with any condition other than **Admin awarded only (manual)** is checked whenever something could change the answer: the member earns points, moves up a level, or reaches a streak milestone. Tenure badges are checked once a day, because no member action can trigger them. The member gets the badge as soon as the rule is met.
 
-**By hand.** Open the badge in **WB Gamification > Badges**. Under **Award this badge to a user**, search for the member and click **Award Badge**. This works for any badge, including ones that also award automatically.
+**By hand.** Open the badge in **Gamification > Badges**. Under **Award this badge to a user**, search for the member and click **Award Badge**. This works for any badge, including ones that also award automatically.
 
 ## Creating Custom Badges
 
-1. Go to **WB Gamification > Badges**.
+1. Go to **Gamification > Badges**.
 2. Click **+ Create New Badge**.
 3. Enter a **Badge ID**, a **Name** and a **Description**, and click **Choose Icon** to pick an image.
 4. Under **Auto-Award Conditions**, pick a condition and fill in its value. Click **+ Add condition** to add more, and choose whether the member must match **ALL of these** or **ANY of these**.
