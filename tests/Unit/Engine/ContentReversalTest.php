@@ -218,6 +218,59 @@ class ContentReversalTest extends TestCase {
 	}
 
 	#[Test]
+	public function a_penalty_is_given_back_when_it_is_lifted(): void {
+		$this->earn( 7, 'wp_user_register', 15, null ); // All they held.
+		$this->earn( 7, 'jetonomy_post_removed', -15, 100 ); // A 20-point penalty that could only take 15.
+
+		$this->assertSame( 1, PointsEngine::reverse_object_awards( array( 'jetonomy_post_removed' => array( 100 ) ) ) );
+
+		$last = end( $this->db->points );
+		$this->assertSame( 'jetonomy_post_removed_removed', $last['action_id'] );
+		$this->assertSame( 15, $last['points'], 'Exactly what was taken, not the amount the action asks for.' );
+		$this->assertSame( 15, $this->db->totals[7]['points'] );
+	}
+
+	#[Test]
+	public function lifting_a_penalty_twice_gives_back_once(): void {
+		$this->earn( 7, 'wp_user_register', 15, null );
+		$this->earn( 7, 'jetonomy_post_removed', -15, 100 );
+		$t = array( 'jetonomy_post_removed' => array( 100 ) );
+
+		PointsEngine::reverse_object_awards( $t );
+		$this->assertSame( 0, PointsEngine::reverse_object_awards( $t ) );
+
+		$this->assertSame( 15, $this->db->totals[7]['points'] );
+		$this->assertCount( 3, $this->db->points );
+	}
+
+	#[Test]
+	public function a_standing_penalty_blocks_a_second_for_the_same_object_until_it_is_lifted(): void {
+		$action = array(
+			'id'              => 'jetonomy_post_downvoted',
+			'once_per_object' => 'intval',
+			'point_type'      => '',
+		);
+
+		$this->earn( 7, 'jetonomy_post_downvoted', -2, 100 );
+		$this->assertFalse( PointsEngine::passes_rate_limits( 7, 'jetonomy_post_downvoted', $action, 100 ), 'Penalised once for this vote.' );
+		$this->assertTrue( PointsEngine::passes_rate_limits( 7, 'jetonomy_post_downvoted', $action, 101 ), 'Another vote is another penalty.' );
+
+		PointsEngine::reverse_object_awards( array( 'jetonomy_post_downvoted' => array( 100 ) ) );
+		$this->assertTrue( PointsEngine::passes_rate_limits( 7, 'jetonomy_post_downvoted', $action, 100 ), 'Withdrawn, then cast again: penalised again.' );
+	}
+
+	#[Test]
+	public function an_award_still_comes_back_by_what_it_paid_not_by_a_penalty_sign(): void {
+		$this->earn( 7, 'jetonomy_post_upvoted', 10, 100 );
+		$this->earn( 7, 'jetonomy_post_downvoted', -2, 100 ); // Same object number, a different action.
+
+		PointsEngine::reverse_object_awards( array( 'jetonomy_post_upvoted' => array( 100 ) ) );
+
+		$this->assertSame( -2, $this->db->totals[7]['points'] );
+		$this->assertSame( -10, end( $this->db->points )['points'] );
+	}
+
+	#[Test]
 	public function awards_from_before_1_6_8_are_left_alone(): void {
 		$this->earn( 7, 'wp_publish_post', 25, null ); // No object id.
 

@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+### Changed
+
+- Jetonomy forum events are now real actions on Settings > Points: topic, reply, upvotes, accepted answer, planned idea, upheld report, and the penalties (downvote, report, removed by a moderator). Set the amount, switch each off, and add a cooldown or a daily or weekly cap. Until you save a number they pay what Jetonomy already pays, so no amount changes on update.
+- Penalties are a new kind of action: they take points, never below zero, and give back exactly what was taken when the penalty is lifted. They are not listed in the public earning guide.
+- A deleted or moderator-removed topic or reply takes its participation points back, and restoring it gives them back. A withdrawn vote takes back that vote's points only.
+
+### Added
+
+- A `penalty` key for manifest actions, and a `penalty` field on `GET /actions`.
+
 ## [1.6.8] - 2026-11-18
 
 Fair earning across every integration: removed content takes its points back, nobody earns from their own content, and the plugin now speaks five languages.

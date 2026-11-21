@@ -291,6 +291,11 @@ class ActionsController extends WP_REST_Controller {
 					'type'        => 'integer',
 					'description' => 'Default points awarded for this action.',
 				),
+				'penalty'        => array(
+					'type'        => 'boolean',
+					'description' => 'Whether the action takes points away. Its points value is the amount taken (a positive number).',
+					'readonly'    => true,
+				),
 				'repeatable'     => array(
 					'type'        => 'boolean',
 					'description' => 'Whether the action can be triggered multiple times.',
@@ -339,6 +344,7 @@ class ActionsController extends WP_REST_Controller {
 			'icon'           => $action['icon'] ?? '',
 			'default_points' => $action['default_points'],
 			'repeatable'     => $action['repeatable'] ?? true,
+			'penalty'        => (bool) ( $action['penalty'] ?? false ),
 			'cooldown'       => $action['cooldown'] ?? 0,
 			'daily_cap'      => $action['daily_cap'] ?? 0,
 			'weekly_cap'     => $action['weekly_cap'] ?? 0,

@@ -114,6 +114,9 @@ final class Registry {
 	 *                                  award is skipped (`own_content`) when that is the member being paid.
 	 *   @type callable $object_date    Optional. Object id => when the content was created (UTC 'Y-m-d H:i:s'). Content
 	 *                                  from before the 1.6.8 update is treated as paid ({@see PointsEngine::is_legacy_object()}).
+	 *   @type bool     $penalty        Optional. The action takes points away instead of giving them. The amount is the
+	 *                                  action's points setting (a positive number), it never takes the balance below
+	 *                                  zero, and it is not an earn: no badge, level-up announcement or multiplier.
 	 *   @type int      $default_points Default points awarded. Admin can override.
 	 *   @type string   $category       Optional category (buddypress, commerce, etc.).
 	 *   @type string   $icon           Dashicon name or URL.

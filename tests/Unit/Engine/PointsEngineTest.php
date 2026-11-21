@@ -179,6 +179,74 @@ class PointsEngineTest extends TestCase {
 		$this->assertSame( 'insufficient_balance', $result['reason'] );
 	}
 
+	/**
+	 * A penalty larger than the balance takes only what the member holds: it never drives a
+	 * balance below zero, and the ledger records what was really taken.
+	 */
+	public function test_penalize_takes_only_what_the_member_holds(): void {
+		global $wpdb;
+
+		$wpdb         = $this->mockWpdb();
+		$wpdb->prefix = 'wp_';
+
+		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn( $q ) => $q );
+		$wpdb->shouldReceive( 'get_var' )->andReturn( 15 );
+		$wpdb->shouldReceive( 'get_results' )->andReturn( array() );
+		$inserts = array();
+		$wpdb->shouldReceive( 'insert' )->andReturnUsing(
+			static function ( $table, $data ) use ( &$inserts ): int {
+				$inserts[] = $data;
+				return 1;
+			}
+		);
+		$wpdb->shouldReceive( 'query' )->andReturn( 1 );
+
+		Functions\when( 'current_time' )->justReturn( '2026-01-01 00:00:00' );
+		Functions\stubs( array( 'wp_json_encode' => static fn( $v ) => json_encode( $v ) ) );
+		Functions\when( 'wp_cache_delete' )->justReturn( true );
+		Functions\when( 'do_action' )->justReturn( null );
+
+		$event = new \WBGam\Engine\Event(
+			array(
+				'action_id' => 'jetonomy_post_removed',
+				'user_id'   => 7,
+				'object_id' => 100,
+			)
+		);
+
+		$this->assertTrue( PointsEngine::penalize( $event, 20 ) );
+
+		$ledger_row = end( $inserts );
+		$this->assertSame( -15, $ledger_row['points'], 'The 20 asked for is capped at the 15 held.' );
+		$this->assertSame( 100, $ledger_row['object_id'] );
+		$this->assertSame( 20, $event->metadata['penalty_requested'], 'What the action asked for travels with the event.' );
+	}
+
+	public function test_penalize_takes_nothing_from_an_empty_balance(): void {
+		global $wpdb;
+
+		$wpdb         = $this->mockWpdb();
+		$wpdb->prefix = 'wp_';
+
+		$wpdb->shouldReceive( 'prepare' )->andReturnUsing( static fn( $q ) => $q );
+		$wpdb->shouldReceive( 'get_var' )->andReturn( 0 );
+		$wpdb->shouldReceive( 'get_results' )->andReturn( array() );
+		$wpdb->shouldReceive( 'insert' )->never();
+		$wpdb->shouldReceive( 'query' )->andReturn( 1 );
+
+		Functions\when( 'do_action' )->justReturn( null );
+
+		$event = new \WBGam\Engine\Event(
+			array(
+				'action_id' => 'jetonomy_post_removed',
+				'user_id'   => 7,
+				'object_id' => 100,
+			)
+		);
+
+		$this->assertFalse( PointsEngine::penalize( $event, 20 ) );
+	}
+
 	public function test_debit_always_stores_negative_amount(): void {
 		global $wpdb;
 

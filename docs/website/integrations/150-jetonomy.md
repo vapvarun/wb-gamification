@@ -2,11 +2,31 @@
 
 WB Gamification connects to Jetonomy automatically when Jetonomy is active. Two things happen: Jetonomy activity awards WB Gamification points, and - to avoid showing two identical leaderboards - WB Gamification defers its own leaderboard display to Jetonomy's reputation ranking.
 
-## Jetonomy Events Award WB Gam Points
+## Forum Events Are Actions You Control
 
-`WBGam\Integrations\Jetonomy\JetonomyIntegration` mirrors every Jetonomy reputation delta 1:1 into the WB Gamification points ledger via the `jetonomy_reputation_changed` action. Positive deltas award points; negative deltas debit (only when the member has enough balance). Sandboxed users are skipped in both directions, and Jetonomy's own reputation row is never touched - only the gamification ledger mirrors it.
+Every forum event Jetonomy scores is an action on **Settings > Points**, under Jetonomy, like any other action:
 
-Forum and content reputation events (post / reply / vote / idea / flag) are recorded under prefixed action IDs (`jetonomy_*`) so forum-sourced points stay distinct from native WB Gam awards in reports.
+| Action | Starts at | What it is |
+|---|---|---|
+| Started a forum topic | Jetonomy's value | A topic is published |
+| Replied in the forum | Jetonomy's value | A reply is published |
+| Your forum post / reply was upvoted | Jetonomy's value | Each upvote from another member |
+| Your answer was accepted | Jetonomy's value | The asker accepts a reply |
+| Your idea was planned | Jetonomy's value | A moderator moves an idea onto the roadmap |
+| Your report was upheld | Jetonomy's value | A moderator removes a post you reported |
+| Your forum post / reply was downvoted | Jetonomy's value | Each downvote. **Takes points** |
+| Forum post reported | Jetonomy's value | Each report against the author. **Takes points** |
+| Post removed by a moderator | Jetonomy's value | A moderator trashes or spams a topic or reply. **Takes points** |
+
+For each one you can set the amount, switch it off, and add a cooldown, a daily cap or a weekly cap. **Nothing is fixed in code.** "Starts at" is only a starting value: until you save a number here, the action pays what Jetonomy already pays on your site (its default, or whatever you set under Jetonomy > Settings > Reputation), so installing this version changes no number.
+
+How the two plugins split the work: Jetonomy decides whether a forum event counts at all and keeps the forum reputation. WB Gamification decides what that event is worth as community points. A value of 0 in Jetonomy means the event is never announced, so it also pays nothing here; to stop only the points, switch the action off here.
+
+**Penalties** take points away. The amount is the number you set (shown as a positive number), a penalty never takes a balance below zero, and a member with nothing to lose loses nothing. What was really taken is what the ledger records, and what is given back if the penalty is lifted. Penalties are not shown in the public "how to earn" guide.
+
+**Taken back and given back.** Content leaves with its points: a topic or reply that is deleted, or removed by a moderator, takes its participation points back, and restoring it returns them. A withdrawn upvote takes back that one vote's points (not every upvote on the post), a withdrawn downvote or lifted report gives the penalty back, and un-accepting an answer takes the acceptance points back. A vote that changes direction does both: the old one is undone and the new one applies. Each upvote, downvote and report is tracked separately, so one member withdrawing never touches another's. Points that were already spent can leave a balance below zero when an earned award is taken back; that rule is the same for every integration.
+
+Everything else Jetonomy scores (a custom badge's reputation bonus, a manual adjustment from the command line) is not an action: it is copied into the points ledger 1:1 as `jetonomy_badge_earned` and so on. Sandboxed members are skipped in both directions. Jetonomy's own reputation row is never touched.
 
 In addition, the auto-discovered manifests register discrete Jetonomy actions:
 
@@ -15,7 +35,7 @@ In addition, the auto-discovered manifests register discrete Jetonomy actions:
 | `integrations/jetonomy.php` | `jetonomy_space_joined`, `jetonomy_join_request_approved`, `jetonomy_trust_level_up`, `jetonomy_membership_activated` |
 | `integrations/jetonomy-pro.php` | `jetonomy_pro_poll_created`, `jetonomy_pro_poll_voted`, `jetonomy_pro_reaction_added` |
 
-A Jetonomy custom badge is paid once: its reputation bonus reaches the points ledger through the reputation mirror as `jetonomy_badge_earned`. There is no separate `jetonomy_pro_badge_earned` action (before 1.6.5 there was, and each badge paid twice).
+A Jetonomy custom badge is paid once: its reputation bonus reaches the points ledger through the remaining reputation copy as `jetonomy_badge_earned`. There is no separate `jetonomy_pro_badge_earned` action (before 1.6.5 there was, and each badge paid twice).
 
 ## Membership Activation Pays Once Per Plan
 
@@ -27,7 +47,7 @@ A Jetonomy custom badge is paid once: its reputation bonus reaches the points le
 
 ## Leaderboard Deferral
 
-Because WB Gamification mirrors Jetonomy reputation 1:1 into points, the two leaderboards would rank the same members in the same order - a genuine duplicate. Rather than show both, `WBGam\Integrations\Jetonomy\DisplayDefer` suppresses WB Gam's leaderboard display when Jetonomy is active and lets Jetonomy's reputation leaderboard be the single source of truth.
+Out of the box WB Gamification pays forum events the same amounts Jetonomy scores them, so the two leaderboards would rank the same members in the same order - a genuine duplicate. Rather than show both, `WBGam\Integrations\Jetonomy\DisplayDefer` suppresses WB Gam's leaderboard display when Jetonomy is active and lets Jetonomy's reputation leaderboard be the single source of truth.
 
 When deferral is on, WB Gamification suppresses:
 
@@ -57,5 +77,5 @@ See the [Filters reference](../developer-guide/130-filters-reference.md) for the
 
 ## Requirements
 
-- Jetonomy active (reputation mirroring + leaderboard deferral).
+- Jetonomy 2.0.8 or later for exact per-vote and per-report tracking (older versions still pay, but a withdrawn vote cannot be matched to its award); Jetonomy 1.4.3 or later otherwise (forum actions + leaderboard deferral).
 - Jetonomy Pro active for the `jetonomy_pro_*` actions.

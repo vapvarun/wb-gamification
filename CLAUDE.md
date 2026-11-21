@@ -164,6 +164,10 @@ plugin by plugin.
    on the way in and out) and settles exactly what that object paid, from whoever was paid. Re-adding pays
    again, so add/remove loops net to zero instead of needing a ban. `restore_on` gives back an award that
    was taken (untrash, unspam, approve again).
+   A **penalty** (`'penalty' => true`) takes points instead of giving them: the points setting is the amount,
+   it is capped at the balance (never below zero), no multiplier, badge or level-up applies, and `reverse_on`
+   gives back exactly what was taken. Forum scoring (`integrations/jetonomy.php`) is the reference: every
+   number is an owner setting, and the default only follows what the partner already pays.
 3. **Pay on publish, not on submit.** Content held for moderation pays when approved (bridge to a
    `wb_gam_<plugin>_..._published` hook, as Listora, WP Sell Services, Tutor and Learnomy reviews do) and
    reverses on reject or spam.

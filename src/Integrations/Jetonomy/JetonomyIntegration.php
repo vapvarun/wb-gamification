@@ -2,10 +2,12 @@
 /**
  * WB Gamification — Jetonomy integration.
  *
- * Mirrors Jetonomy reputation deltas into the WB Gam ledger via the
- * `jetonomy_reputation_changed` action. Sandboxed users (truthy
- * `wb_gam_sandboxed` user meta) are skipped at the wb-gam mirror —
- * Jetonomy's own reputation row is unaffected.
+ * Forum events that are registered actions (topic, reply, votes, acceptance, penalties; see
+ * integrations/jetonomy.php) are paid and taken back by the engine like every other action, under
+ * the owner's settings. This class mirrors the rest of Jetonomy's reputation deltas (badges, manual
+ * adjustments) into the WB Gam ledger via `jetonomy_reputation_changed`, and stands aside for any
+ * event a registered action owns. Sandboxed users (truthy `wb_gam_sandboxed` user meta) are skipped
+ * at the wb-gam mirror: Jetonomy's own reputation row is unaffected.
  *
  * History: 1.0.1 also registered listeners for three filters
  * (`jetonomy_reputation_points_map`, `jetonomy_reputation_pre_change`,
@@ -81,6 +83,8 @@ final class JetonomyIntegration {
 			return $label;
 		}
 
+		// Named here as well as on the registered actions: history stays readable on a site where
+		// Jetonomy is switched off and its actions are not registered.
 		$labels = array(
 			'reply_created'     => __( 'Replied in the forum', 'wb-gamification' ),
 			'post_created'      => __( 'Started a forum topic', 'wb-gamification' ),
@@ -149,9 +153,18 @@ final class JetonomyIntegration {
 			return;
 		}
 
-		$action_id = self::ACTION_PREFIX . preg_replace( '/[^a-z0-9_]/i', '', (string) $action );
-		if ( self::ACTION_PREFIX === $action_id ) {
+		$reason = preg_replace( '/[^a-z0-9_]/i', '', (string) $action );
+		if ( '' === $reason ) {
 			return; // Malformed action key — refuse to ledger junk rows.
+		}
+		$action_id = self::ACTION_PREFIX . $reason;
+
+		// A registered action owns this event, and its withdrawal ("{event}_revoked"): the engine pays
+		// it under the owner's settings and takes it back through the action's own exit. Paying it
+		// here as well would double it, and ignore the owner's points, caps and on/off.
+		$event = str_ends_with( $reason, '_revoked' ) ? substr( $reason, 0, -strlen( '_revoked' ) ) : $reason;
+		if ( null !== \WBGam\Engine\Registry::get_action( self::ACTION_PREFIX . $event ) ) {
+			return;
 		}
 
 		// Sandboxed users get no wb-gam mirror in either direction.

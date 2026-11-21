@@ -1494,6 +1494,9 @@ final class SettingsPage {
 											<td>
 												<div class="wbgam-action-cell">
 													<strong class="wbgam-action-cell__title"><?php echo esc_html( $action['label'] ?? $action_id ); ?></strong>
+													<?php if ( ! empty( $action['penalty'] ) ) : ?>
+														<span class="wbgam-pill wbgam-pill--warning"><?php esc_html_e( 'Takes points', 'wb-gamification' ); ?></span>
+													<?php endif; ?>
 													<?php if ( ! empty( $action['description'] ) ) : ?>
 														<span class="wbgam-action-cell__desc"><?php echo esc_html( $action['description'] ); ?></span>
 													<?php endif; ?>
@@ -1503,7 +1506,18 @@ final class SettingsPage {
 												<input
 													type="number"
 													name="<?php echo esc_attr( self::field_name( 'wb_gam_points_', (string) $action_id ) ); ?>"
-													aria-label="<?php /* translators: %s: gamification action label */ echo esc_attr( sprintf( __( 'Amount for %s', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
+													aria-label="<?php
+													echo esc_attr(
+														sprintf(
+															! empty( $action['penalty'] )
+																/* translators: %s: gamification action label */
+																? __( 'Points taken for %s', 'wb-gamification' )
+																/* translators: %s: gamification action label */
+																: __( 'Amount for %s', 'wb-gamification' ),
+															$action['label'] ?? $action_id
+														)
+													);
+													?>"
 													value="<?php echo esc_attr( (string) $pts ); ?>"
 													min="0"
 													max="9999"
