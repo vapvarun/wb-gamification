@@ -196,6 +196,16 @@ final class JetonomyIntegration {
 			return;
 		}
 
+		// A queued job can run later than the change that queued it, and two jobs for one topic (a
+		// removal then an approval) can run in either order. Each batch therefore acts on the topic's
+		// state NOW: a removal only while the topic is not published, a restore only while it is. A job
+		// the topic has since overtaken does nothing.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Jetonomy's topic table, one row by id.
+		$status = $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$wpdb->prefix}jt_posts WHERE id = %d", $post_id ) );
+		if ( $reverse === ( 'publish' === (string) $status ) ) {
+			return;
+		}
+
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Jetonomy's reply table, a keyset page by id.
 		$ids = array_map(
 			'intval',
