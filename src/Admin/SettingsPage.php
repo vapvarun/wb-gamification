@@ -38,6 +38,12 @@ defined( 'ABSPATH' ) || exit;
 final class SettingsPage {
 
 	/**
+	 * Largest points value a single action can award from the Points tab (the field's own max).
+	 */
+	private const POINTS_MAX = 9999;
+
+
+	/**
 	 * Register admin_menu and form-handler hooks.
 	 */
 	public static function init(): void {
@@ -411,10 +417,12 @@ final class SettingsPage {
 
 		foreach ( $actions as $action_id => $action ) {
 			$key    = self::field_name( 'wb_gam_points_', (string) $action_id );
-			$points = isset( $_POST[ $key ] ) ? absint( wp_unslash( $_POST[ $key ] ) ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$raw = isset( $_POST[ $key ] ) ? trim( (string) wp_unslash( $_POST[ $key ] ) ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
-			if ( null !== $points && $points >= 0 ) {
-				update_option( 'wb_gam_points_' . $action_id, $points );
+			// The field is a whole number from 0 to POINTS_MAX, as the browser enforces. absint() turned -5 into 5 and text
+			// into 0, so a value that is not a plain non-negative number is left as it was, and an oversized one is capped.
+			if ( null !== $raw && ctype_digit( $raw ) ) {
+				update_option( 'wb_gam_points_' . $action_id, min( self::POINTS_MAX, (int) $raw ) );
 			}
 
 			$enabled_key = self::field_name( 'wb_gam_enabled_', (string) $action_id );
