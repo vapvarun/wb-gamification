@@ -171,7 +171,7 @@ final class JetonomyIntegration {
 		if ( function_exists( 'as_enqueue_async_action' ) ) {
 			// Each batch queues the next, so the same batch must never be queued twice.
 			$args = array( $post_id, $mode, $after_id );
-			if ( ! as_has_scheduled_action( self::REPLIES_HOOK, $args, 'wb-gamification' ) ) {
+			if ( ! function_exists( 'as_has_scheduled_action' ) || ! as_has_scheduled_action( self::REPLIES_HOOK, $args, 'wb-gamification' ) ) {
 				as_enqueue_async_action( self::REPLIES_HOOK, $args, 'wb-gamification' );
 			}
 			return;
