@@ -14,9 +14,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - A deleted or moderator-removed topic or reply takes its participation points back, and restoring it gives them back. A withdrawn vote takes back that vote's points only.
 - Deleting or removing a topic also takes back the points of its replies (published and accepted), in background batches of 200, and approving the topic gives them back. A moderator removal takes the topic's participation points back first, then the penalty from what is left, so a small balance ends at zero, never below.
 
+- Forum topics start with a daily cap of 5 and replies with a daily cap of 20 and a 30 second cooldown, so a run of throwaway posts cannot farm points. Change or clear them on Settings > Points.
+
 ### Added
 
 - A `penalty` key for manifest actions, and a `penalty` field on `GET /actions`.
+
+### Fixed
+
+- Every toast closes by itself: 4 seconds, or 8 seconds when it carries a link. A toast with a link used to stay until it was closed by hand, and inside BuddyNext for good.
+- Escape closes the newest toast.
+- Toasts wait while a popup is open or while the member is writing in a field, so they never sit over a Post or Submit button. Inside BuddyNext the popup rule was skipped before.
+- A toast earned by the member's own action arrives within a few seconds, whichever plugin handled it (a BuddyNext post or comment used to wait for the next 60 second check).
+- The release zip compresses every file, so the store's upload firewall no longer rejects it for readable PHP.
 
 ## [1.6.8] - 2026-11-18
 

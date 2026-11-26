@@ -204,6 +204,14 @@ foreach ( $jt_forum_events as $jt_event => $jt_def ) {
 	if ( $jt_restore ) {
 		$jt_trigger['restore_on'] = $jt_restore;
 	}
+	// Starting limits so a run of throwaway topics or replies cannot farm points (Jetonomy caps
+	// neither). The owner changes or clears them on the Actions screen.
+	if ( 'post_created' === $jt_event ) {
+		$jt_trigger['daily_cap'] = 5;
+	} elseif ( 'reply_created' === $jt_event ) {
+		$jt_trigger['cooldown']  = 30;
+		$jt_trigger['daily_cap'] = 20;
+	}
 	$jt_forum_triggers[] = $jt_trigger;
 }
 
