@@ -1754,7 +1754,7 @@ final class LeaderboardEngine {
 		/**
 		 * Filter: add an eligibility rule to every leaderboard and rank query.
 		 *
-		 * @since 1.6.9
+		 * @since 1.7.0
 		 *
 		 * @param array{0:string,1:array} $extra [ SQL fragment starting with " AND ", values for its placeholders ].
 		 * @param string                  $alias Table alias whose user_id column is the member.
@@ -1768,7 +1768,7 @@ final class LeaderboardEngine {
 		}
 		$placeholders = preg_match_all( '/%[ds]/', str_replace( '%%', '', $sql ) );
 		if ( 0 !== strpos( $sql, ' AND ' ) || count( $values ) !== $placeholders ) {
-			_doing_it_wrong( 'wb_gam_leaderboard_exclusion_sql', esc_html__( 'The fragment must start with " AND " and have one value per %d or %s placeholder. It was ignored.', 'wb-gamification' ), '1.6.9' );
+			_doing_it_wrong( 'wb_gam_leaderboard_exclusion_sql', esc_html__( 'The fragment must start with " AND " and have one value per %d or %s placeholder. It was ignored.', 'wb-gamification' ), '1.7.0' );
 			return array( '', array() );
 		}
 		return array( $sql, $values );
