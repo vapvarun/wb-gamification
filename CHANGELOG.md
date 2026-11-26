@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 ### Added
 
 - A `penalty` key for manifest actions, and a `penalty` field on `GET /actions`.
+- The `wb_gam_leaderboard_exclusion_sql` filter: a host plugin adds its own rule for who appears on every leaderboard and rank. BuddyNext uses it to keep suspended members off the boards.
 
 ### Fixed
 

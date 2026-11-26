@@ -132,6 +132,32 @@ class LeaderboardEligibilityTest extends TestCase {
 		$this->assertStringNotContainsString( 'muser_id', $sql );
 		$this->assertStringNotContainsString( ' p.user_id', $sql, 'This fragment was not built for the `p` alias.' );
 	}
+
+	/**
+	 * A host plugin's rule (BuddyNext: suspended members) lands in every board query, with its values.
+	 */
+	public function test_a_host_rule_is_appended_with_its_values(): void {
+		Monkey\Filters\expectApplied( 'wb_gam_leaderboard_exclusion_sql' )
+			->andReturnUsing( static fn( $extra, $alias ) => array( ' AND NOT EXISTS ( SELECT 1 FROM wp_bn_user_suspensions bs WHERE bs.user_id = ' . $alias . '.user_id AND bs.level >= %d )', array( 2 ) ) );
+
+		$m             = new \ReflectionMethod( LeaderboardEngine::class, 'exclusion_sql' );
+		[ $sql, $vals ] = $m->invoke( null, 'ut', false );
+
+		$this->assertStringContainsString( 'bs.user_id = ut.user_id', $sql );
+		$this->assertSame( 2, end( $vals ) );
+	}
+
+	/**
+	 * A fragment that breaks the contract never reaches the query.
+	 */
+	public function test_a_malformed_host_rule_is_ignored(): void {
+		Functions\when( '_doing_it_wrong' )->justReturn( null );
+		Functions\when( 'esc_html__' )->returnArg();
+		Monkey\Filters\expectApplied( 'wb_gam_leaderboard_exclusion_sql' )
+			->andReturn( array( 'OR 1=1 AND x = %d', array() ) );
+
+		$this->assertStringNotContainsString( 'OR 1=1', $this->fragment( 'p' ) );
+	}
 }
 
 /**
