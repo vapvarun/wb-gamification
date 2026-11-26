@@ -567,6 +567,10 @@
 	}
 
 	function update( handle, opts ) {
+		opts = sayable( opts || {} );
+		if ( ! opts ) {
+			return; // Nothing to say: keep what is on screen.
+		}
 		paint( handle, opts );
 		arm( handle, handle.ms );
 	}
@@ -638,7 +642,12 @@
 			get el() { return e.pulled || e.dead ? null : e.cur.el; },
 			get gone() { return e.pulled ? false : ! bnAlive( e ); },
 			update: function ( next ) {
-				e.opts = Object.assign( {}, e.opts, next || {} );
+				var merged = sayable( Object.assign( {}, e.opts, next || {} ) );
+				if ( ! merged ) {
+					return; // Nothing to say: keep what is on screen.
+				}
+				e.opts = merged;
+				next   = merged;
 				if ( ! e.pulled && ! e.dead ) {
 					var can = window.bnToast.supports || {};
 					var out = Object.assign( {}, next || {} );
@@ -681,8 +690,32 @@
 	 * @param {Object}  opts      See the file header.
 	 * @param {boolean} fromQueue Internal: the queue is handing over its next toast.
 	 */
+	/**
+	 * A toast always says something. An empty title takes the body's place; with neither there is
+	 * nothing to show, so no toast is drawn (an empty pill with only an icon and a close button,
+	 * on either stack, is never acceptable).
+	 *
+	 * @param {Object} opts Toast options.
+	 * @return {?Object} Options with a title, or null.
+	 */
+	function sayable( opts ) {
+		if ( '' !== countText( opts ).trim() ) {
+			return opts;
+		}
+		var body = String( opts.body || '' ).trim();
+		if ( '' === body ) {
+			return null;
+		}
+		return Object.assign( {}, opts, { title: body, body: '', count: undefined } );
+	}
+
+	var SILENT = { el: null, gone: true, update: function () {}, dismiss: function () {} };
+
 	function toast( opts, fromQueue ) {
-		opts = opts || {};
+		opts = sayable( opts || {} );
+		if ( ! opts ) {
+			return SILENT;
+		}
 		var onBn = isBuddyNextToast();
 
 		// Same key while alive: update in place, never stack a second copy (BuddyNext does this itself).

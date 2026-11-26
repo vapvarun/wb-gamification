@@ -340,3 +340,24 @@ test( 'another plugin\'s text-only bnToast (Jetonomy without BuddyNext) is not u
 	assert.strictEqual( seen.length, 0, 'never handed an options object ("[object Object]")' );
 	assert.strictEqual( p.shown(), 1 );
 } );
+
+test( 'no empty toast on either stack: nothing to say draws nothing, an empty title takes the body', () => {
+	const own = page();
+	own.toast( { title: '', body: '' } );
+	assert.strictEqual( own.shown(), 0, 'own stack: nothing drawn' );
+	own.toast( { title: '  ', body: 'Join a space' } );
+	assert.strictEqual( own.w.document.querySelector( '.wb-gam-toast__message' ).textContent, 'Join a space' );
+
+	const bn = page( { bn: true } );
+	bn.toast( { title: '', body: '' } );
+	assert.strictEqual( bn.bnCalls.length, 0, 'BuddyNext is never asked to draw an empty toast' );
+	bn.toast( { title: '', body: 'Join a space', tone: 'achievement' } );
+	assert.strictEqual( bn.bnCalls[ 0 ].o.title, 'Join a space' );
+} );
+
+test( 'an update with nothing to say keeps the toast on screen as it was', () => {
+	const p = page();
+	const h = p.toast( { title: '+10 Points', body: 'Join a space' } );
+	h.update( { title: '', body: '' } );
+	assert.strictEqual( p.w.document.querySelector( '.wb-gam-toast__message' ).textContent, '+10 Points' );
+} );
