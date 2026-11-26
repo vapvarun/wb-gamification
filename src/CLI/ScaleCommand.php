@@ -723,11 +723,22 @@ final class ScaleCommand {
 		add_filter( 'pre_option_wb_gam_enabled_wp_publish_post', $force_on );
 		$rows_for      = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d", $uid ) );
 		PointsEngine::award( $uid, 'wp_publish_post', 5, 0, null, true ); // Warm caches; the first award of a request pays for everyone.
-		$rows_before   = $rows_for();
-		$before        = $wpdb->num_queries;
-		$awarded       = PointsEngine::award( $uid, 'wp_publish_post', 5, 0, null, true );
-		$award_queries = $wpdb->num_queries - $before;
-		$award_written = $awarded && $rows_for() === $rows_before + 1;
+		// Measure a steady-state award: the test member's total grows on every run, so an award can
+		// cross a badge threshold and pay for writing that badge too (26-43 queries instead of 9,
+		// seen 2026-11-26). An award that earned a badge is not the number this gate tracks; try
+		// again, at most five times.
+		$badges_for = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_user_badges WHERE user_id = %d", $uid ) );
+		for ( $try = 0; $try < 5; $try++ ) {
+			$rows_before   = $rows_for();
+			$badges_before = $badges_for();
+			$before        = $wpdb->num_queries;
+			$awarded       = PointsEngine::award( $uid, 'wp_publish_post', 5, 0, null, true );
+			$award_queries = $wpdb->num_queries - $before;
+			$award_written = $awarded && $rows_for() === $rows_before + 1;
+			if ( ! $award_written || $badges_for() === $badges_before ) {
+				break;
+			}
+		}
 		remove_filter( 'pre_option_wb_gam_enabled_wp_publish_post', $force_on );
 
 		// Render.
