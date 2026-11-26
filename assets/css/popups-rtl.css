@@ -259,7 +259,7 @@ body.admin-bar .wb-gam-toasts--top-right {
 }
 /* The badge's own picture fills the disc, on a light ground in both modes: badge art is drawn for
  * light backgrounds (many SVGs use currentColor, which is black inside an <img>). */
-.wb-gam-disc--image { box-sizing: border-box; padding: 4px; background: var(--wb-gam-color-white); }
+.wb-gam-disc--image { box-sizing: border-box; padding: 4px; background: #ffffff; } /* Fixed white, not a theme token: the theme "white" turns dark in dark mode. */
 .wb-gam-disc--image img {
 	display: block;
 	width: 100%;
