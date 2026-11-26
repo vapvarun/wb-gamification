@@ -190,7 +190,7 @@ These fire on every block, not just one slug.
 
 | Filter | Arguments | Description |
 |---|---|---|
-| `wb_gam_realtime_interval` | `int $seconds` | How often the realtime client (WordPress Heartbeat) checks for new points and badge toasts while a page is in use, from 5 to 120 seconds. The default is 15 on its own and 60 inside a BuddyNext community; the client still bursts to 5 seconds for 30 seconds after the member's own action. |
+| `wb_gam_realtime_interval` | `int $seconds` | How often the realtime client (WordPress Heartbeat) checks for new points and badge toasts while a page is in use, from 5 to 120 seconds. The default is 15 on its own and 60 inside a BuddyNext community; the client still bursts to 5 seconds for 30 seconds after the member's own action. The value is cast to a whole number. A value below 5 or above 120 is ignored, and the client then runs at the default 15 seconds, even inside BuddyNext. |
 
 ## Lifecycle
 
