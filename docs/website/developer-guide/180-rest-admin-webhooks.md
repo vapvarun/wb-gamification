@@ -33,13 +33,16 @@ curl https://example.com/wp-json/wb-gamification/v1/actions/bp_activity_update
 
 ### POST /actions/{id}/overrides
 
-Added in 1.4.0. Set per-action overrides for `cooldown`, `daily_cap`, and `weekly_cap` without touching the manifest. Stored in the `wb_gam_action_overrides` site option, keyed by action ID. The engine reads these on every rate-limit check, so the override takes effect immediately for new awards. All fields are optional; omit a field to leave it unchanged.
+Added in 1.4.0. Settings > Earning saves every row change through this route. The action id is the registered id as-is (since 1.7.0 ids with `/`, `.` or capitals work too; an unknown id answers `404`). Set per-action overrides for `cooldown`, `daily_cap`, and `weekly_cap` without touching the manifest. Stored in the `wb_gam_action_overrides` site option, keyed by action ID. The engine reads these on every rate-limit check, so the override takes effect immediately for new awards. All fields are optional; omit a field to leave it unchanged.
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `cooldown` | int (>= 0) | Minimum seconds between awards. `0` disables the cooldown |
 | `daily_cap` | int (>= 0) | Daily cap per user per action. `0` allows unlimited |
 | `weekly_cap` | int (>= 0) | Weekly cap per user per action. `0` allows unlimited |
+| `enabled` | bool | Whether the action pays at all |
+| `points` | int (0 to 9999) | Added in 1.7.0. The amount the action pays (or takes, for a penalty) |
+| `point_type` | string | Added in 1.7.0. Point type slug the action pays in; an empty string clears the choice so the manifest's type or the default applies. An unknown slug is refused with `400` |
 | `submittable` | bool | Added in 1.6.8. Whether members can claim this action through Submit Achievement. Off until set (or the manifest declares `'submittable' => true`); the stored value wins over the manifest |
 
 ```bash
@@ -54,6 +57,8 @@ curl -X POST https://example.com/wp-json/wb-gamification/v1/actions/bp_activity_
 {
   "action_id": "bp_activity_update",
   "enabled": true,
+  "points": 10,
+  "point_type": "",
   "submittable": false,
   "overrides": { "cooldown": 120, "daily_cap": 5 },
   "effective": { "cooldown": 120, "daily_cap": 5, "weekly_cap": 0 }
@@ -62,7 +67,7 @@ curl -X POST https://example.com/wp-json/wb-gamification/v1/actions/bp_activity_
 
 ### DELETE /actions/{id}/overrides
 
-Added in 1.4.0. Reset overrides for one action. The next read falls back to the manifest values, including `submittable` (off unless the manifest says otherwise).
+Added in 1.4.0. Restore one action to its defaults: limits, `submittable` (off unless the manifest says otherwise) and, since 1.7.0, also the amount, the on/off switch and the point type. Answers with the restored settings, the same shape as POST plus `"reset": true`.
 
 ```bash
 curl -X DELETE https://example.com/wp-json/wb-gamification/v1/actions/bp_activity_update/overrides \
@@ -71,7 +76,7 @@ curl -X DELETE https://example.com/wp-json/wb-gamification/v1/actions/bp_activit
 ```
 
 ```json
-{ "action_id": "bp_activity_update", "reset": true }
+{ "action_id": "bp_activity_update", "enabled": true, "points": 10, "point_type": "", "submittable": false, "overrides": {}, "effective": { "cooldown": 0, "daily_cap": 0, "weekly_cap": 0 }, "reset": true }
 ```
 
 ## Rules

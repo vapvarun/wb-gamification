@@ -35,6 +35,11 @@ defined( 'ABSPATH' ) || exit;
 final class Registry {
 
 	/**
+	 * Largest amount an owner can set for one action (Settings > Earning and the REST overrides route).
+	 */
+	public const POINTS_MAX = 9999;
+
+	/**
 	 * Registered gamification actions keyed by action ID.
 	 *
 	 * @var array<string, array>

@@ -6,8 +6,9 @@
  * so for an id like "MyPlugin/Do.Thing" the save never found the field, wrote nothing, and every
  * award fell back to the default type. The same mismatch hit the points and enabled fields.
  *
- * This drives the real save handler (SettingsPage::save_points_settings) and reads the result back
- * the way the engine does (Registry::resolve_action_point_type, then PointTypeService::resolve).
+ * Since 1.7.0 every Earning row change saves through POST /actions/{id}/overrides (one save path),
+ * so this drives that handler and reads the result back the way the engine does
+ * (Registry::resolve_action_point_type, then PointTypeService::resolve).
  *
  * @package WB_Gamification
  */
@@ -21,6 +22,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use WBGam\API\ActionsController;
 use WBGam\Admin\SettingsPage;
 use WBGam\Engine\Registry;
 use WBGam\Repository\PointTypeRepository;
@@ -64,6 +66,9 @@ class ActionPointTypeMappingTest extends TestCase {
 		Functions\when( 'wp_parse_args' )->alias( fn( $args, $defaults = array() ) => array_merge( $defaults, $args ) );
 		Functions\when( 'wp_cache_get' )->justReturn( false );
 		Functions\when( 'wp_cache_set' )->justReturn( true );
+		Functions\when( 'rest_ensure_response' )->returnArg( 1 );
+		require_once dirname( __DIR__ ) . '/Engine/Stubs/RestControllerStub.php';
+		require_once dirname( __DIR__ ) . '/Engine/Stubs/WPErrorStub.php';
 
 		// Registry actions and the point-type catalogue, both served from memory (no database).
 		$actions             = ( new ReflectionClass( Registry::class ) )->getProperty( 'actions' );
@@ -105,11 +110,13 @@ class ActionPointTypeMappingTest extends TestCase {
 	}
 
 	/**
-	 * Register an action, post the Points tab as a browser would, and run the real save handler.
+	 * Register an action and save its row as the Earning screen does.
 	 *
-	 * @param string $id Action id.
+	 * @param string $id       Action id.
+	 * @param string $currency Point type slug.
+	 * @return mixed Handler result.
 	 */
-	private function save_with_currency( string $id, string $currency ): void {
+	private function save_with_currency( string $id, string $currency ) {
 		Registry::register_action(
 			array(
 				'id'             => $id,
@@ -119,27 +126,25 @@ class ActionPointTypeMappingTest extends TestCase {
 				'default_points' => 5,
 			)
 		);
-
-		// The names the rendered form posts. PHP rewrites "." and " " in a top-level POST key to "_".
-		$_POST = array(
-			$this->posted_name( 'wb_gam_points_', $id )     => '12',
-			$this->posted_name( 'wb_gam_enabled_', $id )    => '1',
-			$this->posted_name( 'wb_gam_point_type_', $id ) => $currency,
-		);
-
-		$save = ( new ReflectionClass( SettingsPage::class ) )->getMethod( 'save_points_settings' );
-		$save->invoke( null );
+		return $this->post( $id, array( 'points' => 12, 'enabled' => true, 'point_type' => $currency ) );
 	}
 
 	/**
-	 * The POST key the browser sends for a rendered field. Before 1.6.8 the form used the raw action id.
+	 * Call the overrides handler with the route's id and body.
 	 *
-	 * @param string $prefix Field prefix.
-	 * @param string $id     Action id.
+	 * @param string $id     Action id as it arrives in the route.
+	 * @param array  $params Body.
+	 * @param string $method update_overrides or delete_overrides.
+	 * @return mixed
 	 */
-	private function posted_name( string $prefix, string $id ): string {
-		$name = method_exists( SettingsPage::class, 'field_name' ) ? SettingsPage::field_name( $prefix, $id ) : $prefix . $id;
-		return strtr( $name, '. ', '__' );
+	private function post( string $id, array $params, string $method = 'update_overrides' ) {
+		$request = new class( $params + array( 'id' => $id ) ) {
+			public function __construct( private array $p ) {}
+			public function get_param( string $k ) {
+				return $this->p[ $k ] ?? null;
+			}
+		};
+		return ( new ActionsController() )->$method( $request );
 	}
 
 	#[Test]
@@ -150,9 +155,42 @@ class ActionPointTypeMappingTest extends TestCase {
 		$this->assertSame( 'coins', $this->options[ 'wb_gam_point_type_' . $id ] ?? null, 'The mapping must be saved under the raw action id the engine reads.' );
 		$this->assertSame( 12, (int) ( $this->options[ 'wb_gam_points_' . $id ] ?? 0 ), 'Points amount shares the same key bug.' );
 		$this->assertSame( 1, (int) ( $this->options[ 'wb_gam_enabled_' . $id ] ?? 0 ), 'An enabled action must stay enabled after a save.' );
+		$this->assertSame( 12, $this->post( $id, array() )['points'], 'The response is what the screen shows next.' );
 
 		$action = Registry::get_action( $id );
 		$this->assertSame( 'coins', ( new PointTypeService() )->resolve( Registry::resolve_action_point_type( $action ) ?: null ) );
+	}
+
+	#[Test]
+	public function an_unknown_point_type_is_refused_and_nothing_changes(): void {
+		$result = $this->save_with_currency( 'MyPlugin/Do.Thing', 'gold' );
+		$this->assertInstanceOf( \WP_Error::class, $result );
+		$this->assertArrayNotHasKey( 'wb_gam_points_MyPlugin/Do.Thing', $this->options, 'A refused save must not half-apply.' );
+	}
+
+	#[Test]
+	public function restore_puts_the_whole_row_back_to_its_defaults(): void {
+		$this->save_with_currency( 'MyPlugin/Do.Thing', 'coins' );
+		$this->post( 'MyPlugin/Do.Thing', array( 'enabled' => false, 'daily_cap' => 3 ) );
+
+		$row = $this->post( 'MyPlugin/Do.Thing', array(), 'delete_overrides' );
+
+		$this->assertTrue( $row['enabled'] );
+		$this->assertSame( 5, $row['points'], 'Back to the plugin amount.' );
+		$this->assertSame( '', $row['point_type'] );
+		$this->assertSame( 0, $row['effective']['daily_cap'] );
+		$this->assertArrayNotHasKey( 'wb_gam_enabled_MyPlugin/Do.Thing', $this->options );
+	}
+
+	#[Test]
+	public function saving_the_points_form_leaves_every_action_as_it_was(): void {
+		$this->save_with_currency( 'wp_publish_post', 'coins' );
+		$_POST = array( 'wb_gam_log_retention_months' => '6' );
+
+		( new ReflectionClass( SettingsPage::class ) )->getMethod( 'save_points_settings' )->invoke( null );
+
+		$this->assertSame( 1, (int) $this->options['wb_gam_enabled_wp_publish_post'], 'Before 1.7.0 the form switched off every action it did not carry.' );
+		$this->assertSame( 12, (int) $this->options['wb_gam_points_wp_publish_post'] );
 	}
 
 	#[Test]

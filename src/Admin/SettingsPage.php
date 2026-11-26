@@ -40,7 +40,6 @@ final class SettingsPage {
 	/**
 	 * Largest points value a single action can award from the Points tab (the field's own max).
 	 */
-	private const POINTS_MAX = 9999;
 
 
 	/**
@@ -335,57 +334,13 @@ final class SettingsPage {
 	}
 
 	/**
-	 * Form field name for a per-action setting. Render and save both call this, so the two
-	 * can never disagree. Action ids such as "myplugin/Action.name" are not safe POST keys
-	 * (sanitize_key() strips "/" and capitals, PHP rewrites "." and spaces), so every unsafe
-	 * character becomes "_". The stored option name stays the raw action id.
-	 *
-	 * @param string $prefix    Field prefix, e.g. 'wb_gam_point_type_'.
-	 * @param string $action_id Registered action id.
-	 */
-	public static function field_name( string $prefix, string $action_id ): string {
-		return $prefix . preg_replace( '/[^A-Za-z0-9_]/', '_', $action_id );
-	}
-
-	/**
-	 * Persist per-action point values and enable/disable toggles from the Points tab.
+	 * Save the Points tab form: history retention and point expiry. Each action's own settings
+	 * (switch, amount, point type, limits) save on their own through
+	 * POST /actions/{id}/overrides, so the form never carries them (one save path).
 	 * Nonce is verified by check_admin_referer() in handle_save().
 	 */
 	private static function save_points_settings(): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
-		$actions    = Registry::get_actions();
-		$pt_service = new \WBGam\Services\PointTypeService();
-
-		foreach ( $actions as $action_id => $action ) {
-			$key    = self::field_name( 'wb_gam_points_', (string) $action_id );
-			$raw = isset( $_POST[ $key ] ) ? trim( (string) wp_unslash( $_POST[ $key ] ) ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-
-			// The field is a whole number from 0 to POINTS_MAX, as the browser enforces. absint() turned -5 into 5 and text
-			// into 0, so a value that is not a plain non-negative number is left as it was, and an oversized one is capped.
-			if ( null !== $raw && ctype_digit( $raw ) ) {
-				update_option( 'wb_gam_points_' . $action_id, min( self::POINTS_MAX, (int) $raw ) );
-			}
-
-			$enabled_key = self::field_name( 'wb_gam_enabled_', (string) $action_id );
-			// 1/0, never true/false: update_option( key, false ) on a missing option matches the
-			// get_option() default and stores nothing, so "off" never saved.
-			update_option( 'wb_gam_enabled_' . $action_id, isset( $_POST[ $enabled_key ] ) ? 1 : 0 );
-
-			// Per-action currency override. Stored only when set and known —
-			// PointTypeService::resolve() falls back to primary for any
-			// unknown slug, so we don't write garbage. Empty submit clears
-			// the override (action falls back to manifest declaration).
-			$type_key = self::field_name( 'wb_gam_point_type_', (string) $action_id );
-			if ( isset( $_POST[ $type_key ] ) ) {
-				$raw_type = sanitize_key( wp_unslash( $_POST[ $type_key ] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-				if ( '' === $raw_type ) {
-					delete_option( 'wb_gam_point_type_' . $action_id );
-				} elseif ( $pt_service->get( $raw_type ) ) {
-					update_option( 'wb_gam_point_type_' . $action_id, $raw_type );
-				}
-			}
-		}
-
 		// Also save log retention.
 		if ( isset( $_POST['wb_gam_log_retention_months'] ) ) {
 			$months = max( 1, min( 24, absint( wp_unslash( $_POST['wb_gam_log_retention_months'] ) ) ) );
@@ -1019,6 +974,30 @@ final class SettingsPage {
 			array(
 				'restBase' => rest_url( 'wb-gamification/v1/actions/' ),
 				'nonce'    => wp_create_nonce( 'wp_rest' ),
+				'i18n'     => array(
+					'saved'       => __( 'Saved.', 'wb-gamification' ),
+					'undone'      => __( 'Change undone.', 'wb-gamification' ),
+					'restored'    => __( 'Defaults restored.', 'wb-gamification' ),
+					'switchedOff' => __( 'Switched off.', 'wb-gamification' ),
+					'notSaved'    => __( 'Not saved. The previous value is back; try again.', 'wb-gamification' ),
+					'noLimit'     => __( 'No limit', 'wb-gamification' ),
+					/* translators: %d: most awards per day. */
+					'perDay'      => __( '%d a day', 'wb-gamification' ),
+					/* translators: %d: most awards per week. */
+					'perWeek'     => __( '%d a week', 'wb-gamification' ),
+					/* translators: %s: time between awards, e.g. "30s". */
+					'apart'       => __( '%s apart', 'wb-gamification' ),
+					/* translators: %d: seconds. */
+					'seconds'     => __( '%ds', 'wb-gamification' ),
+					/* translators: %d: minutes. */
+					'minutes'     => __( '%d min', 'wb-gamification' ),
+					/* translators: %d: hours. */
+					'hours'       => __( '%d h', 'wb-gamification' ),
+					/* translators: %d: number of actions. */
+					'count'       => __( '%d actions', 'wb-gamification' ),
+					/* translators: 1: actions shown, 2: all actions. */
+					'countOf'     => __( '%1$d of %2$d actions', 'wb-gamification' ),
+				),
 			)
 		);
 	}
@@ -1279,191 +1258,152 @@ final class SettingsPage {
 				);
 				?>
 
+				<?php
+				$wb_gam_total = count( $actions );
+				?>
+				<div class="wbgam-earn-toolbar" data-wb-gam-earn-toolbar>
+					<label class="screen-reader-text" for="wbgam-earn-search"><?php esc_html_e( 'Find an action', 'wb-gamification' ); ?></label>
+					<input type="search" id="wbgam-earn-search" class="wbgam-input wbgam-earn-toolbar__search" placeholder="<?php esc_attr_e( 'Find an action', 'wb-gamification' ); ?>" data-wb-gam-earn-search>
+					<div class="wbgam-earn-toolbar__chips" role="group" aria-label="<?php esc_attr_e( 'Show', 'wb-gamification' ); ?>">
+						<?php
+						foreach ( array(
+							'all'     => __( 'All', 'wb-gamification' ),
+							'on'      => __( 'On', 'wb-gamification' ),
+							'off'     => __( 'Off', 'wb-gamification' ),
+							'penalty' => __( 'Takes points', 'wb-gamification' ),
+							'limited' => __( 'Has a limit', 'wb-gamification' ),
+						) as $wb_gam_filter => $wb_gam_filter_label ) :
+							?>
+							<button type="button" class="wbgam-earn-chip" data-wb-gam-earn-filter="<?php echo esc_attr( $wb_gam_filter ); ?>" aria-pressed="<?php echo 'all' === $wb_gam_filter ? 'true' : 'false'; ?>"><?php echo esc_html( $wb_gam_filter_label ); ?></button>
+						<?php endforeach; ?>
+					</div>
+					<label class="screen-reader-text" for="wbgam-earn-plugin"><?php esc_html_e( 'Plugin', 'wb-gamification' ); ?></label>
+					<select id="wbgam-earn-plugin" class="wbgam-select wbgam-select--sm" data-wb-gam-earn-plugin>
+						<option value=""><?php esc_html_e( 'All plugins', 'wb-gamification' ); ?></option>
+						<?php foreach ( array_keys( $by_plugin ) as $wb_gam_plugin_name ) : ?>
+							<option value="<?php echo esc_attr( (string) $wb_gam_plugin_name ); ?>"><?php echo esc_html( (string) $wb_gam_plugin_name ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<p class="wbgam-earn-toolbar__count" aria-live="polite" data-wb-gam-earn-count>
+						<?php
+						/* translators: %d: number of earning actions. */
+						echo esc_html( sprintf( _n( '%d action', '%d actions', $wb_gam_total, 'wb-gamification' ), $wb_gam_total ) );
+						?>
+					</p>
+				</div>
+
+				<p class="wbgam-earn-none" data-wb-gam-earn-none hidden><?php esc_html_e( 'No action matches. Clear the search or choose All.', 'wb-gamification' ); ?></p>
+
 				<?php foreach ( $by_plugin as $plugin => $plugin_actions ) : ?>
-					<details class="wbgam-settings-card wbgam-stack-block wbgam-accordion"<?php echo 'WordPress' === $plugin ? ' open' : ''; ?>>
+					<details class="wbgam-settings-card wbgam-stack-block wbgam-accordion wbgam-earn-group" data-wb-gam-earn-group="<?php echo esc_attr( (string) $plugin ); ?>"<?php echo 'WordPress' === $plugin ? ' open' : ''; ?>>
 						<summary class="wbgam-settings-card__head wbgam-accordion__head">
 							<span class="wbgam-accordion__chevron icon-chevron-right" aria-hidden="true"></span>
 							<span class="wbgam-accordion__head-text">
 								<span class="wbgam-settings-card__title"><?php echo esc_html( $plugin ); ?></span>
 								<span class="wbgam-settings-card__desc">
 									<?php
-									printf(
-										/* translators: %d = number of actions for this integration */
-										esc_html( _n( '%d action from this integration.', '%d actions from this integration.', count( $plugin_actions ), 'wb-gamification' ) ),
-										count( $plugin_actions )
-									);
+									/* translators: %d = number of actions for this integration */
+									echo esc_html( sprintf( _n( '%d action', '%d actions', count( $plugin_actions ), 'wb-gamification' ), count( $plugin_actions ) ) );
 									?>
 								</span>
 							</span>
 						</summary>
-						<div class="wbgam-settings-card__body">
-							<div class="wbgam-table-scroll">
-								<table class="wbgam-table wbgam-table-reset wb-gam-settings-table">
-									<thead>
-									<tr>
-										<th class="wb-gam-col-toggle"><?php esc_html_e( 'On', 'wb-gamification' ); ?></th>
-										<th><?php esc_html_e( 'Action', 'wb-gamification' ); ?></th>
-										<th class="wb-gam-col-points"><?php esc_html_e( 'Amount', 'wb-gamification' ); ?></th>
-										<?php if ( $wb_gam_multi_currency ) : ?>
-											<th class="wb-gam-col-currency"><?php esc_html_e( 'Currency', 'wb-gamification' ); ?></th>
-										<?php endif; ?>
-										<th class="wb-gam-col-flag"><?php esc_html_e( 'Repeat', 'wb-gamification' ); ?></th>
-										<th class="wb-gam-col-flag"><?php esc_html_e( 'Cooldown (s)', 'wb-gamification' ); ?></th>
-										<th class="wb-gam-col-flag"><?php esc_html_e( 'Daily cap', 'wb-gamification' ); ?></th>
-										<th class="wb-gam-col-flag"><?php esc_html_e( 'Weekly cap', 'wb-gamification' ); ?></th>
-										<th class="wb-gam-col-flag"><?php esc_html_e( 'Members can submit', 'wb-gamification' ); ?></th>
-									</tr>
-									</thead>
-									<tbody>
-									<?php
-									foreach ( $plugin_actions as $action ) :
-										$action_id  = $action['id'];
-										$pts        = (int) get_option( 'wb_gam_points_' . $action_id, $action['default_points'] );
-										$enabled    = (bool) get_option( 'wb_gam_enabled_' . $action_id, true );
-										$repeatable = (bool) ( $action['repeatable'] ?? true );
-										$daily_cap  = (int) ( $action['daily_cap'] ?? 0 );
-										// The engine has ENFORCED a weekly cap since the rate-limit
-										// gate was written (PointsEngine::passes_rate_limits), the
-										// Registry defaults it, and the REST override endpoint accepts
-										// it — but this table never rendered a field for it, so no
-										// owner could ever set one. Engine-enforced, admin-invisible:
-										// the capability existed on paper only, and CAPABILITIES.md
-										// listed it as shipped.
-										$weekly_cap = (int) ( $action['weekly_cap'] ?? 0 );
-										// Resolve current currency: admin override > manifest > primary.
-										$action_type = \WBGam\Engine\Registry::resolve_action_point_type( $action );
-										if ( '' === $action_type ) {
-											$action_type = $wb_gam_default_slug;
-										}
-										?>
-										<tr>
-											<td>
-												<label class="wbgam-switch">
-													<input
-														type="checkbox"
-														name="<?php echo esc_attr( self::field_name( 'wb_gam_enabled_', (string) $action_id ) ); ?>"
-														aria-label="<?php /* translators: %s: gamification action label */ echo esc_attr( sprintf( __( 'Enable %s', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
-														<?php checked( $enabled ); ?>
-													>
-													<span class="wbgam-switch__track" aria-hidden="true"></span>
-												</label>
-											</td>
-											<td>
-												<div class="wbgam-action-cell">
-													<strong class="wbgam-action-cell__title"><?php echo esc_html( $action['label'] ?? $action_id ); ?></strong>
-													<?php if ( ! empty( $action['penalty'] ) ) : ?>
-														<span class="wbgam-pill wbgam-pill--warning"><?php esc_html_e( 'Takes points', 'wb-gamification' ); ?></span>
-													<?php endif; ?>
-													<?php if ( ! empty( $action['description'] ) ) : ?>
-														<span class="wbgam-action-cell__desc"><?php echo esc_html( $action['description'] ); ?></span>
-													<?php endif; ?>
-												</div>
-											</td>
-											<td>
-												<input
-													type="number"
-													name="<?php echo esc_attr( self::field_name( 'wb_gam_points_', (string) $action_id ) ); ?>"
-													aria-label="<?php
-													echo esc_attr(
-														sprintf(
-															! empty( $action['penalty'] )
-																/* translators: %s: gamification action label */
-																? __( 'Points taken for %s', 'wb-gamification' )
-																/* translators: %s: gamification action label */
-																: __( 'Amount for %s', 'wb-gamification' ),
-															$action['label'] ?? $action_id
-														)
-													);
-													?>"
-													value="<?php echo esc_attr( (string) $pts ); ?>"
-													min="0"
-													max="9999"
-													class="wbgam-input wbgam-input--xs"
-												>
-											</td>
-											<?php if ( $wb_gam_multi_currency ) : ?>
-												<td>
-													<select
-														name="<?php echo esc_attr( self::field_name( 'wb_gam_point_type_', (string) $action_id ) ); ?>"
-														class="wbgam-select wbgam-select--sm"
-														aria-label="<?php /* translators: %s: gamification action label */ echo esc_attr( sprintf( __( 'Currency for %s', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
-													>
-														<?php foreach ( $wb_gam_pt_catalog as $wb_gam_pt_choice ) : ?>
-															<option value="<?php echo esc_attr( (string) $wb_gam_pt_choice['slug'] ); ?>" <?php selected( $action_type, (string) $wb_gam_pt_choice['slug'] ); ?>>
-																<?php echo esc_html( (string) $wb_gam_pt_choice['label'] ); ?>
-															</option>
-														<?php endforeach; ?>
-													</select>
-												</td>
-											<?php endif; ?>
-											<td>
-												<?php if ( $repeatable ) : ?>
-													<span class="wbgam-pill wbgam-pill--info"><?php esc_html_e( 'Yes', 'wb-gamification' ); ?></span>
-												<?php else : ?>
-													<span class="wbgam-pill wbgam-pill--inactive"><?php esc_html_e( 'Once', 'wb-gamification' ); ?></span>
-												<?php endif; ?>
-											</td>
-											<td>
-												<?php $wb_gam_cooldown = (int) ( $action['cooldown'] ?? 0 ); ?>
-												<input
-													type="number"
-													data-wb-gam-action-override="cooldown"
-													data-wb-gam-action-id="<?php echo esc_attr( $action_id ); ?>"
-													value="<?php echo esc_attr( (string) $wb_gam_cooldown ); ?>"
-													min="0"
-													max="86400"
-													step="1"
-													class="wbgam-input wbgam-input--xs"
-													aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Cooldown in seconds for %s', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
-												>
-											</td>
-											<td>
-												<input
-													type="number"
-													data-wb-gam-action-override="daily_cap"
-													data-wb-gam-action-id="<?php echo esc_attr( $action_id ); ?>"
-													value="<?php echo esc_attr( (string) $daily_cap ); ?>"
-													min="0"
-													max="9999"
-													step="1"
-													class="wbgam-input wbgam-input--xs"
-													aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Daily cap for %s (0 = unlimited)', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
-												>
-											</td>
-											<td>
-												<input
-													type="number"
-													data-wb-gam-action-override="weekly_cap"
-													data-wb-gam-action-id="<?php echo esc_attr( $action_id ); ?>"
-													value="<?php echo esc_attr( (string) $weekly_cap ); ?>"
-													min="0"
-													max="99999"
-													step="1"
-													class="wbgam-input wbgam-input--xs"
-													aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Weekly cap for %s (0 = unlimited)', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
-												>
-											</td>
-											<td>
-												<?php
-												// Submit Achievement only offers actions the owner ticks here
-												// (or a manifest marks submittable). Off by default.
-												?>
-												<input
-													type="checkbox"
-													data-wb-gam-action-override="submittable"
-													data-wb-gam-action-id="<?php echo esc_attr( $action_id ); ?>"
-													<?php checked( \WBGam\Engine\Registry::is_submittable( $action_id ) ); ?>
-													aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Members can submit %s for review', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
-												>
-											</td>
-										</tr>
-									<?php endforeach; ?>
-									</tbody>
-								</table>
-							</div>
+						<div class="wbgam-earn-group__tools">
+							<button type="button" class="wbgam-btn wbgam-btn--secondary wbgam-btn--sm" data-wb-gam-earn-restore>
+								<?php /* translators: %s: plugin name */ echo esc_html( sprintf( __( 'Restore %s defaults', 'wb-gamification' ), $plugin ) ); ?>
+							</button>
+							<button type="button" class="wbgam-btn wbgam-btn--secondary wbgam-btn--sm" data-wb-gam-earn-alloff><?php esc_html_e( 'Switch all off', 'wb-gamification' ); ?></button>
 						</div>
+						<div class="wbgam-earn-head" aria-hidden="true">
+							<span><?php esc_html_e( 'On', 'wb-gamification' ); ?></span>
+							<span><?php esc_html_e( 'Action', 'wb-gamification' ); ?></span>
+							<span><?php echo esc_html( $wb_gam_default_label ); ?></span>
+							<span><?php esc_html_e( 'Limit', 'wb-gamification' ); ?></span>
+							<span><?php esc_html_e( 'Members can submit', 'wb-gamification' ); ?></span>
+						</div>
+						<ul class="wbgam-earn-list">
+							<?php
+							foreach ( $plugin_actions as $action ) :
+								$action_id   = (string) $action['id'];
+								$wb_gam_name = (string) ( $action['label'] ?? $action_id );
+								$penalty     = ! empty( $action['penalty'] );
+								$enabled     = (bool) get_option( 'wb_gam_enabled_' . $action_id, true );
+								$action_type = \WBGam\Engine\Registry::resolve_action_point_type( $action );
+								if ( '' === $action_type ) {
+									$action_type = $wb_gam_default_slug;
+								}
+								$wb_gam_limits = array(
+									'cooldown'   => array( (int) ( $action['cooldown'] ?? 0 ), __( 'Time between awards (seconds)', 'wb-gamification' ), 86400 ),
+									'daily_cap'  => array( (int) ( $action['daily_cap'] ?? 0 ), __( 'Most per day', 'wb-gamification' ), 9999 ),
+									'weekly_cap' => array( (int) ( $action['weekly_cap'] ?? 0 ), __( 'Most per week', 'wb-gamification' ), 99999 ),
+								);
+								?>
+								<li class="wbgam-earn-row" data-wb-gam-earn-row="<?php echo esc_attr( $action_id ); ?>" data-search="<?php echo esc_attr( strtolower( $wb_gam_name . ' ' . ( $action['description'] ?? '' ) . ' ' . $action_id ) ); ?>"<?php echo $penalty ? ' data-penalty' : ''; ?>>
+									<label class="wbgam-switch wbgam-earn-row__on">
+										<input type="checkbox" data-wb-gam-action-override="enabled" <?php checked( $enabled ); ?>
+											aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Pay for %s', 'wb-gamification' ), $wb_gam_name ) ); ?>">
+										<span class="wbgam-switch__track" aria-hidden="true"></span>
+									</label>
+									<div class="wbgam-earn-row__action">
+										<strong><?php echo esc_html( $wb_gam_name ); ?></strong>
+										<?php if ( $penalty ) : ?>
+											<span class="wbgam-pill wbgam-pill--warning"><?php esc_html_e( 'Takes points', 'wb-gamification' ); ?></span>
+										<?php endif; ?>
+										<?php if ( empty( $action['repeatable'] ?? true ) ) : ?>
+											<span class="wbgam-pill wbgam-pill--inactive"><?php esc_html_e( 'Once per member', 'wb-gamification' ); ?></span>
+										<?php endif; ?>
+										<?php if ( ! empty( $action['description'] ) ) : ?>
+											<span class="wbgam-earn-row__desc"><?php echo esc_html( $action['description'] ); ?></span>
+										<?php endif; ?>
+									</div>
+									<div class="wbgam-earn-row__points">
+										<span class="wbgam-earn-row__label" aria-hidden="true"><?php echo esc_html( $wb_gam_default_label ); ?></span>
+										<input type="number" class="wbgam-input wbgam-input--xs" data-wb-gam-action-override="points" min="0" max="<?php echo esc_attr( (string) \WBGam\Engine\Registry::POINTS_MAX ); ?>"
+											value="<?php echo esc_attr( (string) (int) get_option( 'wb_gam_points_' . $action_id, $action['default_points'] ) ); ?>"
+											aria-label="<?php echo esc_attr( sprintf( $penalty ? /* translators: %s: action label */ __( 'Points taken for %s', 'wb-gamification' ) : /* translators: %s: action label */ __( 'Amount for %s', 'wb-gamification' ), $wb_gam_name ) ); ?>">
+										<?php if ( $wb_gam_multi_currency ) : ?>
+											<select class="wbgam-select wbgam-select--sm" data-wb-gam-action-override="point_type"
+												aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Point type for %s', 'wb-gamification' ), $wb_gam_name ) ); ?>">
+												<?php foreach ( $wb_gam_pt_catalog as $wb_gam_pt_choice ) : ?>
+													<option value="<?php echo esc_attr( (string) $wb_gam_pt_choice['slug'] ); ?>" <?php selected( $action_type, (string) $wb_gam_pt_choice['slug'] ); ?>><?php echo esc_html( (string) $wb_gam_pt_choice['label'] ); ?></option>
+												<?php endforeach; ?>
+											</select>
+										<?php endif; ?>
+									</div>
+									<details class="wbgam-earn-limit">
+										<summary data-wb-gam-earn-limit-summary aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Limits for %s', 'wb-gamification' ), $wb_gam_name ) ); ?>"><?php esc_html_e( 'Limit', 'wb-gamification' ); ?></summary>
+										<div class="wbgam-earn-limit__panel">
+											<?php foreach ( $wb_gam_limits as $wb_gam_field => $wb_gam_limit ) : ?>
+												<label>
+													<span><?php echo esc_html( $wb_gam_limit[1] ); ?></span>
+													<input type="number" class="wbgam-input wbgam-input--xs" data-wb-gam-action-override="<?php echo esc_attr( $wb_gam_field ); ?>" min="1" max="<?php echo esc_attr( (string) $wb_gam_limit[2] ); ?>" step="1"
+														value="<?php echo $wb_gam_limit[0] > 0 ? esc_attr( (string) $wb_gam_limit[0] ) : ''; ?>" placeholder="<?php esc_attr_e( 'No limit', 'wb-gamification' ); ?>">
+												</label>
+											<?php endforeach; ?>
+											<p class="description"><?php esc_html_e( 'Leave a field empty for no limit.', 'wb-gamification' ); ?></p>
+										</div>
+									</details>
+									<div class="wbgam-earn-row__submit">
+										<?php if ( $penalty ) : ?>
+											<span class="wbgam-earn-row__na"><?php esc_html_e( 'Not for penalties', 'wb-gamification' ); ?></span>
+										<?php else : ?>
+											<label>
+												<input type="checkbox" data-wb-gam-action-override="submittable" <?php checked( \WBGam\Engine\Registry::is_submittable( $action_id ) ); ?>>
+												<span class="wbgam-earn-row__label"><?php esc_html_e( 'Members can submit', 'wb-gamification' ); ?></span>
+												<span class="screen-reader-text"><?php /* translators: %s: action label */ echo esc_html( sprintf( __( 'for %s', 'wb-gamification' ), $wb_gam_name ) ); ?></span>
+											</label>
+										<?php endif; ?>
+									</div>
+								</li>
+							<?php endforeach; ?>
+						</ul>
 					</details>
 				<?php endforeach; ?>
+
+				<div class="wbgam-earn-status" role="status" aria-live="polite" data-wb-gam-earn-status hidden>
+					<span data-wb-gam-earn-status-text></span>
+					<button type="button" class="wbgam-btn wbgam-btn--secondary wbgam-btn--sm" data-wb-gam-earn-undo><?php esc_html_e( 'Undo', 'wb-gamification' ); ?></button>
+				</div>
 
 				<?php self::enqueue_action_overrides_script(); ?>
 

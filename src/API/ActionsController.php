@@ -82,10 +82,11 @@ class ActionsController extends WP_REST_Controller {
 		// PUT/POST /actions/{id}/overrides — admin-only edit of cooldown,
 		// daily_cap, weekly_cap, the on/off switch (`enabled`) and whether members
 		// may claim the action through Submit Achievement (`submittable`) without
-		// touching the manifest. Reset caps by sending 0 for the field or DELETE on this endpoint.
+		// touching the manifest, plus the amount (`points`) and `point_type`: Settings > Earning saves every
+		// row change here. Clear a limit by sending 0; DELETE restores the whole row to its defaults.
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<id>[a-z0-9_]+)/overrides',
+			'/' . $this->rest_base . '/(?P<id>.+?)/overrides',
 			array(
 				array(
 					'methods'             => array( 'POST', 'PUT' ),
@@ -113,6 +114,15 @@ class ActionsController extends WP_REST_Controller {
 						),
 						'enabled'     => array(
 							'type' => 'boolean',
+						),
+						'points'      => array(
+							'type'    => 'integer',
+							'minimum' => 0,
+							'maximum' => Registry::POINTS_MAX,
+						),
+						'point_type'  => array(
+							'type'        => 'string',
+							'description' => 'Point type slug this action pays in. Empty clears the choice (the manifest or the default type applies).',
 						),
 						'submittable' => array(
 							'type'        => 'boolean',
@@ -169,9 +179,27 @@ class ActionsController extends WP_REST_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function update_overrides( $request ) {
-		$id = sanitize_key( (string) $request->get_param( 'id' ) );
+		// The registered id as-is: third-party ids may hold "/", "." or capitals, and the
+		// engine stores each setting under the raw id. Registry lookup is the validation.
+		$id = (string) $request->get_param( 'id' );
 		if ( null === Registry::get_action( $id ) ) {
 			return new \WP_Error( 'rest_action_invalid', __( 'Unknown action.', 'wb-gamification' ), array( 'status' => 404 ) );
+		}
+
+		$type = $request->get_param( 'point_type' );
+		if ( null !== $type ) {
+			$type = sanitize_key( (string) $type );
+			if ( '' !== $type && ! ( new \WBGam\Services\PointTypeService() )->get( $type ) ) {
+				return new \WP_Error( 'rest_point_type_invalid', __( 'Unknown point type.', 'wb-gamification' ), array( 'status' => 400 ) );
+			}
+			if ( '' === $type ) {
+				delete_option( 'wb_gam_point_type_' . $id );
+			} else {
+				update_option( 'wb_gam_point_type_' . $id, $type );
+			}
+		}
+		if ( null !== $request->get_param( 'points' ) ) {
+			update_option( 'wb_gam_points_' . $id, min( Registry::POINTS_MAX, max( 0, (int) $request->get_param( 'points' ) ) ) );
 		}
 
 		$option = get_option( 'wb_gam_action_overrides', array() );
@@ -194,35 +222,61 @@ class ActionsController extends WP_REST_Controller {
 			update_option( 'wb_gam_enabled_' . $id, $request->get_param( 'enabled' ) ? 1 : 0 );
 		}
 
-		return rest_ensure_response(
-			array(
-				'action_id'   => $id,
-				'enabled'     => (bool) get_option( 'wb_gam_enabled_' . $id, true ),
-				'submittable' => Registry::is_submittable( $id ),
-				'overrides'   => $row,
-				'effective'   => array_intersect_key( Registry::get_action( $id ), array_flip( array( 'cooldown', 'daily_cap', 'weekly_cap' ) ) ),
-			)
+		return rest_ensure_response( self::row( $id ) );
+	}
+
+	/**
+	 * What an action's settings are now, as the Earning screen shows them.
+	 *
+	 * @param string $id Registered action id.
+	 * @return array<string, mixed>
+	 */
+	private static function row( string $id ): array {
+		$action    = (array) Registry::get_action( $id );
+		$overrides = get_option( 'wb_gam_action_overrides', array() );
+		return array(
+			'action_id'   => $id,
+			'enabled'     => (bool) get_option( 'wb_gam_enabled_' . $id, true ),
+			'points'      => (int) get_option( 'wb_gam_points_' . $id, $action['default_points'] ?? 0 ),
+			'point_type'  => (string) get_option( 'wb_gam_point_type_' . $id, '' ),
+			'submittable' => Registry::is_submittable( $id ),
+			'overrides'   => is_array( $overrides[ $id ] ?? null ) ? $overrides[ $id ] : array(),
+			'effective'   => array_map(
+				'intval',
+				array_intersect_key(
+					$action + array(
+						'cooldown'   => 0,
+						'daily_cap'  => 0,
+						'weekly_cap' => 0,
+					),
+					array_flip( array( 'cooldown', 'daily_cap', 'weekly_cap' ) )
+				)
+			),
 		);
 	}
 
 	/**
-	 * Reset per-action overrides — fall back to manifest defaults.
+	 * Restore an action to its defaults: the plugin's amount, switched on, its limits, its
+	 * point type and its "members can submit" choice (Settings > Earning, "Restore defaults").
+	 *
+	 * @since 1.7.0 also resets the amount, the switch and the point type (before: limits only).
 	 *
 	 * @param \WP_REST_Request $request Request.
-	 * @return \WP_REST_Response
+	 * @return \WP_REST_Response|\WP_Error
 	 */
-	public function delete_overrides( $request ): \WP_REST_Response {
-		$id     = sanitize_key( (string) $request->get_param( 'id' ) );
+	public function delete_overrides( $request ) {
+		$id = (string) $request->get_param( 'id' );
+		if ( null === Registry::get_action( $id ) ) {
+			return new \WP_Error( 'rest_action_invalid', __( 'Unknown action.', 'wb-gamification' ), array( 'status' => 404 ) );
+		}
 		$option = get_option( 'wb_gam_action_overrides', array() );
 		$option = is_array( $option ) ? $option : array();
 		unset( $option[ $id ] );
 		update_option( 'wb_gam_action_overrides', $option, false );
-		return rest_ensure_response(
-			array(
-				'action_id' => $id,
-				'reset'     => true,
-			)
-		);
+		foreach ( array( 'wb_gam_points_', 'wb_gam_enabled_', 'wb_gam_point_type_' ) as $prefix ) {
+			delete_option( $prefix . $id );
+		}
+		return rest_ensure_response( self::row( $id ) + array( 'reset' => true ) );
 	}
 
 	/**
