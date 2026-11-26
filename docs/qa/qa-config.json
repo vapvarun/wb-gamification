@@ -3,7 +3,7 @@
   "name": "WB Gamification",
   "version_constant": "WB_GAM_VERSION",
   "main_file": "wb-gamification.php",
-  "base_url": "http://wb-gamification.local",
+  "base_url": "http://buddynext.local",
   "wp_path": null,
   "autologin_param": "autologin",
   "rest_namespace": "wb-gamification/v1",
@@ -48,7 +48,7 @@
     },
     "member_c": {
       "autologin": "bn_demo_alex_rivera",
-      "profile": "/members/alex-rivera/achievements/",
+      "profile": "/members/bn_demo_alex_rivera/achievements/",
       "note": "Member with points this year and none last year (Year Recap empty-year wording; their own choices form). On another site, override in qa-config.local.json."
     }
   },
@@ -168,7 +168,7 @@
       {
         "id": "member-prefs-own",
         "persona": "member_c",
-        "url": "/members/alex-rivera/achievements/",
+        "url": "/members/bn_demo_alex_rivera/achievements/",
         "kind": "front",
         "root": ".wb-gam-member-prefs"
       },
@@ -442,7 +442,7 @@
       {
         "id": "member-prefs-own-profile-only",
         "persona": "member_c",
-        "url": "/members/alex-rivera/achievements/",
+        "url": "/members/bn_demo_alex_rivera/achievements/",
         "expect": [
           {
             "selector": ".wb-gam-member-prefs",
@@ -453,7 +453,7 @@
       {
         "id": "member-prefs-hidden-from-others",
         "persona": "member_b",
-        "url": "/members/alex-rivera/achievements/",
+        "url": "/members/bn_demo_alex_rivera/achievements/",
         "expect": [
           {
             "selector": ".wb-gam-member-prefs",
