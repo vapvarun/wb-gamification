@@ -646,8 +646,11 @@ final class SetupWizard {
 							$is_wp     = 'WordPress' === $plugin;
 							$penalties = count( array_filter( $actions, static fn( $a ) => ! empty( $a['penalty'] ) ) );
 							$kept      = $is_wp || array_filter( array_keys( $actions ), $enabled );
-							$examples  = array_slice( array_filter( $actions, static fn( $a ) => empty( $a['penalty'] ) ), 0, 3 );
-							$with_pro  = (bool) array_filter( $actions, static fn( $a ) => (bool) preg_match( '/ Pro$/', (string) ( $a['plugin'] ?? '' ) ) );
+							$is_pro    = static fn( $a ) => (bool) preg_match( '/ Pro$/', (string) ( $a['plugin'] ?? '' ) );
+							$earning   = array_filter( $actions, static fn( $a ) => empty( $a['penalty'] ) );
+							// The plugin's own actions lead the examples; a Pro add-on's follow.
+							$examples = array_slice( array_filter( $earning, static fn( $a ) => ! $is_pro( $a ) ) + array_filter( $earning, $is_pro ), 0, 3 );
+							$with_pro = (bool) array_filter( $actions, $is_pro );
 							?>
 							<label class="wbgam-setup__plugin<?php echo $is_wp ? ' wbgam-setup__plugin--always' : ''; ?>">
 								<?php if ( $is_wp ) : ?>
