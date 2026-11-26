@@ -1,6 +1,6 @@
 # API Keys
 
-Go to **Gamification > API Keys** in your admin menu.
+Go to **Gamification > Tools > API keys** in your admin menu.
 
 API keys let remote sites connect to this WordPress installation as a centralized gamification hub. A remote site sends requests to this site's REST API using the key as an authentication credential.
 

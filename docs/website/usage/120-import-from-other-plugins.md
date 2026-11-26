@@ -1,6 +1,6 @@
 # Import from Other Plugins
 
-Go to **Gamification > Import** in your admin menu.
+Go to **Gamification > Tools > Import from another plugin** in your admin menu.
 
 Moving from GamiPress, myCred or BadgeOS? The importer brings your members' points history, earned badges and ranks across, so nobody starts again from zero. Keep the old plugin active until the import finishes: the importer reads its data in place.
 
@@ -63,4 +63,4 @@ Use `gamipress`, `mycred` or `badgeos` as the source. `--sync` is the fastest wa
 
 ## Who Can Import
 
-Administrators, and staff given the **Manage members** permission under **Gamification > Dashboard > Access > Staff permissions**.
+Administrators, and staff given the **Manage members** permission under **Gamification > Members > Access > Staff permissions**.

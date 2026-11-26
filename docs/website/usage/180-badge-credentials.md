@@ -1,6 +1,6 @@
 # Badge Credentials
 
-Go to **Gamification > Badges** in your admin menu.
+Go to **Gamification > Rewards > Badges** in your admin menu.
 
 A credential is a badge that carries proof. Anyone with its link can check that your site issued it, to which member and when. Use it for course certificates, professional status or any badge a member would put on a CV.
 
@@ -8,7 +8,7 @@ This page is the owner's step by step. For how sharing works for members, see [B
 
 ## Make a Badge a Credential
 
-1. Go to **Gamification > Badges**.
+1. Go to **Gamification > Rewards > Badges**.
 2. Click the badge card to open it.
 3. Tick **Is Credential**. The label reads "Mark as shareable credential (LinkedIn, OpenBadges)".
 4. Optional: enter **Valid for (days)** if the credential should expire. Leave it blank to keep it valid for ever.
@@ -104,7 +104,7 @@ Administrators can open any member's share page and credential without the membe
 
 ## Turn Sharing Off
 
-Go to **Gamification > Dashboard > Modules**, find **Background features**, untick **Badge sharing - public share cards for LinkedIn and similar**, and click **Save Modules**. The share page stops working. Nothing is deleted.
+Go to **Gamification > Tools > Modules**, find **Background features**, untick **Badge sharing - public share cards for LinkedIn and similar**, and click **Save Modules**. The share page stops working. Nothing is deleted.
 
 ## Who Can Do This
 

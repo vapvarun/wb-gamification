@@ -1,6 +1,6 @@
 # Staff Permissions
 
-Go to **Gamification > Dashboard > Access** and scroll to **Staff permissions**.
+Go to **Gamification > Members > Access** and scroll to **Staff permissions**.
 
 Let a moderator, editor or community manager run part of gamification without making them a site administrator. Each permission covers one area. Administrators always have every permission.
 

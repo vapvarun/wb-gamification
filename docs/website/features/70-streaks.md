@@ -16,7 +16,7 @@ Life happens. The streak engine includes a **1-day grace period** by default. Th
 - The grace period can only be used once per streak. Missing two consecutive days breaks the streak.
 - The grace period resets after each consecutive day. If you use it on a Wednesday, you can use it again after a full consecutive sequence.
 
-Admins can adjust the grace period from 0 to 3 days in **Gamification > Dashboard > Habits & Profiles**.
+Admins can adjust the grace period from 0 to 3 days in **Gamification > Experience > Profiles and habits**.
 
 ## Streak Milestones
 
@@ -32,7 +32,7 @@ When a member's current streak reaches one of these milestones, they earn a bonu
 | 180 days | Bonus points + toast notification |
 | 365 days | Bonus points + toast notification |
 
-The number of bonus points awarded at each milestone is configurable in **Gamification > Dashboard > Habits & Profiles**. Set to 0 to give a notification without bonus points.
+The number of bonus points awarded at each milestone is configurable in **Gamification > Experience > Profiles and habits**. Set to 0 to give a notification without bonus points.
 
 ## What Resets a Streak
 

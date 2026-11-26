@@ -2,6 +2,8 @@
 
 **Included in Free.** Version 1.6.8 makes earning fair across every integration: points follow the content that earned them, nobody earns from their own content, and the plugin speaks five languages.
 
+Screen paths on this page are as they were in 1.6.8. In 1.7.0 every screen moved into a new menu: see [What's New in 1.7.0](05-whats-new-in-1-7-0.md#where-every-screen-went).
+
 ## What you should do
 
 - If you saved **Gamification > Dashboard > Points** on 1.6.8 before this fix and have actions from other plugins with capitals, slashes or dots in their id, re-check those actions: the old save could switch them off.

@@ -1,78 +1,63 @@
 # Points & Actions
 
-![The Points settings screen with the actions table](../images/points-settings.webp)
+Go to **Gamification > Earning > Actions and points** in your admin sidebar.
 
-Go to **Gamification > Dashboard > Points** in your admin sidebar.
+This screen lists every action that earns (or takes) points on your site, grouped by the plugin it comes from. Actions are detected automatically from the plugins you run, so a plugin's group appears as soon as that plugin is active.
 
-## The Actions Table
+Every change saves on its own. There is no Save button for actions: change an amount, a limit or a switch, and the screen says **Saved.** with an **Undo** button for 10 seconds. If a save fails, the previous value comes back and the screen says so, so what you see is always what is stored.
 
-Each row represents one user behavior that can earn points. Actions are detected automatically from active plugins - no setup required. You will not see any rows until at least one supported plugin (WordPress core, BuddyPress, WooCommerce, etc.) is active.
+## Find an action
 
-The table has five columns:
+A site with several plugins can have more than 80 actions. Three tools narrow the list:
+
+| Tool | What it does |
+|---|---|
+| **Find an action** | Type part of an action's name or description. |
+| **All / On / Off / Takes points / Has a limit** | Show every action, only the ones paying, only the ones switched off, only penalties, or only actions with a limit set. |
+| **Plugin** | Show one plugin's actions. |
+
+The count above the list ("86 actions") follows the filters. When nothing matches, the screen tells you to clear the search or choose **All**.
+
+## One plugin's group
+
+Each plugin is a group you can open and close, headed by the plugin name and its number of actions. Two buttons act on the whole group:
+
+- **Restore [plugin] defaults** puts that plugin's actions back to how the plugin ships them: on or off, amount and limits.
+- **Switch all off** stops every action in the group from paying. Amounts and limits are kept, so switching an action back on restores what you had.
+
+## One action
 
 | Column | What it controls |
-|--------|-----------------|
-| **On** | Checkbox. Uncheck to disable the action entirely. Disabled actions earn zero points and fire no badges or challenges. |
-| **Action** | The name and description of the behavior, e.g. "Publish a post" or "Join a group." |
-| **Points** | How many points a member earns each time this action fires. Enter any whole number from 0 to 9999. |
-| **Repeat** | Whether the action can be earned more than once. **Yes** means every occurrence earns points. **Once** means the member earns points only the first time. This is set per-action in the manifest and cannot be changed from the admin. |
-| **Daily cap** | The maximum number of times this action counts in a single day. Shows a number or ∞ (unlimited). Like Repeat, this is defined in the manifest and is read-only in the table. |
+|---|---|
+| **On** | Whether the action pays. An action switched off earns no points and does not count towards badges or challenges. |
+| **Action** | The action's name and what it rewards. **Once per member** means a member earns it one time only (for example, joining the site). **Takes points** marks a penalty, such as a moderator removing a post. |
+| **Points** | How many points the action pays, from 0 to 9,999. For a penalty, the number of points it takes. When you run more than one point type, a menu beside the amount chooses which type the action pays in. |
+| **Limit** | How often the action can pay, in words ("No limit", "10 a day", "1 min apart"). Open it to change it (see below). |
+| **Members can submit** | Lets members claim the action through the Submit Achievement form, for you to approve. Every action starts unticked. Not available for penalties. See [Submissions](../features/120-submissions.md#choose-what-members-can-submit). |
 
-### Changing point values
+Changes apply to the next award. Points already given are not recalculated.
 
-1. Find the action row.
-2. Edit the number in the **Points** column.
-3. Click **Save Changes** at the bottom of the page.
+## Limits
 
-Changes take effect immediately for any future action. Past points are not recalculated.
+Open an action's **Limit** to set up to three limits:
 
-### Enabling and disabling actions
+| Field | What it does |
+|---|---|
+| **Time between awards (seconds)** | The shortest gap between two awards of this action to the same member. 30 stops a member earning for 50 comments posted in a minute. |
+| **Most per day** | How many times the action can pay a member in one day, in your site's time zone (Settings > General). |
+| **Most per week** | How many times the action can pay a member in one week. |
 
-Uncheck the **On** toggle next to any action and save. Members performing that action will no longer earn points, badges, or challenge progress from it.
+Leave a field empty for no limit. The limit's summary updates as you type, for example "20 a day, 30s apart".
 
-## Action categories
+Limits stop farming without blocking real activity. Good starting points: a few seconds between comments, a daily limit on uploads and reactions, and a weekly limit on anything members could repeat at will.
 
-Actions are grouped into cards by category:
+## Point expiry and log retention
 
-| Category | Source |
-|----------|--------|
-| **WordPress** | Core WordPress events - publishing posts, comments, user registration |
-| **BuddyPress** | Social events - profile updates, activity posts, friendships, group joins |
-| **Commerce** | WooCommerce - purchases, product reviews |
-| **Learning** | LearnDash - course completions, quiz scores |
-| **Social** | Reactions, kudos, and other peer-recognition events |
-| **General** | Actions from other integrations or custom manifests |
+Two cards sit below the actions, and these do have a **Save** button:
 
-If a category does not appear, the plugin that provides it is not active on your site.
+- **Point expiry** takes points away from members who have been inactive for a set time. It is off by default. See [Point Expiry](../features/230-point-expiry.md).
+- **Log retention** sets how long the points history keeps rows: **Keep points history for** 1 to 24 months (6 by default). Older rows are removed once a day. The events table, which totals are rebuilt from, is never trimmed.
 
-## Understanding "Repeatable", "Cooldown" and "Daily Cap"
+## For developers
 
-**Repeatable: Once** - Useful for one-time milestones like "Complete your profile" or "Write your first post." The member earns the points exactly one time, no matter how many times they perform the action.
-
-**Repeatable: Yes** - The action counts every time. Use the Cooldown and Daily Cap fields to prevent abuse.
-
-**Cooldown (seconds)** - *Editable in 1.4.0.* The minimum gap between two awards of the same action for the same member. Set `bp_activity_comment` to a 60-second cooldown so a member can not earn points for 50 comments posted in 30 seconds. Set to `0` to disable the cooldown.
-
-**Daily cap** - *Editable in 1.4.0.* A hard ceiling on how many times an action can earn points in one calendar day in the site time zone (Settings > General). For example, if commenting has a daily cap of 10, a member who posts 50 comments earns points for only the first 10 each day. Set to `0` to allow unlimited awards per day.
-
-Both **Cooldown** and **Daily cap** are editable directly in the actions table. Type a new value and click outside the field - the change saves automatically (no Save button needed). A short green flash confirms the save.
-
-Setting either field to `0` is itself a saved override that turns the limit off - it does **not** restore the manifest default value. To revert to the manifest default (for example, to put a 60-second cooldown back after you set it to `0`), call `DELETE /wp-json/wb-gamification/v1/actions/{action_id}/overrides` via REST or remove the action's row from the `wb_gam_action_overrides` site option.
-
-**Members can submit** - *New in 1.6.8.* Tick it to let members claim the action through the Submit Achievement form, for you to approve. Every action starts unticked. The tick saves straight away. See [Submissions](../features/120-submissions.md#choose-what-members-can-submit).
-
-Overrides are stored in the `wb_gam_action_overrides` site option, keyed by action ID. The engine merges overrides on top of the manifest values, so the same effective values are used by rate-limit checks, the admin display, and REST consumers.
-
-## Log Retention
-
-Below the action categories, the **Log Retention** card controls how long the points history table keeps rows.
-
-| Field | Default | Range |
-|-------|---------|-------|
-| Keep points history for | 6 months | 1–24 months |
-
-Rows older than this value are pruned automatically by WP-Cron once per day. The **events table** (the source of truth) is never pruned. This means you can always recalculate totals from events even after the points log is trimmed.
-
-Reduce this value on high-traffic sites to keep the database lean. Increase it if you rely on per-period analytics.
-
-Click **Save Changes** to apply.
+Each change on this screen is one call to the REST route `POST /wb-gamification/v1/actions/{id}/overrides`, which takes `enabled`, `points`, `point_type`, `cooldown`, `daily_cap`, `weekly_cap` and `submittable`. `DELETE` on the same route restores the action's shipped values. Overrides are stored in the `wb_gam_action_overrides` option, keyed by action id, and the engine merges them over the manifest values, so the screen, the rate limits and REST always agree. See [REST: admin and webhooks](../developer-guide/180-rest-admin-webhooks.md).

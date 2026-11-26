@@ -33,7 +33,7 @@ curl https://example.com/wp-json/wb-gamification/v1/actions/bp_activity_update
 
 ### POST /actions/{id}/overrides
 
-Added in 1.4.0. Settings > Earning saves every row change through this route. The action id is the registered id as-is (since 1.7.0 ids with `/`, `.` or capitals work too; an unknown id answers `404`). Set per-action overrides for `cooldown`, `daily_cap`, and `weekly_cap` without touching the manifest. Stored in the `wb_gam_action_overrides` site option, keyed by action ID. The engine reads these on every rate-limit check, so the override takes effect immediately for new awards. All fields are optional; omit a field to leave it unchanged.
+Added in 1.4.0. **Earning > Actions and points** saves every row change through this route. The action id is the registered id as-is (since 1.7.0 ids with `/`, `.` or capitals work too; an unknown id answers `404`). Set per-action overrides for `cooldown`, `daily_cap`, and `weekly_cap` without touching the manifest. Stored in the `wb_gam_action_overrides` site option, keyed by action ID. The engine reads these on every rate-limit check, so the override takes effect immediately for new awards. All fields are optional; omit a field to leave it unchanged.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -97,7 +97,7 @@ curl https://example.com/wp-json/wb-gamification/v1/rules \
 
 ## Cohort Settings
 
-Cohort league tier names, promotion/demotion thresholds, and duration. Stored as a single options document plus the leagues on/off switch (Gamification > Dashboard > Modules); the endpoint reads and writes both together.
+Cohort league tier names, promotion/demotion thresholds, and duration. Stored as a single options document plus the leagues on/off switch (Gamification > Tools > Modules); the endpoint reads and writes both together.
 
 | Method | Endpoint | Permission |
 |--------|----------|------------|
@@ -142,7 +142,7 @@ Save the cohort settings document.
 | `promote_pct` | int | Yes | Percentage promoted to the tier above each period (1 to 50) |
 | `demote_pct` | int | Yes | Percentage demoted to the tier below each period (1 to 50) |
 | `duration` | string | Yes | `weekly` or `monthly` |
-| `enabled` | boolean | No | Turns cohort leagues on or off. Since 1.6.5 the admin form no longer sends this - use Gamification > Dashboard > Modules instead - but a client that sends it still flips the switch |
+| `enabled` | boolean | No | Turns cohort leagues on or off. Since 1.6.5 the admin form no longer sends this - use Gamification > Tools > Modules instead - but a client that sends it still flips the switch |
 
 ```bash
 curl -X POST https://example.com/wp-json/wb-gamification/v1/cohort-settings \
@@ -276,7 +276,7 @@ curl https://example.com/wp-json/wb-gamification/v1/settings/capabilities \
 
 ### POST /settings/capabilities
 
-Set the delegation matrix. Goes through the same write path as the Gamification > Dashboard > Access admin screen, so the two surfaces never disagree about who holds what.
+Set the delegation matrix. Goes through the same write path as the Gamification > Members > Access admin screen, so the two surfaces never disagree about who holds what.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -345,7 +345,7 @@ curl https://example.com/wp-json/wb-gamification/v1/events/stream \
 
 ## Members roster
 
-Site-owner member management (Gamification > Members). Added in 1.5.3. All admin-only.
+Site-owner member management (Gamification > Members > Members). Added in 1.5.3. All admin-only.
 
 | Method | Endpoint | Permission |
 |--------|----------|------------|
@@ -409,7 +409,7 @@ Award the same points to a whole role or to all members at once. Added in 1.5.3.
 
 ### POST /points/bulk
 
-Routes through the exclusion-aware batch award, so accounts excluded in Gamification > Dashboard > Access are skipped automatically. Points must be positive.
+Routes through the exclusion-aware batch award, so accounts excluded in Gamification > Members > Access are skipped automatically. Points must be positive.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -431,7 +431,7 @@ curl -X POST https://example.com/wp-json/wb-gamification/v1/points/bulk \
 
 ## Tools
 
-Settings portability and maintenance (Gamification > Dashboard > Tools). Added in 1.5.3. All admin-only.
+Settings portability and maintenance (Gamification > Tools > Export and maintenance). Added in 1.5.3. All admin-only.
 
 | Method | Endpoint | Permission |
 |--------|----------|------------|

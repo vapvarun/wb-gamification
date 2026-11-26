@@ -16,7 +16,7 @@ The WP Sell Services integration rewards both sides of a marketplace order. The 
 - **Each review pays once.** A review published on creation is not paid a second time if a moderator later re-approves it.
 - **Taking a review down takes its points back.** Rejecting, holding or deleting a published review removes the points it earned. Approving it again gives the same points back once, so approve, reject, approve leaves the buyer holding one award.
 - **Reopened orders do not pay twice.** WP Sell Services does not fire the completion hook again when a dispute restores an order.
-- Change the points, cooldown and caps under **Gamification > Dashboard > Points**.
+- Change the points, cooldown and caps under **Gamification > Earning > Actions and points**.
 
 ## Requirements
 

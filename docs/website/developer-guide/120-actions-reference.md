@@ -18,7 +18,7 @@ See [Hooks and Filters Overview](110-hooks-overview.md) for how to add a listene
 | `wb_gam_points_spent` | After `wb_gam_spend_points()` successfully debits a member's balance for an external redemption (e.g. a BuddyNext membership tier, a marketplace purchase). Added in 1.6.1. | `int $user_id`, `int $amount`, `string $context`, `array $result` |
 | `wb_gam_point_type_converted` | After a member converts one point currency into another. Debit and credit ledger rows share an `event_id`. | `int $user_id`, `string $from`, `string $to`, `int $debit_amount`, `int $credit_amount`, `array $rule` |
 | `wb_gam_award_skipped` | When the engine intentionally skips an award (cooldown, cap reached, not eligible, veto). Use it to surface a contextual hint so silent skips do not feel broken. | `int $user_id`, `string $action_id`, `string $reason`, `array $context` |
-| `wb_gam_points_decayed` | After each daily inactivity point-decay sweep (Gamification > Dashboard > Points > Point expiry; off by default). `$count` is the number of members decayed this run. Added in 1.5.3. | `int $count` |
+| `wb_gam_points_decayed` | After each daily inactivity point-decay sweep (Gamification > Earning > Actions and points > Point expiry; off by default). `$count` is the number of members decayed this run. Added in 1.5.3. | `int $count` |
 
 ### `wb_gam_award_skipped` reason taxonomy (closed set)
 
@@ -155,11 +155,11 @@ These fire from the REST controllers behind the admin CRUD screens. Each carries
 
 ## Site-owner controls
 
-Added in 1.5.3 (Gamification > Dashboard > Tools).
+Added in 1.5.3 (Gamification > Tools > Export and maintenance).
 
 | Hook | When it fires | Parameters |
 |------|---------------|------------|
-| `wb_gam_progress_reset` | After an admin resets all member progress (Gamification > Dashboard > Tools danger zone). The progress tables and per-user progress meta are wiped while all configuration and definitions are kept. Adapters can clear their own derived state (transients, etc.) here. Added in 1.5.3. | (none) |
+| `wb_gam_progress_reset` | After an admin resets all member progress (Gamification > Tools > Export and maintenance danger zone). The progress tables and per-user progress meta are wiped while all configuration and definitions are kept. Adapters can clear their own derived state (transients, etc.) here. Added in 1.5.3. | (none) |
 
 ## Lifecycle
 

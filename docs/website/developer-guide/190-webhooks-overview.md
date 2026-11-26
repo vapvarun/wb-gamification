@@ -205,7 +205,7 @@ curl -X DELETE https://example.com/wp-json/wb-gamification/v1/webhooks/1/log \
 
 1. Create a new Zap and choose Webhooks by Zapier as the trigger.
 2. Select Catch Hook and copy the webhook URL (starts with `https://hooks.zapier.com/`).
-3. In WordPress admin, go to **Gamification > Webhooks** and register the webhook URL with your desired events.
+3. In WordPress admin, go to **Gamification > Tools > Webhooks** and register the webhook URL with your desired events.
 4. Copy the returned `secret` for signature verification (optional in Zapier but recommended).
 5. Send a test event from WB Gamification and check the Zap trigger for the payload.
 6. Add your action steps (send email, update Google Sheet, post to Slack, etc.).

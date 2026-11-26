@@ -2,7 +2,7 @@
 
 ![The Badge Library admin screen](../images/badge-library.webp)
 
-Go to **Gamification > Badges** in your admin menu.
+Go to **Gamification > Rewards > Badges** in your admin menu.
 
 The Badge Library shows every badge as a card. Each card shows the badge icon, its name, how many members have earned it, and **Auto-award** or **Manual**: whether it is given out on its own or only by hand. A badge whose actions come from a plugin your site does not run (for example a BuddyPress badge without BuddyPress) shows **Not earnable here** instead. Members do not see it, unless they already earned it.
 

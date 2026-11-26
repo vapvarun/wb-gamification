@@ -46,7 +46,17 @@
     {
       "name": "What's New",
       "folder": "whats-new",
-      "description": "What changed in each release and what you should do after updating."
+      "description": "What changed in each release and what you should do after updating.",
+      "pages": [
+        {
+          "slug": "05-whats-new-in-1-7-0",
+          "title": "What's New in 1.7.0"
+        },
+        {
+          "slug": "00-whats-new-in-1-6-8",
+          "title": "What's New in 1.6.8"
+        }
+      ]
     }
   ]
 }
