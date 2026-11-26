@@ -86,8 +86,8 @@ test( 'first points: welcome title, site line and the progress button', () => {
 	p.send( [ pts( 10, 'Join the site' ), { _id: ++id, type: 'welcome', message: 'Welcome aboard!', detail: 'Your first points in Garden', url: '/gamification/', url_label: 'See progress' } ] );
 	p.tick( 1500 );
 	const o = p.drawn[ 0 ].o;
-	assert.strictEqual( o.title, '+10 Points. Welcome aboard!' );
-	assert.strictEqual( o.body, 'Your first points in Garden' );
+	assert.strictEqual( o.title, '+10 Points', 'short enough for one line next to the button' );
+	assert.strictEqual( o.body, 'Welcome aboard! Your first points in Garden' );
 	assert.strictEqual( o.hrefLabel, 'See progress' );
 } );
 
@@ -97,4 +97,17 @@ test( 'a level-up is not a toast, and approvals are not merged', () => {
 	p.tick( 1500 );
 	assert.strictEqual( p.drawn.length, 1 );
 	assert.strictEqual( p.drawn[ 0 ].o.title, 'Approved: Run 5k' );
+} );
+
+test( 'a streak bonus adds to the total and the streak is named once, not shown as a popup', () => {
+	const p = page();
+	p.send( [
+		pts( 10, 'Publish a blog post' ),
+		{ _id: ++id, type: 'points', points: 5, action: 'streak_milestone', message: '+5 Points', unit_many: 'Points', detail: 'Streak bonus' },
+		{ _id: ++id, type: 'streak_milestone', message: '5-day streak!' },
+	] );
+	p.tick( 1500 );
+	assert.strictEqual( p.drawn.length, 1 );
+	assert.deepStrictEqual( JSON.parse( JSON.stringify( p.drawn[ 0 ].o.count ) ), { from: 0, to: 15 }, 'the toast agrees with the ledger' );
+	assert.strictEqual( p.drawn[ 0 ].o.body, 'Publish a blog post, 5-day streak!' );
 } );

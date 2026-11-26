@@ -1,83 +1,77 @@
-# Setup Wizard
+# Setup
 
-The Setup Wizard appears automatically the first time you activate WB Gamification. It takes about one minute to complete and pre-configures point values for your site type so you are not starting from a blank slate.
+Setup opens by itself the first time you visit your admin after activating WB Gamification. It reads the plugins on your site and asks four short questions. It takes about two minutes.
 
-## Choosing a Starter Template
+You can open it any time from **Gamification > Tools > Setup** (`admin.php?page=wb-gamification-setup`). Only administrators can run it.
 
-The wizard presents six templates. A template that needs another plugin shows which plugin it needs and is only available while that plugin is active. Pick the one that best describes your site.
+Setup is one form in four steps. Use **Continue** and **Back**, or click a step number at the top. Nothing is saved until you click **Launch gamification** in step 4.
 
-### Blog / Publisher
+## Step 1: Your Community
 
-Rewards writing and meaningful comments. For standalone WordPress blogs.
+Setup lists every plugin on your site that has gamification actions. Each card shows:
 
-Point values configured:
-- Publish a blog post - 25 points
-- Publish your first post ever - 20 points (one-time bonus)
-- Leave a comment - 5 points
-- Your post receives a comment - 3 points
+- The plugin name. A plugin with a Pro add-on shows one card, marked **+ Pro**.
+- How many actions it has, and how many take points back.
+- Three example actions with their point amounts.
 
-### Community Engagement
+Switch off any plugin you do not want to reward. Its actions stay off.
 
-Balanced: rewards posting, reactions and social connection. **Requires BuddyNext.**
+**WordPress basics are always included**: joining, logging in, completing a profile, publishing and commenting.
 
-Point values configured:
-- Create a post - 10 points
-- Comment - 5 points
-- Connect with a member - 8 points
-- Join a space - 8 points
-- Receive a reaction - 3 points
-- Complete your profile - 25 points
+Plugins that WB Gamification supports but that are not installed appear in one **Also works with** line. Install one later and its actions appear under **Earning**.
 
-### BuddyPress Community
+## Step 2: How Members Earn
 
-Rewards activity updates, comments, friendships, groups and a complete profile. **Requires BuddyPress.** New in 1.6.8.
+Choose a pace. It sets the daily and weekly limits for the actions you kept.
 
-Point values configured:
-- Post an activity update - 10 points
-- Comment on an activity - 5 points
-- Accept a friendship - 8 points
-- Join a group - 8 points
-- Receive a reaction - 3 points
-- Complete your profile - 15 points
+| Pace | What it does |
+|---|---|
+| **Relaxed** | Half each plugin's own daily and weekly limits. For a quiet community or one just starting. |
+| **Balanced** (recommended) | Each plugin's own limits. The default on a first run. |
+| **Competitive** | Double the limits. For active, game-minded communities. |
+| **Keep my limits** | Shown only when you run Setup again, and selected by default. Leaves the limits you set under **Earning** as they are. |
 
-### Online Course
+Below the pace, open any plugin to see its actions. For each action you can:
 
-Course completion heavy, with progress and credential badges. **Requires Learnomy.**
+- Switch it on or off.
+- Change its point amount.
+- Read its limit in words, for example "5 a day" or "No limit".
 
-Point values configured:
-- Complete a lesson - 20 points
-- Complete a course - 100 points
-- Receive a certificate - 50 points
-- Enrol in a course - 5 points
+Actions that take points away carry a **Takes points** label.
 
-### Coaching Platform
+## Step 3: What Members Get
 
-Rewards the steady habits of a coaching programme: writing, commenting and completing a profile. For standalone WordPress sites.
+This step shows what you already have. Change any of it later under **Rewards**.
 
-Point values configured:
-- Publish a blog post - 25 points
-- Leave a comment - 10 points
-- Complete your profile - 15 points
-- Publish your first post ever - 20 points
+- **Levels**: your site's level names and the points each one needs. **Edit level names and points** opens the Levels screen in a new tab.
+- **Badges**: how many badges are in your library. **Open the badge library** opens it in a new tab.
+- **Leaderboard**: when Jetonomy is active, choose **Gamification leaderboard** or **Let Jetonomy run it**. Without Jetonomy, the Gamification leaderboard is used.
+- **Public profile pages**: show members' points, badges and level to others. Each member can still hide their own. This switch is hidden when your community plugin already controls profile privacy.
 
-### Nonprofit / Mission
+## Step 4: Review and Launch
 
-Rewards joining spaces, connecting and taking part in conversations: community participation over individual output. **Requires BuddyNext.**
+A summary lists the plugins rewarded, the number of actions on and the pace, and your rewards. Each line has a **Change** link back to its step.
 
-Point values configured:
-- Create a post - 5 points
-- Join a space - 10 points
-- Connect with a member - 8 points
-- Comment - 5 points
+Choose your emails:
 
-## Skipping the Wizard
+| Email | First-run default |
+|---|---|
+| **Level-up email** | Off. Members already see a toast. |
+| **Badge email** | Off. Members already see a toast. |
+| **Weekly recap** | On. One email a week with their points and rank. |
 
-If you want to configure everything manually, click **Skip & configure manually**. The defaults stay in place: optional emails off, public profiles on. You can return to **Gamification > Dashboard** at any time to adjust point values and all other options.
+**Send me a test toast** gives your own account 10 points, so you can see the toast on the front of your site.
 
-## After Completing the Wizard
+Click **Launch gamification** to save. Members start earning from their next action. Nothing is awarded for past activity.
 
-After you select a template, the wizard saves the chosen point values to your settings and takes you to the main **Gamification** dashboard.
+You land on **Overview > Dashboard**, with a **Finish setting up** checklist. See [Admin Dashboard](../usage/150-admin-dashboard.md).
 
-## Changing Settings Later
+## Skipping Setup
 
-Nothing the wizard configures is permanent. All point values and other options can be changed at any time in **Gamification > Dashboard**.
+Click **Skip setup, I'll configure it myself** at the top. Nothing is saved except that setup is marked done. Members keep earning with each plugin's own default values. Change them any time under **Earning**.
+
+## Running Setup Again
+
+Open **Gamification > Tools > Setup**. Every step opens with your site's current values, including your emails. The pace defaults to **Keep my limits**.
+
+To close Setup without saving, click **Leave without changes**.

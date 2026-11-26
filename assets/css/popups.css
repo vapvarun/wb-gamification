@@ -256,8 +256,9 @@ body.admin-bar .wb-gam-toasts--top-right {
 	overflow: hidden;
 	font-size: 18px;
 }
-/* The badge's own picture fills the disc. */
-.wb-gam-disc--image { background: transparent; }
+/* The badge's own picture fills the disc, on a light ground in both modes: badge art is drawn for
+ * light backgrounds (many SVGs use currentColor, which is black inside an <img>). */
+.wb-gam-disc--image { box-sizing: border-box; padding: 4px; background: var(--wb-gam-color-white); }
 .wb-gam-disc--image img {
 	display: block;
 	width: 100%;

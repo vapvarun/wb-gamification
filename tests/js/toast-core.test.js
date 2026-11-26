@@ -66,7 +66,7 @@ function page( { bn = false, admin = false } = {} ) {
 	const bnCalls = [];
 	if ( bn ) {
 		// Stand-in for BuddyNext's bnToast: records what it was asked to draw.
-		w.bnToast = ( o ) => {
+		w.bnToast = function bnToast( o ) { // Named, like BuddyNext's real one (shell/dialog.js).
 			const el = w.document.createElement( 'div' );
 			el.className = 'bn-toast';
 			w.document.body.appendChild( el );
@@ -328,4 +328,15 @@ test( 'own stack: closing a toast whose button had focus returns focus to where 
 	link.focus();
 	h.dismiss();
 	assert.strictEqual( p.w.document.activeElement, before );
+} );
+
+test( 'another plugin\'s text-only bnToast (Jetonomy without BuddyNext) is not used: our own stack draws', () => {
+	const p = page();
+	const seen = [];
+	p.w.bnToast = function ( msg ) { // Anonymous, like Jetonomy's header.js and BuddyNext's early stub.
+		seen.push( msg );
+	};
+	p.toast( { title: '+5 Points' } );
+	assert.strictEqual( seen.length, 0, 'never handed an options object ("[object Object]")' );
+	assert.strictEqual( p.shown(), 1 );
 } );

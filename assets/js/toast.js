@@ -11,7 +11,7 @@
  *   3. REST `/members/me/toasts` poll, only when the broker does not come online.
  *
  * Event routing:
- *   - level_up, streak_milestone, cohort_promotion, community_goal are Moment cards, owned by the
+ *   - level_up, cohort_promotion, community_goal are Moment cards, owned by the
  *     Interactivity store (assets/interactivity/notifications.js). Skipped here.
  *   - points, badge, challenge, kudos, welcome: collected for 1.5s and shown as ONE summary toast
  *     ("+17 Points and a new badge" / "Publish a blog post, Conversation Starter"), which keeps
@@ -37,10 +37,13 @@
 		return ( wbGamToast.i18n && wbGamToast.i18n[ key ] ) || fallback;
 	}
 
-	var MOMENT_TYPES = [ 'level_up', 'streak_milestone', 'cohort_promotion', 'community_goal' ];
+	// A level-up (and the rarer promotion / community goal) shows alone; a streak day joins the summary.
+	var MOMENT_TYPES = [ 'level_up', 'cohort_promotion', 'community_goal' ];
 	// Awards that land together (a post that pays points, finishes a streak day and earns a badge)
 	// become ONE summary toast instead of a pile (TOASTS.md).
-	var REWARD_TYPES = [ 'points', 'badge', 'challenge', 'kudos', 'welcome' ];
+	var REWARD_TYPES = [ 'points', 'badge', 'challenge', 'kudos', 'welcome', 'streak_milestone' ];
+	// Bonus points whose reason is already named by its own item (the challenge, the streak).
+	var BONUS_ACTIONS = [ 'challenge_completed', 'streak_milestone' ];
 	var COLLECT_MS   = 1500;
 	var SUMMARY_KEY  = 'wbgam-awards';
 
@@ -84,7 +87,7 @@
 			return;
 		}
 		if ( ! sum || ! sum.handle || sum.handle.gone ) {
-			sum = { handle: null, total: 0, shown: 0, unitMany: '', firstMessage: '', pointItems: 0, labels: [], counts: {}, badges: [], challenges: [], kudos: [], singles: [], welcome: null, image: '', url: '', urlLabel: '' };
+			sum = { handle: null, total: 0, shown: 0, unitMany: '', firstMessage: '', pointItems: 0, labels: [], counts: {}, badges: [], challenges: [], kudos: [], streaks: [], singles: [], welcome: null, image: '', url: '', urlLabel: '' };
 		}
 		items.forEach( add );
 		var opts = summarise();
@@ -123,7 +126,12 @@
 				sum.pointItems++;
 				sum.unitMany     = sum.unitMany || t.unit_many || toastI18n( 'points', 'points' );
 				sum.firstMessage = sum.firstMessage || t.message || '';
-				label( t.detail );
+				if ( BONUS_ACTIONS.indexOf( t.action ) === -1 ) {
+					label( t.detail );
+				}
+				return;
+			case 'streak_milestone':
+				sum.streaks.push( t.message );
 				return;
 			case 'badge':
 				sum.badges.push( t.name || t.message );
@@ -161,7 +169,8 @@
 				count = { from: sum.shown, to: sum.total };
 			}
 			if ( sum.welcome ) {
-				title += '. ' + toastI18n( 'welcome', 'Welcome aboard!' );
+				// The welcome is the detail line: at 360px next to its button, "+10 Points. Welcome
+				// aboard!" did not fit one line.
 			} else if ( 1 === extras.length ) {
 				var e = extras[ 0 ];
 				title += ' ' + ( 1 === e[ 0 ].length ? toastI18n( e[ 1 ], e[ 2 ] ) : fmt( e[ 3 ], e[ 4 ], e[ 0 ].length ) );
@@ -174,15 +183,15 @@
 			title = fmt( 'rewards', '%d new rewards', others || sum.singles.length );
 		}
 
-		if ( sum.welcome && sum.welcome.detail ) {
-			body = sum.welcome.detail;
+		if ( sum.welcome ) {
+			body = toastI18n( 'welcome', 'Welcome aboard!' ) + ( sum.welcome.detail ? ' ' + sum.welcome.detail : '' );
 		} else if ( 1 === sum.singles.length || ( ! sum.total && 1 === others ) ) {
 			var only = sum.singles.filter( function ( t ) { return 'points' !== t.type; } )[ 0 ] || sum.singles[ 0 ];
 			body = only.detail || '';
 		} else {
 			body = sum.labels.map( function ( l ) {
 				return sum.counts[ l ] > 1 ? l + ' ×' + sum.counts[ l ] : l;
-			} ).concat( sum.badges, sum.challenges, sum.kudos ).join( ', ' );
+			} ).concat( sum.streaks, sum.badges, sum.challenges, sum.kudos ).join( ', ' );
 		}
 
 		var kind = sum.badges.length ? 'badge' : ( sum.challenges.length ? 'challenge' : ( sum.kudos.length && ! sum.total ? 'kudos' : 'points' ) );

@@ -4,14 +4,16 @@
 
 Get WB Gamification running in five minutes. This guide shows you the complete loop from activation to your first member earning points.
 
-## Step 1: Activate and Run the Wizard (2 minutes)
+## Step 1: Activate and Run Setup (2 minutes)
 
 1. Activate the plugin from **Plugins > Installed Plugins**.
-2. The Setup Wizard opens automatically.
-3. Click the template that matches your site. For a BuddyPress community, choose **Community Engagement**. For a blog, choose **Blog / Publisher**.
-4. Click **Use This Template**.
+2. Setup opens automatically. It lists the plugins on your site that reward members.
+3. Switch off any plugin you do not want to reward, then click **Continue**.
+4. Pick a pace. **Balanced** uses each plugin's own limits and suits most sites.
+5. Review your levels, badges and leaderboard, then choose your emails.
+6. Click **Launch gamification**.
 
-The wizard saves your point values and redirects you to the Gamification dashboard.
+Setup saves your choices and takes you to **Overview > Dashboard**. See [Setup](20-setup-wizard.md) for every step.
 
 ## Step 2: Check What Is Already Working (30 seconds)
 

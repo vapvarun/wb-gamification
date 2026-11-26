@@ -664,12 +664,26 @@
 	}
 
 	/**
+	 * Is window.bnToast BuddyNext's own toast (which takes an options object)? Other plugins define
+	 * a text-only window.bnToast when BuddyNext is absent (Jetonomy's header.js), and BuddyNext's
+	 * early stub is text-only too; handing either an object printed "[object Object]". BuddyNext's
+	 * real one is the named function `bnToast` (shell/dialog.js) and, from BuddyNext 1.3.1, says
+	 * what it supports.
+	 *
+	 * @return {boolean}
+	 */
+	function isBuddyNextToast() {
+		var f = window.bnToast;
+		return 'function' === typeof f && ( !! f.supports || 'bnToast' === f.name );
+	}
+
+	/**
 	 * @param {Object}  opts      See the file header.
 	 * @param {boolean} fromQueue Internal: the queue is handing over its next toast.
 	 */
 	function toast( opts, fromQueue ) {
 		opts = opts || {};
-		var onBn = typeof window.bnToast === 'function';
+		var onBn = isBuddyNextToast();
 
 		// Same key while alive: update in place, never stack a second copy (BuddyNext does this itself).
 		if ( ! onBn && opts.key && live[ opts.key ] && ! live[ opts.key ].gone ) {

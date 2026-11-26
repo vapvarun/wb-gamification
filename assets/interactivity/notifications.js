@@ -6,7 +6,7 @@
  * toasts.
  *
  * Moment event types (each carries its own translated eyebrow, title, sub, ring and cta):
- *   - level_up, streak_milestone, cohort_promotion, community_goal
+ *   - level_up, cohort_promotion, community_goal (a streak day joins the summary toast)
  *
  * Every other type passes through silently. toast.js owns those.
  *
@@ -33,7 +33,8 @@ const NS = 'wb-gamification';
 
 const AUTO_CLOSE_MS = 6000;
 
-const MOMENT_TYPES = [ 'level_up', 'streak_milestone', 'cohort_promotion', 'community_goal' ];
+// A streak day joins the summary toast (toast.js); only these show alone (TOASTS.md).
+const MOMENT_TYPES = [ 'level_up', 'cohort_promotion', 'community_goal' ];
 
 const EMPTY_MOMENT = {
 	active: false,

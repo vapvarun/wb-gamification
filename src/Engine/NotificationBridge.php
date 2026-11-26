@@ -385,11 +385,9 @@ final class NotificationBridge {
 	 * @param int   $points  Points awarded.
 	 */
 	public static function on_points_awarded( int $user_id, Event $event, int $points ): void {
-		// Don't notify for internal synthetic actions (challenge bonus, streak bonus).
-		$silent = array( 'challenge_completed', 'streak_milestone' );
-		if ( in_array( $event->action_id, $silent, true ) ) {
-			return;
-		}
+		// Challenge and streak bonuses are queued like any award: the member's summary toast adds
+		// them to the total (toast.js names the challenge or streak once, not the bonus line), so
+		// the toast agrees with the ledger.
 
 		// First-earn explainer — push a one-time welcome toast so the member
 		// understands what just happened and where to see their progress.
