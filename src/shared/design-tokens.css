@@ -241,7 +241,9 @@
 	/* Inside BuddyNext the fill is BuddyNext's button fill (the accent deepened only as far as a
 	 * white label needs) and the label below is its pair, so a gamification button reads like
 	 * BuddyNext's own Post button. The raw accent-500 with our own label rule gave black on blue. */
-	--wb-gam-pop-accent: var(--bn-accent-solid, var(--bn-accent, var(--wb-gam-color-accent)));
+	/* Toasts and popups fit any site (TOASTS.md): BuddyNext's pair, then the host theme's own accent
+	   (Wbcom themes, then block-theme presets), then a neutral ink. Never the plugin's brand colour. */
+	--wb-gam-pop-accent: var(--bn-accent-solid, var(--bn-accent, var(--wbcom-link-color, var(--bx-color-accent, var(--reign-site-button-bg-color, var(--wp--preset--color--primary, var(--wp--preset--color--accent-1, var(--wp--preset--color--contrast, #1e1e1e))))))));
 	/* Text ON the accent. Each theme pairs its button colour with a text colour (BuddyX's
 	 * accent-inverse, Reign's button text), so read that pair before assuming white: Reign dark's
 	 * #97c0ee button with white text measured 1.89:1, with Reign's own #111111 it is 9.97:1. */

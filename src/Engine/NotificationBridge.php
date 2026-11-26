@@ -401,18 +401,17 @@ final class NotificationBridge {
 
 			$hub_url = self::progress_url( $user_id );
 
-			$detail = $hub_url
-				? __( 'See your full progress: points, badges, levels and leaderboard.', 'wb-gamification' )
-				: __( 'Earn more points by being active on the site - every action counts.', 'wb-gamification' );
+			/* translators: %s: site name. */
+			$detail = sprintf( __( 'Your first points in %s', 'wb-gamification' ), wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) );
 
 			self::push(
 				$user_id,
 				array(
 					'type'      => 'welcome',
-					'message'   => __( 'Welcome - you just earned your first points!', 'wb-gamification' ),
+					'message'   => __( 'Welcome aboard!', 'wb-gamification' ),
 					// A real link (toast.js renders it); a URL inside the sentence was not clickable.
 					'url'       => $hub_url ? wp_make_link_relative( $hub_url ) : '',
-					'url_label' => __( 'See my progress', 'wb-gamification' ),
+					'url_label' => __( 'See progress', 'wb-gamification' ),
 					'detail'    => $detail,
 					'icon'      => 'icon-sparkles',
 				)
@@ -489,6 +488,9 @@ final class NotificationBridge {
 				),
 				'detail'  => $badge['description'] ?? null,
 				'icon'    => 'icon-medal',
+				// The badge's own picture fills the toast's icon disc; the name lists it in a summary.
+				'name'    => $badge['name'] ?? '',
+				'image'   => ! empty( $badge['image_url'] ) ? esc_url_raw( (string) $badge['image_url'] ) : '',
 			)
 		);
 	}
@@ -728,6 +730,7 @@ final class NotificationBridge {
 					$challenge['title'] ?? ''
 				),
 				'icon'    => 'icon-target',
+				'name'    => $challenge['title'] ?? '',
 			)
 		);
 	}
@@ -758,6 +761,7 @@ final class NotificationBridge {
 					: __( 'Someone gave you kudos!', 'wb-gamification' ),
 				'detail'   => $message ?: null,
 				'icon'     => 'icon-heart-handshake',
+				'name'     => $giver ? $giver->display_name : '',
 			)
 		);
 	}
@@ -1329,7 +1333,7 @@ final class NotificationBridge {
 			'message'   => $message,
 			'detail'    => '' !== $detail ? $detail : null,
 			'url'       => '' !== $url ? wp_make_link_relative( $url ) : '',
-			'url_label' => __( 'See my progress', 'wb-gamification' ),
+			'url_label' => __( 'See progress', 'wb-gamification' ),
 			'icon'      => 'icon-sparkles',
 			'_id'       => $last_id,
 		);

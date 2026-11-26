@@ -13,9 +13,12 @@
  * Event routing:
  *   - level_up, streak_milestone, cohort_promotion, community_goal are Moment cards, owned by the
  *     Interactivity store (assets/interactivity/notifications.js). Skipped here.
- *   - badge, challenge: an Achievement toast with a small confetti burst.
- *   - points, kudos, welcome, submission, skip: a plain toast. Repeats of the SAME points action
- *     inside two seconds merge into one toast ("+2 Points", "Leave a comment x2").
+ *   - points, badge, challenge, kudos, welcome: collected for 1.5s and shown as ONE summary toast
+ *     ("+17 Points and a new badge" / "Publish a blog post, Conversation Starter"), which keeps
+ *     adding up while it is on screen; the number counts up. The badge's own picture is the icon.
+ *     No confetti here: only a level-up celebrates (TOASTS.md). A level-up Moment shows alone
+ *     first; toast-core holds the summary until it closes.
+ *   - submission, skip, the "since your last visit" summary: a toast of their own.
  *
  * @since 1.0.0
  * @refactored 1.6.5 - the renderer moved to toast-core.js so the admin shares it.
@@ -35,7 +38,11 @@
 	}
 
 	var MOMENT_TYPES = [ 'level_up', 'streak_milestone', 'cohort_promotion', 'community_goal' ];
-	var AGGREGATE_WINDOW_MS = 2000;
+	// Awards that land together (a post that pays points, finishes a streak day and earns a badge)
+	// become ONE summary toast instead of a pile (TOASTS.md).
+	var REWARD_TYPES = [ 'points', 'badge', 'challenge', 'kudos', 'welcome' ];
+	var COLLECT_MS   = 1500;
+	var SUMMARY_KEY  = 'wbgam-awards';
 
 	var ICONS = {
 		points: 'icon-sparkles',
@@ -54,75 +61,150 @@
 	 */
 	var seenIds = new Set();
 
-	// The most recent points toast, so a repeat of the same action merges into it.
-	var lastPoints = null; // { handle, points, count, action, label, unitMany, at }
+	var pending = [];   // Awards collected in the current 1.5s window.
+	var collectTimer = 0;
+	var sum = null;     // The summary on screen (or waiting), still taking awards.
 
-	function celebrate( el ) {
-		if ( window.wbGam && typeof window.wbGam.celebrate === 'function' ) {
-			window.wbGam.celebrate( el, 'small' );
+	function fmt( key, fallback, n ) {
+		return toastI18n( key, fallback ).replace( '%d', n ).replace( '%s', n );
+	}
+
+	function collect( toast ) {
+		pending.push( toast );
+		if ( ! collectTimer ) {
+			collectTimer = setTimeout( flush, COLLECT_MS );
 		}
 	}
 
-	function pointsToast( toast ) {
-		var add = parseInt( toast.points, 10 );
-		if ( isNaN( add ) ) {
-			var m = ( toast.message || '' ).match( /\+(\d+)/ );
-			add = m ? parseInt( m[ 1 ], 10 ) : 0;
-		}
-		var action = toast.action || '';
-		var label  = toast.detail || '';
-		var now    = Date.now();
-
-		if (
-			add > 0
-			&& lastPoints
-			&& ! lastPoints.handle.gone
-			&& lastPoints.action === action
-			&& lastPoints.label === label
-			&& now - lastPoints.at < AGGREGATE_WINDOW_MS
-		) {
-			lastPoints.points += add;
-			lastPoints.count  += 1;
-			lastPoints.at      = now;
-			// A merged total is always more than one, so it takes the plural name the server sent.
-			var unit = lastPoints.unitMany || toastI18n( 'points', 'points' );
-			lastPoints.handle.update( {
-				title: '+' + lastPoints.points.toLocaleString() + ' ' + unit,
-				body: label ? label + ' ×' + lastPoints.count : '×' + lastPoints.count,
-			} );
+	function flush() {
+		collectTimer = 0;
+		var items = pending;
+		pending = [];
+		if ( ! items.length ) {
 			return;
 		}
+		if ( ! sum || ! sum.handle || sum.handle.gone ) {
+			sum = { handle: null, total: 0, shown: 0, unitMany: '', firstMessage: '', pointItems: 0, labels: [], counts: {}, badges: [], challenges: [], kudos: [], singles: [], welcome: null, image: '', url: '', urlLabel: '' };
+		}
+		items.forEach( add );
+		var opts = summarise();
+		if ( sum.handle ) {
+			sum.handle.update( opts );
+		} else {
+			sum.handle = window.wbGam.toast( opts );
+		}
+		sum.shown = sum.total;
+	}
 
-		var handle = window.wbGam.toast( {
-			type: 'points',
-			tone: 'reward',
-			icon: toast.icon || ICONS.points,
-			title: toast.message || '',
-			body: label,
-		} );
-		lastPoints = add > 0
-			? { handle: handle, points: add, count: 1, action: action, label: label, unitMany: toast.unit_many || '', at: now }
-			: null;
+	function label( text ) {
+		if ( ! text ) {
+			return;
+		}
+		if ( ! sum.counts[ text ] ) {
+			sum.labels.push( text );
+		}
+		sum.counts[ text ] = ( sum.counts[ text ] || 0 ) + 1;
+	}
+
+	function add( t ) {
+		sum.singles.push( t );
+		if ( t.url && ! sum.url ) {
+			sum.url      = t.url;
+			sum.urlLabel = t.url_label || '';
+		}
+		switch ( t.type ) {
+			case 'points':
+				var n = parseInt( t.points, 10 );
+				if ( isNaN( n ) ) {
+					var m = ( t.message || '' ).match( /\+(\d+)/ );
+					n = m ? parseInt( m[ 1 ], 10 ) : 0;
+				}
+				sum.total += n;
+				sum.pointItems++;
+				sum.unitMany     = sum.unitMany || t.unit_many || toastI18n( 'points', 'points' );
+				sum.firstMessage = sum.firstMessage || t.message || '';
+				label( t.detail );
+				return;
+			case 'badge':
+				sum.badges.push( t.name || t.message );
+				sum.image = sum.image || t.image || '';
+				return;
+			case 'challenge':
+				sum.challenges.push( t.name || t.message );
+				return;
+			case 'kudos':
+				sum.kudos.push( t.name ? fmt( 'kudosFrom', 'Kudos from %s', t.name ) : t.message );
+				return;
+			case 'welcome':
+				sum.welcome = t;
+				return;
+		}
+	}
+
+	/** One title under 40 characters, one detail line, one optional button. */
+	function summarise() {
+		var extras = [
+			[ sum.badges, 'andBadge', 'and a new badge', 'andBadges', 'and %d new badges' ],
+			[ sum.challenges, 'andChallenge', 'and a challenge done', 'andChallenges', 'and %d challenges done' ],
+			[ sum.kudos, 'andKudos', 'and kudos', 'andKudos', 'and kudos' ],
+		].filter( function ( e ) { return e[ 0 ].length; } );
+		var others = sum.badges.length + sum.challenges.length + sum.kudos.length;
+		var title;
+		var body;
+		var count;
+
+		if ( sum.total > 0 ) {
+			if ( 1 === sum.pointItems && ! sum.shown && sum.firstMessage ) {
+				title = sum.firstMessage; // "+1 Point": the server already chose singular or plural.
+			} else {
+				title = '+{count} ' + sum.unitMany;
+				count = { from: sum.shown, to: sum.total };
+			}
+			if ( sum.welcome ) {
+				title += '. ' + toastI18n( 'welcome', 'Welcome aboard!' );
+			} else if ( 1 === extras.length ) {
+				var e = extras[ 0 ];
+				title += ' ' + ( 1 === e[ 0 ].length ? toastI18n( e[ 1 ], e[ 2 ] ) : fmt( e[ 3 ], e[ 4 ], e[ 0 ].length ) );
+			} else if ( extras.length > 1 ) {
+				title += ' ' + fmt( 'andRewards', 'and %d rewards', others );
+			}
+		} else if ( 1 === sum.singles.length ) {
+			title = sum.singles[ 0 ].message || '';
+		} else {
+			title = fmt( 'rewards', '%d new rewards', others || sum.singles.length );
+		}
+
+		if ( sum.welcome && sum.welcome.detail ) {
+			body = sum.welcome.detail;
+		} else if ( 1 === sum.singles.length || ( ! sum.total && 1 === others ) ) {
+			var only = sum.singles.filter( function ( t ) { return 'points' !== t.type; } )[ 0 ] || sum.singles[ 0 ];
+			body = only.detail || '';
+		} else {
+			body = sum.labels.map( function ( l ) {
+				return sum.counts[ l ] > 1 ? l + ' ×' + sum.counts[ l ] : l;
+			} ).concat( sum.badges, sum.challenges, sum.kudos ).join( ', ' );
+		}
+
+		var kind = sum.badges.length ? 'badge' : ( sum.challenges.length ? 'challenge' : ( sum.kudos.length && ! sum.total ? 'kudos' : 'points' ) );
+		return {
+			key: SUMMARY_KEY,
+			type: kind,
+			tone: sum.badges.length || sum.challenges.length ? 'achievement' : 'reward',
+			icon: sum.image || ICONS[ kind ],
+			title: title,
+			count: count,
+			body: body,
+			href: sum.url,
+			hrefLabel: sum.urlLabel,
+		};
 	}
 
 	function showOne( toast ) {
+		if ( REWARD_TYPES.indexOf( toast.type ) !== -1 ) {
+			collect( toast );
+			return;
+		}
 		switch ( toast.type ) {
-			case 'points':
-				pointsToast( toast );
-				return;
-
-			case 'badge':
-			case 'challenge':
-				window.wbGam.toast( {
-					type: toast.type,
-					tone: 'achievement',
-					icon: toast.icon || ICONS[ toast.type ],
-					title: toast.message || '',
-					body: toast.detail || '',
-					onShow: celebrate,
-				} );
-				return;
-
 			case 'skip':
 				window.wbGam.toast( { type: 'skip', tone: 'info', icon: ICONS.skip, title: toast.message || '', body: toast.detail || '' } );
 				return;

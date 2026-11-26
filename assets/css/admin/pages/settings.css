@@ -130,7 +130,7 @@ summary.wbgam-settings-nav-group__label::after {
 	border-right: 2px solid currentColor;
 	border-bottom: 2px solid currentColor;
 	transform: rotate(-45deg);
-	transition: transform 0.15s;
+	transition: transform var(--wb-gam-dur-fast) var(--wb-gam-ease);
 }
 
 details[open] > summary.wbgam-settings-nav-group__label::after {

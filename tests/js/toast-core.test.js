@@ -265,3 +265,67 @@ test( 'Escape is left to an open dialog', () => {
 	p.esc();
 	assert.strictEqual( p.bnCalls[ 0 ].dismissed, false );
 } );
+
+// ── 1.7.0: shared toast standard (TOASTS.md) ────────────────────────────────
+
+test( 'own stack: a fourth toast waits its turn instead of pushing one off screen', () => {
+	const p = page();
+	[ 'a', 'b', 'c', 'd' ].forEach( ( t ) => p.toast( { title: t } ) );
+	assert.strictEqual( p.shown(), 2, 'two at most on a desktop' );
+	p.tick( 4000 + 250 + 350 + 10 );
+	const titles = [ ...p.w.document.querySelectorAll( '.wb-gam-toast:not(.wb-gam-toast--exit) .wb-gam-toast__message' ) ].map( ( e ) => e.textContent );
+	assert.deepStrictEqual( titles, [ 'c', 'd' ], 'nothing dropped, in order' );
+} );
+
+test( 'own stack: no toast shows while the level-up celebration is open', () => {
+	const p = page();
+	const m = p.w.document.createElement( 'div' );
+	m.className = 'wb-gam-moment';
+	m.setAttribute( 'role', 'status' );
+	m.getBoundingClientRect = () => ( { width: 400, height: 400, top: 0, left: 0, right: 400, bottom: 400 } );
+	p.w.document.body.appendChild( m );
+	p.toast( { title: '+30 Points' } );
+	assert.strictEqual( p.shown(), 0, 'the celebration shows alone' );
+	m.hidden = true;
+	p.tick( 600 );
+	assert.strictEqual( p.shown(), 1, 'the summary follows once it closes' );
+} );
+
+test( 'own stack: {count} reads as the final number and a badge picture fills the disc', () => {
+	const p = page();
+	p.toast( { title: '+{count} Points', count: { from: 10, to: 25 }, icon: '/badge.png' } );
+	const t = p.w.document.querySelector( '.wb-gam-toast' );
+	assert.match( t.querySelector( '.screen-reader-text' ).textContent, /^\+25 Points$/ );
+	assert.ok( ! t.textContent.includes( '{count}' ) );
+	assert.strictEqual( t.querySelector( '.wb-gam-disc img' ).getAttribute( 'src' ), '/badge.png' );
+} );
+
+test( 'BuddyNext before its rebuild: the final number goes in the title, never "{count}"', () => {
+	const p = page( { bn: true } );
+	p.toast( { title: '+{count} Points', count: { from: 0, to: 17 }, icon: '/badge.png' } );
+	assert.strictEqual( p.bnCalls[ 0 ].o.title, '+17 Points' );
+	assert.strictEqual( p.bnCalls[ 0 ].o.count, undefined );
+	assert.strictEqual( p.bnCalls[ 0 ].o.icon, undefined, 'its own status icon until it supports pictures' );
+} );
+
+test( 'BuddyNext after its rebuild: count and the picture are passed through', () => {
+	const p = page( { bn: true } );
+	p.w.bnToast.supports = { count: true, icon: true, award: true };
+	p.toast( { title: '+{count} Points', count: { from: 0, to: 17 }, icon: '/badge.png', tone: 'achievement' } );
+	const o = p.bnCalls[ 0 ].o;
+	assert.strictEqual( o.title, '+{count} Points' );
+	assert.deepStrictEqual( JSON.parse( JSON.stringify( o.count ) ), { from: 0, to: 17 } );
+	assert.strictEqual( o.icon, '/badge.png' );
+	assert.strictEqual( o.type, 'award' );
+} );
+
+test( 'own stack: closing a toast whose button had focus returns focus to where it was', () => {
+	const p = page();
+	const before = p.w.document.getElementById( 'f' );
+	const h = p.toast( { title: 'x', href: '/x/', hrefLabel: 'View' } );
+	const link = h.el.querySelector( '.wb-gam-toast__link' );
+	link.dispatchEvent( new p.w.FocusEvent( 'focusin', { bubbles: true, relatedTarget: before } ) );
+	link.focus();
+	h.dismiss();
+	assert.strictEqual( p.w.document.activeElement, before );
+} );

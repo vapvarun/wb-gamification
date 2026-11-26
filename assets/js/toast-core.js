@@ -6,14 +6,15 @@
  * the toast DOM, and the admin's built class names the admin stylesheet never styled, so every
  * "Saved" landed as bare text at the bottom of the page.
  *
- * Contract (mirrors the bnToast options form BuddyNext is publishing, so a later switch to
- * BuddyNext's toast is a one-line change):
+ * Contract: the shared toast standard (TOASTS.md on the standards shelf), the same options
+ * BuddyNext's bnToast takes:
  *
  *   var handle = wbGam.toast( {
  *       key:       'pts:comment',   // same key while alive = update in place, never a second toast
  *       tone:      'reward',        // reward | achievement | success | danger | info
- *       icon:      'icon-sparkles', // Lucide class; a default per tone otherwise
- *       title:     '+10 Points',
+ *       icon:      'icon-sparkles', // Lucide class, or a picture URL (badge art); a default per tone otherwise
+ *       title:     '+{count} points', // one line; {count} is replaced by the number
+ *       count:     { from: 10, to: 25 }, // optional: the number counts up over 400ms
  *       body:      'Leave a comment', // optional second line
  *       href:      '/gamification/',  // optional link; the toast stays longer (8s), it still closes
  *       hrefLabel: 'See my progress',
@@ -23,11 +24,14 @@
  *
  * On a page where BuddyNext's window.bnToast exists the toast is drawn by it (one stack for every
  * plugin, no two bottom-centre stacks over each other) and this renderer is only the fallback,
- * used in wp-admin and on sites without BuddyNext. bnToast draws its own four status icons, so
- * a per-event icon is ignored there. The rules below apply on both renderers: this file decides
+ * used in wp-admin and on sites without BuddyNext. `count` and a picture icon go to bnToast only
+ * when it says it supports them (bnToast.supports); before that it gets the final number and its
+ * own status icon. The rules below apply on both renderers: this file decides
  * when a toast shows and when it goes, BuddyNext only draws it.
  *
- * Rules: three visible at most. Every toast closes by itself: 4s, or 8s when it carries a link,
+ * Rules: two visible at most (one on a phone); the rest wait their turn, 600ms apart, and focus
+ * inside a closing toast goes back where it came from. A level-up or other celebration shows
+ * alone: toasts wait until it closes. Every toast closes by itself: 4s, or 8s when it carries a link,
  * paused while the pointer or focus is on it. Escape closes the newest one. The host is a manual
  * popover so it sits in the top layer above any native dialog opened later.
  * A toast never covers what the member is using: while a modal or dialog is open (ours or another
@@ -53,7 +57,8 @@
 	var POSITIONS = [ 'bottom-center', 'bottom-right', 'bottom-left', 'top-center', 'top-right' ];
 	var position  = POSITIONS.indexOf( cfg.position ) === -1 ? 'bottom-center' : cfg.position;
 
-	var MAX_VISIBLE = 3;
+	// Two at most on a desktop, one on a phone; the rest wait their turn (TOASTS.md).
+	var MAX_VISIBLE = 2;
 	// Phones show one toast at a time, in order: three stacked covered about a quarter of the
 	// screen, over the form being filled in. Same rule as BuddyNext's stack.
 	var ONE_AT_A_TIME = '(max-width: 640px)';
@@ -64,6 +69,8 @@
 	var LINK_MS     = 8000;
 	var RESUME_MS   = 2000;
 	var EXIT_MS     = 250;
+	var NEXT_GAP_MS = 350; // With EXIT_MS: a waiting toast follows 600ms after one closes.
+	var COUNT_MS    = 400;
 	var GAP         = 16; // Matches the 1rem breathing room in the stylesheet fallback.
 	var MODAL_CHECK_MS = 500;
 	var watchTimer     = 0;
@@ -186,12 +193,22 @@
 		}
 		// A toast held off screen while a dialog was open sits in the queue as itself.
 		waiting = waiting.filter( function ( e ) { return e.real !== handle; } );
+		// Focus inside the toast (its button or close) goes back where it came from, never to a
+		// removed element.
+		if ( handle.el.contains( document.activeElement ) ) {
+			var back = handle.returnTo && handle.returnTo.isConnected ? handle.returnTo : null;
+			if ( back && typeof back.focus === 'function' ) {
+				back.focus();
+			} else {
+				document.activeElement.blur();
+			}
+		}
 		handle.el.classList.add( 'wb-gam-toast--exit' );
 		setTimeout( function () {
 			if ( handle.el.parentNode ) {
 				handle.el.remove();
 			}
-			nextToast();
+			setTimeout( nextToast, NEXT_GAP_MS );
 		}, EXIT_MS );
 	}
 
@@ -262,7 +279,7 @@
 			arm( entry.real, entry.real.ms );
 			return;
 		}
-		entry.real      = toast( entry.opts );
+		entry.real      = toast( entry.opts, true );
 		entry.handle.el = entry.real.el;
 	}
 
@@ -321,7 +338,19 @@
 	 * @return {boolean}
 	 */
 	function blocked() {
-		return 'loading' === document.readyState || modalOpen() || editing();
+		return 'loading' === document.readyState || modalOpen() || momentOpen() || editing();
+	}
+
+	/**
+	 * Is a celebration (level up, streak, promotion) on screen? It is an announcement, not a
+	 * dialog, so modalOpen() does not see it; the biggest moment shows alone and the summary
+	 * toast follows once it closes.
+	 *
+	 * @return {boolean}
+	 */
+	function momentOpen() {
+		var m = document.querySelector( '.wb-gam-moment:not([hidden])' );
+		return !! m && onScreen( m );
 	}
 
 	/**
@@ -397,7 +426,8 @@
 		var hasBody = !! ( opts.body && String( opts.body ).length );
 		var hasLink = !! ( opts.href && /^(\/(?!\/)|https?:\/\/)/.test( opts.href ) );
 
-		title.textContent = opts.title || '';
+		setTitle( handle, title, opts );
+		setIcon( el.querySelector( '.wb-gam-disc' ), opts );
 
 		detail.textContent = hasBody ? opts.body : '';
 		detail.hidden = ! hasBody;
@@ -410,11 +440,92 @@
 			link.hidden = true;
 		}
 
-		// One line is a pill, two lines take the large radius.
-		el.classList.toggle( 'wb-gam-toast--single', ! hasBody && ! hasLink );
 
 		// Every toast closes by itself; one with a link stays longer so it can be read and followed.
 		handle.ms = hasLink ? LINK_MS : DISMISS_MS;
+	}
+
+	/** A picture URL (badge art) rather than an icon class name. */
+	function isImage( icon ) {
+		return /^(\/(?!\/)|https?:\/\/)/.test( String( icon || '' ) );
+	}
+
+	function setIcon( disc, opts ) {
+		var tone = opts.tone || 'reward';
+		var icon = opts.icon || DEFAULT_ICON[ tone ] || DEFAULT_ICON.reward;
+		var want = isImage( icon ) ? 'img' : 'i';
+		var node = disc.firstElementChild;
+		if ( ! node || node.tagName.toLowerCase() !== want ) {
+			node = document.createElement( want );
+			disc.textContent = '';
+			disc.appendChild( node );
+		}
+		disc.classList.toggle( 'wb-gam-disc--image', 'img' === want );
+		if ( 'img' === want ) {
+			node.alt = ''; // Decorative: the title carries the meaning.
+			if ( node.getAttribute( 'src' ) !== icon ) {
+				node.src = icon;
+			}
+		} else {
+			node.className = icon;
+		}
+	}
+
+	function reducedMotion() {
+		return !! ( window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches );
+	}
+
+	/** The title with its {count} token as the final number, for readers and for stacks that do not count. */
+	function countText( opts ) {
+		var c = opts.count;
+		return String( opts.title || '' ).replace( '{count}', c ? Number( c.to ).toLocaleString() : '' );
+	}
+
+	/**
+	 * Fill the title. With `count: { from, to }` and a {count} token the number counts up over
+	 * 400ms in an aria-hidden span, while a hidden copy holds the final text, so a screen reader
+	 * hears it once. Reduced motion shows the final number at once.
+	 */
+	function setTitle( handle, title, opts ) {
+		var c = opts.count;
+		var raw = String( opts.title || '' );
+		if ( handle.countFrame ) {
+			window.cancelAnimationFrame( handle.countFrame );
+		}
+		if ( ! c || -1 === raw.indexOf( '{count}' ) ) {
+			title.textContent = raw;
+			return;
+		}
+		var parts = raw.split( '{count}' );
+		var num   = document.createElement( 'span' );
+		num.className = 'wb-gam-count';
+		num.setAttribute( 'aria-hidden', 'true' );
+		var shown = document.createElement( 'span' );
+		shown.setAttribute( 'aria-hidden', 'true' );
+		shown.append( parts[ 0 ], num, parts.slice( 1 ).join( '{count}' ) );
+		var said = document.createElement( 'span' );
+		said.className = 'screen-reader-text';
+		said.textContent = countText( opts );
+		title.textContent = '';
+		title.append( shown, said );
+
+		var from = Number( c.from ) || 0;
+		var to   = Number( c.to ) || 0;
+		if ( reducedMotion() || from === to ) {
+			num.textContent = to.toLocaleString();
+			return;
+		}
+		var start = 0;
+		var step  = function ( t ) {
+			start = start || t;
+			var k = Math.min( 1, ( t - start ) / COUNT_MS );
+			num.textContent = Math.round( from + ( to - from ) * ( 1 - Math.pow( 1 - k, 3 ) ) ).toLocaleString();
+			if ( k < 1 ) {
+				handle.countFrame = window.requestAnimationFrame( step );
+			}
+		};
+		num.textContent = from.toLocaleString();
+		handle.countFrame = window.requestAnimationFrame( step );
 	}
 
 	function build( opts ) {
@@ -428,9 +539,6 @@
 		var disc = document.createElement( 'span' );
 		disc.className = 'wb-gam-disc' + ( 'success' === tone || 'danger' === tone || 'info' === tone ? ' wb-gam-disc--' + tone : '' );
 		disc.setAttribute( 'aria-hidden', 'true' );
-		var icon = document.createElement( 'i' );
-		icon.className = opts.icon || DEFAULT_ICON[ tone ] || DEFAULT_ICON.reward;
-		disc.appendChild( icon );
 		el.appendChild( disc );
 
 		var body = document.createElement( 'div' );
@@ -442,8 +550,8 @@
 		link.className = 'wb-gam-toast__link';
 		body.appendChild( message );
 		body.appendChild( detail );
-		body.appendChild( link );
 		el.appendChild( body );
+		el.appendChild( link ); // Its own column: a small button on the right.
 
 		var close = document.createElement( 'button' );
 		close.type = 'button';
@@ -477,11 +585,17 @@
 	 */
 	function bnDraw( opts ) {
 		var hasLink = !! ( opts.href && /^(\/(?!\/)|https?:\/\/)/.test( opts.href ) );
+		// BuddyNext counts and draws pictures only once its rebuilt stack says so; before that the
+		// final number goes in the title and the type's own icon shows.
+		var can  = window.bnToast.supports || {};
+		var type = BN_TYPE[ opts.tone || 'reward' ] || 'info';
 		var h = window.bnToast( {
 			key: opts.key || '',
-			title: opts.title || '',
+			title: can.count ? String( opts.title || '' ) : countText( opts ),
+			count: can.count ? opts.count : undefined,
+			icon: can.icon && isImage( opts.icon ) ? opts.icon : undefined,
 			body: opts.body || '',
-			type: BN_TYPE[ opts.tone || 'reward' ] || 'info',
+			type: can.award && 'achievement' === type ? 'award' : type,
 			href: hasLink ? opts.href : '',
 			linkLabel: opts.hrefLabel || '',
 			persist: false,
@@ -526,7 +640,16 @@
 			update: function ( next ) {
 				e.opts = Object.assign( {}, e.opts, next || {} );
 				if ( ! e.pulled && ! e.dead ) {
-					e.cur.update( next || {} );
+					var can = window.bnToast.supports || {};
+					var out = Object.assign( {}, next || {} );
+					if ( ! can.count && 'title' in out ) {
+						out.title = countText( e.opts );
+						delete out.count;
+					}
+					if ( ! can.icon || ! isImage( out.icon ) ) {
+						delete out.icon;
+					}
+					e.cur.update( out );
 				}
 			},
 			dismiss: function () {
@@ -540,7 +663,11 @@
 		};
 	}
 
-	function toast( opts ) {
+	/**
+	 * @param {Object}  opts      See the file header.
+	 * @param {boolean} fromQueue Internal: the queue is handing over its next toast.
+	 */
+	function toast( opts, fromQueue ) {
 		opts = opts || {};
 		var onBn = typeof window.bnToast === 'function';
 
@@ -552,7 +679,7 @@
 
 		// A dialog is open, the member is typing, or toasts are already waiting: join the queue.
 		// Before the BuddyNext hand-off, so the rule holds whichever stack draws the toast.
-		if ( blocked() || waiting.some( function ( e ) { return e.held; } ) ) {
+		if ( ! fromQueue && ( blocked() || waiting.some( function ( e ) { return e.held; } ) ) ) {
 			return waitTurn( opts );
 		}
 
@@ -561,7 +688,9 @@
 		}
 		var host = ensureContainer();
 
-		if ( host.children.length && window.matchMedia( ONE_AT_A_TIME ).matches ) {
+		// Full (one on a phone, two otherwise): wait in line. A toast is never dropped.
+		var showing = Array.prototype.filter.call( host.children, function ( c ) { return ! c.classList.contains( 'wb-gam-toast--exit' ); } ).length;
+		if ( showing >= ( window.matchMedia( ONE_AT_A_TIME ).matches ? 1 : MAX_VISIBLE ) || ( ! fromQueue && waiting.length ) ) {
 			return waitTurn( opts );
 		}
 
@@ -573,20 +702,14 @@
 
 		handle.el.querySelector( '.wb-gam-close' ).addEventListener( 'click', function () { dismiss( handle ); } );
 		handle.el.addEventListener( 'mouseenter', function () { clearTimeout( handle.timer ); } );
-		handle.el.addEventListener( 'focusin', function () { clearTimeout( handle.timer ); } );
+		handle.el.addEventListener( 'focusin', function ( e ) {
+			clearTimeout( handle.timer );
+			if ( e.relatedTarget && ! handle.el.contains( e.relatedTarget ) ) {
+				handle.returnTo = e.relatedTarget;
+			}
+		} );
 		handle.el.addEventListener( 'mouseleave', function () { arm( handle, RESUME_MS ); } );
 		handle.el.addEventListener( 'focusout', function () { arm( handle, RESUME_MS ); } );
-
-		// Three at most: a burst of distinct awards must never cover the page.
-		while ( host.children.length >= MAX_VISIBLE ) {
-			var oldest = host.firstElementChild;
-			if ( oldest._wbGamToast ) {
-				dismiss( oldest._wbGamToast );
-				oldest.remove();
-			} else {
-				oldest.remove();
-			}
-		}
 
 		if ( handle.key ) {
 			live[ handle.key ] = handle;
