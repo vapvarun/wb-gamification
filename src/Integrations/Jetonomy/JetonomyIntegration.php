@@ -211,14 +211,12 @@ final class JetonomyIntegration {
 		}
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Jetonomy's reply table, a keyset page by id.
-		$ids = array_map(
-			'intval',
-			(array) $wpdb->get_col(
-				$reverse
-					? $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}jt_replies WHERE post_id = %d AND id > %d ORDER BY id ASC LIMIT %d", $post_id, $after_id, self::REPLY_BATCH )
-					: $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}jt_replies WHERE post_id = %d AND id > %d AND status = %s ORDER BY id ASC LIMIT %d", $post_id, $after_id, 'publish', self::REPLY_BATCH )
-			)
-		);
+		if ( $reverse ) {
+			$sql = $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}jt_replies WHERE post_id = %d AND id > %d ORDER BY id ASC LIMIT %d", $post_id, $after_id, self::REPLY_BATCH );
+		} else {
+			$sql = $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}jt_replies WHERE post_id = %d AND id > %d AND status = %s ORDER BY id ASC LIMIT %d", $post_id, $after_id, 'publish', self::REPLY_BATCH );
+		}
+		$ids = array_map( 'intval', (array) $wpdb->get_col( $sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared just above.
 		// phpcs:enable
 
 		if ( ! $ids ) {
