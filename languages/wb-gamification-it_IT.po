@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WB Gamification 1.6.7\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wb-gamification\n"
-"POT-Creation-Date: 2026-11-26T12:51:09+00:00\n"
+"POT-Creation-Date: 2026-11-26T13:19:59+00:00\n"
 "PO-Revision-Date: 2026-11-18T07:34:55+00:00\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -6249,7 +6249,7 @@ msgid "Save Realtime Settings"
 msgstr "Salva impostazioni in tempo reale"
 
 #: src/Admin/SettingsPage.php:2659 src/BuddyPress/Stream/ActivityCard.php:219
-#: src/Engine/NotificationBridge.php:545
+#: src/Engine/NotificationBridge.php:546
 msgid "Level up"
 msgstr "Salita di livello"
 
@@ -7679,7 +7679,7 @@ msgstr "+%1$d %2$s"
 msgid "Level up: %s"
 msgstr "Nuovo livello: %s"
 
-#: src/API/MembersController.php:1376 src/Engine/NotificationBridge.php:562
+#: src/API/MembersController.php:1376 src/Engine/NotificationBridge.php:563
 #. translators: %d: streak day count.
 #, php-format
 msgid "%d-day streak!"
@@ -9466,147 +9466,165 @@ msgstr "Leghe delle coorti"
 msgid "This feature is turned off on this site."
 msgstr "Questa funzionalità è disattivata su questo sito."
 
-#: src/Engine/NotificationBridge.php:343 src/Engine/PointsEngine.php:279
-msgid "You're on cooldown for this action - try again in a bit."
-msgstr "Per questa azione devi aspettare un po': riprova tra poco."
+#: src/Engine/NotificationBridge.php:343
+msgid "A little too soon"
+msgstr "Un po' troppo presto"
 
-#: src/Engine/NotificationBridge.php:346 src/Engine/PointsEngine.php:281
-msgid "You've hit your daily limit for this action. Resets tomorrow."
-msgstr "Hai raggiunto il limite giornaliero per questa azione. Si azzera domani."
+#: src/Engine/NotificationBridge.php:344
+msgid "Try this again in a moment."
+msgstr "Riprova tra qualche istante."
 
-#: src/Engine/NotificationBridge.php:349 src/Engine/PointsEngine.php:283
-msgid "You've hit your weekly limit for this action. Resets next week."
-msgstr ""
-"Hai raggiunto il limite settimanale per questa azione. Si azzera la "
-"prossima settimana."
+#: src/Engine/NotificationBridge.php:347
+msgid "Daily limit reached"
+msgstr "Limite giornaliero raggiunto"
 
-#: src/Engine/NotificationBridge.php:390
+#: src/Engine/NotificationBridge.php:348
+msgid "Resets tomorrow."
+msgstr "Si azzera domani."
+
+#: src/Engine/NotificationBridge.php:351
+msgid "Weekly limit reached"
+msgstr "Limite settimanale raggiunto"
+
+#: src/Engine/NotificationBridge.php:352
+msgid "Resets next week."
+msgstr "Si azzera la prossima settimana."
+
+#: src/Engine/NotificationBridge.php:394
 msgid "Your first points."
 msgstr "I tuoi primi punti."
 
-#: src/Engine/NotificationBridge.php:396 wb-gamification.php:863
+#: src/Engine/NotificationBridge.php:400 wb-gamification.php:863
 msgid "Welcome aboard!"
 msgstr "Benvenuto a bordo!"
 
-#: src/Engine/NotificationBridge.php:399 src/Engine/NotificationBridge.php:1288
+#: src/Engine/NotificationBridge.php:403 src/Engine/NotificationBridge.php:1293
 msgid "See progress"
 msgstr "Vedi progressi"
 
-#: src/Engine/NotificationBridge.php:471
-#. translators: %s = badge name
-#, php-format
-msgid "Badge earned: %s"
-msgstr "Distintivo ottenuto: %s"
+#: src/Engine/NotificationBridge.php:474
+msgid "New badge"
+msgstr "Nuovo distintivo"
 
-#: src/Engine/NotificationBridge.php:521
+#: src/Engine/NotificationBridge.php:522
 #: src/Engine/TransactionalEmailEngine.php:198
 #. translators: %s: new level name.
 #, php-format
 msgid "You reached %s!"
 msgstr "Hai raggiunto %s!"
 
-#: src/Engine/NotificationBridge.php:522 src/Engine/NotificationBridge.php:546
+#: src/Engine/NotificationBridge.php:523 src/Engine/NotificationBridge.php:547
 msgid "You leveled up!"
 msgstr "Sei salito di livello!"
 
-#: src/Engine/NotificationBridge.php:549 src/Engine/NotificationBridge.php:606
-#: src/Engine/NotificationBridge.php:646
+#: src/Engine/NotificationBridge.php:550 src/Engine/NotificationBridge.php:607
+#: src/Engine/NotificationBridge.php:647
 msgid "Awesome!"
 msgstr "Fantastico!"
 
-#: src/Engine/NotificationBridge.php:570 src/Engine/Registry.php:805
+#: src/Engine/NotificationBridge.php:571 src/Engine/Registry.php:805
 msgid "Streak milestone"
 msgstr "Traguardo della serie"
 
-#: src/Engine/NotificationBridge.php:572
+#: src/Engine/NotificationBridge.php:573
 msgid "Keep showing up - you're on fire!"
 msgstr "Continua a farti vedere: sei inarrestabile!"
 
-#: src/Engine/NotificationBridge.php:574
+#: src/Engine/NotificationBridge.php:575
 msgid "Keep it up!"
 msgstr "Continua così!"
 
-#: src/Engine/NotificationBridge.php:600
+#: src/Engine/NotificationBridge.php:601
 #. translators: %s: league name.
 #, php-format
 msgid "You moved up to %s League"
 msgstr "Sei salito alla lega %s"
 
-#: src/Engine/NotificationBridge.php:601
+#: src/Engine/NotificationBridge.php:602
 msgid "League up"
 msgstr "Nuova lega"
 
-#: src/Engine/NotificationBridge.php:603
+#: src/Engine/NotificationBridge.php:604
 #. translators: %s: league name.
 #, php-format
 msgid "%s League"
 msgstr "Lega %s"
 
-#: src/Engine/NotificationBridge.php:604
+#: src/Engine/NotificationBridge.php:605
 msgid "You moved up this week."
 msgstr "Questa settimana sei salito."
 
-#: src/Engine/NotificationBridge.php:638
+#: src/Engine/NotificationBridge.php:639
 #. translators: %s: community challenge title.
 #, php-format
 msgid "Goal reached: %s"
 msgstr "Obiettivo raggiunto: %s"
 
-#: src/Engine/NotificationBridge.php:639
+#: src/Engine/NotificationBridge.php:640
 msgid "Goal reached"
 msgstr "Obiettivo raggiunto"
 
-#: src/Engine/NotificationBridge.php:640
+#: src/Engine/NotificationBridge.php:641
 msgid "Your community did it"
 msgstr "La tua community ce l'ha fatta"
 
-#: src/Engine/NotificationBridge.php:643
+#: src/Engine/NotificationBridge.php:644
 #. translators: %s: formatted points, e.g. "50 Points".
 #, php-format
 msgid "You helped, and earned %s."
 msgstr "Hai dato una mano e hai guadagnato %s."
 
-#: src/Engine/NotificationBridge.php:644
+#: src/Engine/NotificationBridge.php:645
 msgid "Thank you for helping."
 msgstr "Grazie per il tuo aiuto."
 
 #: src/Engine/NotificationBridge.php:669
-#. translators: %s: action label.
-#, php-format
-msgid "Approved: %s"
-msgstr "Approvato: %s"
+msgid "Submission approved"
+msgstr "Invio approvato"
 
 #: src/Engine/NotificationBridge.php:694
-#. translators: %s: action label.
-#, php-format
-msgid "Not approved: %s"
-msgstr "Non approvato: %s"
+msgid "Submission not approved"
+msgstr "Invio non approvato"
 
-#: src/Engine/NotificationBridge.php:714
-#. translators: %s = challenge title
+#: src/Engine/NotificationBridge.php:697
+#. translators: 1: action label, 2: the moderator's reason.
 #, php-format
-msgid "Challenge complete: %s"
-msgstr "Sfida completata: %s"
+msgid "%1$s: %2$s"
+msgstr "%1$s: %2$s"
 
-#: src/Engine/NotificationBridge.php:745
+#: src/Engine/NotificationBridge.php:715
+msgid "Challenge complete"
+msgstr "Sfida completata"
+
+#: src/Engine/NotificationBridge.php:739
+#. translators: 1: display name of the member who gave the kudos, 2: their message.
+#, php-format
+msgid "From %1$s: %2$s"
+msgstr "Da %1$s: %2$s"
+
+#: src/Engine/NotificationBridge.php:741
 #. translators: %s: display name of the member who gave the kudos.
 #, php-format
-msgid "%s gave you kudos!"
-msgstr "%s ti ha dato un kudos!"
+msgid "From %s"
+msgstr "Da %s"
 
-#: src/Engine/NotificationBridge.php:746
-msgid "Someone gave you kudos!"
-msgstr "Qualcuno ti ha dato un kudos!"
+#: src/Engine/NotificationBridge.php:751
+msgid "Kudos received"
+msgstr "Kudos ricevuti"
 
-#: src/Engine/NotificationBridge.php:863
+#: src/Engine/NotificationBridge.php:868
 msgid "Level up!"
 msgstr "Nuovo livello!"
 
-#: src/Engine/NotificationBridge.php:1280
-msgid "You earned points and rewards since your last visit"
-msgstr "Dalla tua ultima visita hai guadagnato punti e ricompense"
+#: src/Engine/NotificationBridge.php:1285
+msgid "Since your last visit"
+msgstr "Dalla tua ultima visita"
 
-#: src/Engine/NotificationBridge.php:1477
+#: src/Engine/NotificationBridge.php:1291
+msgid "You earned points and rewards."
+msgstr "Hai guadagnato punti e ricompense."
+
+#: src/Engine/NotificationBridge.php:1482
 msgid "Points awarded"
 msgstr "Punti assegnati"
 
@@ -9635,6 +9653,20 @@ msgid "New personal record! %1$s %2$s - beating your previous best of %3$s!"
 msgstr ""
 "Nuovo record personale! %1$s %2$s: hai superato il precedente massimo di "
 "%3$s!"
+
+#: src/Engine/PointsEngine.php:279
+msgid "You're on cooldown for this action - try again in a bit."
+msgstr "Per questa azione devi aspettare un po': riprova tra poco."
+
+#: src/Engine/PointsEngine.php:281
+msgid "You've hit your daily limit for this action. Resets tomorrow."
+msgstr "Hai raggiunto il limite giornaliero per questa azione. Si azzera domani."
+
+#: src/Engine/PointsEngine.php:283
+msgid "You've hit your weekly limit for this action. Resets next week."
+msgstr ""
+"Hai raggiunto il limite settimanale per questa azione. Si azzera la "
+"prossima settimana."
 
 #: src/Engine/PointsEngine.php:285
 msgid "This action only awards points once."
@@ -11797,6 +11829,32 @@ msgstr "bilancio"
 msgctxt "block keyword"
 msgid "summary"
 msgstr "riepilogo"
+
+#, php-format
+#~ msgid "Badge earned: %s"
+#~ msgstr "Distintivo ottenuto: %s"
+
+#, php-format
+#~ msgid "Approved: %s"
+#~ msgstr "Approvato: %s"
+
+#, php-format
+#~ msgid "Not approved: %s"
+#~ msgstr "Non approvato: %s"
+
+#, php-format
+#~ msgid "Challenge complete: %s"
+#~ msgstr "Sfida completata: %s"
+
+#, php-format
+#~ msgid "%s gave you kudos!"
+#~ msgstr "%s ti ha dato un kudos!"
+
+#~ msgid "Someone gave you kudos!"
+#~ msgstr "Qualcuno ti ha dato un kudos!"
+
+#~ msgid "You earned points and rewards since your last visit"
+#~ msgstr "Dalla tua ultima visita hai guadagnato punti e ricompense"
 
 #, php-format
 #~ msgid "Your first points in %s"

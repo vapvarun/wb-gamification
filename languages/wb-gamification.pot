@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-26T12:51:09+00:00\n"
+"POT-Creation-Date: 2026-11-26T13:19:59+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wb-gamification\n"
@@ -5418,7 +5418,7 @@ msgstr ""
 
 #: src/Admin/SettingsPage.php:2659
 #: src/BuddyPress/Stream/ActivityCard.php:219
-#: src/Engine/NotificationBridge.php:545
+#: src/Engine/NotificationBridge.php:546
 msgid "Level up"
 msgstr ""
 
@@ -6620,7 +6620,7 @@ msgstr ""
 
 #. translators: %d: streak day count.
 #: src/API/MembersController.php:1376
-#: src/Engine/NotificationBridge.php:562
+#: src/Engine/NotificationBridge.php:563
 #, php-format
 msgid "%d-day streak!"
 msgid_plural "%d-day streak!"
@@ -8383,152 +8383,169 @@ msgid "This feature is turned off on this site."
 msgstr ""
 
 #: src/Engine/NotificationBridge.php:343
-#: src/Engine/PointsEngine.php:279
-msgid "You're on cooldown for this action - try again in a bit."
+msgid "A little too soon"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:346
-#: src/Engine/PointsEngine.php:281
-msgid "You've hit your daily limit for this action. Resets tomorrow."
+#: src/Engine/NotificationBridge.php:344
+msgid "Try this again in a moment."
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:349
-#: src/Engine/PointsEngine.php:283
-msgid "You've hit your weekly limit for this action. Resets next week."
+#: src/Engine/NotificationBridge.php:347
+msgid "Daily limit reached"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:390
+#: src/Engine/NotificationBridge.php:348
+msgid "Resets tomorrow."
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:351
+msgid "Weekly limit reached"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:352
+msgid "Resets next week."
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:394
 msgid "Your first points."
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:396
+#: src/Engine/NotificationBridge.php:400
 #: wb-gamification.php:863
 msgid "Welcome aboard!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:399
-#: src/Engine/NotificationBridge.php:1288
+#: src/Engine/NotificationBridge.php:403
+#: src/Engine/NotificationBridge.php:1293
 msgid "See progress"
 msgstr ""
 
-#. translators: %s = badge name
-#: src/Engine/NotificationBridge.php:471
-#, php-format
-msgid "Badge earned: %s"
+#: src/Engine/NotificationBridge.php:474
+msgid "New badge"
 msgstr ""
 
 #. translators: %s: new level name.
-#: src/Engine/NotificationBridge.php:521
+#: src/Engine/NotificationBridge.php:522
 #: src/Engine/TransactionalEmailEngine.php:198
 #, php-format
 msgid "You reached %s!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:522
-#: src/Engine/NotificationBridge.php:546
+#: src/Engine/NotificationBridge.php:523
+#: src/Engine/NotificationBridge.php:547
 msgid "You leveled up!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:549
-#: src/Engine/NotificationBridge.php:606
-#: src/Engine/NotificationBridge.php:646
+#: src/Engine/NotificationBridge.php:550
+#: src/Engine/NotificationBridge.php:607
+#: src/Engine/NotificationBridge.php:647
 msgid "Awesome!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:570
+#: src/Engine/NotificationBridge.php:571
 #: src/Engine/Registry.php:805
 msgid "Streak milestone"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:572
+#: src/Engine/NotificationBridge.php:573
 msgid "Keep showing up - you're on fire!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:574
+#: src/Engine/NotificationBridge.php:575
 msgid "Keep it up!"
 msgstr ""
 
 #. translators: %s: league name.
-#: src/Engine/NotificationBridge.php:600
+#: src/Engine/NotificationBridge.php:601
 #, php-format
 msgid "You moved up to %s League"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:601
+#: src/Engine/NotificationBridge.php:602
 msgid "League up"
 msgstr ""
 
 #. translators: %s: league name.
-#: src/Engine/NotificationBridge.php:603
+#: src/Engine/NotificationBridge.php:604
 #, php-format
 msgid "%s League"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:604
+#: src/Engine/NotificationBridge.php:605
 msgid "You moved up this week."
 msgstr ""
 
 #. translators: %s: community challenge title.
-#: src/Engine/NotificationBridge.php:638
+#: src/Engine/NotificationBridge.php:639
 #, php-format
 msgid "Goal reached: %s"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:639
+#: src/Engine/NotificationBridge.php:640
 msgid "Goal reached"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:640
+#: src/Engine/NotificationBridge.php:641
 msgid "Your community did it"
 msgstr ""
 
 #. translators: %s: formatted points, e.g. "50 Points".
-#: src/Engine/NotificationBridge.php:643
+#: src/Engine/NotificationBridge.php:644
 #, php-format
 msgid "You helped, and earned %s."
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:644
+#: src/Engine/NotificationBridge.php:645
 msgid "Thank you for helping."
 msgstr ""
 
-#. translators: %s: action label.
 #: src/Engine/NotificationBridge.php:669
-#, php-format
-msgid "Approved: %s"
+msgid "Submission approved"
 msgstr ""
 
-#. translators: %s: action label.
 #: src/Engine/NotificationBridge.php:694
-#, php-format
-msgid "Not approved: %s"
+msgid "Submission not approved"
 msgstr ""
 
-#. translators: %s = challenge title
-#: src/Engine/NotificationBridge.php:714
+#. translators: 1: action label, 2: the moderator's reason.
+#: src/Engine/NotificationBridge.php:697
 #, php-format
-msgid "Challenge complete: %s"
+msgid "%1$s: %2$s"
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:715
+msgid "Challenge complete"
+msgstr ""
+
+#. translators: 1: display name of the member who gave the kudos, 2: their message.
+#: src/Engine/NotificationBridge.php:739
+#, php-format
+msgid "From %1$s: %2$s"
 msgstr ""
 
 #. translators: %s: display name of the member who gave the kudos.
-#: src/Engine/NotificationBridge.php:745
+#: src/Engine/NotificationBridge.php:741
 #, php-format
-msgid "%s gave you kudos!"
+msgid "From %s"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:746
-msgid "Someone gave you kudos!"
+#: src/Engine/NotificationBridge.php:751
+msgid "Kudos received"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:863
+#: src/Engine/NotificationBridge.php:868
 msgid "Level up!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:1280
-msgid "You earned points and rewards since your last visit"
+#: src/Engine/NotificationBridge.php:1285
+msgid "Since your last visit"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:1477
+#: src/Engine/NotificationBridge.php:1291
+msgid "You earned points and rewards."
+msgstr ""
+
+#: src/Engine/NotificationBridge.php:1482
 msgid "Points awarded"
 msgstr ""
 
@@ -8554,6 +8571,18 @@ msgstr ""
 #: src/Engine/PersonalRecordEngine.php:267
 #, php-format
 msgid "New personal record! %1$s %2$s - beating your previous best of %3$s!"
+msgstr ""
+
+#: src/Engine/PointsEngine.php:279
+msgid "You're on cooldown for this action - try again in a bit."
+msgstr ""
+
+#: src/Engine/PointsEngine.php:281
+msgid "You've hit your daily limit for this action. Resets tomorrow."
+msgstr ""
+
+#: src/Engine/PointsEngine.php:283
+msgid "You've hit your weekly limit for this action. Resets next week."
 msgstr ""
 
 #: src/Engine/PointsEngine.php:285
