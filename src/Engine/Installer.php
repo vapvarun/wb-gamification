@@ -33,6 +33,14 @@ defined( 'ABSPATH' ) || exit;
 final class Installer {
 
 	/**
+	 * True while ANOTHER request holds the install lock and is creating the tables. Schema
+	 * migrations (DbUpgrader) wait for the next request instead of altering half-made tables.
+	 *
+	 * @var bool
+	 */
+	public static bool $installing = false;
+
+	/**
 	 * Self-healing install — detects missing-tables state and runs the
 	 * full activation payload (tables, caps, wizard redirect) to recover.
 	 *
@@ -70,12 +78,24 @@ final class Installer {
 		);
 
 		if ( $events_table === $found ) {
+			// Tables exist. With the schema version recorded (install()'s own step) the site is
+			// installed. Without it, another request may be creating the tables right now: on a
+			// bulk activation several first requests arrive together, and one that only saw the
+			// first table went on to run every historical migration against tables already built
+			// in their final shape ("Duplicate column", "Duplicate key name"). If the install lock
+			// is free, nothing is installing and the site keeps its old path (migrate from 0.0.0).
+			if ( '' === (string) get_option( 'wb_gam_db_version', '' ) && ! Lock::run( 'install', '__return_true', false ) ) {
+				self::$installing = true;
+			}
 			return false;
 		}
 
 		// Mirror the activation hook payload — keep this in sync with the
 		// `register_activation_hook` callback in wb-gamification.php.
 		self::install();
+		if ( self::$installing ) {
+			return false; // Another request is installing; it records the version when done.
+		}
 		\WBGam\Engine\Capabilities::register();
 		update_option( 'wb_gam_db_version', WB_GAM_VERSION );
 
@@ -93,6 +113,20 @@ final class Installer {
 	 * Create all required tables and seed default data.
 	 */
 	public static function install(): void {
+		// One request installs at a time (activation, or the first requests after a bulk
+		// activation, can arrive together). A request that cannot take the lock leaves the
+		// work to the one that holds it.
+		if ( false === Lock::run( 'install', array( __CLASS__, 'install_tables_and_seeds' ), false ) ) {
+			self::$installing = true;
+		}
+	}
+
+	/**
+	 * Create all required tables and seed default data. Call install(), which holds the lock.
+	 *
+	 * @return true
+	 */
+	public static function install_tables_and_seeds(): bool {
 		global $wpdb;
 
 		$charset = $wpdb->get_charset_collate();
@@ -610,6 +644,8 @@ final class Installer {
 
 		// Auto-create Gamification hub page if it doesn't exist.
 		self::maybe_create_hub_page();
+
+		return true;
 	}
 
 	/**
