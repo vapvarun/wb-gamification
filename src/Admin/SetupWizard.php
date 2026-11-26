@@ -631,7 +631,15 @@ final class SetupWizard {
 						);
 						?>
 					</h2>
-					<p class="wbgam-setup__lede"><?php esc_html_e( 'Members earn points for what they already do in them. Switch off any plugin you don\'t want to reward. Every amount and limit stays yours to change later under Earning.', 'wb-gamification' ); ?></p>
+					<p class="wbgam-setup__lede">
+						<?php
+						echo esc_html(
+							$plugins
+								? __( 'Members earn points for what they already do in them. Switch off any plugin you don\'t want to reward. Every amount and limit stays yours to change later under Earning.', 'wb-gamification' )
+								: __( 'Joining, logging in, completing a profile, publishing and commenting. Every amount and limit stays yours to change later under Earning.', 'wb-gamification' )
+						);
+						?>
+					</p>
 					<div class="wbgam-setup__plugins">
 						<?php
 						foreach ( $groups as $plugin => $actions ) :
