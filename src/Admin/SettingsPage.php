@@ -905,13 +905,18 @@ final class SettingsPage {
 		if ( 'toplevel_page_wb-gamification' !== $hook_suffix ) {
 			return;
 		}
-
 		// The "See a toast as a member" checklist step carries the button; once this account has
 		// earned, the step is done and the script is not needed.
 		if ( get_user_meta( get_current_user_id(), 'wb_gam_seen_first_earn_toast', true ) ) {
 			return;
 		}
+		self::load_test_event_script();
+	}
 
+	/**
+	 * The "Send me a test toast" button's script (Overview checklist and Setup step 4).
+	 */
+	public static function load_test_event_script(): void {
 		wp_enqueue_script(
 			'wb-gam-admin-test-event',
 			plugins_url( 'assets/js/admin-test-event.js', WB_GAM_FILE ),

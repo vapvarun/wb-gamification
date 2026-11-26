@@ -4,7 +4,7 @@
  *
  * Owner rule, 18 Nov 2026: if adding something pays, removing it takes the points back,
  * the same way for every integration. A trigger written without its exit is how 1.6.8
- * had to be fixed plugin by plugin. Source-level, like SetupWizardTemplatesTest: the
+ * had to be fixed plugin by plugin. Source-level: the
  * failure is a missing key in a PHP array, catchable without booting WordPress.
  *
  * @package WB_Gamification

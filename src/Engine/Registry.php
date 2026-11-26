@@ -710,6 +710,23 @@ final class Registry {
 	}
 
 	/**
+	 * An action's own daily and weekly limits, as its plugin declared them (before any owner
+	 * override). Setup's pace choice scales these; 0 means no limit.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param string $id Action ID.
+	 * @return array{daily_cap:int, weekly_cap:int}
+	 */
+	public static function manifest_limits( string $id ): array {
+		$action = self::$actions[ $id ] ?? array();
+		return array(
+			'daily_cap'  => max( 0, (int) ( $action['daily_cap'] ?? 0 ) ),
+			'weekly_cap' => max( 0, (int) ( $action['weekly_cap'] ?? 0 ) ),
+		);
+	}
+
+	/**
 	 * Whether members may submit this action for review (Submit Achievement).
 	 *
 	 * The owner's tick wins both ways: when `wb_gam_action_overrides[ $id ]['submittable']` is set,
