@@ -340,13 +340,16 @@ final class NotificationBridge {
 
 		switch ( $reason ) {
 			case 'cooldown':
-				$message = __( "You're on cooldown for this action - try again in a bit.", 'wb-gamification' );
+				$message = __( 'A little too soon', 'wb-gamification' );
+				$detail  = __( 'Try this again in a moment.', 'wb-gamification' );
 				break;
 			case 'daily_cap':
-				$message = __( "You've hit your daily limit for this action. Resets tomorrow.", 'wb-gamification' );
+				$message = __( 'Daily limit reached', 'wb-gamification' );
+				$detail  = __( 'Resets tomorrow.', 'wb-gamification' );
 				break;
 			default:
-				$message = __( "You've hit your weekly limit for this action. Resets next week.", 'wb-gamification' );
+				$message = __( 'Weekly limit reached', 'wb-gamification' );
+				$detail  = __( 'Resets next week.', 'wb-gamification' );
 				break;
 		}
 
@@ -357,6 +360,7 @@ final class NotificationBridge {
 				'reason'  => $reason,
 				'action'  => $action_id,
 				'message' => $message,
+				'detail'  => $detail,
 				'context' => $context,
 			)
 		);
@@ -466,12 +470,9 @@ final class NotificationBridge {
 			$user_id,
 			array(
 				'type'    => 'badge',
-				'message' => sprintf(
-					/* translators: %s = badge name */
-					__( 'Badge earned: %s', 'wb-gamification' ),
-					$badge['name'] ?? ''
-				),
-				'detail'  => $badge['description'] ?? null,
+				// Titles are short fixed phrases (one line at 360px); names go in the detail line.
+				'message' => __( 'New badge', 'wb-gamification' ),
+				'detail'  => (string) ( $badge['name'] ?? '' ),
 				'icon'    => 'icon-medal',
 				// The badge's own picture fills the toast's icon disc; the name lists it in a summary.
 				'name'    => $badge['name'] ?? '',
@@ -665,8 +666,8 @@ final class NotificationBridge {
 			array(
 				'type'    => 'submission',
 				'outcome' => 'approved',
-				/* translators: %s: action label. */
-				'message' => sprintf( __( 'Approved: %s', 'wb-gamification' ), wb_gam_get_action_label( $action_id ) ),
+				'message' => __( 'Submission approved', 'wb-gamification' ),
+				'detail'  => wb_gam_get_action_label( $action_id ),
 				'icon'    => 'icon-check',
 			)
 		);
@@ -690,9 +691,11 @@ final class NotificationBridge {
 			array(
 				'type'    => 'submission',
 				'outcome' => 'rejected',
-				/* translators: %s: action label. */
-				'message' => sprintf( __( 'Not approved: %s', 'wb-gamification' ), wb_gam_get_action_label( $action_id ) ),
-				'detail'  => '' !== trim( $notes ) ? wp_strip_all_tags( $notes ) : null,
+				'message' => __( 'Submission not approved', 'wb-gamification' ),
+				'detail'  => '' !== trim( $notes )
+					/* translators: 1: action label, 2: the moderator's reason. */
+					? sprintf( __( '%1$s: %2$s', 'wb-gamification' ), wb_gam_get_action_label( $action_id ), wp_strip_all_tags( $notes ) )
+					: wb_gam_get_action_label( $action_id ),
 				'icon'    => 'icon-info',
 			)
 		);
@@ -709,11 +712,8 @@ final class NotificationBridge {
 			$user_id,
 			array(
 				'type'    => 'challenge',
-				'message' => sprintf(
-					/* translators: %s = challenge title */
-					__( 'Challenge complete: %s', 'wb-gamification' ),
-					$challenge['title'] ?? ''
-				),
+				'message' => __( 'Challenge complete', 'wb-gamification' ),
+				'detail'  => (string) ( $challenge['title'] ?? '' ),
 				'icon'    => 'icon-target',
 				'name'    => $challenge['title'] ?? '',
 			)
@@ -732,6 +732,14 @@ final class NotificationBridge {
 		// Notify the receiver, by the giver's name: the kudos feed and the profile already show
 		// who gave it, and "Someone gave you kudos!" left the member guessing.
 		$giver = get_userdata( $giver_id );
+		$from  = '';
+		if ( $giver ) {
+			$from = '' !== $message
+				/* translators: 1: display name of the member who gave the kudos, 2: their message. */
+				? sprintf( __( 'From %1$s: %2$s', 'wb-gamification' ), $giver->display_name, $message )
+				/* translators: %s: display name of the member who gave the kudos. */
+				: sprintf( __( 'From %s', 'wb-gamification' ), $giver->display_name );
+		}
 		self::push(
 			$receiver_id,
 			array(
@@ -740,11 +748,8 @@ final class NotificationBridge {
 				// abusive kudos had no way to find the toast it had already queued -- so the receiver
 				// was still congratulated for kudos that had been taken away as abuse.
 				'kudos_id' => $kudos_id,
-				'message'  => $giver
-					/* translators: %s: display name of the member who gave the kudos. */
-					? sprintf( __( '%s gave you kudos!', 'wb-gamification' ), $giver->display_name )
-					: __( 'Someone gave you kudos!', 'wb-gamification' ),
-				'detail'   => $message ?: null,
+				'message'  => __( 'Kudos received', 'wb-gamification' ),
+				'detail'   => '' !== $from ? $from : ( $message ?: null ),
 				'icon'     => 'icon-heart-handshake',
 				'name'     => $giver ? $giver->display_name : '',
 			)
@@ -1277,13 +1282,13 @@ final class NotificationBridge {
 		foreach ( $toasts as $toast ) {
 			$last_id = max( $last_id, (int) ( $toast['_id'] ?? 0 ) );
 		}
-		$message = __( 'You earned points and rewards since your last visit', 'wb-gamification' );
+		$message = __( 'Since your last visit', 'wb-gamification' );
 
 		$url     = self::progress_url( $user_id );
 		$summary = array(
 			'type'      => 'summary',
 			'message'   => $message,
-			'detail'    => null,
+			'detail'    => __( 'You earned points and rewards.', 'wb-gamification' ),
 			'url'       => '' !== $url ? wp_make_link_relative( $url ) : '',
 			'url_label' => __( 'See progress', 'wb-gamification' ),
 			'icon'      => 'icon-sparkles',

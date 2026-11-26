@@ -4,27 +4,29 @@ WB Gamification tells members what they have earned in real time. Notifications 
 
 ## Toast Notifications
 
-Toast notifications are small popups that appear at the **bottom center** of the page shortly after a member earns a reward. Change the corner under **Gamification > Dashboard > Realtime**. Every toast closes by itself: after **4 seconds**, or **8 seconds** when it carries a link such as **See my progress**. Pointing at a toast or tabbing into it pauses the timer, and **Escape** closes the newest one.
+Toast notifications are small popups that appear at the **bottom center** of the page shortly after a member earns a reward. Change the corner under **Gamification > Experience > Notifications**. Every toast closes by itself: after **4 seconds**, or **8 seconds** when it carries a link such as **See progress**. Pointing at a toast or tabbing into it pauses the timer, and **Escape** closes the newest one.
 
 There are six notification types:
 
 | Type | When It Shows | Example |
 |---|---|---|
 | **Points** | After any point-earning action | "+10 points - Activity update posted" |
-| **Badge** | When a badge is earned | "Badge earned: Community Pillar" |
-| **Level up** | When advancing to a new level | "You reached Contributor!" |
-| **Streak milestone** | When hitting a streak milestone | "30-day streak! Keep it up." |
-| **Challenge completed** | When a challenge is finished | "Challenge complete: Weekend Writer" |
-| **Kudos received** | When someone sends kudos | "[Member] sent you kudos" |
+| **Badge** | When a badge is earned | "New badge" / "Community Pillar", with the badge's picture |
+| **Level up** | When advancing to a new level | A celebration card: "You reached Contributor!" |
+| **Streak milestone** | When hitting a streak milestone | "30-day streak!", as part of the summary toast |
+| **Challenge completed** | When a challenge is finished | "Challenge complete" / "Weekend Writer" |
+| **Kudos received** | When someone sends kudos | "Kudos received" / "From [Member]: [their message]" |
 
 Each toast is dismissible. Members can click it to close it early, or just wait for it to disappear.
 
-**Note:** Silent awards (challenge bonus points, streak bonus points) do not show a points toast - only the challenge or streak notification fires.
+A toast's title is always one short line; names (a badge, a challenge, a member) are on the line below it.
 
 ### How toasts are paced
 
 - **Each toast shows once.** A member sees an award once, on whichever page delivers it first. It does not show again on the next page.
-- **A burst becomes one summary.** When four or more toasts are waiting (a new member's first visit often has a welcome bonus, a badge and several point awards), they arrive as one toast instead: "Welcome - you earned 55 Points", with the badge (or "3 badges earned") underneath and a **See my progress** link. Up to three waiting toasts still arrive one by one. Level-up and streak celebrations always show on their own.
+- **Awards that land together are one toast.** A post that pays points, finishes a streak day and earns a badge shows one summary: "+17 Points and a new badge", with what earned it underneath ("Publish a blog post, 5-day streak!, Conversation Starter") and the badge's picture. The number counts up, and the toast keeps adding if more arrives while it shows. Challenge and streak bonus points are included in the total.
+- **A level-up shows alone first.** The level-up celebration (and a league promotion or community goal) shows on its own; the summary toast follows when it closes.
+- **A long absence is one line.** A member back after a long time with more waiting than the page reads sees one toast, "Since your last visit" / "You earned points and rewards.", with **See progress**.
 - **One at a time on phones.** At 640px wide and below, a toast that arrives while another is showing waits its turn instead of stacking over the page. Nothing is dropped.
 - **Never over what the member is using.** While a popup or dialog is open, or while the member is writing in a field (a post, a comment, a search), toasts wait and show as soon as the popup closes or the text is sent. This works the same inside a BuddyNext community and on its own.
 - **Quick after the member's own action.** When a post, comment or any other action earns something, the toast arrives within a few seconds, whichever plugin handled the action.

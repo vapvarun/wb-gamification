@@ -147,7 +147,8 @@ class NotificationQueueBoundsTest extends TestCase {
 		$this->assertLessThanOrEqual( 5, count( $events ), 'A backlog must never render more than a 5-toast burst.' );
 		$this->assertCount( 1, $events, 'Since 1.6.6 a backlog arrives as one summary toast.' );
 		$this->assertSame( 'summary', $events[0]['type'] );
-		$this->assertSame( 'You earned points and rewards since your last visit', $events[0]['message'], 'Past the read window the summary names no partial total.' );
+		$this->assertSame( 'Since your last visit', $events[0]['message'], 'Past the read window the summary names no partial total.' );
+		$this->assertSame( 'You earned points and rewards.', $events[0]['detail'] );
 	}
 
 	#[Test]

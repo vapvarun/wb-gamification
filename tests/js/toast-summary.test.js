@@ -51,7 +51,7 @@ test( 'a post, a streak day and a badge within a second are one toast', () => {
 	const p = page();
 	p.send( [ pts( 10, 'Publish a blog post' ), pts( 5, '5-day streak' ) ] );
 	p.tick( 400 );
-	p.send( [ { _id: ++id, type: 'badge', message: 'Badge earned: Conversation Starter', name: 'Conversation Starter', image: '/b.png' } ] );
+	p.send( [ { _id: ++id, type: 'badge', message: 'New badge', detail: 'Conversation Starter', name: 'Conversation Starter', image: '/b.png' } ] );
 	p.tick( 1500 );
 	assert.strictEqual( p.drawn.length, 1, 'one toast, not three' );
 	const o = p.drawn[ 0 ].o;
@@ -93,10 +93,11 @@ test( 'first points: welcome title, site line and the progress button', () => {
 
 test( 'a level-up is not a toast, and approvals are not merged', () => {
 	const p = page();
-	p.send( [ { _id: ++id, type: 'level_up', message: 'Level 3' }, { _id: ++id, type: 'submission', outcome: 'approved', message: 'Approved: Run 5k' } ] );
+	p.send( [ { _id: ++id, type: 'level_up', message: 'Level 3' }, { _id: ++id, type: 'submission', outcome: 'approved', message: 'Submission approved', detail: 'Run 5k' } ] );
 	p.tick( 1500 );
 	assert.strictEqual( p.drawn.length, 1 );
-	assert.strictEqual( p.drawn[ 0 ].o.title, 'Approved: Run 5k' );
+	assert.strictEqual( p.drawn[ 0 ].o.title, 'Submission approved' );
+	assert.strictEqual( p.drawn[ 0 ].o.body, 'Run 5k' );
 } );
 
 test( 'a streak bonus adds to the total and the streak is named once, not shown as a popup', () => {
