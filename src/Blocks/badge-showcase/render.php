@@ -124,10 +124,6 @@ usort(
 	static fn( array $a, array $b ): int => (int) empty( $a['earned'] ) <=> (int) empty( $b['earned'] )
 );
 
-if ( $wb_gam_limit > 0 && count( $wb_gam_badges ) > $wb_gam_limit ) {
-	$wb_gam_badges = array_slice( $wb_gam_badges, 0, $wb_gam_limit );
-}
-
 // Totals for the header chip + filter pill counts.
 $wb_gam_total_count  = count( $wb_gam_badges );
 $wb_gam_earned_count = count(
@@ -140,6 +136,22 @@ $wb_gam_locked_count = $wb_gam_total_count - $wb_gam_earned_count;
 $wb_gam_progress_pct = $wb_gam_total_count > 0
 	? (int) round( ( $wb_gam_earned_count / $wb_gam_total_count ) * 100 )
 	: 0;
+
+// The header counts the member's whole collection; the `limit` attribute only cuts the cards shown.
+// (Counting after the cut said "20 / 20" for 40 earned badges with limit 20.)
+if ( $wb_gam_limit > 0 && count( $wb_gam_badges ) > $wb_gam_limit ) {
+	$wb_gam_badges = array_slice( $wb_gam_badges, 0, $wb_gam_limit );
+}
+
+/**
+ * How many cards the board shows before "Show all". The rest are rendered too (no JavaScript,
+ * search engines and the hub drawer still get every card); view.js folds them away.
+ *
+ * @since 1.7.0
+ *
+ * @param int $page_size Cards per tab before "Show all". 0 shows every card.
+ */
+$wb_gam_page_size = max( 0, (int) apply_filters( 'wb_gam_badge_showcase_page_size', 12 ) );
 
 $wb_gam_wrapper = get_block_wrapper_attributes(
 	array(
@@ -179,7 +191,8 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 ?>
 <div <?php echo $wb_gam_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 	data-wb-gam-badge-showcase
-	data-filter="all">
+	data-filter="all"
+	data-page-size="<?php echo esc_attr( (string) $wb_gam_page_size ); ?>">
 
 	<?php if ( empty( $wb_gam_badges ) ) : ?>
 		<?php
@@ -336,6 +349,9 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 				</li>
 			<?php endforeach; ?>
 		</ul>
+		<button type="button" class="wb-gam-badge-showcase__more" data-wb-gam-more hidden
+			<?php /* translators: %d: number of badges in the current tab. */ ?>
+			data-label="<?php echo esc_attr( __( 'Show all %d badges', 'wb-gamification' ) ); ?>"></button>
 	<?php endif; ?>
 </div>
 <?php
