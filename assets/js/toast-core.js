@@ -338,7 +338,19 @@
 	 * @return {boolean}
 	 */
 	function blocked() {
-		return 'loading' === document.readyState || modalOpen() || momentOpen() || editing();
+		return 'loading' === document.readyState || buddyNextStarting() || modalOpen() || momentOpen() || editing();
+	}
+
+	/**
+	 * Is BuddyNext's early stub (shell/extras.js) still standing in for its real toast? It queues
+	 * calls in window.__bnToastQueue until shell/dialog.js replaces it, which can be just after the
+	 * page has parsed. Toasts wait those milliseconds so they are drawn by BuddyNext's stack, not ours.
+	 *
+	 * @return {boolean}
+	 */
+	function buddyNextStarting() {
+		var f = window.bnToast;
+		return 'function' === typeof f && ! isBuddyNextToast() && -1 !== String( f ).indexOf( '__bnToastQueue' );
 	}
 
 	/**

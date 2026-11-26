@@ -361,3 +361,17 @@ test( 'an update with nothing to say keeps the toast on screen as it was', () =>
 	h.update( { title: '', body: '' } );
 	assert.strictEqual( p.w.document.querySelector( '.wb-gam-toast__message' ).textContent, '+10 Points' );
 } );
+
+test( 'BuddyNext still starting: a toast waits for its real stack instead of drawing ours', () => {
+	const p = page( { bn: true } );
+	const real = p.w.bnToast;
+	p.w.bnToast = function ( msg, type ) { // BuddyNext's stub (shell/extras.js), after the page has parsed.
+		( p.w.__bnToastQueue = p.w.__bnToastQueue || [] ).push( [ msg, type ] );
+	};
+	p.toast( { title: '+10 Points', body: 'Join a space' } );
+	assert.strictEqual( p.shown(), 0, 'our stack does not draw on a BuddyNext page' );
+	p.w.bnToast = real; // shell/dialog.js loaded.
+	p.tick( 600 );
+	assert.strictEqual( p.bnCalls.length, 1 );
+	assert.strictEqual( p.bnCalls[ 0 ].o.title, '+10 Points' );
+} );
