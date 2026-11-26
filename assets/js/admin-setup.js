@@ -44,7 +44,7 @@
 			}
 		};
 		sum( 'plugins', on.length ? fmt( s.plugins, on.join( ', ' ) ) : s.onlyWp );
-		sum( 'earning', fmt( s.earning, total, pace ? pace.closest( 'label' ).querySelector( 'strong' ).textContent : '' ) );
+		sum( 'earning', fmt( s.earning, total, pace ? pace.closest( 'label' ).querySelector( 'strong' ).textContent.split( '·' )[ 0 ].trim() : '' ) );
 		sum( 'rewards', fmt( s.rewards, root.querySelectorAll( '.wbgam-setup__levels li' ).length, board && 'jetonomy' === board.value ? s.boardJt : s.boardOurs ) );
 	}
 
@@ -80,7 +80,21 @@
 			show( Number( go.dataset.wbgamGoto ), true );
 		}
 	} );
-	root.addEventListener( 'change', refresh );
+	root.addEventListener( 'change', ( e ) => {
+		// Choosing a plugin in step 1 means rewarding it: when none of its actions is on yet,
+		// they all start on (each still switchable in step 2).
+		const toggle = e.target.closest( '[data-wbgam-plugin-toggle]' );
+		if ( toggle && toggle.checked ) {
+			const group = root.querySelector( '[data-wbgam-plugin="' + toggle.value + '"]' );
+			const boxes = group ? Array.from( group.querySelectorAll( 'input[type=checkbox]' ) ) : [];
+			if ( boxes.length && ! boxes.some( ( b ) => b.checked ) ) {
+				boxes.forEach( ( b ) => {
+					b.checked = true;
+				} );
+			}
+		}
+		refresh();
+	} );
 	root.classList.add( 'is-stepped' );
 	show( 1 );
 }() );
