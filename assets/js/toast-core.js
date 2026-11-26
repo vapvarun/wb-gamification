@@ -311,9 +311,17 @@
 		return field && '' !== el.value.trim();
 	}
 
-	/** Must toasts wait? @return {boolean} */
+	/**
+	 * Must toasts wait? Behind an open dialog, while the member writes, and while the page is
+	 * still loading. A toast from the page-load seed arrives before BuddyNext's toast module has
+	 * replaced its stub (shell/extras.js), which queues the call and returns no handle, so that
+	 * toast could not be closed with Escape or held behind a dialog. Waiting the few
+	 * milliseconds until the page has parsed hands it to the real function instead.
+	 *
+	 * @return {boolean}
+	 */
 	function blocked() {
-		return modalOpen() || editing();
+		return 'loading' === document.readyState || modalOpen() || editing();
 	}
 
 	/**

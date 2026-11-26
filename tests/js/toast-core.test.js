@@ -83,6 +83,16 @@ function page( { bn = false, admin = false } = {} ) {
 		};
 	}
 
+	// The document's parse state, settable: a page-load toast arrives while it is "loading".
+	let readyState = 'complete';
+	Object.defineProperty( w.document, 'readyState', {
+		configurable: true,
+		get: () => readyState,
+	} );
+	const setReadyState = ( s ) => {
+		readyState = s;
+	};
+
 	w.eval( SRC );
 	const shown = () =>
 		w.document.querySelectorAll( '.wb-gam-toast:not(.wb-gam-toast--exit)' )
@@ -112,9 +122,30 @@ function page( { bn = false, admin = false } = {} ) {
 		esc,
 		openDialog,
 		bnCalls,
+		setReadyState,
 		toast: ( o ) => w.wbGam.toast( o ),
 	};
 }
+
+test( 'BuddyNext: a page-load toast waits for the real toast function, then closes on Escape', () => {
+	const p = page( { bn: true } );
+	const real = p.w.bnToast;
+	const stubbed = [];
+	// BuddyNext's early stub (shell/extras.js): queues the call, returns no handle.
+	p.w.bnToast = ( o ) => {
+		stubbed.push( o );
+	};
+	p.setReadyState( 'loading' );
+	p.toast( { title: '+15 Points', body: 'Manual award' } );
+	assert.strictEqual( stubbed.length, 0, 'not handed to the stub' );
+
+	p.w.bnToast = real; // The module loaded.
+	p.setReadyState( 'interactive' );
+	p.tick( 600 );
+	assert.strictEqual( p.bnCalls.length, 1, 'drawn by the real function' );
+	p.esc();
+	assert.strictEqual( p.bnCalls[ 0 ].dismissed, true, 'Escape reaches it' );
+} );
 
 const LINK = {
 	title: 'You earned points',
