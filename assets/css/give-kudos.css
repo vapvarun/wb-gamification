@@ -80,7 +80,7 @@
 	font-weight: 600;
 	font-family: inherit;
 	color: var( --wb-gam-pop-accent-fg );
-	background: var( --wb-gam-color-accent, #3b82f6 );
+	background: var(--wb-gam-pop-accent); /* With --wb-gam-pop-accent-fg: the solid fill its text colour was computed for. */
 	border: none;
 	border-radius: var( --wb-gam-radius-full, 999px );
 	cursor: pointer;
@@ -88,7 +88,7 @@
 }
 
 .wb-gam-give-kudos__submit:hover {
-	background: var( --wb-gam-color-accent-hover, #2563eb );
+	background: color-mix(in srgb, var(--wb-gam-pop-accent) 88%, #000000);
 }
 
 .wb-gam-give-kudos__submit:active {

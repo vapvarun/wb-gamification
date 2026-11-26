@@ -57,7 +57,8 @@
 	border-radius: 999px;
 }
 
-.wb-gam-top-members__rank-badge--1 { background: var(--wb-gam-color-gold-text); color: var(--wb-gam-color-white); }
+/* One pair in both modes: white on the dark-mode gold-text fell under 3:1; dark ink on gold is 6.6:1. */
+.wb-gam-top-members__rank-badge--1 { background: var(--wb-gam-color-gold); color: #2b1d00; }
 .wb-gam-top-members__rank-badge--2 { background: var(--wb-gam-silver); color: var(--wb-gam-color-white); }
 .wb-gam-top-members__rank-badge--3 { background: var(--wb-gam-bronze); color: var(--wb-gam-color-white); }
 

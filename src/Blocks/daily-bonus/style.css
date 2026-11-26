@@ -53,7 +53,7 @@
 	gap: 6px;
 	padding: 8px 14px;
 	border-radius: 999px;
-	background: var(--wb-gam-color-accent);
+	background: var(--wb-gam-pop-accent); /* With --wb-gam-pop-accent-fg: the solid fill its text colour was computed for. */
 	color: var(--wb-gam-pop-accent-fg);
 	font-size: 14px;
 	font-weight: 600;

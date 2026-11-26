@@ -226,7 +226,7 @@
 	font-weight: 600;
 	color: var( --wb-gam-pop-accent-fg );
 	text-decoration: none;
-	background: var( --wb-gam-color-accent, #3b82f6 );
+	background: var(--wb-gam-pop-accent); /* With --wb-gam-pop-accent-fg: the solid fill its text colour was computed for. */
 	border-radius: var( --wb-gam-radius-full, 999px );
 	transition: background-color 0.15s ease;
 }
