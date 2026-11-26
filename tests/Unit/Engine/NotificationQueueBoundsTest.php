@@ -196,4 +196,19 @@ class NotificationQueueBoundsTest extends TestCase {
 		$this->assertSame( array( 1, 2, 3 ), $ids, 'Every event in an under-cap queue is still delivered.' );
 		$this->assertSame( 3, $this->written_cursor );
 	}
+
+	/**
+	 * Since 1.7.0 a burst under the read window passes through whole: the page folds it into one
+	 * summary toast. Folding here as well made a second summary after a level-up, and keeping
+	 * only the newest few dropped points the page should add up.
+	 */
+	#[Test]
+	public function a_burst_under_the_window_is_delivered_whole_for_the_page_to_fold(): void {
+		$this->stub_wpdb( 7 );
+
+		$events = NotificationBridge::read_pending( 7, 'footer' );
+
+		$this->assertCount( 7, $events );
+		$this->assertNotContains( 'summary', array_column( $events, 'type' ), 'No second summary from the server.' );
+	}
 }

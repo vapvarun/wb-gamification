@@ -78,7 +78,7 @@ class SharedDeliveryCursorTest extends TestCase {
 
 	#[Test]
 	public function what_one_reader_delivered_no_other_reader_delivers_again(): void {
-		$this->assertCount( 1, NotificationBridge::read_pending( 7, 'heartbeat' ), 'Ten waiting arrive as one summary.' );
+		$this->assertNotEmpty( NotificationBridge::read_pending( 7, 'heartbeat' ), 'The waiting events arrive once (the page folds them into one toast).' );
 		$this->assertSame( array(), NotificationBridge::read_pending( 7, 'footer' ), 'The page seed must not repeat what the heartbeat showed.' );
 		$this->assertSame( array(), NotificationBridge::read_pending( 7 ) );
 		$this->assertSame( 10, NotificationBridge::cursor( 7 ) );
@@ -102,7 +102,7 @@ class SharedDeliveryCursorTest extends TestCase {
 	}
 
 	#[Test]
-	public function a_new_members_burst_is_one_welcome_summary(): void {
+	public function a_new_members_burst_arrives_whole_for_the_page_to_fold(): void {
 		$payloads = array(
 			array( 'type' => 'badge', 'message' => 'Badge earned: Welcome Aboard' ),
 			array( 'type' => 'welcome', 'message' => 'Welcome - you just earned your first points!' ),
@@ -129,14 +129,13 @@ class SharedDeliveryCursorTest extends TestCase {
 
 		$events = NotificationBridge::read_pending( 7 );
 
-		$this->assertCount( 2, $events, 'The level-up card passes through; the six toasts become one.' );
-		$this->assertSame( 'level_up', $events[0]['type'] );
-		$summary = $events[1];
-		$this->assertSame( 'summary', $summary['type'] );
-		$this->assertSame( 'Welcome - you earned 55 Points', $summary['message'] );
-		$this->assertSame( 'Badge earned: Welcome Aboard', $summary['detail'] );
-		$this->assertSame( '/hub/', $summary['url'], 'The See my progress link survives.' );
-		$this->assertSame( 105, $summary['_id'] );
+		// Since 1.7.0 the server folds nothing under the read window: assets/js/toast.js turns the six
+		// rewards into one summary toast after the level-up (tests/js/toast-summary.test.js). Folding
+		// here too made a second summary toast.
+		$this->assertCount( 7, $events );
+		$this->assertContains( 'level_up', array_column( $events, 'type' ), 'The level-up card still arrives.' );
+		$this->assertNotContains( 'summary', array_column( $events, 'type' ) );
+		$this->assertSame( 55, array_sum( array_column( $events, 'points' ) ), 'Every award arrives, so the page can add them all up.' );
 	}
 
 	#[Test]

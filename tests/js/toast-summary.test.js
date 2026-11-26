@@ -83,11 +83,11 @@ test( 'a later award updates the summary on screen and counts on from its total'
 
 test( 'first points: welcome title, site line and the progress button', () => {
 	const p = page();
-	p.send( [ pts( 10, 'Join the site' ), { _id: ++id, type: 'welcome', message: 'Welcome aboard!', detail: 'Your first points in Garden', url: '/gamification/', url_label: 'See progress' } ] );
+	p.send( [ pts( 10, 'Join the site' ), { _id: ++id, type: 'welcome', message: 'Welcome aboard!', detail: 'Your first points.', url: '/gamification/', url_label: 'See progress' } ] );
 	p.tick( 1500 );
 	const o = p.drawn[ 0 ].o;
 	assert.strictEqual( o.title, '+10 Points', 'short enough for one line next to the button' );
-	assert.strictEqual( o.body, 'Welcome aboard! Your first points in Garden' );
+	assert.strictEqual( o.body, 'Welcome aboard! Your first points.' );
 	assert.strictEqual( o.hrefLabel, 'See progress' );
 } );
 

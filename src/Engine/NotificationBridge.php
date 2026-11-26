@@ -73,19 +73,6 @@ final class NotificationBridge {
 	public const BURST_MAX_EVENTS = 5;
 
 	/**
-	 * More waiting toasts than this arrive as ONE summary toast.
-	 *
-	 * A new member reaches their first community page with six waiting (badge,
-	 * welcome, +15, +10, +10, +20). Shown one by one, the stack's limit pushed the
-	 * welcome and its "See my progress" link off screen and the burst cap skipped
-	 * the badge. One toast says it all: "Welcome - you earned 55 Points".
-	 *
-	 * @since 1.6.6
-	 * @var int
-	 */
-	public const SUMMARY_FROM = 4;
-
-	/**
 	 * Rows read per delivery, so a summary can total a whole burst. Past this the
 	 * summary names no number (a member back after months).
 	 *
@@ -100,7 +87,7 @@ final class NotificationBridge {
 	 *
 	 * @var string[]
 	 */
-	private const MOMENT_TYPES = array( 'level_up', 'streak_milestone', 'cohort_promotion', 'community_goal' );
+	private const MOMENT_TYPES = array( 'level_up', 'cohort_promotion', 'community_goal' ); // A streak day joins the summary toast (1.7.0).
 
 	/**
 	 * Rows deleted per statement by `prune_queue()`, and the number of such
@@ -399,8 +386,8 @@ final class NotificationBridge {
 
 			$hub_url = self::progress_url( $user_id );
 
-			/* translators: %s: site name. */
-			$detail = sprintf( __( 'Your first points in %s', 'wb-gamification' ), wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ) );
+			// Short enough for the two lines beside the "See progress" button (a site name did not fit).
+			$detail = __( 'Your first points.', 'wb-gamification' );
 
 			self::push(
 				$user_id,
@@ -1254,9 +1241,9 @@ final class NotificationBridge {
 	/**
 	 * Fold a burst of waiting toasts into one summary toast.
 	 *
-	 * Up to three toasts pass through unchanged (newest BURST_MAX_EVENTS kept).
-	 * From SUMMARY_FROM on, every toast becomes one: the points per currency, the
-	 * badges, and the "See my progress" link. Celebration cards pass through.
+	 * Every toast passes through (the page folds them into one summary toast); only a
+	 * backlog longer than the read window becomes one "since your last visit" toast with
+	 * no partial total. Celebration cards pass through either way.
 	 *
 	 * @since 1.6.6
 	 *
@@ -1277,59 +1264,26 @@ final class NotificationBridge {
 			}
 		}
 
-		if ( count( $toasts ) < self::SUMMARY_FROM ) {
-			return array_slice( $events, -self::BURST_MAX_EVENTS );
+		// Since 1.7.0 the page folds every award that lands together into ONE summary toast
+		// (assets/js/toast.js), so the events pass through whole: folding here as well made a
+		// second summary, and keeping only the newest few dropped points the page should count.
+		// Only a backlog longer than the read window becomes one toast here, with no partial
+		// total (a member back after months).
+		if ( ! $truncated ) {
+			return $events;
 		}
 
-		$totals  = array(); // Plural currency name => amount.
-		$badges  = array();
-		$welcome = false;
 		$last_id = 0;
 		foreach ( $toasts as $toast ) {
 			$last_id = max( $last_id, (int) ( $toast['_id'] ?? 0 ) );
-			$type    = (string) ( $toast['type'] ?? '' );
-			if ( 'points' === $type && (int) ( $toast['points'] ?? 0 ) > 0 ) {
-				$unit            = (string) ( $toast['unit_many'] ?? '' );
-				$unit            = '' !== $unit ? $unit : __( 'Points', 'wb-gamification' );
-				$totals[ $unit ] = ( $totals[ $unit ] ?? 0 ) + (int) $toast['points'];
-			} elseif ( 'badge' === $type ) {
-				$badges[] = (string) ( $toast['message'] ?? '' );
-			} elseif ( 'welcome' === $type ) {
-				$welcome = true;
-			}
 		}
-
-		$parts = array();
-		foreach ( $totals as $unit => $amount ) {
-			/* translators: 1: an amount, e.g. "+10" or "250", 2: the site's name for points, e.g. "Points" or "Karma". */
-			$parts[] = sprintf( __( '%1$s %2$s', 'wb-gamification' ), number_format_i18n( $amount ), $unit );
-		}
-
-		if ( $truncated ) {
-			$message = __( 'You earned points and rewards since your last visit', 'wb-gamification' );
-		} elseif ( $parts ) {
-			$message = $welcome
-				/* translators: %s: what was earned, e.g. "55 Points" or "55 Points and 20 Coins". */
-				? sprintf( __( 'Welcome - you earned %s', 'wb-gamification' ), wp_sprintf( '%l', $parts ) )
-				/* translators: %s: what was earned, e.g. "55 Points" or "55 Points and 20 Coins". */
-				: sprintf( __( 'You earned %s', 'wb-gamification' ), wp_sprintf( '%l', $parts ) );
-		} else {
-			$message = __( 'You have new achievements', 'wb-gamification' );
-		}
-
-		$detail = '';
-		if ( 1 === count( $badges ) ) {
-			$detail = $badges[0];
-		} elseif ( count( $badges ) > 1 ) {
-			/* translators: %d: number of badges. */
-			$detail = sprintf( _n( '%d badge earned', '%d badges earned', count( $badges ), 'wb-gamification' ), count( $badges ) );
-		}
+		$message = __( 'You earned points and rewards since your last visit', 'wb-gamification' );
 
 		$url     = self::progress_url( $user_id );
 		$summary = array(
 			'type'      => 'summary',
 			'message'   => $message,
-			'detail'    => '' !== $detail ? $detail : null,
+			'detail'    => null,
 			'url'       => '' !== $url ? wp_make_link_relative( $url ) : '',
 			'url_label' => __( 'See progress', 'wb-gamification' ),
 			'icon'      => 'icon-sparkles',
