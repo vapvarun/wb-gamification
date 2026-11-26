@@ -599,3 +599,11 @@ dialog.wb-gam-drawer[open] {
 	dialog.wb-gam-drawer[open] { opacity: 1; }
 	.wb-gam-confetti { display: none; }
 }
+
+
+/* A dialog that locks the page (body.bn-modal-open, set by BuddyNext) is the one thing the member is answering: the
+   celebration toast waits behind its backdrop instead of floating undimmed above it. */
+body.bn-modal-open .wb-gam-toasts {
+	z-index: 1;
+	pointer-events: none;
+}
