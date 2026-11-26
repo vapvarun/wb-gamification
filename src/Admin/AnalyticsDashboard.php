@@ -560,19 +560,25 @@ final class AnalyticsDashboard {
 	/**
 	 * Render a single KPI card widget.
 	 *
-	 * @param string $title Card heading.
-	 * @param string $value Formatted primary metric value.
-	 * @param string $sub   Sub-label / contextual description.
-	 * @param string $icon  Emoji or icon character for the card.
+	 * @param string     $title Card heading.
+	 * @param string     $value Formatted primary metric value.
+	 * @param string     $sub   Sub-label / contextual description.
+	 * @param string     $icon  Emoji or icon character for the card.
+	 * @param array|null $next Optional next step for an empty number: array{url:string,label:string}.
 	 * @return void
 	 */
-	public static function kpi_card( string $title, string $value, string $sub, string $icon ): void {
+	public static function kpi_card( string $title, string $value, string $sub, string $icon, ?array $next = null ): void {
 		?>
 		<div class="wb-gam-analytics__kpi-card wb-gam-admin-kpi-card">
 			<span class="wb-gam-analytics__kpi-icon wb-gam-admin-kpi-icon <?php echo esc_attr( $icon ); ?>" aria-hidden="true"></span>
 			<span class="wb-gam-analytics__kpi-value wb-gam-admin-kpi-value"><?php echo esc_html( $value ); ?></span>
 			<span class="wb-gam-analytics__kpi-title wb-gam-admin-kpi-title"><?php echo esc_html( $title ); ?></span>
-			<span class="wb-gam-analytics__kpi-sub wb-gam-admin-kpi-sub"><?php echo esc_html( $sub ); ?></span>
+			<?php if ( '' !== $sub ) : ?>
+				<span class="wb-gam-analytics__kpi-sub wb-gam-admin-kpi-sub"><?php echo esc_html( $sub ); ?></span>
+			<?php endif; ?>
+			<?php if ( $next ) : // An empty number says what to do about it. ?>
+				<a class="wb-gam-admin-kpi-next" href="<?php echo esc_url( (string) $next['url'] ); ?>"><?php echo esc_html( (string) $next['label'] ); ?></a>
+			<?php endif; ?>
 		</div>
 		<?php
 	}

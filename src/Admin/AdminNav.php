@@ -35,7 +35,6 @@ final class AdminNav {
 	 */
 	private const CHILD_OF = array(
 		'wb-gam-community-challenges' => 'challenges',
-		'wb-gamification-setup'       => 'dashboard',
 	);
 
 	/**
@@ -254,6 +253,12 @@ final class AdminNav {
 						'key'   => 'api-keys',
 						'label' => __( 'API keys', 'wb-gamification' ),
 						'page'  => 'wb-gam-api-keys',
+					),
+					// Setup again on a configured site: it opens with the site's current values.
+					array(
+						'key'   => 'setup',
+						'label' => __( 'Setup', 'wb-gamification' ),
+						'page'  => SetupWizard::PAGE_SLUG,
 					),
 				),
 			),

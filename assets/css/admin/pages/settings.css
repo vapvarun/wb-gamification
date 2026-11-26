@@ -1226,3 +1226,17 @@ details.wbgam-settings-nav-group .wbgam-settings-nav-item {
 	.wbgam-earn-limit__panel { position: static; width: auto; margin-block-start: 4px; box-shadow: none; }
 	.wbgam-earn-status { inset-inline: 16px; }
 }
+
+/* ── Overview (1.7.0) ─────────────────────────────────────────────────────── */
+.wbgam-overview-actions { margin-block: 0 var(--wbgam-gap); }
+.wb-gam-admin-kpi-next {
+	display: inline-block;
+	margin-block-start: 4px;
+	font-size: var(--wbgam-fs-sm);
+	font-weight: 600;
+}
+.wbgam-action-list__item--manual {
+	border-block-start: 1px dashed var(--wbgam-border);
+	color: var(--wbgam-text-secondary);
+}
+.wbgam-banner__body p { margin: 4px 0 0; }
