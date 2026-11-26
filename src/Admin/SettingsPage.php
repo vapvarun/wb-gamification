@@ -1292,7 +1292,7 @@ final class SettingsPage {
 				<p class="wbgam-earn-none" data-wb-gam-earn-none hidden><?php esc_html_e( 'No action matches. Clear the search or choose All.', 'wb-gamification' ); ?></p>
 
 				<?php foreach ( $by_plugin as $plugin => $plugin_actions ) : ?>
-					<details class="wbgam-settings-card wbgam-stack-block wbgam-accordion wbgam-earn-group" data-wb-gam-earn-group="<?php echo esc_attr( (string) $plugin ); ?>"<?php echo 'WordPress' === $plugin ? ' open' : ''; ?>>
+					<details class="wbgam-settings-card wbgam-stack-block wbgam-accordion" data-wb-gam-earn-group="<?php echo esc_attr( (string) $plugin ); ?>"<?php echo 'WordPress' === $plugin ? ' open' : ''; ?>>
 						<summary class="wbgam-settings-card__head wbgam-accordion__head">
 							<span class="wbgam-accordion__chevron icon-chevron-right" aria-hidden="true"></span>
 							<span class="wbgam-accordion__head-text">

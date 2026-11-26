@@ -222,155 +222,156 @@ return array(
 		$jt_forum_triggers,
 		array(
 
-		array(
-			'id'                => 'jetonomy_space_joined',
-			'label'             => static fn(): string => __( 'Join a space', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded once when a member joins a Jetonomy community space. Daily cap prevents bulk-join farming.', 'wb-gamification' ),
-			// Free fires: do_action( 'jetonomy_user_joined_space', int $space_id, int $user_id, string $role ).
-			'hook'              => 'jetonomy_user_joined_space',
-			'user_callback'     => function ( int $space_id, int $user_id, string $role ): int {
-				// A BuddyNext space joining its linked forum is one join, paid by bn_space_joined.
-				return \WBGam\Engine\HostActivity::is_copy() ? 0 : $user_id;
-			},
-			'metadata_callback' => function ( int $space_id, int $user_id, string $role ): array {
-				return array(
-					'space_id' => $space_id,
-					'role'     => $role,
-				);
-			},
-			'once_per_object'   => static fn( int $space_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $space_id ),
-			'reverse_on'        => array(
-				'jetonomy_user_left_space' => static fn( $space_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $space_id ),
+			array(
+				'id'                => 'jetonomy_space_joined',
+				'label'             => static fn(): string => __( 'Join a space', 'wb-gamification' ),
+				'description'       => static fn(): string => __( 'Awarded once when a member joins a Jetonomy community space. Daily cap prevents bulk-join farming.', 'wb-gamification' ),
+				// Free fires: do_action( 'jetonomy_user_joined_space', int $space_id, int $user_id, string $role ).
+				'hook'              => 'jetonomy_user_joined_space',
+				'user_callback'     => function ( int $space_id, int $user_id, string $role ): int {
+					// A BuddyNext space joining its linked forum is one join, paid by bn_space_joined.
+					return \WBGam\Engine\HostActivity::is_copy() ? 0 : $user_id;
+				},
+				'metadata_callback' => function ( int $space_id, int $user_id, string $role ): array {
+					return array(
+						'space_id' => $space_id,
+						'role'     => $role,
+					);
+				},
+				'once_per_object'   => static fn( int $space_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $space_id ),
+				'reverse_on'        => array(
+					'jetonomy_user_left_space' => static fn( $space_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $space_id ),
+				),
+				'async'             => false,
+				'default_points'    => 10,
+				'category'          => 'community',
+				'icon'              => 'icon-users',
+				'repeatable'        => true,
+				'cooldown'          => 60,
+				'daily_cap'         => 5,
 			),
-			'async'             => false,
-			'default_points'    => 10,
-			'category'          => 'community',
-			'icon'              => 'icon-users',
-			'repeatable'        => true,
-			'cooldown'          => 60,
-			'daily_cap'         => 5,
-		),
 
-		array(
-			'id'                => 'jetonomy_join_request_approved',
-			'label'             => static fn(): string => __( 'Get approved into a gated space', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded once when a member is approved into a request-to-join space.', 'wb-gamification' ),
-			// Free fires: do_action( 'jetonomy_join_request_approved', int $space_id, int $user_id, int $reviewed_by ).
-			'hook'              => 'jetonomy_join_request_approved',
-			'user_callback'     => function ( int $space_id, int $user_id, int $reviewed_by ): int {
-				return $user_id;
-			},
-			'metadata_callback' => function ( int $space_id, int $user_id, int $reviewed_by ): array {
-				return array(
-					'space_id'    => $space_id,
-					'reviewed_by' => $reviewed_by,
-				);
-			},
-			'once_per_object'   => static fn( int $space_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $space_id ),
-			'reverse_on'        => array(
-				'jetonomy_user_left_space' => static fn( $space_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $space_id ),
+			array(
+				'id'                => 'jetonomy_join_request_approved',
+				'label'             => static fn(): string => __( 'Get approved into a gated space', 'wb-gamification' ),
+				'description'       => static fn(): string => __( 'Awarded once when a member is approved into a request-to-join space.', 'wb-gamification' ),
+				// Free fires: do_action( 'jetonomy_join_request_approved', int $space_id, int $user_id, int $reviewed_by ).
+				'hook'              => 'jetonomy_join_request_approved',
+				'user_callback'     => function ( int $space_id, int $user_id, int $reviewed_by ): int {
+					return $user_id;
+				},
+				'metadata_callback' => function ( int $space_id, int $user_id, int $reviewed_by ): array {
+					return array(
+						'space_id'    => $space_id,
+						'reviewed_by' => $reviewed_by,
+					);
+				},
+				'once_per_object'   => static fn( int $space_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $space_id ),
+				'reverse_on'        => array(
+					'jetonomy_user_left_space' => static fn( $space_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $space_id ),
+				),
+				'async'             => false,
+				'default_points'    => 10,
+				'category'          => 'community',
+				'icon'              => 'icon-circle-check',
+				'repeatable'        => true,
+				'cooldown'          => 300,
 			),
-			'async'             => false,
-			'default_points'    => 10,
-			'category'          => 'community',
-			'icon'              => 'icon-circle-check',
-			'repeatable'        => true,
-			'cooldown'          => 300,
-		),
 
-		array(
-			'id'                => 'jetonomy_trust_level_up',
-			'label'             => static fn(): string => __( 'Get promoted to a higher trust level', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded when a member is promoted to a higher Jetonomy trust level (TL0 -> TL5). Demotions never award.', 'wb-gamification' ),
-			// Free fires: do_action( 'jetonomy_trust_level_changed', int $user_id, int $old_level, int $new_level ).
-			'hook'              => 'jetonomy_trust_level_changed',
-			'user_callback'     => function ( int $user_id, int $old_level, int $new_level ): int {
-				// Only the upward direction earns. Demotions / no-op fire the same
-				// action; returning 0 makes Engine::process drop the event silently.
-				return $new_level > $old_level ? $user_id : 0;
-			},
-			'metadata_callback' => function ( int $user_id, int $old_level, int $new_level ): array {
-				return array(
-					'old_level' => $old_level,
-					'new_level' => $new_level,
-					'delta'     => $new_level - $old_level,
-				);
-			},
-			'permanent'         => 'A trust level reached is a milestone; a later demotion does not undo it.',
-			'default_points'    => 50,
-			'category'          => 'community',
-			'icon'              => 'icon-trending-up',
-			'repeatable'        => true,
-		),
+			array(
+				'id'                => 'jetonomy_trust_level_up',
+				'async'             => false,
+				'label'             => static fn(): string => __( 'Get promoted to a higher trust level', 'wb-gamification' ),
+				'description'       => static fn(): string => __( 'Awarded when a member is promoted to a higher Jetonomy trust level (TL0 -> TL5). Demotions never award.', 'wb-gamification' ),
+				// Free fires: do_action( 'jetonomy_trust_level_changed', int $user_id, int $old_level, int $new_level ).
+				'hook'              => 'jetonomy_trust_level_changed',
+				'user_callback'     => function ( int $user_id, int $old_level, int $new_level ): int {
+					// Only the upward direction earns. Demotions / no-op fire the same
+					// action; returning 0 makes Engine::process drop the event silently.
+					return $new_level > $old_level ? $user_id : 0;
+				},
+				'metadata_callback' => function ( int $user_id, int $old_level, int $new_level ): array {
+					return array(
+						'old_level' => $old_level,
+						'new_level' => $new_level,
+						'delta'     => $new_level - $old_level,
+					);
+				},
+				'permanent'         => 'A trust level reached is a milestone; a later demotion does not undo it.',
+				'default_points'    => 50,
+				'category'          => 'community',
+				'icon'              => 'icon-trending-up',
+				'repeatable'        => true,
+			),
 
-		array(
-			'id'                => 'jetonomy_membership_activated',
-			'label'             => static fn(): string => __( 'Activate a membership', 'wb-gamification' ),
-			'description'       => static fn(): string => __( 'Awarded once per plan when a paid membership becomes active for the member (RCP / PMPro / MemberPress / WooCommerce Subscriptions / Sensei / LearnDash / MasterStudy / Tutor / LifterLMS).', 'wb-gamification' ),
-			// Free + Pro adapters fire: do_action( 'jetonomy_membership_activated', int $user_id, mixed $level_id, string $source ).
-			'hook'              => 'jetonomy_membership_activated',
-			'user_callback'     => function ( int $user_id, $level_id, string $source ): int {
-				/**
-				 * Whether activating this membership level earns points.
-				 *
-				 * The rule rewards a paid membership. Adapters also report free
-				 * levels (a default plan every member is placed on), which would
-				 * hand out points just for signing up. The source that knows its
-				 * levels answers false for a free one.
-				 *
-				 * @since 1.6.6
-				 *
-				 * @param bool   $earns    Default true.
-				 * @param mixed  $level_id Level id as the adapter reported it.
-				 * @param string $source   Adapter source, e.g. 'buddynext-pro'.
-				 * @param int    $user_id  Member.
-				 */
-				if ( ! apply_filters( 'wb_gam_membership_level_earns', true, $level_id, $source, $user_id ) ) {
-					return 0;
-				}
+			array(
+				'id'                => 'jetonomy_membership_activated',
+				'label'             => static fn(): string => __( 'Activate a membership', 'wb-gamification' ),
+				'description'       => static fn(): string => __( 'Awarded once per plan when a paid membership becomes active for the member (RCP / PMPro / MemberPress / WooCommerce Subscriptions / Sensei / LearnDash / MasterStudy / Tutor / LifterLMS).', 'wb-gamification' ),
+				// Free + Pro adapters fire: do_action( 'jetonomy_membership_activated', int $user_id, mixed $level_id, string $source ).
+				'hook'              => 'jetonomy_membership_activated',
+				'user_callback'     => function ( int $user_id, $level_id, string $source ): int {
+					/**
+					 * Whether activating this membership level earns points.
+					 *
+					 * The rule rewards a paid membership. Adapters also report free
+					 * levels (a default plan every member is placed on), which would
+					 * hand out points just for signing up. The source that knows its
+					 * levels answers false for a free one.
+					 *
+					 * @since 1.6.6
+					 *
+					 * @param bool   $earns    Default true.
+					 * @param mixed  $level_id Level id as the adapter reported it.
+					 * @param string $source   Adapter source, e.g. 'buddynext-pro'.
+					 * @param int    $user_id  Member.
+					 */
+					if ( ! apply_filters( 'wb_gam_membership_level_earns', true, $level_id, $source, $user_id ) ) {
+						return 0;
+					}
 
-				// Awards from before 1.6.8 carry no object id: those count as earned per plan here.
-				// Newer ones are keyed per member and plan (once_per_object) and taken back on
-				// deactivation. Adapters re-announce a membership on every
-				// renewal, date change and monthly/yearly switch (BuddyNext Pro maps
-				// subscription_extended to this hook too), and each paid 25 points
-				// again. A different plan still earns, once. The check reads the
-				// ledger joined to its event, so an event that paid nothing (a cap
-				// blocked it) does not count as earned.
-				global $wpdb;
-				$needle = substr( (string) wp_json_encode( array( 'level_id' => is_scalar( $level_id ) ? (string) $level_id : '' ) ), 1, -1 );
-				$earned = (int) $wpdb->get_var(
-					$wpdb->prepare(
-						"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points p
+					// Awards from before 1.6.8 carry no object id: those count as earned per plan here.
+					// Newer ones are keyed per member and plan (once_per_object) and taken back on
+					// deactivation. Adapters re-announce a membership on every
+					// renewal, date change and monthly/yearly switch (BuddyNext Pro maps
+					// subscription_extended to this hook too), and each paid 25 points
+					// again. A different plan still earns, once. The check reads the
+					// ledger joined to its event, so an event that paid nothing (a cap
+					// blocked it) does not count as earned.
+					global $wpdb;
+					$needle = substr( (string) wp_json_encode( array( 'level_id' => is_scalar( $level_id ) ? (string) $level_id : '' ) ), 1, -1 );
+					$earned = (int) $wpdb->get_var(
+						$wpdb->prepare(
+							"SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points p
 						 JOIN {$wpdb->prefix}wb_gam_events e ON e.id = p.event_id
 						 WHERE p.user_id = %d AND p.action_id = 'jetonomy_membership_activated' AND p.points > 0
 						   AND p.object_id IS NULL AND e.metadata LIKE %s",
-						$user_id,
-						'%' . $wpdb->esc_like( $needle ) . '%'
-					)
-				);
-				return $earned > 0 ? 0 : $user_id;
-			},
-			'metadata_callback' => function ( int $user_id, $level_id, string $source ): array {
-				return array(
-					'level_id' => is_scalar( $level_id ) ? (string) $level_id : '',
-					'source'   => $source,
-				);
-			},
-			'once_per_object'   => static fn( int $user_id, $level_id ): int => \WBGam\Engine\Registry::object_key( $user_id, is_scalar( $level_id ) ? (string) $level_id : '' ),
-			// Per member and plan: deactivation (cancel, refund, removal) takes it back; reactivating pays again.
-			'reverse_on'        => array(
-				'jetonomy_membership_deactivated' => static fn( $user_id, $level_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, is_scalar( $level_id ) ? (string) $level_id : '' ),
+							$user_id,
+							'%' . $wpdb->esc_like( $needle ) . '%'
+						)
+					);
+					return $earned > 0 ? 0 : $user_id;
+				},
+				'metadata_callback' => function ( int $user_id, $level_id, string $source ): array {
+					return array(
+						'level_id' => is_scalar( $level_id ) ? (string) $level_id : '',
+						'source'   => $source,
+					);
+				},
+				'once_per_object'   => static fn( int $user_id, $level_id ): int => \WBGam\Engine\Registry::object_key( $user_id, is_scalar( $level_id ) ? (string) $level_id : '' ),
+				// Per member and plan: deactivation (cancel, refund, removal) takes it back; reactivating pays again.
+				'reverse_on'        => array(
+					'jetonomy_membership_deactivated' => static fn( $user_id, $level_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, is_scalar( $level_id ) ? (string) $level_id : '' ),
+				),
+				'default_points'    => 25,
+				'category'          => 'community',
+				'icon'              => 'icon-key',
+				'repeatable'        => true,
+				// Award in the request, not via the async queue: the once-per-plan check
+				// above must see the first award before a second event (a plan switch
+				// fires two within seconds) is checked.
+				'async'             => false,
 			),
-			'default_points'    => 25,
-			'category'          => 'community',
-			'icon'              => 'icon-key',
-			'repeatable'        => true,
-			// Award in the request, not via the async queue: the once-per-plan check
-			// above must see the first award before a second event (a plan switch
-			// fires two within seconds) is checked.
-			'async'             => false,
-		),
 
 		),
 	),

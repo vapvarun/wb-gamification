@@ -1768,7 +1768,7 @@ final class LeaderboardEngine {
 		}
 		$placeholders = preg_match_all( '/%[ds]/', str_replace( '%%', '', $sql ) );
 		if ( 0 !== strpos( $sql, ' AND ' ) || count( $values ) !== $placeholders ) {
-			_doing_it_wrong( 'wb_gam_leaderboard_exclusion_sql', esc_html__( 'The fragment must start with " AND " and have one value per %d or %s placeholder. It was ignored.', 'wb-gamification' ), '1.7.0' );
+			_doing_it_wrong( 'wb_gam_leaderboard_exclusion_sql', esc_html__( 'The fragment must start with " AND " and have one value for each placeholder. It was ignored.', 'wb-gamification' ), '1.7.0' );
 			return array( '', array() );
 		}
 		return array( $sql, $values );

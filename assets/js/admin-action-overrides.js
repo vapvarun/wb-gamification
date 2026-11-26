@@ -96,6 +96,8 @@
 	function request( id, method, body ) {
 		const url = cfg.restBase + encodeURIComponent( id ).replace( /%2F/g, '/' ) + '/overrides';
 		return fetch( url + ( url.includes( '?' ) ? '&' : '?' ) + '_locale=user', {
+			// A hung host must not leave the row waiting forever: the save fails and the old value returns.
+			signal: ( typeof AbortSignal !== 'undefined' && AbortSignal.timeout ) ? AbortSignal.timeout( 15000 ) : undefined,
 			method,
 			credentials: 'same-origin',
 			headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': cfg.nonce },

@@ -601,7 +601,7 @@ final class SetupWizard {
 		);
 		?>
 		<div class="wrap wbgam-setup" data-wbgam-setup>
-			<form method="post" class="wbgam-setup__form" data-wbgam-setup-form>
+			<form method="post" data-wbgam-setup-form>
 				<?php wp_nonce_field( self::NONCE_ACTION ); ?>
 
 				<header class="wbgam-setup__head">

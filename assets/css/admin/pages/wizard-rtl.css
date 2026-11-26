@@ -91,7 +91,6 @@
 }
 .wbgam-setup__panel[hidden] { display: none; }
 .wbgam-setup__panel h2 { margin: 0 0 6px; font-size: var(--wbgam-fs-xl); }
-.wbgam-setup__panel h2:focus { outline: none; }
 .wbgam-setup__lede { margin: 0 0 var(--wbgam-gap); color: var(--wbgam-text-secondary); max-width: 70ch; }
 
 /* Step 1: plugins found on the site. */

@@ -169,7 +169,11 @@ final class JetonomyIntegration {
 		}
 
 		if ( function_exists( 'as_enqueue_async_action' ) ) {
-			as_enqueue_async_action( self::REPLIES_HOOK, array( $post_id, $mode, $after_id ), 'wb-gamification' );
+			// Each batch queues the next, so the same batch must never be queued twice.
+			$args = array( $post_id, $mode, $after_id );
+			if ( ! as_has_scheduled_action( self::REPLIES_HOOK, $args, 'wb-gamification' ) ) {
+				as_enqueue_async_action( self::REPLIES_HOOK, $args, 'wb-gamification' );
+			}
 			return;
 		}
 
@@ -224,7 +228,7 @@ final class JetonomyIntegration {
 			return;
 		}
 
-		$keys = array_map( static fn( int $id ): int => \WBGam\Engine\Registry::object_key( 'jetonomy', 'reply', $id, 0 ), $ids );
+		$keys    = array_map( static fn( int $id ): int => \WBGam\Engine\Registry::object_key( 'jetonomy', 'reply', $id, 0 ), $ids );
 		$targets = array(
 			self::ACTION_PREFIX . 'reply_created'  => $keys,
 			self::ACTION_PREFIX . 'reply_accepted' => $keys,

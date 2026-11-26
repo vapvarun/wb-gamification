@@ -40,7 +40,7 @@ final class AdminNav {
 	/**
 	 * Slugs WordPress registered under the plugin menu for this request (filled in arrange()).
 	 *
-	 * @var array<string, array{0:string,1:string,2:string}>|null
+	 * @var array<string, string>|null Page slug => capability.
 	 */
 	private static ?array $registered = null;
 
