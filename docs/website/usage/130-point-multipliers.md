@@ -32,4 +32,4 @@ A multiplier can carry a start and end date so it switches itself on and off. Th
 
 ## Who Can Manage Multipliers
 
-Administrators, and staff given the **Manage rules** permission under **Gamification > Dashboard > Access > Staff permissions**.
+Administrators, and staff given the **Manage rules** permission under **Gamification > Members > Access > Staff permissions**.

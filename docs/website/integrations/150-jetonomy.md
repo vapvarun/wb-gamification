@@ -4,7 +4,7 @@ WB Gamification connects to Jetonomy automatically when Jetonomy is active. Two 
 
 ## Forum Events Are Actions You Control
 
-Every forum event Jetonomy scores is an action on **Settings > Points**, under Jetonomy, like any other action:
+Every forum event Jetonomy scores is an action on **Earning > Actions and points**, under Jetonomy, like any other action:
 
 | Action | Starts at | What it is |
 |---|---|---|

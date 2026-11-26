@@ -42,7 +42,7 @@ Credential badges include a pre-built LinkedIn deep-link on the share page. Clic
 
 ## How to Enable Credential Badges
 
-1. Go to **Gamification > Badges**.
+1. Go to **Gamification > Rewards > Badges**.
 2. Edit the badge you want to make shareable as a credential.
 3. Tick **Mark as shareable credential (LinkedIn, OpenBadges)**.
 4. Save the badge.
@@ -51,4 +51,4 @@ Non-credential badges still get share pages once the member shares them - they j
 
 ## Toggling the feature
 
-Badge Sharing is on by default. To turn it off site-wide, untick **Badge sharing** under **Gamification > Dashboard > Modules**.
+Badge Sharing is on by default. To turn it off site-wide, untick **Badge sharing** under **Gamification > Tools > Modules**.

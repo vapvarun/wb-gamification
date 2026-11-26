@@ -83,7 +83,7 @@ Use the **REST API** with API key authentication.
 
 **Setup:**
 
-1. Generate an API key in WP Admin > Gamification > API Keys
+1. Generate an API key in WP Admin > Gamification > Tools > API keys
 2. Use the key in the `X-WB-Gam-Key` header
 
 **JavaScript SDK (recommended):**

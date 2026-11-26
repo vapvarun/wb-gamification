@@ -65,7 +65,7 @@ Members find the box on their own profile page, or on the **Achievements** tab i
 ## Admin Data Controls
 
 Admins can:
-- View any member's full point history via **Gamification > Members**
+- View any member's full point history via **Gamification > Members > Members**
 - Award or adjust points manually with a logged reason
 - Award or revoke badges manually
 - View all kudos activity in the Analytics dashboard

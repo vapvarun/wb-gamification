@@ -34,6 +34,7 @@ See [Hooks and Filters Overview](110-hooks-overview.md) for how to add a listene
 | `wb_gam_og_accent_color` | The accent hex colour used in the generated badge-share OG image. Default `#5b4cdb`; an invalid value falls back to the default. | `string $hex` | `string` hex colour |
 | `wb_gam_streak_grace_days` | The grace period (days before a streak breaks) per user. | `int $days`, `int $user_id` | `int` grace days |
 | `wb_gam_credential_document` | The OpenBadges 3.0 JSON-LD credential before it is returned. | `array $credential`, `string $badge_id`, `int $user_id` | `array` credential document |
+| `wb_gam_badge_showcase_page_size` | How many badges the Badge Showcase block shows per tab before its **Show all** button. Added in 1.7.0. | `int $page_size` (default `12`) | `int`; `0` shows every badge with no button |
 
 ## Challenges and kudos
 
@@ -98,7 +99,7 @@ See [Customizing gamification emails](210-email-customization.md) for worked exa
 |--------|-----------------|------------|--------|
 | `wb_gam_sse_allowed` | Whether the Server-Sent Events long-poll transport may run on this host. Default `false` - SSE pins a PHP-FPM worker per connection, so it stays off unless the host is provisioned for long-lived streaming. When `false`, realtime falls back to WP Heartbeat. Added in 1.5.2. | `bool $allowed` | `bool` whether SSE is permitted |
 | `wb_gam_celebration_style` | Whether celebrations use confetti. Default `'confetti'`; return `'none'` for a community where it does not fit. Members with reduced motion never see confetti regardless. Added in 1.6.5. | `string $style` | `string` `'confetti'` or `'none'` |
-| `wb_gam_toast_position` | The on-screen corner reward toasts slide in from. Filters the stored `wb_gam_toast_position` option (Gamification > Dashboard > Realtime). One of `bottom-center` (default since 1.6.5), `bottom-right`, `bottom-left`, `top-right`, `top-center`. Added in 1.5.2. | `string $position` | `string` toast position |
+| `wb_gam_toast_position` | The on-screen corner reward toasts slide in from. Filters the stored `wb_gam_toast_position` option (Gamification > Experience > Notifications). One of `bottom-center` (default since 1.6.5), `bottom-right`, `bottom-left`, `top-right`, `top-center`. Added in 1.5.2. | `string $position` | `string` toast position |
 
 ## Community notification contract
 
@@ -110,7 +111,7 @@ Part of the same contract as `wb_gam_notification_created` (see the [Actions ref
 
 ## Access and modules
 
-Site-owner controls added in 1.5.3 (Gamification > Dashboard > Access and Gamification > Dashboard > Modules).
+Site-owner controls added in 1.5.3 (Gamification > Members > Access and Gamification > Tools > Modules).
 
 | Filter | What it filters | Parameters | Return |
 |--------|-----------------|------------|--------|
@@ -227,7 +228,7 @@ add_filter(
 add_filter( 'wb_gam_sse_allowed', '__return_true' );
 
 // Move reward toasts to the top-right corner for everyone, ignoring the
-// admin Gamification > Dashboard > Realtime selection.
+// admin Gamification > Experience > Notifications selection.
 add_filter(
 	'wb_gam_toast_position',
 	static function (): string {

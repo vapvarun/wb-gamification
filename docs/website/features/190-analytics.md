@@ -6,7 +6,7 @@ The Analytics dashboard gives you a high-level view of how your community's gami
 
 ## Accessing the Dashboard
 
-Go to **Gamification > Analytics** in your WordPress admin.
+Go to **Gamification > Overview > Analytics** in your WordPress admin.
 
 ## Period Selector
 
@@ -64,6 +64,6 @@ All analytics queries are cached for **10 minutes**. The dashboard notes the las
 ## What Is Not Shown
 
 The analytics dashboard shows aggregate data only. It does not show:
-- Individual member point transactions (see **Gamification > Members** for that)
+- Individual member point transactions (see **Gamification > Members > Members** for that)
 - Historical data beyond 90 days via the period selector (though all data remains in the database)
 - Real-time live updates - the page must be reloaded to see fresh data

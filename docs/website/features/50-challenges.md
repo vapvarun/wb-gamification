@@ -13,7 +13,7 @@ Example challenges:
 
 ## Creating a Challenge
 
-1. Go to **Gamification > Challenges**.
+1. Go to **Gamification > Rewards > Challenges**.
 2. Click **Add New Challenge**.
 3. Fill in the following fields:
 

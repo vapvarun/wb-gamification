@@ -251,7 +251,7 @@ if ( wb_gam_is_feature_enabled( 'cohort_leagues' ) ) {
 }
 ```
 
-The optional-engine feature flags are: `cohort_leagues`, `weekly_emails`, `leaderboard_nudge`, `status_retention`, `community_challenges`, and `badge_share`. Every flag defaults to on and is toggled from **Gamification > Dashboard > Modules**.
+The optional-engine feature flags are: `cohort_leagues`, `weekly_emails`, `leaderboard_nudge`, `status_retention`, `community_challenges`, and `badge_share`. Every flag defaults to on and is toggled from **Gamification > Tools > Modules**.
 
 ---
 
@@ -266,7 +266,7 @@ Since 1.6.5. Use these instead of calling the engine classes (`WBGam\Engine\*`),
 | `wb_gam_format_points( int $amount, string $slug = '', bool $signed = false ): string` | An amount with the site's name for it, singular for exactly one: "1 Point", "250 Points", "+10 Karma". Use it wherever a number of points is shown. |
 | `wb_gam_get_point_type_label( string $slug = '' ): string` | The point type's display name ("Points", "Coins"); `''` means the default type. |
 | `wb_gam_get_category_label( string $slug ): string` | A readable category heading ("member-blog" reads "Member Blog"). |
-| `wb_gam_is_module_enabled( string $slug ): bool` | Whether a module on **Gamification > Dashboard > Modules** is on (`kudos`, `badges`, ...). |
+| `wb_gam_is_module_enabled( string $slug ): bool` | Whether a module on **Gamification > Tools > Modules** is on (`kudos`, `badges`, ...). |
 | `wb_gam_get_points_history( int $user_id, int $limit = 20, ?string $point_type = null ): array` | Recent transactions, newest first. |
 | `wb_gam_get_user_rank( int $user_id, string $period = 'all', string $point_type = '' ): array` | `rank`, `points`, `points_to_next`. |
 | `wb_gam_get_next_level( int $user_id ): ?array` | The next level, or `null` at the top. |

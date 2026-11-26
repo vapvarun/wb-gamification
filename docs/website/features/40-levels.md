@@ -28,7 +28,7 @@ Level is never stored independently - it is always derived from the points ledge
 
 When a member advances to a new level, they receive:
 
-- A **toast notification** at the bottom-center of the page (or the placement set in Gamification > Dashboard > Realtime) with the new level name and icon
+- A **toast notification** at the bottom-center of the page (or the placement set in Gamification > Experience > Notifications) with the new level name and icon
 - A **BuddyPress notification** (if BuddyPress is active)
 - An **activity feed post** announcing the level-up to the community (if BuddyPress is active)
 
@@ -40,7 +40,7 @@ Members can also see their current level name and the points needed for the next
 
 ## Adding Custom Levels
 
-1. Go to **Gamification > Levels**.
+1. Go to **Gamification > Rewards > Levels**.
 2. Click **Add New Level**.
 3. Enter a level name (for example, "Expert" or "Ambassador").
 4. Enter the minimum points required to reach this level.

@@ -1,6 +1,6 @@
 # Admin Tools
 
-Go to **Gamification > Dashboard > Tools** in your admin sidebar.
+Go to **Gamification > Tools > Export and maintenance** in your admin sidebar.
 
 Tools are the maintenance and portability controls a site owner reaches for occasionally: move your configuration between sites, rebuild the leaderboard snapshot, and (in the danger zone) wipe all member progress. Added in 1.5.3.
 

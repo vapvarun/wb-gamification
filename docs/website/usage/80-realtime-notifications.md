@@ -1,6 +1,6 @@
 # Realtime and Notification Settings
 
-Go to **Gamification > Dashboard > Realtime** in your admin sidebar.
+Go to **Gamification > Experience > Notifications** in your admin sidebar.
 
 This section controls how live reward feedback reaches members - the transport that delivers updates, and where on screen reward toasts appear.
 
@@ -8,7 +8,17 @@ This section controls how live reward feedback reaches members - the transport t
 
 **Default: Bottom center (recommended)**
 
-Reward toasts (points, badges, kudos) appear where you pick here, in the same style as BuddyNext's own toasts. A bottom position slides up and a top position slides down. Repeated points from the same action within two seconds merge into one toast, and at most three show at once.
+Reward toasts (points, badges, kudos) appear where you pick here. A bottom position slides up and a top position slides down.
+
+How toasts behave (1.7.0):
+
+- **One toast per moment.** Awards that land within a second and a half of each other become one summary, for example "+17 Points and a new badge", with what earned it underneath and the badge's picture. The number counts up.
+- **The big moment first.** A level-up (or a league promotion or community goal) shows on its own; the summary follows when it closes.
+- **Never crowded.** At most two toasts show at once on a desktop and one on a phone. The rest wait their turn and are never dropped.
+- **Closes by itself.** After 4 seconds, or 8 when the toast carries a button such as **See progress**. Pointing at a toast or tabbing into it pauses the timer, and **Escape** closes the newest one. Toasts wait while a popup is open or the member is typing.
+- **Fits your site.** Toasts use your site's font and your theme's accent colour, are one width everywhere, and inside BuddyNext they go through BuddyNext's own toast stack.
+
+See [Notifications](../features/160-notifications.md) for every toast and its wording.
 
 | Option | Stored value |
 |---|---|

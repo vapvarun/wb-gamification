@@ -1,6 +1,6 @@
 # Challenge Manager
 
-Go to **Gamification > Challenges** in your admin menu.
+Go to **Gamification > Rewards > Challenges** in your admin menu.
 
 Challenges give members a time-limited goal: perform a specific action a set number of times before the deadline to earn bonus points. Progress counts only while the challenge is active.
 
@@ -24,7 +24,7 @@ The **Create Challenge** form is at the top of the page.
 | Field | Required | Default | Description |
 |-------|----------|---------|-------------|
 | **Title** | Yes | - | A short name shown to members on the challenge card, e.g. "Post 10 photos this week." |
-| **Action** | Yes | - | The user behavior that counts toward this challenge. Choose from all registered actions (same list as the Points tab). |
+| **Action** | Yes | - | The user behavior that counts toward this challenge. Choose from all registered actions (same list as **Earning > Actions and points**). |
 | **Target Count** | Yes | 10 | How many times the member must perform the action to complete the challenge. Minimum 1. |
 | **Bonus Points** | No | 50 | Extra points awarded when the member hits the target. Set to 0 for a challenge with no point bonus (e.g. badge-only reward). |
 | **Start Date** | No | Now | When the challenge becomes available. Actions before this date do not count. |
@@ -57,6 +57,6 @@ Click **Delete** in the challenge row. Confirm the prompt. This removes the chal
 ## Notes on Challenge Design
 
 - **Default 7-day duration.** The end date defaults to 7 days from when you create the challenge. Adjust this for shorter sprints (24-hour flash challenges) or longer campaigns.
-- **Actions must be enabled.** If you disable an action on the Points tab, it will not count toward challenges that use it.
+- **Actions must be enabled.** If you switch an action off under **Earning > Actions and points**, it will not count toward challenges that use it.
 - **One action per challenge.** Each challenge tracks a single action type. To create multi-action goals, create multiple challenges and use a badge as the reward for completing all of them.
 - **Bonus points stack with regular points.** Members earn their normal per-action points throughout the challenge period, plus the bonus on completion.

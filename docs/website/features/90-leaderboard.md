@@ -30,7 +30,7 @@ Leaderboard positions are calculated from the points ledger and stored in a snap
 - Very recent activity may take a short time to appear on the leaderboard
 - Page loads are fast because the ranking query runs against the cached snapshot rather than recounting points from scratch
 
-If you award points manually and need the leaderboard to update immediately, you can rebuild it from **Gamification > Dashboard > Tools**.
+If you award points manually and need the leaderboard to update immediately, you can rebuild it from **Gamification > Tools > Export and maintenance**.
 
 ## Browsing the Whole Leaderboard
 

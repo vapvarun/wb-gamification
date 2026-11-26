@@ -22,6 +22,16 @@ Prefer a shortcode? Use:
 | Category | Limit to one badge category (for example, wordpress or buddypress). | (empty, all) |
 | Limit | Cap how many badges to display. 0 shows all. | 0 |
 
+## Big collections
+
+The block shows 12 badges per tab (All, Earned, Locked), then a **Show all N badges** button that reveals the rest in place. Each tab folds on its own count, and a tab with 12 or fewer shows no button. The header always counts the whole collection, even when **Limit** is set, so "3 / 28 badges earned" stays true. Without JavaScript every badge shows.
+
+To change the 12, use the `wb_gam_badge_showcase_page_size` filter; `0` shows every badge with no button:
+
+```php
+add_filter( 'wb_gam_badge_showcase_page_size', fn() => 24 );
+```
+
 ## Tips
 
 - Turn on Show locked to motivate members by revealing badges they can still earn.

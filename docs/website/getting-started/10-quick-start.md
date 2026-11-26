@@ -17,7 +17,7 @@ Setup saves your choices and takes you to **Overview > Dashboard**. See [Setup](
 
 ## Step 2: Check What Is Already Working (30 seconds)
 
-Go to **Gamification > Dashboard > Points**. You will see every action that is currently active on your site - things like "Post an activity update," "Join a group," and "Complete a course." These are already wired up. No additional configuration is needed.
+Go to **Gamification > Earning > Actions and points**. You will see every action that is currently active on your site - things like "Post an activity update," "Join a group," and "Complete a course." These are already wired up. No additional configuration is needed.
 
 ## Step 3: Have a Member Do Something (1 minute)
 
@@ -31,11 +31,11 @@ Points appear immediately in three places:
 
 - The **member-points block** on any page where you have placed it
 - The member's **BuddyPress profile** under the Gamification tab (if BuddyPress is active)
-- **Gamification > Members** in the admin, where you can view any member's full point history
+- **Gamification > Members > Members** in the admin, where you can view any member's full point history
 
 ## Step 5: View the Analytics Dashboard (30 seconds)
 
-Go to **Gamification > Analytics**. You will see KPI cards showing total points awarded, active members, badges earned, and more. The dashboard refreshes every 10 minutes.
+Go to **Gamification > Overview > Analytics**. You will see KPI cards showing total points awarded, active members, badges earned, and more. The dashboard refreshes every 10 minutes.
 
 ## What Happens Automatically
 
@@ -47,4 +47,4 @@ From here, the plugin handles everything on its own:
 - Streaks build each day a member is active
 - The leaderboard updates on a rolling basis
 
-You do not need to do anything to keep it running. Explore **Gamification > Badges**, **Levels**, and **Challenges** to customize the experience for your community.
+You do not need to do anything to keep it running. Explore **Gamification > Rewards > Badges**, **Levels**, and **Challenges** to customize the experience for your community.

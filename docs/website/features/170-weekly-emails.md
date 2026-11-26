@@ -15,7 +15,7 @@ The email is sent from your site's admin email address, with your site title as 
 
 ## Configuration
 
-1. Go to **Gamification > Dashboard > Habits & Profiles**.
+1. Go to **Gamification > Experience > Profiles and habits**.
 2. In **Weekly Recap Email**, tick or untick **Send the weekly recap email**.
 3. Optionally change the **Subject line**.
 
