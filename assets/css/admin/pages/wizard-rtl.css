@@ -134,14 +134,17 @@
 }
 .wbgam-setup__pace {
 	display: grid;
-	gap: 4px;
+	grid-template-columns: auto 1fr;
+	gap: 4px 10px;
+	align-items: start;
 	padding: var(--wbgam-gap-sm) var(--wbgam-gap);
 	border: 1px solid var(--wbgam-border);
 	border-radius: var(--wbgam-radius-md);
 	cursor: pointer;
 }
 .wbgam-setup__pace:has(input:checked) { border-color: var(--wbgam-primary); background: var(--wbgam-surface-tint); }
-.wbgam-setup__pace span { color: var(--wbgam-text-secondary); font-size: var(--wbgam-fs-sm); }
+.wbgam-setup__pace input { grid-row: span 2; margin-block-start: 3px; }
+.wbgam-setup__pace span { grid-column: 2; color: var(--wbgam-text-secondary); font-size: var(--wbgam-fs-sm); }
 .wbgam-setup__group {
 	margin-block-start: var(--wbgam-gap-sm);
 	border: 1px solid var(--wbgam-border);
@@ -218,7 +221,7 @@
 .wbgam-setup__nav > span { flex: 1 1 auto; color: var(--wbgam-text-muted); font-size: var(--wbgam-fs-sm); }
 
 @media (max-width: 640px) {
-	.wbgam-setup { padding-inline: 0; }
+	.wbgam-setup { box-sizing: border-box; padding-inline: 12px; }
 	.wbgam-setup__panel { padding: var(--wbgam-gap); }
 	.wbgam-setup__step { padding-inline: 8px 10px; }
 	.wbgam-setup:not(.is-stepped) .wbgam-setup__steps { display: none; }
