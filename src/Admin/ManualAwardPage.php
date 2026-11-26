@@ -489,15 +489,17 @@ final class ManualAwardPage {
 		// "Recent Manual Awards" table (Basecamp #9927666545). The browser
 		// verification on the live DB showed 32 'manual_award' + 6 'manual'
 		// rows that were invisible — collectively the bulk of award traffic.
+		$in   = implode( ', ', array_fill( 0, count( self::ACTION_IDS ), '%s' ) );
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $in is a list of %s placeholders, one per id, bound below.
 				"SELECT p.user_id, p.points, p.point_type, p.action_id, p.created_at, e.metadata
 				   FROM {$wpdb->prefix}wb_gam_points p
 				   LEFT JOIN {$wpdb->prefix}wb_gam_events e ON e.id = p.event_id
-				  WHERE p.action_id IN ('" . implode( "','", self::ACTION_IDS ) . "')
+				  WHERE p.action_id IN ( {$in} )
 				  ORDER BY p.created_at DESC, p.id DESC
 				  LIMIT %d",
-				max( 1, $limit )
+				array_merge( self::ACTION_IDS, array( max( 1, $limit ) ) )
 			),
 			ARRAY_A
 		);

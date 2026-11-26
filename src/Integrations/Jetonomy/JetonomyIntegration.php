@@ -214,12 +214,9 @@ final class JetonomyIntegration {
 		$ids = array_map(
 			'intval',
 			(array) $wpdb->get_col(
-				$wpdb->prepare(
-					"SELECT id FROM {$wpdb->prefix}jt_replies WHERE post_id = %d AND id > %d" . ( $reverse ? '' : " AND status = 'publish'" ) . ' ORDER BY id ASC LIMIT %d',
-					$post_id,
-					$after_id,
-					self::REPLY_BATCH
-				)
+				$reverse
+					? $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}jt_replies WHERE post_id = %d AND id > %d ORDER BY id ASC LIMIT %d", $post_id, $after_id, self::REPLY_BATCH )
+					: $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}jt_replies WHERE post_id = %d AND id > %d AND status = %s ORDER BY id ASC LIMIT %d", $post_id, $after_id, 'publish', self::REPLY_BATCH )
 			)
 		);
 		// phpcs:enable
