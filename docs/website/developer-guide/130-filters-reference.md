@@ -186,6 +186,12 @@ These fire on every block, not just one slug.
 |--------|-----------------|------------|--------|
 | `wb_gam_hub_anon_leaderboard` | Whether the hub block shows anonymous visitors a top-3 leaderboard preview. Default is the `wb_gam_hub_anon_leaderboard` option (ON). | `bool $show` | `bool` whether to show the preview |
 
+### Realtime polling rate
+
+| Filter | Arguments | Description |
+|---|---|---|
+| `wb_gam_realtime_interval` | `int $seconds` | How often the realtime client (WordPress Heartbeat) checks for new points and badge toasts while a page is in use, from 5 to 120 seconds. The default is 15 on its own and 60 inside a BuddyNext community; the client still bursts to 5 seconds for 30 seconds after the member's own action. |
+
 ## Lifecycle
 
 | Filter | What it filters | Parameters | Return |
