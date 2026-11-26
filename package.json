@@ -14,6 +14,7 @@
 		"start": "wp-scripts start",
 		"format": "wp-scripts format",
 		"lint:js": "wp-scripts lint-js",
+		"test:js": "node --test tests/js/*.test.js",
 		"lint:css": "wp-scripts lint-style",
 		"packages-update": "wp-scripts packages-update"
 	},

@@ -129,6 +129,12 @@ final class NotificationBridge {
 	private const CURSOR_META_PREFIX = 'wb_gam_notif_cursor_';
 
 	/**
+	 * Server-Timing metric name that tells the member's page a toast is waiting. Read by
+	 * assets/js/heartbeat.js, which polls at once when a response carries it.
+	 */
+	public const TOAST_TIMING = 'wbgam-toast';
+
+	/**
 	 * The one delivery position every reader shares (cursor key suffix).
 	 *
 	 * Each reader (page seed, heartbeat, REST poll, SSE) used to keep its own
@@ -1035,6 +1041,13 @@ final class NotificationBridge {
 		);
 
 		self::trim( $user_id );
+
+		// The member's own action just queued this toast (a BuddyNext post or comment, any plugin's
+		// form): mark this response so their page fetches it now instead of on its next slow poll.
+		// Server-Timing is readable by the page for any same-origin request (assets/js/heartbeat.js).
+		if ( get_current_user_id() === $user_id && ! headers_sent() ) {
+			header( 'Server-Timing: ' . self::TOAST_TIMING, false );
+		}
 	}
 
 	/**

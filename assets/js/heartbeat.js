@@ -117,6 +117,26 @@
 			}, BURST_MS );
 		}
 
+		// The server marks a response when the member's own action queued a toast (Server-Timing:
+		// wbgam-toast). Any plugin's request counts, so a BuddyNext post or comment brings its toast
+		// in seconds instead of on the next slow tick, without a hook into that plugin's code.
+		function markedForToast( entry ) {
+			return ( entry.serverTiming || [] ).some( function ( t ) {
+				return 'wbgam-toast' === t.name;
+			} );
+		}
+		if ( window.PerformanceObserver ) {
+			try {
+				new PerformanceObserver( function ( list ) {
+					if ( list.getEntries().some( markedForToast ) ) {
+						burst();
+					}
+				} ).observe( { type: 'resource' } );
+			} catch ( err ) {
+				// No resource timing here: the steady poll still delivers the toast.
+			}
+		}
+
 		var subscribers = {
 			user:         new Set(),
 			toasts:       new Set(),

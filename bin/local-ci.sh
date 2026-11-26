@@ -181,6 +181,13 @@ else
     fi
   fi
 
+  # Front-end behaviour tests (node:test + jsdom, which @wordpress/scripts already installs).
+  if [ -d node_modules/jsdom ]; then
+    run_stage "1.6" "JS tests (npm run test:js)" npm run --silent test:js
+  else
+    warn "1.6 JS tests skipped — node_modules missing. Run 'npm install'."
+  fi
+
   if [ -f package.json ] && grep -q '"build"' package.json; then
     if [ -d node_modules ]; then
       run_stage "1.4" "JS build (npm run build)" npm run build

@@ -15,23 +15,25 @@
  *       icon:      'icon-sparkles', // Lucide class; a default per tone otherwise
  *       title:     '+10 Points',
  *       body:      'Leave a comment', // optional second line
- *       href:      '/gamification/',  // optional link; a toast with a link stays until dismissed
+ *       href:      '/gamification/',  // optional link; the toast stays longer (8s), it still closes
  *       hrefLabel: 'See my progress',
- *       persist:   false,
  *       onShow:    function ( el, handle ) {}
  *   } );
  *   handle.el / handle.update( opts ) / handle.dismiss()
  *
- * On a page where BuddyNext's window.bnToast exists the call is handed to it (one stack for every
+ * On a page where BuddyNext's window.bnToast exists the toast is drawn by it (one stack for every
  * plugin, no two bottom-centre stacks over each other) and this renderer is only the fallback,
  * used in wp-admin and on sites without BuddyNext. bnToast draws its own four status icons, so
- * a per-event icon is ignored there.
+ * a per-event icon is ignored there. The rules below apply on both renderers: this file decides
+ * when a toast shows and when it goes, BuddyNext only draws it.
  *
- * Rules: three visible at most, 4s then fade, paused while the pointer or focus is on it, the
- * host is a manual popover so it sits in the top layer above any native dialog opened later.
- * While any modal or dialog is open (ours or another plugin's), toasts wait: a new one joins the
- * queue and one already showing is taken off screen and put back at the front, so a toast never
- * covers a popup's buttons. They show once the dialog closes. Nothing is dropped.
+ * Rules: three visible at most. Every toast closes by itself: 4s, or 8s when it carries a link,
+ * paused while the pointer or focus is on it. Escape closes the newest one. The host is a manual
+ * popover so it sits in the top layer above any native dialog opened later.
+ * A toast never covers what the member is using: while a modal or dialog is open (ours or another
+ * plugin's), or while the member is typing in a field on the front end (a composer, a comment box),
+ * toasts wait. A new one joins the queue and one already showing is taken off screen and put back
+ * at the front. They show once the dialog closes or the member leaves the field. Nothing is dropped.
  *
  * @package WB_Gamification
  * @since   1.6.5
@@ -57,6 +59,9 @@
 	var ONE_AT_A_TIME = '(max-width: 640px)';
 	var waiting       = []; // { opts, real, handle, held }, oldest first.
 	var DISMISS_MS  = 4000;
+	// Long enough to read two lines and decide on the link; hover or focus pauses it, so a keyboard
+	// member who tabs into the toast keeps it. The destination is also in the member's menu.
+	var LINK_MS     = 8000;
 	var RESUME_MS   = 2000;
 	var EXIT_MS     = 250;
 	var GAP         = 16; // Matches the 1rem breathing room in the stylesheet fallback.
@@ -73,6 +78,7 @@
 
 	var container = null;
 	var live      = {}; // key -> handle
+	var bnLive    = []; // { opts, cur, pulled, dead }: toasts drawn by BuddyNext, so a dialog or Escape reaches them.
 
 	// A string the page localized itself wins; otherwise the translated default.
 	function text( key, fallback ) {
@@ -161,7 +167,7 @@
 		clearTimeout( handle.timer );
 		// A merge or a late arm must not start the countdown under the pointer; mouseleave re-arms.
 		// A toast held off screen behind a dialog starts its countdown when it shows again.
-		if ( handle.persist || handle.held || handle.el.matches( ':hover' ) ) {
+		if ( handle.held || handle.el.matches( ':hover' ) ) {
 			return;
 		}
 		handle.timer = setTimeout( function () {
@@ -193,11 +199,10 @@
 	 * Queue a toast behind the one on screen (phones). Nothing is dropped. The handle forwards
 	 * to the real toast once it shows; until then update() edits the queued options.
 	 *
-	 * @param {Object}      opts Same options as toast().
-	 * @param {HTMLElement} host The stack.
+	 * @param {Object} opts Same options as toast().
 	 * @return {Object} { el, gone, update, dismiss }
 	 */
-	function waitTurn( opts, host ) {
+	function waitTurn( opts ) {
 		watch();
 		var same = opts.key ? waiting.filter( function ( e ) { return e.opts && e.opts.key === opts.key; } )[ 0 ] : null;
 		if ( same ) {
@@ -224,37 +229,37 @@
 			},
 		};
 		waiting.push( entry );
-
-		// The toast on screen must not hold the line: one that would stay open (it carries a
-		// link) now times out like the rest.
-		var showing = host && host.lastElementChild && host.lastElementChild._wbGamToast;
-		if ( showing && showing.persist ) {
-			showing.persist = false;
-			arm( showing, DISMISS_MS );
-		}
 		return entry.handle;
 	}
 
-	/** Show the next waiting toast, if any. Waits while a dialog is open. */
+	/** Show the next waiting toast, if any. Waits while a dialog is open or the member is typing. */
 	function nextToast() {
-		if ( ! waiting.length || modalOpen() ) {
+		if ( ! waiting.length || blocked() ) {
 			if ( waiting.length ) {
 				watch();
 			}
 			return;
 		}
 		var entry = waiting.shift();
+		if ( entry.bn ) {
+			// A BuddyNext-drawn toast taken off screen: drawn again, and the caller's handle follows it.
+			var bn    = entry.bn;
+			bn.pulled = false;
+			bn.cur    = bnDraw( bn.opts );
+			if ( bn.cur ) {
+				bnLive.push( bn );
+			} else {
+				bn.dead = true;
+			}
+			return;
+		}
 		if ( entry.held ) {
 			// A toast taken off screen while a dialog was open: the same element and handle come
 			// back, so the caller's handle still updates and dismisses it.
 			entry.real.held = false;
-			// Same rule as waitTurn(): on a phone a toast with a link must not hold the line.
-			if ( waiting.length && window.matchMedia( ONE_AT_A_TIME ).matches ) {
-				entry.real.persist = false;
-			}
 			ensureContainer().appendChild( entry.real.el );
 			raise();
-			arm( entry.real, DISMISS_MS );
+			arm( entry.real, entry.real.ms );
 			return;
 		}
 		entry.real      = toast( entry.opts );
@@ -285,6 +290,33 @@
 	}
 
 	/**
+	 * Is the member writing something on the front end? True while the focused field holds text
+	 * not yet sent: a toast then waits, so it never sits over the composer's Post button or the
+	 * phone keyboard's edge. Once the text is sent the field empties (focus often stays in it, as
+	 * BuddyNext's comment box does) and the waiting toast shows. An empty field holds nothing, so a
+	 * page that focuses a box on load does not hold every toast. Not in wp-admin, where the toast
+	 * confirms the save the owner just made from that field.
+	 *
+	 * @return {boolean}
+	 */
+	function editing() {
+		var el = document.activeElement;
+		if ( ! el || ! document.body || document.body.classList.contains( 'wp-admin' ) || ( container && container.contains( el ) ) ) {
+			return false;
+		}
+		if ( el.isContentEditable ) {
+			return '' !== el.textContent.trim();
+		}
+		var field = 'TEXTAREA' === el.tagName || ( 'INPUT' === el.tagName && /^(text|search|email|url|tel|number)$/.test( el.type ) );
+		return field && '' !== el.value.trim();
+	}
+
+	/** Must toasts wait? @return {boolean} */
+	function blocked() {
+		return modalOpen() || editing();
+	}
+
+	/**
 	 * Does the element have a box that overlaps the viewport?
 	 *
 	 * @param {Element} node Element.
@@ -296,9 +328,10 @@
 	}
 
 	/**
-	 * While a toast is showing or waiting, check every half second for an open dialog. Showing
-	 * toasts are taken off screen (front of the queue, newest last so order is kept); when the
-	 * dialog closes the queue drains. The check stops once nothing is showing or waiting.
+	 * While a toast is showing or waiting, check every half second for an open dialog or a field
+	 * being typed in. Showing toasts are taken off screen (front of the queue, newest last so order
+	 * is kept); when the page is clear again the queue drains. The check stops once nothing is
+	 * showing or waiting.
 	 */
 	function watch() {
 		if ( watchTimer ) {
@@ -306,12 +339,13 @@
 		}
 		watchTimer = setInterval( function () {
 			var showingEls = container ? Array.prototype.slice.call( container.children ) : [];
-			if ( ! showingEls.length && ! waiting.length ) {
+			bnLive = bnLive.filter( bnAlive );
+			if ( ! showingEls.length && ! bnLive.length && ! waiting.length ) {
 				clearInterval( watchTimer );
 				watchTimer = 0;
 				return;
 			}
-			if ( modalOpen() ) {
+			if ( blocked() ) {
 				var held = [];
 				showingEls.forEach( function ( el ) {
 					var h = el._wbGamToast;
@@ -323,12 +357,21 @@
 					el.remove();
 					held.push( { opts: null, real: h, handle: h, held: true } );
 				} );
+				bnLive.forEach( function ( e ) {
+					e.pulled = true;
+					e.cur.dismiss( true );
+					held.push( { opts: null, bn: e, held: true } );
+				} );
+				bnLive  = [];
 				waiting = held.concat( waiting );
 				return;
 			}
-			// The dialog closed: show what waited, one at a time on a phone, up to three otherwise.
+			// The page is clear: show what waited, one at a time on a phone, up to three otherwise.
 			var phone = window.matchMedia( ONE_AT_A_TIME ).matches;
-			while ( waiting.length && ( phone ? ! showingEls.length : ensureContainer().children.length < MAX_VISIBLE ) ) {
+			var shown = function () {
+				return ( container ? container.children.length : 0 ) + bnLive.length;
+			};
+			while ( waiting.length && ( phone ? ! shown() : shown() < MAX_VISIBLE ) ) {
 				nextToast();
 				if ( phone ) {
 					break;
@@ -362,9 +405,8 @@
 		// One line is a pill, two lines take the large radius.
 		el.classList.toggle( 'wb-gam-toast--single', ! hasBody && ! hasLink );
 
-		// A toast with a link stays until it is dismissed: it sits at the end of the page, so a
-		// keyboard or screen-reader member could not reach the link inside four seconds.
-		handle.persist = !! ( opts.persist || hasLink );
+		// Every toast closes by itself; one with a link stays longer so it can be read and followed.
+		handle.ms = hasLink ? LINK_MS : DISMISS_MS;
 	}
 
 	function build( opts ) {
@@ -410,7 +452,7 @@
 
 	function update( handle, opts ) {
 		paint( handle, opts );
-		arm( handle, DISMISS_MS );
+		arm( handle, handle.ms );
 	}
 
 	// BuddyNext's status set. Its disc draws only these four icons, so a per-event icon class is
@@ -418,17 +460,14 @@
 	var BN_TYPE = { reward: 'achievement', achievement: 'achievement', success: 'success', danger: 'error', info: 'info' };
 
 	/**
-	 * Show the toast through BuddyNext's stack (window.bnToast, same option shape) so two plugins
-	 * never draw two bottom-centre stacks over each other. The handle is adapted to ours: `gone`
-	 * follows the element, and a call BuddyNext only queued (its module has not loaded yet)
-	 * returns a dead handle, so the caller simply makes the next toast fresh.
+	 * Draw one toast with BuddyNext's stack (window.bnToast). The lifetime is always passed, so
+	 * BuddyNext never keeps a toast of ours open until it is closed by hand (its default for a
+	 * toast with a link).
 	 *
 	 * @param {Object} opts Same options as toast().
-	 * @return {Object} { el, gone, update, dismiss }
+	 * @return {?Object} BuddyNext's handle, or null when it did not take the toast.
 	 */
-	function viaBuddyNext( opts ) {
-		// Same rule as paint(): a toast with a usable link stays until dismissed. Passing
-		// persist:false would override BuddyNext's own default and time the link out.
+	function bnDraw( opts ) {
 		var hasLink = !! ( opts.href && /^(\/(?!\/)|https?:\/\/)/.test( opts.href ) );
 		var h = window.bnToast( {
 			key: opts.key || '',
@@ -437,48 +476,88 @@
 			type: BN_TYPE[ opts.tone || 'reward' ] || 'info',
 			href: hasLink ? opts.href : '',
 			linkLabel: opts.hrefLabel || '',
-			persist: !! ( opts.persist || hasLink ),
+			persist: false,
+			timeout: hasLink ? LINK_MS : DISMISS_MS,
 		} );
-
 		// A toast BuddyNext is holding in line on a phone (h.waiting) is alive, not dead: it
 		// still takes updates, so a points burst keeps merging into one toast.
 		if ( ! h || ( ! h.el && ! h.waiting ) ) {
-			return { el: null, gone: true, update: function () {}, dismiss: function () {} };
+			return null;
 		}
 		if ( h.el && typeof opts.onShow === 'function' ) {
 			window.requestAnimationFrame( function () { opts.onShow( h.el, h ); } );
 		}
+		return h;
+	}
+
+	/** Is a BuddyNext-drawn toast still on screen or in BuddyNext's line? */
+	function bnAlive( e ) {
+		return ! e.pulled && ! e.dead && ( e.cur.el ? e.cur.el.isConnected : !! e.cur.waiting );
+	}
+
+	/**
+	 * Show the toast through BuddyNext's stack so two plugins never draw two bottom-centre stacks
+	 * over each other. The handle is adapted to ours and survives being taken off screen behind a
+	 * dialog: while it waits, update() edits what will be drawn. A call BuddyNext did not take
+	 * returns a dead handle, so the caller simply makes the next toast fresh.
+	 *
+	 * @param {Object} opts Same options as toast().
+	 * @return {Object} { el, gone, update, dismiss }
+	 */
+	function viaBuddyNext( opts ) {
+		var h = bnDraw( opts );
+		if ( ! h ) {
+			return { el: null, gone: true, update: function () {}, dismiss: function () {} };
+		}
+		var e = { opts: opts, cur: h, pulled: false, dead: false };
+		bnLive.push( e );
+		watch();
 		return {
-			get el() { return h.el; },
-			get gone() { return h.el ? ! h.el.isConnected : ! h.waiting; },
-			update: function ( next ) { h.update( next || {} ); },
-			dismiss: function () { h.dismiss(); },
+			get el() { return e.pulled || e.dead ? null : e.cur.el; },
+			get gone() { return e.pulled ? false : ! bnAlive( e ); },
+			update: function ( next ) {
+				e.opts = Object.assign( {}, e.opts, next || {} );
+				if ( ! e.pulled && ! e.dead ) {
+					e.cur.update( next || {} );
+				}
+			},
+			dismiss: function () {
+				if ( e.pulled ) {
+					waiting = waiting.filter( function ( w ) { return w.bn !== e; } );
+					e.dead = true;
+				} else {
+					e.cur.dismiss();
+				}
+			},
 		};
 	}
 
 	function toast( opts ) {
 		opts = opts || {};
-		if ( typeof window.bnToast === 'function' ) {
-			return viaBuddyNext( opts );
-		}
-		var host = ensureContainer();
+		var onBn = typeof window.bnToast === 'function';
 
-		// Same key while alive: update in place, never stack a second copy.
-		if ( opts.key && live[ opts.key ] && ! live[ opts.key ].gone ) {
+		// Same key while alive: update in place, never stack a second copy (BuddyNext does this itself).
+		if ( ! onBn && opts.key && live[ opts.key ] && ! live[ opts.key ].gone ) {
 			update( live[ opts.key ], opts );
 			return live[ opts.key ];
 		}
 
-		// A dialog is open, or toasts are already waiting for one to close: join the queue.
-		if ( modalOpen() || waiting.some( function ( e ) { return e.held; } ) ) {
-			return waitTurn( opts, null );
+		// A dialog is open, the member is typing, or toasts are already waiting: join the queue.
+		// Before the BuddyNext hand-off, so the rule holds whichever stack draws the toast.
+		if ( blocked() || waiting.some( function ( e ) { return e.held; } ) ) {
+			return waitTurn( opts );
 		}
+
+		if ( onBn ) {
+			return viaBuddyNext( opts );
+		}
+		var host = ensureContainer();
 
 		if ( host.children.length && window.matchMedia( ONE_AT_A_TIME ).matches ) {
-			return waitTurn( opts, host );
+			return waitTurn( opts );
 		}
 
-		var handle = { key: opts.key || '', el: build( opts ), timer: 0, gone: false, persist: false };
+		var handle = { key: opts.key || '', el: build( opts ), timer: 0, gone: false, ms: DISMISS_MS };
 		handle.update  = function ( next ) { update( handle, next || {} ); };
 		handle.dismiss = function () { dismiss( handle ); };
 		handle.el._wbGamToast = handle;
@@ -506,7 +585,7 @@
 		}
 		host.appendChild( handle.el );
 		raise();
-		arm( handle, DISMISS_MS );
+		arm( handle, handle.ms );
 		watch();
 
 		if ( typeof opts.onShow === 'function' ) {
@@ -515,6 +594,22 @@
 
 		return handle;
 	}
+
+	// Escape closes the newest toast. Not while a dialog is open: Escape belongs to the dialog then.
+	document.addEventListener( 'keydown', function ( e ) {
+		if ( 'Escape' !== e.key || e.defaultPrevented || modalOpen() ) {
+			return;
+		}
+		var bn = bnLive.filter( function ( b ) { return bnAlive( b ) && b.cur.el; } ).pop();
+		if ( bn ) {
+			bn.cur.dismiss();
+			return;
+		}
+		var last = container && container.lastElementChild;
+		if ( last && last._wbGamToast && ! last._wbGamToast.gone ) {
+			dismiss( last._wbGamToast );
+		}
+	} );
 
 	window.wbGam.toast = toast;
 }() );

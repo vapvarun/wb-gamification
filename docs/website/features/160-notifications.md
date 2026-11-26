@@ -4,7 +4,7 @@ WB Gamification tells members what they have earned in real time. Notifications 
 
 ## Toast Notifications
 
-Toast notifications are small popups that appear at the **bottom center** of the page shortly after a member earns a reward. Change the corner under **Gamification > Dashboard > Realtime**. They disappear automatically after **4 seconds**.
+Toast notifications are small popups that appear at the **bottom center** of the page shortly after a member earns a reward. Change the corner under **Gamification > Dashboard > Realtime**. Every toast closes by itself: after **4 seconds**, or **8 seconds** when it carries a link such as **See my progress**. Pointing at a toast or tabbing into it pauses the timer, and **Escape** closes the newest one.
 
 There are six notification types:
 
@@ -26,6 +26,8 @@ Each toast is dismissible. Members can click it to close it early, or just wait 
 - **Each toast shows once.** A member sees an award once, on whichever page delivers it first. It does not show again on the next page.
 - **A burst becomes one summary.** When four or more toasts are waiting (a new member's first visit often has a welcome bonus, a badge and several point awards), they arrive as one toast instead: "Welcome - you earned 55 Points", with the badge (or "3 badges earned") underneath and a **See my progress** link. Up to three waiting toasts still arrive one by one. Level-up and streak celebrations always show on their own.
 - **One at a time on phones.** At 640px wide and below, a toast that arrives while another is showing waits its turn instead of stacking over the page. Nothing is dropped.
+- **Never over what the member is using.** While a popup or dialog is open, or while the member is writing in a field (a post, a comment, a search), toasts wait and show as soon as the popup closes or the text is sent. This works the same inside a BuddyNext community and on its own.
+- **Quick after the member's own action.** When a post, comment or any other action earns something, the toast arrives within a few seconds, whichever plugin handled the action.
 - **Held on entry screens.** A community plugin can hold toasts on screens where a popup would cover the task, such as sign-up, onboarding or checkout. Held toasts are not lost; they show on the next page that does not hold them. BuddyNext and BuddyNext Pro hold them on their entry and checkout screens. Developers use the `wb_gam_hold_toasts` filter.
 - **Visitors are not polled.** Logged-out visitors cannot earn, so pages no longer check for their toasts in the background. The only exception is a page that shows a live leaderboard.
 
