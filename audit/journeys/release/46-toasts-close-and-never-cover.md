@@ -58,6 +58,16 @@ them fail on the 1.6.8 files.
 - **Expect**: no toast while it is open; it shows after it closes. Same with BuddyNext active.
 - **On fail**: `toast()` must check `blocked()` before the `viaBuddyNext()` hand-off.
 
+### 6. Popup buttons read like BuddyNext's own (inside BuddyNext)
+- **Action**: inside BuddyNext, light mode, compare the level-up card's "Awesome!" button
+  (`.wb-gam-moment .wb-gam-btn--primary`) with the composer's Post button; repeat with a red and a
+  yellow accent (`--bn-hue` 25 and 90).
+- **Expect**: same fill and a white label, 4.5:1 or more (measured 5.18 to 5.26:1). Dark mode follows
+  BuddyNext's published pair (`--bn-accent-solid` / `--bn-accent-fg`); its composer button overrides
+  that pair with its own dark rule.
+- **On fail**: `src/shared/design-tokens.css` `--wb-gam-pop-accent` and the `@supports` label rule
+  must read the BuddyNext pair first (tests/js/design-tokens.test.js).
+
 ## Pass criteria
 
 1. Every toast closes by itself (4s or 8s), on both stacks.
