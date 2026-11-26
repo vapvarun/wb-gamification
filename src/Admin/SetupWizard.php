@@ -504,6 +504,8 @@ final class SetupWizard {
 		if ( '' === $plugin ) {
 			return __( 'Other', 'wb-gamification' );
 		}
+		// A Pro add-on is the same choice as its plugin: "Jetonomy + Pro" is one card.
+		$plugin = (string) preg_replace( '/ Pro$/', '', $plugin );
 		return 'WPMediaVerse' === $plugin ? 'MediaVerse' : $plugin;
 	}
 
@@ -637,6 +639,7 @@ final class SetupWizard {
 							$penalties = count( array_filter( $actions, static fn( $a ) => ! empty( $a['penalty'] ) ) );
 							$kept      = $is_wp || array_filter( array_keys( $actions ), $enabled );
 							$examples  = array_slice( array_filter( $actions, static fn( $a ) => empty( $a['penalty'] ) ), 0, 3 );
+							$with_pro  = (bool) array_filter( $actions, static fn( $a ) => (bool) preg_match( '/ Pro$/', (string) ( $a['plugin'] ?? '' ) ) );
 							?>
 							<label class="wbgam-setup__plugin<?php echo $is_wp ? ' wbgam-setup__plugin--always' : ''; ?>">
 								<?php if ( $is_wp ) : ?>
@@ -645,7 +648,12 @@ final class SetupWizard {
 									<input type="checkbox" name="plugins[]" value="<?php echo esc_attr( $plugin ); ?>" data-wbgam-plugin-toggle <?php checked( (bool) $kept ); ?>>
 								<?php endif; ?>
 								<span class="wbgam-setup__plugin-head">
-									<strong><?php echo esc_html( $is_wp ? __( 'WordPress basics are always included', 'wb-gamification' ) : $plugin ); ?></strong>
+									<strong>
+										<?php echo esc_html( $is_wp ? __( 'WordPress basics are always included', 'wb-gamification' ) : $plugin ); ?>
+										<?php if ( $with_pro ) : ?>
+											<span class="wbgam-pill wbgam-pill--info"><?php esc_html_e( '+ Pro', 'wb-gamification' ); ?></span>
+										<?php endif; ?>
+									</strong>
 									<span class="wbgam-setup__plugin-meta">
 										<?php
 										/* translators: %d: number of actions. */

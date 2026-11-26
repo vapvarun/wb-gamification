@@ -42,6 +42,7 @@ class SetupPlanTest extends TestCase {
 		$this->action( 'jetonomy_post_created', 'Jetonomy', 2, array( 'daily_cap' => 5 ) );
 		$this->action( 'jetonomy_reply_created', 'Jetonomy', 1, array( 'daily_cap' => 20, 'weekly_cap' => 0, 'cooldown' => 30 ) );
 		$this->action( 'mv/Upload.Photo', 'WPMediaVerse', 10, array( 'weekly_cap' => 3 ) );
+		$this->action( 'jetonomy_pro_poll_created', 'Jetonomy Pro', 10 );
 	}
 
 	protected function tearDown(): void {
@@ -64,7 +65,7 @@ class SetupPlanTest extends TestCase {
 	}
 
 	private function plan( array $post, array $overrides = array(), bool $jetonomy = false ): array {
-		$all = array( 'wp_publish_post', 'jetonomy_post_created', 'jetonomy_reply_created', 'mv/Upload.Photo' );
+		$all = array( 'wp_publish_post', 'jetonomy_post_created', 'jetonomy_reply_created', 'mv/Upload.Photo', 'jetonomy_pro_poll_created' );
 		$post += array( 'on' => array_fill_keys( $all, '1' ) );
 		return SetupWizard::plan( Registry::get_actions(), $post, $overrides, array( 'jetonomy' => $jetonomy, 'host_privacy' => false ) );
 	}
@@ -75,6 +76,7 @@ class SetupPlanTest extends TestCase {
 
 		$this->assertSame( 0, $out['wb_gam_enabled_jetonomy_post_created'], 'Jetonomy was switched off in step 1.' );
 		$this->assertSame( 0, $out['wb_gam_enabled_jetonomy_reply_created'] );
+		$this->assertSame( 0, $out['wb_gam_enabled_jetonomy_pro_poll_created'], 'A Pro add-on goes with its plugin.' );
 		$this->assertSame( 1, $out['wb_gam_enabled_mv/Upload.Photo'], 'Ids with "/", "." and capitals keep their own option.' );
 		$this->assertSame( 1, $out['wb_gam_enabled_wp_publish_post'] );
 	}
