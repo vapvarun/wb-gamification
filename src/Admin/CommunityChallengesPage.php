@@ -58,21 +58,15 @@ final class CommunityChallengesPage {
 	 * @return void
 	 */
 	public static function enqueue_assets( string $hook_suffix ): void {
-		// The page is registered with parent_slug=null (hidden submenu) so
-		// the resulting hook is `admin_page_wb-gam-community-challenges`
-		// — NOT `gamification_page_...`. Site owners also reach this page
-		// via the "Community" tab on the unified Challenges admin
-		// (`?page=wb-gam-challenges&tab=community`), so accept both hooks
-		// AND the explicit page-slug fallback. Failing the match here was
-		// the root cause of Basecamp #9927572402 — admin-rest-form.js never
-		// loaded, the create form fell through to browser-default GET
-		// submission, and the page rendered blank with the form data
-		// leaked into the query string.
+		// Owners also reach this page from the "Community" tab on the Challenges admin
+		// (`?page=wb-gam-challenges&tab=community`), so accept both page hooks AND the
+		// page-slug fallback. Failing the match was the root cause of Basecamp #9927572402:
+		// admin-rest-form.js never loaded, the create form fell back to a browser GET and
+		// the page rendered blank with the form data in the query string.
 		$page         = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- page slug only used to gate asset enqueue.
 		$is_community = in_array(
 			$hook_suffix,
 			array(
-				'admin_page_wb-gam-community-challenges',
 				get_plugin_page_hookname( 'wb-gam-community-challenges', 'wb-gamification' ),
 				get_plugin_page_hookname( 'wb-gam-challenges', 'wb-gamification' ),
 			),
@@ -127,36 +121,17 @@ final class CommunityChallengesPage {
 			return;
 		}
 
-		// Hidden submenu (empty parent slug) — keeps the URL routable so existing
-		// bookmarks / docs / dashboard links don't 404, but the page is
-		// reached via the "Community" tab on the unified Challenges admin
-		// page (b9 merge — `?page=wb-gam-challenges&tab=community`).
-		//
-		// Because a parentless page never lands in the `$submenu` lookup,
-		// `get_admin_page_title()` returns null and admin-header.php emits a
-		// `strip_tags(): Passing null` deprecation on every visit (PHP 8.1+).
-		// Pre-seed the `$title` global on `load-{hook}` — the same fix used by
-		// SetupPage for its hidden wizard route.
-		$hook = add_submenu_page(
-			'',
+		// Registered under Gamification like every page, so WordPress keeps that menu open here
+		// and finds the page title; AdminNav leaves it out of the list (it opens from the
+		// "Community" tab on Challenges) and marks Challenges as the current item.
+		add_submenu_page(
+			'wb-gamification',
 			__( 'Community Challenges', 'wb-gamification' ),
 			__( 'Community Challenges', 'wb-gamification' ),
 			'wb_gam_manage_challenges',
 			'wb-gam-community-challenges',
 			array( __CLASS__, 'render_page' )
 		);
-		if ( $hook ) {
-			add_action(
-				'load-' . $hook,
-				static function (): void {
-					global $title;
-					if ( empty( $title ) ) {
-						// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Pre-seeding the admin page title for a hidden submenu; get_admin_page_title() returns this verbatim.
-						$title = __( 'Community Challenges', 'wb-gamification' );
-					}
-				}
-			);
-		}
 	}
 
 	/**

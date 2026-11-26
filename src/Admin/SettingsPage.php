@@ -49,7 +49,6 @@ final class SettingsPage {
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
 		// After every page has registered, and after ModuleToggles (999) has removed the switched-off ones.
-		add_action( 'admin_menu', array( __CLASS__, 'order_submenu' ), 1000 );
 		add_action( 'admin_init', array( __CLASS__, 'handle_save' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_dismiss_welcome' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_dismiss_checklist' ) );
@@ -106,64 +105,6 @@ final class SettingsPage {
 			'dashicons-awards',
 			56
 		);
-	}
-
-	/**
-	 * The submenu in the order an owner works through it: set up, configure, monitor, moderate, develop.
-	 * Each page registers itself, so registration order is load order, not a design. A slug that is not
-	 * listed (a page another module adds) keeps its place after the listed ones.
-	 */
-	private const MENU_ORDER = array(
-		'wb-gamification',
-		'wb-gamification-import',
-		'wb-gamification-badges',
-		'wb-gam-levels',
-		'wb-gam-challenges',
-		'wb-gam-community-challenges',
-		'wb-gam-redemption',
-		'wb-gam-point-types',
-		'wb-gam-conversions',
-		'wb-gam-multipliers',
-		'wb-gamification-analytics',
-		'wb-gamification-members',
-		'wb-gamification-award',
-		'wb-gamification-streaks',
-		'wb-gamification-kudos-moderation',
-		'wb-gam-submissions',
-		'wb-gam-webhooks',
-		'wb-gam-api-keys',
-	);
-
-	/**
-	 * Reorder the plugin's submenu and name its first entry for what it is.
-	 *
-	 * @since 1.6.5
-	 */
-	public static function order_submenu(): void {
-		global $submenu;
-		if ( empty( $submenu['wb-gamification'] ) || ! is_array( $submenu['wb-gamification'] ) ) {
-			return;
-		}
-		$submenu['wb-gamification'] = self::sort_submenu( $submenu['wb-gamification'] ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- reordering our own submenu is the point of this hook.
-	}
-
-	/**
-	 * Sort submenu rows by MENU_ORDER (unlisted slugs last, in their existing order).
-	 *
-	 * @param array<int, array<int, string>> $items Submenu rows: title, capability, slug.
-	 * @return array<int, array<int, string>>
-	 */
-	public static function sort_submenu( array $items ): array {
-		$rank = array_flip( self::MENU_ORDER );
-		$rows = array();
-		foreach ( array_values( $items ) as $i => $row ) {
-			if ( 'wb-gamification' === ( $row[2] ?? '' ) ) {
-				$row[0] = __( 'Dashboard', 'wb-gamification' );
-			}
-			$rows[] = array( $rank[ $row[2] ?? '' ] ?? PHP_INT_MAX, $i, $row );
-		}
-		usort( $rows, static fn( $a, $b ) => array( $a[0], $a[1] ) <=> array( $b[0], $b[1] ) );
-		return array_column( $rows, 2 );
 	}
 
 	// ── Form handlers ─────────────────────────────────────────────────────────
@@ -1159,99 +1100,7 @@ final class SettingsPage {
 			</header>
 		<div class="wbgam-settings-wrap">
 
-			<!-- Sidebar -->
-			<div class="wbgam-settings-sidebar">
-
-				<!-- CORE -->
-				<div class="wbgam-settings-nav-group">
-					<span class="wbgam-settings-nav-group__label"><?php esc_html_e( 'Core', 'wb-gamification' ); ?></span>
-					<a class="wbgam-settings-nav-item" href="#dashboard" data-section="dashboard">
-						<span class="icon-layout-dashboard"></span>
-						<?php esc_html_e( 'Dashboard', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#points" data-section="points">
-						<span class="icon-star"></span>
-						<?php esc_html_e( 'Points', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-levels' ) ); ?>">
-						<span class="icon-chart-bar"></span>
-						<?php esc_html_e( 'Levels', 'wb-gamification' ); ?>
-					</a>
-				</div>
-
-				<!-- ENGAGEMENT -->
-				<div class="wbgam-settings-nav-group">
-					<span class="wbgam-settings-nav-group__label"><?php esc_html_e( 'Engagement', 'wb-gamification' ); ?></span>
-					<?php if ( \WBGam\Engine\ModuleToggles::enabled( 'challenges' ) ) : // Its page is removed when the module is off. ?>
-					<a class="wbgam-settings-nav-item" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-challenges' ) ); ?>">
-						<span class="icon-flag"></span>
-						<?php esc_html_e( 'Challenges', 'wb-gamification' ); ?>
-					</a>
-					<?php endif; ?>
-					<a class="wbgam-settings-nav-item" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-badges' ) ); ?>">
-						<span class="icon-shield"></span>
-						<?php esc_html_e( 'Badges', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#kudos" data-section="kudos">
-						<span class="icon-thumbs-up"></span>
-						<?php esc_html_e( 'Kudos', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#cohort" data-section="cohort">
-						<span class="icon-users"></span>
-						<?php esc_html_e( 'Cohort Leagues', 'wb-gamification' ); ?>
-					</a>
-				</div>
-
-				<!-- AUTOMATION -->
-				<div class="wbgam-settings-nav-group">
-					<span class="wbgam-settings-nav-group__label"><?php esc_html_e( 'Automation', 'wb-gamification' ); ?></span>
-					<a class="wbgam-settings-nav-item" href="#rules" data-section="rules">
-						<span class="icon-refresh-cw"></span>
-						<?php esc_html_e( 'Rules', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#emails" data-section="emails">
-						<span class="icon-mail"></span>
-						<?php esc_html_e( 'Emails', 'wb-gamification' ); ?>
-					</a>
-				</div>
-
-				<!-- ADVANCED -->
-				<div class="wbgam-settings-nav-group">
-					<span class="wbgam-settings-nav-group__label"><?php esc_html_e( 'Advanced', 'wb-gamification' ); ?></span>
-					<a class="wbgam-settings-nav-item" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-api-keys' ) ); ?>">
-						<span class="icon-network"></span>
-						<?php esc_html_e( 'API Keys', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#access" data-section="access">
-						<span class="icon-user-x"></span>
-						<?php esc_html_e( 'Access', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#realtime" data-section="realtime">
-						<span class="icon-zap"></span>
-						<?php esc_html_e( 'Realtime', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#integrations" data-section="integrations">
-						<span class="icon-link"></span>
-						<?php esc_html_e( 'Integrations', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#modules" data-section="modules">
-						<span class="icon-sliders-horizontal"></span>
-						<?php esc_html_e( 'Modules', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#engagement" data-section="engagement">
-						<span class="icon-rocket"></span>
-						<?php esc_html_e( 'Habits & Profiles', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#appearance" data-section="appearance">
-						<span class="icon-palette"></span>
-						<?php esc_html_e( 'Appearance', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#tools" data-section="tools">
-						<span class="icon-wrench"></span>
-						<?php esc_html_e( 'Tools', 'wb-gamification' ); ?>
-					</a>
-				</div>
-			</div>
+			<?php AdminNav::render_sidebar( 'wb-gamification' ); ?>
 
 			<!-- Content -->
 			<div class="wbgam-settings-content">

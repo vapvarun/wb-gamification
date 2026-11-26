@@ -105,6 +105,72 @@
 	padding-top: 8px;
 }
 
+/* Groups (1.7.0, AdminNav): a native disclosure, so it opens with a click, Enter or Space and
+ * needs no script. The group holding the current screen is rendered open. */
+summary.wbgam-settings-nav-group__label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 32px;
+	cursor: pointer;
+	list-style: none;
+	color: var(--wbgam-wp-text);
+	font-size: var(--wbgam-fs-sm);
+	letter-spacing: 0.04em;
+}
+
+summary.wbgam-settings-nav-group__label::-webkit-details-marker {
+	display: none;
+}
+
+summary.wbgam-settings-nav-group__label::after {
+	content: "";
+	margin-inline-start: auto;
+	width: 7px;
+	height: 7px;
+	border-left: 2px solid currentColor;
+	border-bottom: 2px solid currentColor;
+	transform: rotate(45deg);
+	transition: transform 0.15s;
+}
+
+details[open] > summary.wbgam-settings-nav-group__label::after {
+	transform: rotate(-45deg);
+}
+
+summary.wbgam-settings-nav-group__label:focus-visible {
+	outline: 2px solid var(--wbgam-wp-blue);
+	outline-offset: -2px;
+}
+
+details.wbgam-settings-nav-group .wbgam-settings-nav-item {
+	padding-inline-start: 44px;
+}
+
+/* The same side menu on every other plugin screen (AdminNav wraps each page). The Settings
+ * layout's negative margins cancel the WordPress .wrap it sits in; these screens have no such
+ * parent, so the shell takes the .wrap spacing itself instead of running 20px off the page. */
+.wbgam-settings-wrap.wbgam-shell {
+	margin-block: 20px 0;
+	margin-inline: 2px 20px;
+	min-height: 0;
+	border: 1px solid var(--wbgam-border-light);
+	border-radius: 12px;
+	overflow: hidden;
+}
+
+.wbgam-shell > .wbgam-settings-content > .wrap {
+	margin: 0;
+}
+
+@media (max-width: 782px) {
+
+	.wbgam-settings-wrap.wbgam-shell {
+		margin-block: 10px 0;
+		margin-inline: 0 10px;
+	}
+}
+
 .wbgam-settings-nav-item {
 	display: flex;
 	align-items: center;

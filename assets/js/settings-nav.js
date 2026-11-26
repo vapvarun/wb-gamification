@@ -29,6 +29,7 @@
 		if ( navItem && section ) {
 			navItem.classList.add( ACTIVE_CLASS );
 			section.classList.add( ACTIVE_CLASS );
+			markGroup( navItem );
 		} else {
 			// Fallback: activate the first section.
 			var firstNav = document.querySelector( NAV_SELECTOR );
@@ -40,6 +41,43 @@
 				firstSection.classList.add( ACTIVE_CLASS );
 			}
 		}
+	}
+
+	/**
+	 * Open the side-menu group holding the current section and move the WordPress submenu
+	 * highlight to that group. The server cannot see the #section part of the address, so it
+	 * marks Overview on every Settings load; each WordPress entry opens its group's first link.
+	 *
+	 * @param {Element} navItem Active side-menu link.
+	 */
+	function markGroup( navItem ) {
+		var group = navItem.closest( 'details' );
+		var first = group ? group.querySelector( '.wbgam-settings-nav-item' ) : null;
+		if ( ! first ) {
+			return;
+		}
+		// Only the group holding the current section stays open: the server cannot see the
+		// #section part of the address and rendered the Overview group open.
+		document.querySelectorAll( '.wbgam-settings-sidebar details' ).forEach( function ( d ) {
+			d.open = d === group;
+		} );
+		var href   = first.getAttribute( 'href' ) || '';
+		var target = first.href;
+		if ( 0 === href.indexOf( '#' ) ) {
+			target = window.location.origin + window.location.pathname + '?page=wb-gamification' + ( '#dashboard' === href ? '' : href );
+		}
+		document.querySelectorAll( '#toplevel_page_wb-gamification .wp-submenu a' ).forEach( function ( a ) {
+			var on = a.href === target;
+			a.classList.toggle( 'current', on );
+			if ( a.parentElement ) {
+				a.parentElement.classList.toggle( 'current', on );
+			}
+			if ( on ) {
+				a.setAttribute( 'aria-current', 'page' );
+			} else {
+				a.removeAttribute( 'aria-current' );
+			}
+		} );
 	}
 
 	function getHashSection() {

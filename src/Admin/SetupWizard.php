@@ -98,9 +98,7 @@ final class SetupWizard {
 	 */
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
-		// The wizard lives under Gamification (so that menu is open on it) but is not listed there.
-		add_action( 'admin_head', array( __CLASS__, 'hide_menu_item' ) );
-		add_filter( 'submenu_file', array( __CLASS__, 'highlight_submenu' ) );
+		// Listed nowhere in the menu and highlighted as Dashboard: AdminNav::CHILD_OF.
 		// Auto-redirect on admin_init:1 — earlier than the default 10 so any
 		// later admin_init callback that emits output doesn't block our redirect.
 		add_action( 'admin_init', array( __CLASS__, 'maybe_redirect' ), 1 );
@@ -149,7 +147,7 @@ final class SetupWizard {
 	 */
 	public static function register_page(): void {
 		$hook = add_submenu_page(
-			'wb-gamification', // Under Gamification so its menu is open here; unlisted by hide_menu_item().
+			'wb-gamification', // Under Gamification so its menu is open here; AdminNav leaves it out of the list.
 			__( 'Gamification Setup', 'wb-gamification' ),
 			'',
 			'manage_options',
@@ -238,31 +236,6 @@ final class SetupWizard {
 		exit;
 	}
 
-	/**
-	 * Keep the wizard out of the Gamification submenu. Runs on admin_head: after WordPress has
-	 * checked access to the page and before it prints the menu.
-	 */
-	public static function hide_menu_item(): void {
-		remove_submenu_page( 'wb-gamification', self::PAGE_SLUG );
-	}
-
-	/**
-	 * Highlight the Dashboard item under Gamification while the wizard is on screen.
-	 *
-	 * @param string|null $submenu_file Submenu slug WordPress chose.
-	 * @return string|null
-	 */
-	public static function highlight_submenu( $submenu_file ) {
-		return self::on_wizard() ? 'wb-gamification' : $submenu_file;
-	}
-
-	/**
-	 * Is the current admin screen the wizard?
-	 */
-	private static function on_wizard(): bool {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- page-slug compare, no state change.
-		return isset( $_GET['page'] ) && self::PAGE_SLUG === sanitize_key( wp_unslash( $_GET['page'] ) );
-	}
 
 	/**
 	 * Persist a dismissal of the welcome notice.
