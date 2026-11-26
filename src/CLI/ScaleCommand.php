@@ -716,6 +716,11 @@ final class ScaleCommand {
 		// that action's 60 s cooldown: the engine refused it after a few reads, and the gate counted
 		// the queries of a refusal as "one award". wp_publish_post has no cooldown or cap; the award
 		// must return true and add exactly one ledger row, or the measurement fails.
+		// The cost of an award does not depend on whether this site's owner rewards blog posts. A site
+		// with "Publish a blog post" switched off refused the award and failed the gate with nothing
+		// measured, so the action is on for this measurement only; the stored setting is untouched.
+		$force_on = static fn() => '1';
+		add_filter( 'pre_option_wb_gam_enabled_wp_publish_post', $force_on );
 		$rows_for      = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d", $uid ) );
 		PointsEngine::award( $uid, 'wp_publish_post', 5, 0, null, true ); // Warm caches; the first award of a request pays for everyone.
 		$rows_before   = $rows_for();
@@ -723,6 +728,7 @@ final class ScaleCommand {
 		$awarded       = PointsEngine::award( $uid, 'wp_publish_post', 5, 0, null, true );
 		$award_queries = $wpdb->num_queries - $before;
 		$award_written = $awarded && $rows_for() === $rows_before + 1;
+		remove_filter( 'pre_option_wb_gam_enabled_wp_publish_post', $force_on );
 
 		// Render.
 		$failures = 0;
