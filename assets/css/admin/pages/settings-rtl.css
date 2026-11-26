@@ -635,7 +635,6 @@ details.wbgam-settings-nav-group .wbgam-settings-nav-item {
 .wbgam-action-list__name {
 	color: var(--wbgam-text);
 	font-weight: 500;
-	text-transform: capitalize;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;

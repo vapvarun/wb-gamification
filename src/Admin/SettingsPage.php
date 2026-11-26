@@ -1582,7 +1582,7 @@ final class SettingsPage {
 					<ul class="wbgam-checklist">
 						<?php foreach ( $checklist_steps as $step ) : ?>
 							<li class="wbgam-checklist__item <?php echo $step['done'] ? 'is-done' : ''; ?>">
-								<span class="wbgam-checklist__icon icon-<?php echo $step['done'] ? 'check-circle' : 'circle'; ?>" aria-hidden="true"></span>
+								<span class="wbgam-checklist__icon icon-<?php echo $step['done'] ? 'circle-check' : 'circle'; ?>" aria-hidden="true"></span>
 								<span class="wbgam-checklist__body">
 									<strong class="wbgam-checklist__title"><?php echo esc_html( $step['title'] ); ?></strong>
 									<span class="wbgam-checklist__desc"><?php echo esc_html( $step['desc'] ); ?></span>
@@ -1651,8 +1651,8 @@ final class SettingsPage {
 		$manual_pts   = 0;
 		$earn_actions = array();
 		foreach ( $all_actions as $row ) {
-			if ( 'manual_award' === ( $row['action_id'] ?? '' ) ) {
-				$manual_pts = (int) ( $row['pts'] ?? 0 );
+			if ( in_array( $row['action_id'] ?? '', ManualAwardPage::ACTION_IDS, true ) ) {
+				$manual_pts += (int) ( $row['pts'] ?? 0 );
 			} else {
 				$earn_actions[] = $row;
 			}
