@@ -211,7 +211,7 @@ final class SettingsPage {
 	 *
 	 * @param int  $hub_page_id   Current hub page ID (0 if not yet auto-created).
 	 * @param bool $challenges_on Whether the Challenges module is on.
-	 * @return array<int, array{title:string, desc:string, done:bool, action?:string, action_url?:string, action_label?:string}>
+	 * @return array<int, array{title:string, desc:string, done:bool, key?:string, action?:string, action_url?:string, action_label?:string}>
 	 */
 	private static function compute_setup_checklist( int $hub_page_id, bool $challenges_on ): array {
 		global $wpdb;
@@ -249,6 +249,7 @@ final class SettingsPage {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- One COUNT on a small definitions table, dashboard only.
 			$challenge_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_challenges" );
 			$steps[]         = array(
+				'key'          => 'challenge',
 				'title'        => __( 'Create a first challenge', 'wb-gamification' ),
 				'desc'         => __( 'A goal with a deadline gives members a reason to come back this week.', 'wb-gamification' ),
 				'done'         => $challenge_count > 0,
@@ -1560,6 +1561,7 @@ final class SettingsPage {
 		$checklist_steps     = self::compute_setup_checklist( $hub_page_id, $challenges_on );
 		$checklist_done      = count( array_filter( $checklist_steps, static fn( $step ) => $step['done'] ) );
 		$checklist_total     = count( $checklist_steps );
+		$has_challenge       = (bool) array_filter( $checklist_steps, static fn( $step ) => 'challenge' === ( $step['key'] ?? '' ) && $step['done'] );
 
 		if ( ! $checklist_dismissed && $checklist_done < $checklist_total ) :
 			?>
@@ -1631,7 +1633,7 @@ final class SettingsPage {
 					number_format_i18n( $stats['challenges_completed'] ),
 					'',
 					'icon-target',
-					0 === (int) $stats['challenges_completed']
+					0 === (int) $stats['challenges_completed'] && ! $has_challenge
 						? array(
 							'url'   => admin_url( 'admin.php?page=wb-gam-challenges' ),
 							'label' => __( 'Create your first challenge', 'wb-gamification' ),
