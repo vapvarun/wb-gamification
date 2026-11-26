@@ -10,7 +10,7 @@ prerequisites:
 estimated_runtime_minutes: 5
 ---
 
-# The release zip has no readable PHP (1.6.9)
+# The release zip has no readable PHP (1.7.0)
 
 Card 10549179297: the `zip` command stores tiny files (index.php "Silence is golden") uncompressed,
 so plain `<?php` is readable in the upload and the store's Cloudflare upload rule rejects it; wp-admin

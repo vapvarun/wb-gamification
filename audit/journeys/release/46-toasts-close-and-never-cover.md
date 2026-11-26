@@ -11,7 +11,7 @@ prerequisites:
 estimated_runtime_minutes: 10
 ---
 
-# Toasts close by themselves and never cover what the member is using (1.6.9)
+# Toasts close by themselves and never cover what the member is using (1.7.0)
 
 Card 10516939110 and BuddyNext QA: a toast with a link stayed until closed (65s and more), ignored
 Escape, and sat over the composer's Post button at 390. Inside BuddyNext the "wait while a popup is

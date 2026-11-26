@@ -11,7 +11,7 @@ prerequisites:
 estimated_runtime_minutes: 20
 ---
 
-# Forum topics and replies earn points the owner controls (1.6.9)
+# Forum topics and replies earn points the owner controls (1.7.0)
 
 Card 10534617034. Forum points used to be a fixed copy of Jetonomy's reputation number: always on,
 no cooldown or cap, not on the Actions screen, and a deleted topic kept its points. Each forum event
