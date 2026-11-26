@@ -735,6 +735,15 @@ final class WB_Gamification {
 		$wb_gam_toast_readers = is_user_logged_in() && ! \WBGam\Engine\NotificationBridge::toasts_held();
 		if ( $wb_gam_toast_readers ) {
 			wp_enqueue_script( 'wb-gamification-realtime' );
+
+			// Inside a BuddyNext community the page already refreshes its own counters and follows the community's
+			// rule of keeping background requests few, so this plugin adapts: it polls at the slow steady rate and
+			// still bursts to the fast rate right after the member's own action. Standalone it keeps its own rate.
+			// A site can set any rate with the wb_gam_realtime_interval filter (seconds, 5 to 120).
+			$wb_gam_interval = (int) apply_filters( 'wb_gam_realtime_interval', function_exists( 'buddynext_service' ) ? 60 : 15 );
+			if ( $wb_gam_interval >= 5 && $wb_gam_interval <= 120 && 15 !== $wb_gam_interval ) {
+				wp_add_inline_script( 'wb-gamification-realtime', 'window.wbGamRealtimeInterval=' . $wb_gam_interval . ';', 'before' );
+			}
 		}
 
 		// SSE transport (scaffold; feature-flagged off by default). Loads

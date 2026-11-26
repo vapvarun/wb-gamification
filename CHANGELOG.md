@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Changed
 
+- Inside a BuddyNext community the realtime client polls every 60 seconds instead of 15, and still bursts to 5 seconds right after the member's own action; standalone sites keep 15 seconds. The `wb_gam_realtime_interval` filter sets any rate from 5 to 120 seconds.
 - Jetonomy forum events are now real actions on Settings > Points: topic, reply, upvotes, accepted answer, planned idea, upheld report, and the penalties (downvote, report, removed by a moderator). Set the amount, switch each off, and add a cooldown or a daily or weekly cap. Until you save a number they pay what Jetonomy already pays, so no amount changes on update.
 - Penalties are a new kind of action: they take points, never below zero, and give back exactly what was taken when the penalty is lifted. They are not listed in the public earning guide.
 - A deleted or moderator-removed topic or reply takes its participation points back, and restoring it gives them back. A withdrawn vote takes back that vote's points only.
