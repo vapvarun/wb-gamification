@@ -1229,7 +1229,7 @@ details.wbgam-settings-nav-group .wbgam-settings-nav-item {
 
 /* ── Overview (1.7.0) ─────────────────────────────────────────────────────── */
 .wbgam-overview-actions { margin-block: 0 var(--wbgam-gap); }
-.wbgam-overview-actions .wbgam-btn { min-height: 40px; }
+.wbgam-overview-actions .wbgam-btn { box-sizing: border-box; min-height: 40px; }
 .wb-gam-admin-kpi-next {
 	display: inline-block;
 	margin-block-start: 4px;
