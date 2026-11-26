@@ -29,10 +29,10 @@
 - [ ] `wp option get wb_gam_db_version` equals `DbUpgrader::TARGET`
 - [ ] First REST request after activation returns 200 — no manual permalink flush needed: `curl -fsS http://wb-gamification.local/wp-json/wb-gamification/v1/openapi.json` (regression guard against `D.activation-rewrite`)
 - [ ] After activation, loading any `/wp-admin/` URL auto-redirects to `?page=wb-gamification-setup` (option `wb_gam_pending_setup_redirect` armed by activation hook, consumed on first admin load — survives any activation-to-admin gap, no 30s ceiling)
-- [ ] Setup wizard renders with 5 starter template cards; selecting one persists `wb_gam_template` + sets `wb_gam_wizard_complete`
-- [ ] "Skip & configure manually" exits without writing any email/privacy toggles (engine defaults stay in force)
-- [ ] After completion, the wizard URL still renders (re-runnable) with the current template highlighted "Current" + a "you've already completed setup" notice
-- [ ] Admin notice "Welcome — run setup wizard" appears on plugin admin pages until completion, never after, never on non-plugin pages
+- [ ] Setup renders four steps (Your community, How members earn, What members get, Review and launch); nothing is saved before **Launch gamification**; Launch writes `wb_gam_enabled_{id}`, `wb_gam_points_{id}`, `wb_gam_action_overrides` (daily_cap/weekly_cap only), the leaderboard/profile/email options, then sets `wb_gam_wizard_complete` and lands on Overview > Dashboard with "Finish setting up". No `wb_gam_template` option is written.
+- [ ] "Skip setup, I'll configure it myself" writes only `wb_gam_wizard_complete` (no email/privacy toggles, engine defaults stay in force)
+- [ ] After completion, the Setup URL still renders (re-runnable) with the site's current values, pace defaulting to "Keep my limits" and the skip link reading "Leave without changes"
+- [ ] Admin notice "Welcome to WB Gamification!" (Open setup / No thanks) appears on plugin admin pages until completion, never after, never on non-plugin pages
 - [ ] Hub page exists: `wp option get wb_gam_hub_page_id` returns a numeric page ID
 - [ ] Deactivate → reactivate → no duplicate tables, no re-run migrations, schedule count for `wb_gam_*` cron events stable
 

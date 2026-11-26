@@ -29,7 +29,7 @@ The four reward emails are called transactional emails: each one answers one thi
 
 The change applies at once. The **Redemption confirmation** email includes the points spent, the remaining balance and the coupon code, if the reward made one.
 
-The [Setup Wizard](../getting-started/20-setup-wizard.md) can also turn on the first three.
+Step 4 of [Setup](../getting-started/20-setup-wizard.md) also switches three emails: **Level-up email** and **Badge email** (off by default) and **Weekly recap** (on by default). Setup saves them only when you click **Launch gamification**.
 
 ### Test Before You Switch On
 

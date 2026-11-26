@@ -14,7 +14,7 @@ Three ways:
 
 ## Can I change point values?
 
-Yes. Every action has a configurable point value under **Gamification > Dashboard > Points**. You can also enable or disable individual actions and, where the action allows it, set daily caps and cooldowns. The setup wizard pre-configures sensible defaults based on your site type.
+Yes. Every action has a configurable point value under **Gamification > Dashboard > Points**. You can also enable or disable individual actions and, where the action allows it, set daily caps and cooldowns. **Gamification > Tools > Setup** lets you pick which plugins reward members, choose a pace for the limits, and change amounts before launch.
 
 ## Will WB Gamification slow down my site?
 

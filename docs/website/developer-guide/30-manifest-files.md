@@ -56,7 +56,7 @@ return [
 |-------|------|----------|-------------|
 | `id` | string | Yes | Unique action identifier. Use `plugin_name_action` format to avoid collisions |
 | `label` | string or closure | Yes | What the member does, as an imperative ("Create a post", "Get a listing approved"), shown in the admin actions list, points history and toasts. A manifest loads before `init`, so pass `static fn(): string => __( 'Create a post', 'your-domain' )` and it is translated when read; a plain string works too |
-| `description` | string or closure | No | Longer description shown in tooltips and the setup wizard. Same rule as `label` |
+| `description` | string or closure | No | Longer description shown in tooltips. Same rule as `label` |
 | `hook` | string | Yes | WordPress action hook name to listen on |
 | `user_callback` | callable | Yes | Receives the hook arguments. Must return the WordPress user ID to award points to |
 | `metadata_callback` | callable | No | Receives the hook arguments. Returns an array merged into event metadata (available in `wb_gam_points_for_action` filter) |

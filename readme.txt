@@ -12,13 +12,13 @@ Complete gamification for WordPress + BuddyPress. Points, badges, levels, leader
 
 == Description ==
 
-WB Gamification is a universal gamification engine that works with any WordPress site. Install, activate, pick a template - gamification starts immediately. No configuration required.
+WB Gamification is a universal gamification engine that works with any WordPress site. Install, activate, run a two-minute Setup that reads the plugins on your site - gamification starts immediately. Or skip it: every plugin's own defaults already work.
 
 The engine awards points automatically when members perform actions on your site. Points unlock badges, advance levels, fuel leaderboards, and power streaks. Everything is configurable from the admin, but sensible defaults mean it works from day one.
 
 = Why WB Gamification? =
 
-* **Zero config** - 5 starter templates pre-configure everything. Pick one and go.
+* **Zero config** - Setup finds every plugin on your site with gamification actions. Pick the ones to reward, choose a pace, and launch.
 * **Universal** - Works with plain WordPress, BuddyPress, WooCommerce, LearnDash, bbPress and 18 more plugins. Auto-detects what you have installed.
 * **Scalable** - Async award pipeline, snapshot-cached leaderboards, object caching everywhere. Built for 100K+ members.
 * **API-first** - 80 REST endpoints, outbound webhooks, WP Abilities API. Mobile apps, headless frontends, and AI agents are first-class consumers. Admin UI is REST-driven internally - what the admin saves is what the API exposes (no parallel form-post surface).
@@ -84,7 +84,7 @@ The free plugin ships every gamification mechanic out of the box. Future add-ons
 
 1. Upload the `wb-gamification` folder to `/wp-content/plugins/`.
 2. Activate the plugin through the **Plugins** menu in WordPress.
-3. You will be redirected to the **Setup Wizard**. Choose a starter template that matches your site type, or skip to configure manually.
+3. **Setup** opens on your next admin page. Choose which plugins reward members and how generously, then click **Launch gamification**. Or click **Skip setup, I'll configure it myself** to keep each plugin's own defaults. Run it again any time from **Gamification > Tools > Setup**.
 4. Points start awarding automatically as members interact with your site.
 5. Add gamification blocks to any page using the block editor, or use shortcodes in the classic editor.
 
@@ -111,7 +111,7 @@ Three ways: (1) Automatically on BuddyPress profiles - level name, points, and p
 
 = Can I customize point values? =
 
-Yes. Every action has a configurable point value in **Gamification > Settings > Points**. You can also enable/disable individual actions, set daily caps, and configure cooldown periods. The setup wizard pre-configures sensible defaults based on your site type.
+Yes. Every action has a configurable point value in **Gamification > Settings > Points**. You can also enable/disable individual actions, set daily caps, and configure cooldown periods. **Gamification > Tools > Setup** lets you pick which plugins reward members, choose a pace for the limits, and change amounts before launch.
 
 = Will this slow down my site? =
 
@@ -580,7 +580,7 @@ Distribution pipeline and admin polish ahead of the integration release.
 2. **Badge Library** - Grid display of all badges with earned counts and auto-award/manual indicators. Click to edit.
 3. **Challenge Manager** - Create challenges with action, target, bonus points, and date range. All fields have helper descriptions.
 4. **Analytics Dashboard** - 6 KPI cards (points, members, badges, challenges, streaks, kudos), top actions table, daily sparkline.
-5. **Setup Wizard** - 5 starter templates with point previews. Choose your site type and go.
+5. **Setup** - Four steps: the plugins on your site, how members earn, what members get, review and launch.
 6. **Award Points** - Manual point award page with user selector, point amount, and reason field.
 7. **API Keys** - Generate and manage API keys for remote site authentication.
 8. **Member Hub (Frontend)** - The default Hub page combining points total, level progress, badge count, streak, and a leaderboard widget showing the member's rank.

@@ -191,7 +191,7 @@ proves the rule — `wb_gam_partners` survives today only as a `DROP TABLE IF EX
 A toggle that saves and is never read is worse than no toggle — the owner believes they are
 protected. Grep every key you *render* for a **reader**.
 
-And the sharper version, learned the hard way: the setup wizard's unregistered-action guard called
+And the sharper version, learned the hard way: the old starter-template setup wizard's unregistered-action guard (removed in 1.7.0) called
 `Log::warning()` without importing `Log` — so the guard would **fatal at the exact moment it caught
 something.** The error path was the crash path.
 
