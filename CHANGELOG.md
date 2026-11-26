@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Changed
 
+- One admin menu in six groups (Overview, Earning, Rewards, Members, Experience, Tools), the same in the WordPress menu and on every plugin screen. Old page addresses still open.
+- Earning: every action grouped by plugin, with search and filters. Every change saves on its own, shows "Saved" and can be undone for 10 seconds; limits read in words and an empty limit means no limit.
+- Setup starts from the plugins on the site: choose which to reward, how generous (Relaxed, Balanced, Competitive), see the levels, badges and leaderboard, then launch. Nothing is saved before Launch, Skip changes nothing, and running it again starts from your current values. The six starter templates are gone.
+- The Overview dashboard shows four numbers for 30 days, a "Finish setting up" checklist that follows your site, points awarded by hand apart from what members earned, and a note when hand awards are an unusual share.
+- Awards that land together show as one summary toast that counts up, with the badge's picture; a level-up shows alone first. Toasts use the site's font and accent and are one width everywhere.
+- A big badge collection shows 12 badges per tab and "Show all N badges"; the `wb_gam_badge_showcase_page_size` filter changes the 12.
+
 - Inside a BuddyNext community the realtime client polls every 60 seconds instead of 15, and still bursts to 5 seconds right after the member's own action; standalone sites keep 15 seconds. The `wb_gam_realtime_interval` filter sets any rate from 5 to 120 seconds.
 - Jetonomy forum events are now real actions on Settings > Points: topic, reply, upvotes, accepted answer, planned idea, upheld report, and the penalties (downvote, report, removed by a moderator). Set the amount, switch each off, and add a cooldown or a daily or weekly cap. Until you save a number they pay what Jetonomy already pays, so no amount changes on update.
 - Penalties are a new kind of action: they take points, never below zero, and give back exactly what was taken when the penalty is lifted. They are not listed in the public earning guide.
@@ -23,6 +30,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Fixed
 
+- Saving the Points settings could switch every earning action off: any save that did not carry each action's checkbox (a script, another plugin, or a host that cuts long forms) wrote "off" for all of them. Each action now saves on its own, and the settings form no longer touches them.
+- A fresh install with several plugins activated at once could log "Duplicate column" or "Duplicate key name" database errors; the install now runs once, and upgrades wait for it.
+- Accent buttons inside BuddyNext (Send Kudos, the daily bonus, "Let's go") met text contrast only on the default theme; they now use the accent their text colour was made for. The gold #1 badge is readable in dark mode.
+- Spacing that used the admin's main gap size was missing on several screens.
+- The badge count in the Badge Showcase header counts the whole collection when the block shows only some badges.
 - Every toast closes by itself: 4 seconds, or 8 seconds when it carries a link. A toast with a link used to stay until it was closed by hand, and inside BuddyNext for good.
 - Escape closes the newest toast.
 - Toasts wait while a popup is open or while the member is writing in a field, so they never sit over a Post or Submit button. Inside BuddyNext the popup rule was skipped before.
