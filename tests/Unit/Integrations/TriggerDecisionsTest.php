@@ -55,6 +55,18 @@ class TriggerDecisionsTest extends TestCase {
 	}
 
 	#[Test]
+	public function forum_topics_and_replies_start_with_limits_against_farming(): void {
+		Functions\when( '__' )->returnArg();
+		$manifest = include dirname( __DIR__, 3 ) . '/integrations/jetonomy.php';
+		$by_id    = array_column( $manifest['triggers'], null, 'id' );
+
+		$this->assertSame( 5, $by_id['jetonomy_post_created']['daily_cap'] ?? 0, 'topics: 5 a day' );
+		$this->assertSame( 20, $by_id['jetonomy_reply_created']['daily_cap'] ?? 0, 'replies: 20 a day' );
+		$this->assertSame( 30, $by_id['jetonomy_reply_created']['cooldown'] ?? 0, 'replies: 30s apart' );
+		$this->assertArrayHasKey( 'jetonomy_post_deleted', $by_id['jetonomy_post_created']['reverse_on'], 'a deleted topic takes its points back' );
+	}
+
+	#[Test]
 	public function buddynext_share_is_paid_by_the_share_award_only(): void {
 		$cb = $this->trigger( 'buddynext.php', 'bn_post_created' );
 		$this->assertSame( 16, $cb( 1, 16, 'text' ) );

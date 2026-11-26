@@ -31,7 +31,7 @@ All hooks register on `plugins_loaded`. The priority order ensures each layer is
 |-----------|-----------|---------|
 | `WBGam\Engine\` | `src/Engine/` | Core engines, event bus, DB, cron |
 | `WBGam\API\` | `src/API/` | REST controllers (16 controllers) |
-| `WBGam\Admin\` | `src/Admin/` | Admin pages, setup wizard, analytics |
+| `WBGam\Admin\` | `src/Admin/` | Admin pages, Setup screen (`SetupWizard`), analytics |
 | `WBGam\BuddyPress\` | `src/BuddyPress/` | BP profile, directory, activity integrations |
 | `WBGam\Integrations\` | `src/Integrations/` | WordPress, WooCommerce, and other plugin hooks |
 | `WBGam\Abilities\` | `src/Abilities/` | WordPress Abilities API capability registrations |

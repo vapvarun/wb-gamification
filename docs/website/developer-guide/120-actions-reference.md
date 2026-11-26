@@ -167,8 +167,8 @@ Added in 1.5.3 (Gamification > Dashboard > Tools).
 |------|---------------|------------|
 | `wb_gam_engines_booted` | After all engines have initialized. Third-party extensions hook here to register additional engines. | (none) |
 | `wb_gam_register` | After the Registry is initialized. Last chance to register actions via the manual API. | (none) |
-| `wb_gamification_setup_wizard_started` | When the setup wizard begins applying a starter template. | `string $template` |
-| `wb_gamification_setup_wizard_completed` | After the setup wizard finishes applying a starter template. | `string $template` |
+| `wb_gamification_setup_wizard_started` | When an owner submits Setup, before anything is saved. Changed in 1.7.0: the argument is now `'launch'` or `'skip'`; before 1.7.0 it was a starter template slug. | `string $choice` |
+| `wb_gamification_setup_wizard_completed` | After Setup is saved (Launch) or marked done (Skip). Changed in 1.7.0: the argument is now `'launch'` or `'skip'`; before 1.7.0 it was a starter template slug. | `string $choice` |
 | `wb_gam_log_pruned` | After the daily points-ledger pruner runs (one fire per cron tick). | `int $deleted`, `string $cutoff` |
 | `wb_gam_events_pruned` | After the daily event-log pruner runs (one fire per cron tick). | `int $deleted`, `string $cutoff` |
 | `wb_gam_user_data_erased` | After all gamification data for a user is erased (GDPR). | `int $user_id` |

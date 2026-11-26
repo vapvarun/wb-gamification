@@ -1133,6 +1133,39 @@ final class PointsEngine {
 		return $total;
 	}
 
+	// ── Penalties ─────────────────────────────────────────────────────────────
+
+	/**
+	 * Take points away for a penalty action (a registered action with `penalty => true`).
+	 *
+	 * The amount is the action's points setting, capped at what the member holds: a penalty never
+	 * drives the balance below zero, and a member with nothing to lose loses nothing. What was
+	 * actually taken is the ledger row, and the amount asked for travels in the event metadata
+	 * (`penalty_requested`), so a later reversal gives back exactly what was taken.
+	 *
+	 * @param Event $event  The event being processed (user, action, object, resolved point type).
+	 * @param int   $amount Points the action asks for, a positive number.
+	 * @return bool True when points were taken.
+	 */
+	public static function penalize( Event $event, int $amount ): bool {
+		if ( $amount <= 0 || $event->user_id <= 0 ) {
+			return false;
+		}
+
+		$type = self::resolve_type( $event->point_type );
+		$take = min( $amount, self::get_total( $event->user_id, $type ) );
+		if ( $take <= 0 ) {
+			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			do_action( 'wb_gam_award_skipped', $event->user_id, $event->action_id, 'no_balance', array( 'requested' => $amount ) );
+			return false;
+		}
+
+		$event->metadata['penalty_requested'] = $amount;
+		$result                               = self::debit( $event->user_id, $take, $event->action_id, $event, $type );
+
+		return ! empty( $result['success'] );
+	}
+
 	// ── Read methods ──────────────────────────────────────────────────────────
 
 	/**
@@ -1300,7 +1333,9 @@ final class PointsEngine {
 	 */
 	private static function has_object_award( int $user_id, string $action_id, int $object_id ): bool {
 		global $wpdb;
-		return 0 < (int) $wpdb->get_var(
+		// A non-zero net: an award stands as a positive sum, a penalty as a negative one, and either
+		// is zero once it has been undone.
+		return 0 !== (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COALESCE(SUM(points), 0) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d AND action_id IN (%s, %s, %s) AND object_id = %d",
 				$user_id,
@@ -1521,7 +1556,9 @@ final class PointsEngine {
 				continue;
 			}
 			if ( $reverse ) {
-				$delta = isset( self::$deleting_users[ $row['user_id'] ] ) ? 0 : -max( 0, $row['net'] );
+				// An award is taken back (never below nothing); a penalty is given back.
+				$standing = $row['last_award'] < 0 ? min( 0, $row['net'] ) : max( 0, $row['net'] );
+				$delta    = isset( self::$deleting_users[ $row['user_id'] ] ) ? 0 : -$standing;
 			} else {
 				// Back to exactly one award (the latest), never the sum of every award the object had.
 				$delta = $row['net'] <= 0 && $row['last_award'] > 0 ? $row['last_award'] - $row['net'] : 0;

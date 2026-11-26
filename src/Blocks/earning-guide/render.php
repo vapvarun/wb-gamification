@@ -75,6 +75,11 @@ if ( ! empty( $wb_gam_actions ) ) {
 			continue;
 		}
 
+		// A penalty takes points away; the guide lists ways to earn.
+		if ( ! empty( $wb_gam_action['penalty'] ) ) {
+			continue;
+		}
+
 		$wb_gam_category = (string) ( $wb_gam_action['category'] ?? 'general' );
 		$wb_gam_pts      = Registry::action_points( (string) $wb_gam_id );
 		$wb_gam_label    = (string) ( $wb_gam_action['label'] ?? $wb_gam_id );

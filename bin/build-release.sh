@@ -431,8 +431,20 @@ for required in \
     fi
 done
 
-( cd "${DIST_DIR}" && zip -qr "${SLUG}-${VERSION}.zip" "${SLUG}" )
+# Every entry deflated. The zip CLI stores tiny files (index.php "Silence is golden") as-is, so
+# plain `<?php` is readable in the upload body and the store's upload firewall (Cloudflare, rule
+# for CVE-2018-9206) rejects it: wp-admin shows only "Unexpected response from the server".
+# A -9 or -Z deflate flag on the zip CLI does not change that. Same packer as the wordpress.org repos.
+( cd "${DIST_DIR}" && python3 -I -c 'import os,sys,zipfile
+with zipfile.ZipFile(sys.argv[1], "w", zipfile.ZIP_DEFLATED) as z:
+    for r, d, f in os.walk(sys.argv[2]):
+        d.sort()
+        for n in sorted(f): z.write(os.path.join(r, n))' "${SLUG}-${VERSION}.zip" "${SLUG}" )
 ZIP_PATH="${DIST_DIR}/${SLUG}-${VERSION}.zip"
+if [ "$(LC_ALL=C grep -a -c '<?php' "${ZIP_PATH}" || true)" != "0" ]; then
+    echo "✗ Release aborted: ${ZIP_PATH} has plain-text PHP in it; the store upload would be blocked." >&2
+    exit 1
+fi
 SIZE_KB=$(($(wc -c < "${ZIP_PATH}") / 1024))
 
 echo "→ ${ZIP_PATH} (${SIZE_KB} KB)"

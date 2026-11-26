@@ -626,6 +626,12 @@ final class Engine {
 		 */
 		$points = (int) apply_filters( 'wb_gam_points_for_action', $points, $event->action_id, $event->user_id, $event );
 
+		// A penalty takes points away: it is not an earn, so no multiplier doubles it, and the
+		// badge, level-up and "you earned" side effects below never run for it.
+		if ( null !== $action && ! empty( $action['penalty'] ) ) {
+			return PointsEngine::penalize( $event, $points );
+		}
+
 		// Apply any stored rule multipliers (day-of-week, order-total, etc.).
 		$points = RuleEngine::apply_multipliers( $points, $event );
 

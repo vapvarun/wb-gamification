@@ -147,7 +147,8 @@ class NotificationQueueBoundsTest extends TestCase {
 		$this->assertLessThanOrEqual( 5, count( $events ), 'A backlog must never render more than a 5-toast burst.' );
 		$this->assertCount( 1, $events, 'Since 1.6.6 a backlog arrives as one summary toast.' );
 		$this->assertSame( 'summary', $events[0]['type'] );
-		$this->assertSame( 'You earned points and rewards since your last visit', $events[0]['message'], 'Past the read window the summary names no partial total.' );
+		$this->assertSame( 'Since your last visit', $events[0]['message'], 'Past the read window the summary names no partial total.' );
+		$this->assertSame( 'You earned points and rewards.', $events[0]['detail'] );
 	}
 
 	#[Test]
@@ -195,5 +196,20 @@ class NotificationQueueBoundsTest extends TestCase {
 
 		$this->assertSame( array( 1, 2, 3 ), $ids, 'Every event in an under-cap queue is still delivered.' );
 		$this->assertSame( 3, $this->written_cursor );
+	}
+
+	/**
+	 * Since 1.7.0 a burst under the read window passes through whole: the page folds it into one
+	 * summary toast. Folding here as well made a second summary after a level-up, and keeping
+	 * only the newest few dropped points the page should add up.
+	 */
+	#[Test]
+	public function a_burst_under_the_window_is_delivered_whole_for_the_page_to_fold(): void {
+		$this->stub_wpdb( 7 );
+
+		$events = NotificationBridge::read_pending( 7, 'footer' );
+
+		$this->assertCount( 7, $events );
+		$this->assertNotContains( 'summary', array_column( $events, 'type' ), 'No second summary from the server.' );
 	}
 }

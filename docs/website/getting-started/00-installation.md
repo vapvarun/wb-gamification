@@ -32,15 +32,15 @@ When you activate WB Gamification, the plugin does the following automatically:
 - Creates **20 custom database tables** to store events, points, badges, levels, challenges, streaks, kudos, leaderboard snapshots, member preferences, and more.
 - Seeds your site with **5 default levels** (Newcomer, Member, Contributor, Regular, Champion) and **37 default badges**.
 - Registers all gamification actions appropriate for your active plugins. If BuddyPress is active, BuddyPress triggers load automatically.
-- Redirects you to the **Setup Wizard** so you can choose a starter template.
+- Opens **Setup** on your next admin page load, so you can choose which plugins reward members and how generously.
 
 You do not need to configure anything manually. The plugin detects your active plugins and loads the right point-earning actions automatically.
 
 ## After Activation
 
-You are redirected to the Setup Wizard. Choose a starter template that matches your site type - this takes about one minute. After completing the wizard, your site is fully configured and ready for members to start earning points.
+Setup opens. It lists the plugins on your site that have gamification actions and walks you through four short steps, about two minutes. Click **Launch gamification** at the end and members start earning from their next action. See [Setup](20-setup-wizard.md).
 
-If you skip the wizard, default point values are used. You can always return to **Gamification > Dashboard > Points** to adjust them.
+If you click **Skip setup, I'll configure it myself**, nothing is saved and members earn with each plugin's own default values. You can adjust them any time under **Gamification > Earning > Actions and points**, or run setup again from **Gamification > Tools > Setup**.
 
 ## Languages
 

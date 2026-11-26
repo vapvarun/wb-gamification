@@ -1732,7 +1732,46 @@ final class LeaderboardEngine {
 		// excluded ROLES become a predicate rather than an expanded id list.
 		[ $owner_sql, $owner_values ] = PointsEngine::exclusion_sql( $alias );
 
-		return array( $sql . $owner_sql, array_merge( $values, $owner_values ) );
+		[ $host_sql, $host_values ] = self::host_exclusion_sql( $alias );
+
+		return array( $sql . $owner_sql . $host_sql, array_merge( $values, $owner_values, $host_values ) );
+	}
+
+	/**
+	 * A host plugin's own eligibility rule, as SQL, so it holds on every board path at once
+	 * (filtering results afterwards would leave rank gaps and short pages). BuddyNext keeps
+	 * suspended members off the boards this way; their points stay and they return when the
+	 * suspension ends.
+	 *
+	 * Contract: the fragment starts with " AND ", refers to the member as {$alias}.user_id and uses
+	 * only %d / %s placeholders whose values are in the array. A fragment that breaks the contract
+	 * is ignored rather than put into the query.
+	 *
+	 * @param string $alias Table alias of the row being ranked.
+	 * @return array{0:string,1:array<int,int|string>}
+	 */
+	private static function host_exclusion_sql( string $alias ): array {
+		/**
+		 * Filter: add an eligibility rule to every leaderboard and rank query.
+		 *
+		 * @since 1.7.0
+		 *
+		 * @param array{0:string,1:array} $extra [ SQL fragment starting with " AND ", values for its placeholders ].
+		 * @param string                  $alias Table alias whose user_id column is the member.
+		 */
+		$extra  = (array) apply_filters( 'wb_gam_leaderboard_exclusion_sql', array( '', array() ), $alias ) + array( '', array() );
+		$sql    = is_string( $extra[0] ) ? $extra[0] : '';
+		$values = is_array( $extra[1] ) ? array_values( $extra[1] ) : array();
+
+		if ( '' === $sql ) {
+			return array( '', array() );
+		}
+		$placeholders = preg_match_all( '/%[ds]/', str_replace( '%%', '', $sql ) );
+		if ( 0 !== strpos( $sql, ' AND ' ) || count( $values ) !== $placeholders ) {
+			_doing_it_wrong( 'wb_gam_leaderboard_exclusion_sql', esc_html__( 'The fragment must start with " AND " and have one value for each placeholder. It was ignored.', 'wb-gamification' ), '1.7.0' );
+			return array( '', array() );
+		}
+		return array( $sql, $values );
 	}
 
 	/**

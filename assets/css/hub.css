@@ -129,7 +129,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: var(--gam-accent);
+  background: var(--wb-gam-pop-accent); /* With --wb-gam-pop-accent-fg: the solid fill its text colour was computed for. */
   color: var(--wb-gam-pop-accent-fg);
   border: none;
   border-radius: var(--gam-radius-sm);
@@ -722,7 +722,7 @@
 
 .gam-lb-pill--active {
   border-color: var(--gam-accent);
-  background: var(--gam-accent);
+  background: var(--wb-gam-pop-accent); /* With --wb-gam-pop-accent-fg: the solid fill its text colour was computed for. */
   color: var(--wb-gam-pop-accent-fg);
 }
 

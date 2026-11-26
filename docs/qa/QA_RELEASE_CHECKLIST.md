@@ -205,7 +205,7 @@ On a **second clean** Local site:
 - [ ] Activation succeeds — no fatal, no PHP warning in debug.log
 - [ ] First REST request after activation returns 200 (regression guard against `D.activation-rewrite`)
 - [ ] All 22 DB tables created
-- [ ] Setup wizard renders; first earned points lands within 60s of completing it
+- [ ] Setup (Tools > Setup) renders its four steps; first earned points lands within 60s of clicking "Launch gamification"
 
 ## 10 — Upgrade-in-anger
 

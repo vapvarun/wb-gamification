@@ -14,6 +14,7 @@ See [Hooks and Filters Overview](110-hooks-overview.md) for how to add a listene
 | `wb_gam_rule_condition` | Resolves a custom rule condition type the core engine does not recognize. Return `true` to mark the condition met. | `bool $met`, `array $condition`, `Event $event` | `bool` whether the condition is met |
 | `wb_gam_leaderboard_results` | Leaderboard data before it is returned to blocks, shortcodes, or the REST API. Fires once per page; since 1.6.5 the `rank` in each row is absolute (page two continues from page one) and `$raw_rows` is the page's raw rows. | `array $results`, `array $raw_rows` | `array` results |
 | `wb_gam_leaderboard_anon_paging` | Whether an anonymous visitor may read past the first leaderboard page over REST (the `cursor` parameter). Default `false`: the first page is public, walking the whole roster needs a login. Added in 1.6.5. | `bool $allowed` | `bool` whether cursor paging is open to visitors |
+| `wb_gam_leaderboard_exclusion_sql` | Add your own rule for who may appear on a leaderboard, as SQL, so it holds on every board and rank (the live boards, the snapshot, cohort boards). BuddyNext uses it to keep suspended members off the boards; their points stay. The fragment must start with ` AND `, refer to the member as `{$alias}.user_id`, and use only `%d` / `%s` placeholders whose values are in the array; anything else is ignored. Added in 1.7.0. | `array $extra` (`[ string $sql, array $values ]`, default `[ '', [] ]`), `string $alias` | `array` `[ $sql, $values ]` |
 | `wb_gam_leaderboard_scope_user_ids` | The set of user IDs included in a scoped leaderboard. Return an explicit list to define a custom scope. | `array $user_ids`, `string $scope_type`, `int $scope_id` | `array` user IDs |
 | `wb_gam_leaderboard_max_snapshot_age` | How stale (seconds) the materialized leaderboard snapshot may be before a read falls back live. Floored at 60. Default `600` (the 5-minute rebuild interval). | `int $max_age` | `int` max age in seconds |
 | `wb_gam_toast_data` | Toast notification content before it is queued. Return an empty array to suppress. | `array $event`, `int $user_id` | `array` toast data (empty to suppress) |
@@ -122,7 +123,7 @@ Site-owner controls added in 1.5.3 (Gamification > Dashboard > Access and Gamifi
 
 | Filter | What it filters | Parameters | Return |
 |--------|-----------------|------------|--------|
-| `wb_gam_can_view_public_profile` | Whether a viewer may see a member's gamification profile data (points, badges, rank, kudos entries). A community plugin that owns member profiles (BuddyNext) answers with its own profile privacy, so one setting governs both; when a callback is attached, the plugin's own public-profile switches are hidden in Settings and the setup wizard. Self and administrators are decided before this filter. Added in 1.6.5. | `bool $allowed`, `int $target_id`, `int $viewer_id` | `bool` whether the viewer may see it |
+| `wb_gam_can_view_public_profile` | Whether a viewer may see a member's gamification profile data (points, badges, rank, kudos entries). A community plugin that owns member profiles (BuddyNext) answers with its own profile privacy, so one setting governs both; when a callback is attached, the plugin's own public-profile switches are hidden in Settings and in step 3 of Setup. Self and administrators are decided before this filter. Added in 1.6.5. | `bool $allowed`, `int $target_id`, `int $viewer_id` | `bool` whether the viewer may see it |
 | `wb_gam_profile_publicly_visible` | Whether a member's `/u/{user_login}` profile page is publicly visible. Default ON (opt-out model): a member is visible unless they set the per-user flag to `0`, and the site-wide kill switch still wins. Added in 1.5.2. | `bool $visible`, `int $user_id` | `bool` whether the profile is public |
 | `wb_gam_profile_redirect_url` | Where a visitor is redirected instead of rendering wb-gamification's own `/u/{user_login}` page. A community plugin that owns member profiles can point here so every profile link lands on its own page. Default `''` (render wb-gamification's page). | `string $url`, `int $user_id`, `WP_User $user` | `string` redirect URL |
 | `wb_gam_member_url` | The canonical profile URL resolved for a member - used by every leaderboard row, podium slot, kudos entry, and share card. Return `''` to render no link. | `string $url`, `int $user_id` | `string` profile URL |
@@ -185,6 +186,12 @@ These fire on every block, not just one slug.
 | Filter | What it filters | Parameters | Return |
 |--------|-----------------|------------|--------|
 | `wb_gam_hub_anon_leaderboard` | Whether the hub block shows anonymous visitors a top-3 leaderboard preview. Default is the `wb_gam_hub_anon_leaderboard` option (ON). | `bool $show` | `bool` whether to show the preview |
+
+### Realtime polling rate
+
+| Filter | Arguments | Description |
+|---|---|---|
+| `wb_gam_realtime_interval` | `int $seconds` | How often the realtime client (WordPress Heartbeat) checks for new points and badge toasts while a page is in use, from 5 to 120 seconds. The default is 15 on its own and 60 inside a BuddyNext community; the client still bursts to 5 seconds for 30 seconds after the member's own action. The value is cast to a whole number. A value below 5 or above 120 is ignored, and the client then runs at the default 15 seconds, even inside BuddyNext. |
 
 ## Lifecycle
 

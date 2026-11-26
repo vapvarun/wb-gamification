@@ -35,6 +35,11 @@ defined( 'ABSPATH' ) || exit;
 final class Registry {
 
 	/**
+	 * Largest amount an owner can set for one action (Settings > Earning and the REST overrides route).
+	 */
+	public const POINTS_MAX = 9999;
+
+	/**
 	 * Registered gamification actions keyed by action ID.
 	 *
 	 * @var array<string, array>
@@ -114,6 +119,9 @@ final class Registry {
 	 *                                  award is skipped (`own_content`) when that is the member being paid.
 	 *   @type callable $object_date    Optional. Object id => when the content was created (UTC 'Y-m-d H:i:s'). Content
 	 *                                  from before the 1.6.8 update is treated as paid ({@see PointsEngine::is_legacy_object()}).
+	 *   @type bool     $penalty        Optional. The action takes points away instead of giving them. The amount is the
+	 *                                  action's points setting (a positive number), it never takes the balance below
+	 *                                  zero, and it is not an earn: no badge, level-up announcement or multiplier.
 	 *   @type int      $default_points Default points awarded. Admin can override.
 	 *   @type string   $category       Optional category (buddypress, commerce, etc.).
 	 *   @type string   $icon           Dashicon name or URL.
@@ -699,6 +707,23 @@ final class Registry {
 		$overrides = self::get_overrides();
 		$action    = self::resolve_text( self::$actions[ $id ] );
 		return empty( $overrides ) ? $action : self::apply_overrides( $action, $overrides );
+	}
+
+	/**
+	 * An action's own daily and weekly limits, as its plugin declared them (before any owner
+	 * override). Setup's pace choice scales these; 0 means no limit.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param string $id Action ID.
+	 * @return array{daily_cap:int, weekly_cap:int}
+	 */
+	public static function manifest_limits( string $id ): array {
+		$action = self::$actions[ $id ] ?? array();
+		return array(
+			'daily_cap'  => max( 0, (int) ( $action['daily_cap'] ?? 0 ) ),
+			'weekly_cap' => max( 0, (int) ( $action['weekly_cap'] ?? 0 ) ),
+		);
 	}
 
 	/**

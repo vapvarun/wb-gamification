@@ -442,7 +442,7 @@
 
 .wb-gam-ld-link__btn:hover,
 .wb-gam-lrn-link__btn:hover {
-	background: var(--wb-gam-color-accent);
+	background: var(--wb-gam-pop-accent); /* With --wb-gam-pop-accent-fg: the solid fill its text colour was computed for. */
 	color: var(--wb-gam-pop-accent-fg);
 }
 
@@ -487,7 +487,7 @@
 	padding: 8px 16px;
 	border: 1px solid var(--wb-gam-color-accent, #2271b1);
 	border-radius: var(--wb-gam-radius, 8px);
-	background: var(--wb-gam-color-accent, #2271b1);
+	background: var(--wb-gam-pop-accent); /* With --wb-gam-pop-accent-fg: the solid fill its text colour was computed for. */
 	color: var(--wb-gam-pop-accent-fg);
 	font-weight: 600;
 	font-size: 0.875rem;

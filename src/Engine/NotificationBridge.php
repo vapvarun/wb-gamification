@@ -73,19 +73,6 @@ final class NotificationBridge {
 	public const BURST_MAX_EVENTS = 5;
 
 	/**
-	 * More waiting toasts than this arrive as ONE summary toast.
-	 *
-	 * A new member reaches their first community page with six waiting (badge,
-	 * welcome, +15, +10, +10, +20). Shown one by one, the stack's limit pushed the
-	 * welcome and its "See my progress" link off screen and the burst cap skipped
-	 * the badge. One toast says it all: "Welcome - you earned 55 Points".
-	 *
-	 * @since 1.6.6
-	 * @var int
-	 */
-	public const SUMMARY_FROM = 4;
-
-	/**
 	 * Rows read per delivery, so a summary can total a whole burst. Past this the
 	 * summary names no number (a member back after months).
 	 *
@@ -100,7 +87,7 @@ final class NotificationBridge {
 	 *
 	 * @var string[]
 	 */
-	private const MOMENT_TYPES = array( 'level_up', 'streak_milestone', 'cohort_promotion', 'community_goal' );
+	private const MOMENT_TYPES = array( 'level_up', 'cohort_promotion', 'community_goal' ); // A streak day joins the summary toast (1.7.0).
 
 	/**
 	 * Rows deleted per statement by `prune_queue()`, and the number of such
@@ -127,6 +114,12 @@ final class NotificationBridge {
 	 * @var string
 	 */
 	private const CURSOR_META_PREFIX = 'wb_gam_notif_cursor_';
+
+	/**
+	 * Server-Timing metric name that tells the member's page a toast is waiting. Read by
+	 * assets/js/heartbeat.js, which polls at once when a response carries it.
+	 */
+	public const TOAST_TIMING = 'wbgam-toast';
 
 	/**
 	 * The one delivery position every reader shares (cursor key suffix).
@@ -347,13 +340,16 @@ final class NotificationBridge {
 
 		switch ( $reason ) {
 			case 'cooldown':
-				$message = __( "You're on cooldown for this action - try again in a bit.", 'wb-gamification' );
+				$message = __( 'A little too soon', 'wb-gamification' );
+				$detail  = __( 'Try this again in a moment.', 'wb-gamification' );
 				break;
 			case 'daily_cap':
-				$message = __( "You've hit your daily limit for this action. Resets tomorrow.", 'wb-gamification' );
+				$message = __( 'Daily limit reached', 'wb-gamification' );
+				$detail  = __( 'Resets tomorrow.', 'wb-gamification' );
 				break;
 			default:
-				$message = __( "You've hit your weekly limit for this action. Resets next week.", 'wb-gamification' );
+				$message = __( 'Weekly limit reached', 'wb-gamification' );
+				$detail  = __( 'Resets next week.', 'wb-gamification' );
 				break;
 		}
 
@@ -364,6 +360,7 @@ final class NotificationBridge {
 				'reason'  => $reason,
 				'action'  => $action_id,
 				'message' => $message,
+				'detail'  => $detail,
 				'context' => $context,
 			)
 		);
@@ -379,11 +376,9 @@ final class NotificationBridge {
 	 * @param int   $points  Points awarded.
 	 */
 	public static function on_points_awarded( int $user_id, Event $event, int $points ): void {
-		// Don't notify for internal synthetic actions (challenge bonus, streak bonus).
-		$silent = array( 'challenge_completed', 'streak_milestone' );
-		if ( in_array( $event->action_id, $silent, true ) ) {
-			return;
-		}
+		// Challenge and streak bonuses are queued like any award: the member's summary toast adds
+		// them to the total (toast.js names the challenge or streak once, not the bonus line), so
+		// the toast agrees with the ledger.
 
 		// First-earn explainer — push a one-time welcome toast so the member
 		// understands what just happened and where to see their progress.
@@ -395,18 +390,17 @@ final class NotificationBridge {
 
 			$hub_url = self::progress_url( $user_id );
 
-			$detail = $hub_url
-				? __( 'See your full progress: points, badges, levels and leaderboard.', 'wb-gamification' )
-				: __( 'Earn more points by being active on the site - every action counts.', 'wb-gamification' );
+			// Short enough for the two lines beside the "See progress" button (a site name did not fit).
+			$detail = __( 'Your first points.', 'wb-gamification' );
 
 			self::push(
 				$user_id,
 				array(
 					'type'      => 'welcome',
-					'message'   => __( 'Welcome - you just earned your first points!', 'wb-gamification' ),
+					'message'   => __( 'Welcome aboard!', 'wb-gamification' ),
 					// A real link (toast.js renders it); a URL inside the sentence was not clickable.
 					'url'       => $hub_url ? wp_make_link_relative( $hub_url ) : '',
-					'url_label' => __( 'See my progress', 'wb-gamification' ),
+					'url_label' => __( 'See progress', 'wb-gamification' ),
 					'detail'    => $detail,
 					'icon'      => 'icon-sparkles',
 				)
@@ -476,13 +470,13 @@ final class NotificationBridge {
 			$user_id,
 			array(
 				'type'    => 'badge',
-				'message' => sprintf(
-					/* translators: %s = badge name */
-					__( 'Badge earned: %s', 'wb-gamification' ),
-					$badge['name'] ?? ''
-				),
-				'detail'  => $badge['description'] ?? null,
+				// Titles are short fixed phrases (one line at 360px); names go in the detail line.
+				'message' => __( 'New badge', 'wb-gamification' ),
+				'detail'  => (string) ( $badge['name'] ?? '' ),
 				'icon'    => 'icon-medal',
+				// The badge's own picture fills the toast's icon disc; the name lists it in a summary.
+				'name'    => $badge['name'] ?? '',
+				'image'   => ! empty( $badge['image_url'] ) ? esc_url_raw( (string) $badge['image_url'] ) : '',
 			)
 		);
 	}
@@ -672,8 +666,8 @@ final class NotificationBridge {
 			array(
 				'type'    => 'submission',
 				'outcome' => 'approved',
-				/* translators: %s: action label. */
-				'message' => sprintf( __( 'Approved: %s', 'wb-gamification' ), wb_gam_get_action_label( $action_id ) ),
+				'message' => __( 'Submission approved', 'wb-gamification' ),
+				'detail'  => wb_gam_get_action_label( $action_id ),
 				'icon'    => 'icon-check',
 			)
 		);
@@ -697,9 +691,11 @@ final class NotificationBridge {
 			array(
 				'type'    => 'submission',
 				'outcome' => 'rejected',
-				/* translators: %s: action label. */
-				'message' => sprintf( __( 'Not approved: %s', 'wb-gamification' ), wb_gam_get_action_label( $action_id ) ),
-				'detail'  => '' !== trim( $notes ) ? wp_strip_all_tags( $notes ) : null,
+				'message' => __( 'Submission not approved', 'wb-gamification' ),
+				'detail'  => '' !== trim( $notes )
+					/* translators: 1: action label, 2: the moderator's reason. */
+					? sprintf( __( '%1$s: %2$s', 'wb-gamification' ), wb_gam_get_action_label( $action_id ), wp_strip_all_tags( $notes ) )
+					: wb_gam_get_action_label( $action_id ),
 				'icon'    => 'icon-info',
 			)
 		);
@@ -716,12 +712,10 @@ final class NotificationBridge {
 			$user_id,
 			array(
 				'type'    => 'challenge',
-				'message' => sprintf(
-					/* translators: %s = challenge title */
-					__( 'Challenge complete: %s', 'wb-gamification' ),
-					$challenge['title'] ?? ''
-				),
+				'message' => __( 'Challenge complete', 'wb-gamification' ),
+				'detail'  => (string) ( $challenge['title'] ?? '' ),
 				'icon'    => 'icon-target',
+				'name'    => $challenge['title'] ?? '',
 			)
 		);
 	}
@@ -738,6 +732,14 @@ final class NotificationBridge {
 		// Notify the receiver, by the giver's name: the kudos feed and the profile already show
 		// who gave it, and "Someone gave you kudos!" left the member guessing.
 		$giver = get_userdata( $giver_id );
+		$from  = '';
+		if ( $giver ) {
+			$from = '' !== $message
+				/* translators: 1: display name of the member who gave the kudos, 2: their message. */
+				? sprintf( __( 'From %1$s: %2$s', 'wb-gamification' ), $giver->display_name, $message )
+				/* translators: %s: display name of the member who gave the kudos. */
+				: sprintf( __( 'From %s', 'wb-gamification' ), $giver->display_name );
+		}
 		self::push(
 			$receiver_id,
 			array(
@@ -746,12 +748,10 @@ final class NotificationBridge {
 				// abusive kudos had no way to find the toast it had already queued -- so the receiver
 				// was still congratulated for kudos that had been taken away as abuse.
 				'kudos_id' => $kudos_id,
-				'message'  => $giver
-					/* translators: %s: display name of the member who gave the kudos. */
-					? sprintf( __( '%s gave you kudos!', 'wb-gamification' ), $giver->display_name )
-					: __( 'Someone gave you kudos!', 'wb-gamification' ),
-				'detail'   => $message ?: null,
+				'message'  => __( 'Kudos received', 'wb-gamification' ),
+				'detail'   => '' !== $from ? $from : ( $message ?: null ),
 				'icon'     => 'icon-heart-handshake',
+				'name'     => $giver ? $giver->display_name : '',
 			)
 		);
 	}
@@ -1035,6 +1035,13 @@ final class NotificationBridge {
 		);
 
 		self::trim( $user_id );
+
+		// The member's own action just queued this toast (a BuddyNext post or comment, any plugin's
+		// form): mark this response so their page fetches it now instead of on its next slow poll.
+		// Server-Timing is readable by the page for any same-origin request (assets/js/heartbeat.js).
+		if ( get_current_user_id() === $user_id && ! headers_sent() ) {
+			header( 'Server-Timing: ' . self::TOAST_TIMING, false );
+		}
 	}
 
 	/**
@@ -1239,9 +1246,9 @@ final class NotificationBridge {
 	/**
 	 * Fold a burst of waiting toasts into one summary toast.
 	 *
-	 * Up to three toasts pass through unchanged (newest BURST_MAX_EVENTS kept).
-	 * From SUMMARY_FROM on, every toast becomes one: the points per currency, the
-	 * badges, and the "See my progress" link. Celebration cards pass through.
+	 * Every toast passes through (the page folds them into one summary toast); only a
+	 * backlog longer than the read window becomes one "since your last visit" toast with
+	 * no partial total. Celebration cards pass through either way.
 	 *
 	 * @since 1.6.6
 	 *
@@ -1262,61 +1269,28 @@ final class NotificationBridge {
 			}
 		}
 
-		if ( count( $toasts ) < self::SUMMARY_FROM ) {
-			return array_slice( $events, -self::BURST_MAX_EVENTS );
+		// Since 1.7.0 the page folds every award that lands together into ONE summary toast
+		// (assets/js/toast.js), so the events pass through whole: folding here as well made a
+		// second summary, and keeping only the newest few dropped points the page should count.
+		// Only a backlog longer than the read window becomes one toast here, with no partial
+		// total (a member back after months).
+		if ( ! $truncated ) {
+			return $events;
 		}
 
-		$totals  = array(); // Plural currency name => amount.
-		$badges  = array();
-		$welcome = false;
 		$last_id = 0;
 		foreach ( $toasts as $toast ) {
 			$last_id = max( $last_id, (int) ( $toast['_id'] ?? 0 ) );
-			$type    = (string) ( $toast['type'] ?? '' );
-			if ( 'points' === $type && (int) ( $toast['points'] ?? 0 ) > 0 ) {
-				$unit            = (string) ( $toast['unit_many'] ?? '' );
-				$unit            = '' !== $unit ? $unit : __( 'Points', 'wb-gamification' );
-				$totals[ $unit ] = ( $totals[ $unit ] ?? 0 ) + (int) $toast['points'];
-			} elseif ( 'badge' === $type ) {
-				$badges[] = (string) ( $toast['message'] ?? '' );
-			} elseif ( 'welcome' === $type ) {
-				$welcome = true;
-			}
 		}
-
-		$parts = array();
-		foreach ( $totals as $unit => $amount ) {
-			/* translators: 1: an amount, e.g. "+10" or "250", 2: the site's name for points, e.g. "Points" or "Karma". */
-			$parts[] = sprintf( __( '%1$s %2$s', 'wb-gamification' ), number_format_i18n( $amount ), $unit );
-		}
-
-		if ( $truncated ) {
-			$message = __( 'You earned points and rewards since your last visit', 'wb-gamification' );
-		} elseif ( $parts ) {
-			$message = $welcome
-				/* translators: %s: what was earned, e.g. "55 Points" or "55 Points and 20 Coins". */
-				? sprintf( __( 'Welcome - you earned %s', 'wb-gamification' ), wp_sprintf( '%l', $parts ) )
-				/* translators: %s: what was earned, e.g. "55 Points" or "55 Points and 20 Coins". */
-				: sprintf( __( 'You earned %s', 'wb-gamification' ), wp_sprintf( '%l', $parts ) );
-		} else {
-			$message = __( 'You have new achievements', 'wb-gamification' );
-		}
-
-		$detail = '';
-		if ( 1 === count( $badges ) ) {
-			$detail = $badges[0];
-		} elseif ( count( $badges ) > 1 ) {
-			/* translators: %d: number of badges. */
-			$detail = sprintf( _n( '%d badge earned', '%d badges earned', count( $badges ), 'wb-gamification' ), count( $badges ) );
-		}
+		$message = __( 'Since your last visit', 'wb-gamification' );
 
 		$url     = self::progress_url( $user_id );
 		$summary = array(
 			'type'      => 'summary',
 			'message'   => $message,
-			'detail'    => '' !== $detail ? $detail : null,
+			'detail'    => __( 'You earned points and rewards.', 'wb-gamification' ),
 			'url'       => '' !== $url ? wp_make_link_relative( $url ) : '',
-			'url_label' => __( 'See my progress', 'wb-gamification' ),
+			'url_label' => __( 'See progress', 'wb-gamification' ),
 			'icon'      => 'icon-sparkles',
 			'_id'       => $last_id,
 		);

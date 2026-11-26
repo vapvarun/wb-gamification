@@ -108,6 +108,7 @@ these rules, and do not copy them here — read them there. Which ones govern th
 | A member-facing control (toggle, setting, button) | `public-surface-integrity.md` | `check-wiring`/`wppqa` (partial) |
 | User-facing strings | `i18n.md` | *(no gate)* |
 | Frontend JS, client-side nav | `frontend-interactivity.md` | *(no gate)* |
+| A toast, popup or reward moment | `TOASTS.md` (agreed 2026-11-26 with BuddyNext and QA: one shared bnToast API, 360px shape, merge + count-up, fits any site) | *(no gate)* |
 | A wp-admin screen | `admin-ui-uniformity.md` · `admin-settings-registry.md` | `ux-audit.sh` (principle only — this plugin has its own design system, NOT BuddyNext's tokens) |
 
 **Not applicable:** `FREE-PRO-SEAM.md` (no Pro pair). `MONEY.md` governs real currency; this plugin
@@ -148,7 +149,8 @@ Every overlay is one of six shells defined in `assets/css/popups.css` (Moment ca
 Drawer, Menu) and reads `--wb-gam-pop-*` / `--wb-gam-dur*` tokens from `src/shared/design-tokens.css`, which
 read BuddyNext's `--bn-*` first. Do not restyle a shell per surface and do not write a raw duration or
 easing in component CSS: stage 2.16 (`bin/check-motion-tokens.sh`) fails on growth. Toasts go through
-`window.wbGam.toast()` (`assets/js/toast-core.js`), confetti through `wbGam.celebrate()`.
+`window.wbGam.toast()` (`assets/js/toast-core.js`), confetti through `wbGam.celebrate()`. Every toast follows the
+shared standard `TOASTS.md` on the standards shelf; standalone `popups.css` mirrors BuddyNext's toast shape.
 
 ## Integration rules: entry and exit together (owner, 18 Nov 2026)
 
@@ -164,6 +166,10 @@ plugin by plugin.
    on the way in and out) and settles exactly what that object paid, from whoever was paid. Re-adding pays
    again, so add/remove loops net to zero instead of needing a ban. `restore_on` gives back an award that
    was taken (untrash, unspam, approve again).
+   A **penalty** (`'penalty' => true`) takes points instead of giving them: the points setting is the amount,
+   it is capped at the balance (never below zero), no multiplier, badge or level-up applies, and `reverse_on`
+   gives back exactly what was taken. Forum scoring (`integrations/jetonomy.php`) is the reference: every
+   number is an owner setting, and the default only follows what the partner already pays.
 3. **Pay on publish, not on submit.** Content held for moderation pays when approved (bridge to a
    `wb_gam_<plugin>_..._published` hook, as Listora, WP Sell Services, Tutor and Learnomy reviews do) and
    reverses on reject or spam.

@@ -2,10 +2,12 @@
 /**
  * WB Gamification — Jetonomy integration.
  *
- * Mirrors Jetonomy reputation deltas into the WB Gam ledger via the
- * `jetonomy_reputation_changed` action. Sandboxed users (truthy
- * `wb_gam_sandboxed` user meta) are skipped at the wb-gam mirror —
- * Jetonomy's own reputation row is unaffected.
+ * Forum events that are registered actions (topic, reply, votes, acceptance, penalties; see
+ * integrations/jetonomy.php) are paid and taken back by the engine like every other action, under
+ * the owner's settings. This class mirrors the rest of Jetonomy's reputation deltas (badges, manual
+ * adjustments) into the WB Gam ledger via `jetonomy_reputation_changed`, and stands aside for any
+ * event a registered action owns. Sandboxed users (truthy `wb_gam_sandboxed` user meta) are skipped
+ * at the wb-gam mirror: Jetonomy's own reputation row is unaffected.
  *
  * History: 1.0.1 also registered listeners for three filters
  * (`jetonomy_reputation_points_map`, `jetonomy_reputation_pre_change`,
@@ -52,6 +54,12 @@ final class JetonomyIntegration {
 	private const META_SANDBOXED = 'wb_gam_sandboxed';
 	private const ACTION_PREFIX  = 'jetonomy_';
 
+	/** Background job that settles a removed topic's replies, one batch at a time. */
+	public const REPLIES_HOOK = 'wb_gam_jetonomy_topic_replies';
+
+	/** Replies settled per batch: one indexed query and one ledger transaction each. */
+	private const REPLY_BATCH = 200;
+
 	/**
 	 * Wire integration hooks. No-op unless Jetonomy 1.4.3+ is active.
 	 */
@@ -61,6 +69,10 @@ final class JetonomyIntegration {
 		}
 
 		add_action( 'jetonomy_reputation_changed', array( __CLASS__, 'on_reputation_changed' ), 20, 4 );
+		// A topic that goes takes its replies' points with it; one that returns gives them back.
+		add_action( 'jetonomy_post_deleted', array( __CLASS__, 'on_topic_deleted' ), 10, 1 );
+		add_action( 'jetonomy_content_moderated', array( __CLASS__, 'on_content_moderated' ), 10, 3 );
+		add_action( self::REPLIES_HOOK, array( __CLASS__, 'settle_replies' ), 10, 3 );
 		add_filter( 'wb_gam_action_label', array( __CLASS__, 'label' ), 10, 2 );
 	}
 
@@ -81,6 +93,8 @@ final class JetonomyIntegration {
 			return $label;
 		}
 
+		// Named here as well as on the registered actions: history stays readable on a site where
+		// Jetonomy is switched off and its actions are not registered.
 		$labels = array(
 			'reply_created'     => __( 'Replied in the forum', 'wb-gamification' ),
 			'post_created'      => __( 'Started a forum topic', 'wb-gamification' ),
@@ -112,6 +126,117 @@ final class JetonomyIntegration {
 			/* translators: %s: what happened in the forum, e.g. "Your forum post was upvoted". */
 			? sprintf( __( '%s (reversed)', 'wb-gamification' ), $labels[ $reason ] )
 			: $labels[ $reason ];
+	}
+
+	/**
+	 * A topic was deleted: take back its replies' points.
+	 *
+	 * @param int $post_id Topic id.
+	 */
+	public static function on_topic_deleted( $post_id ): void {
+		self::queue_replies( (int) $post_id, 'reverse' );
+	}
+
+	/**
+	 * A moderator removed or approved content: when it is a topic, settle its replies the same way.
+	 *
+	 * @param string $action Moderation action: approve, spam, trash or hold.
+	 * @param string $type   'post' or 'reply'.
+	 * @param int    $id     Row id.
+	 */
+	public static function on_content_moderated( $action, $type, $id ): void {
+		if ( 'post' !== (string) $type ) {
+			return;
+		}
+
+		if ( in_array( (string) $action, array( 'spam', 'trash' ), true ) ) {
+			self::queue_replies( (int) $id, 'reverse' );
+		} elseif ( 'approve' === (string) $action ) {
+			self::queue_replies( (int) $id, 'restore' );
+		}
+	}
+
+	/**
+	 * Settle a topic's replies in the background: a topic can hold hundreds, so nothing loops in the request.
+	 *
+	 * @param int    $post_id  Topic id.
+	 * @param string $mode     'reverse' or 'restore'.
+	 * @param int    $after_id Last reply id already settled (0 for the first batch).
+	 */
+	private static function queue_replies( int $post_id, string $mode, int $after_id = 0 ): void {
+		if ( $post_id <= 0 ) {
+			return;
+		}
+
+		if ( function_exists( 'as_enqueue_async_action' ) ) {
+			// Each batch queues the next, so the same batch must never be queued twice.
+			$args = array( $post_id, $mode, $after_id );
+			if ( ! function_exists( 'as_has_scheduled_action' ) || ! as_has_scheduled_action( self::REPLIES_HOOK, $args, 'wb-gamification' ) ) {
+				as_enqueue_async_action( self::REPLIES_HOOK, $args, 'wb-gamification' );
+			}
+			return;
+		}
+
+		self::settle_replies( $post_id, $mode, $after_id );
+	}
+
+	/**
+	 * Take back (or give back) the points of the next batch of a topic's replies, then queue the next batch.
+	 *
+	 * A reply earns for being published and, when chosen, for being accepted; both leave and return
+	 * with the topic. A restore skips replies that were removed on their own, which stay removed.
+	 *
+	 * @param int    $post_id  Topic id.
+	 * @param string $mode     'reverse' or 'restore'.
+	 * @param int    $after_id Last reply id of the previous batch (keyset page).
+	 */
+	public static function settle_replies( $post_id, $mode, $after_id = 0 ): void {
+		global $wpdb;
+
+		$post_id  = (int) $post_id;
+		$after_id = (int) $after_id;
+		$reverse  = 'reverse' === (string) $mode;
+		if ( $post_id <= 0 ) {
+			return;
+		}
+
+		// A queued job can run later than the change that queued it, and two jobs for one topic (a
+		// removal then an approval) can run in either order. Each batch therefore acts on the topic's
+		// state NOW: a removal only while the topic is not published, a restore only while it is. A job
+		// the topic has since overtaken does nothing.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Jetonomy's topic table, one row by id.
+		$status = $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$wpdb->prefix}jt_posts WHERE id = %d", $post_id ) );
+		if ( $reverse === ( 'publish' === (string) $status ) ) {
+			return;
+		}
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Jetonomy's reply table, a keyset page by id.
+		if ( $reverse ) {
+			$sql = $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}jt_replies WHERE post_id = %d AND id > %d ORDER BY id ASC LIMIT %d", $post_id, $after_id, self::REPLY_BATCH );
+		} else {
+			$sql = $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}jt_replies WHERE post_id = %d AND id > %d AND status = %s ORDER BY id ASC LIMIT %d", $post_id, $after_id, 'publish', self::REPLY_BATCH );
+		}
+		$ids = array_map( 'intval', (array) $wpdb->get_col( $sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared just above.
+		// phpcs:enable
+
+		if ( ! $ids ) {
+			return;
+		}
+
+		$keys    = array_map( static fn( int $id ): int => \WBGam\Engine\Registry::object_key( 'jetonomy', 'reply', $id, 0 ), $ids );
+		$targets = array(
+			self::ACTION_PREFIX . 'reply_created'  => $keys,
+			self::ACTION_PREFIX . 'reply_accepted' => $keys,
+		);
+		if ( $reverse ) {
+			PointsEngine::reverse_object_awards( $targets );
+		} else {
+			PointsEngine::restore_object_awards( $targets );
+		}
+
+		if ( count( $ids ) === self::REPLY_BATCH ) {
+			self::queue_replies( $post_id, (string) $mode, (int) end( $ids ) );
+		}
 	}
 
 	/**
@@ -149,9 +274,18 @@ final class JetonomyIntegration {
 			return;
 		}
 
-		$action_id = self::ACTION_PREFIX . preg_replace( '/[^a-z0-9_]/i', '', (string) $action );
-		if ( self::ACTION_PREFIX === $action_id ) {
+		$reason = preg_replace( '/[^a-z0-9_]/i', '', (string) $action );
+		if ( '' === $reason ) {
 			return; // Malformed action key — refuse to ledger junk rows.
+		}
+		$action_id = self::ACTION_PREFIX . $reason;
+
+		// A registered action owns this event, and its withdrawal ("{event}_revoked"): the engine pays
+		// it under the owner's settings and takes it back through the action's own exit. Paying it
+		// here as well would double it, and ignore the owner's points, caps and on/off.
+		$event = str_ends_with( $reason, '_revoked' ) ? substr( $reason, 0, -strlen( '_revoked' ) ) : $reason;
+		if ( null !== \WBGam\Engine\Registry::get_action( self::ACTION_PREFIX . $event ) ) {
+			return;
 		}
 
 		// Sandboxed users get no wb-gam mirror in either direction.

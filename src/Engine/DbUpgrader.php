@@ -57,6 +57,12 @@ final class DbUpgrader {
 	 *      `wb_gam_db_version` option is already higher than WB_GAM_VERSION.
 	 */
 	public static function init(): void {
+		// Another request is creating the tables right now: altering them half-made is what
+		// logged "Duplicate column" / "Duplicate key name" on bulk activation. Next request.
+		if ( Installer::$installing ) {
+			return;
+		}
+
 		$current = get_option( self::OPT_KEY, '0.0.0' );
 
 		if ( version_compare( $current, WB_GAM_VERSION, '<' ) ) {

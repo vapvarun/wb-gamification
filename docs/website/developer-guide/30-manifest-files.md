@@ -56,12 +56,13 @@ return [
 |-------|------|----------|-------------|
 | `id` | string | Yes | Unique action identifier. Use `plugin_name_action` format to avoid collisions |
 | `label` | string or closure | Yes | What the member does, as an imperative ("Create a post", "Get a listing approved"), shown in the admin actions list, points history and toasts. A manifest loads before `init`, so pass `static fn(): string => __( 'Create a post', 'your-domain' )` and it is translated when read; a plain string works too |
-| `description` | string or closure | No | Longer description shown in tooltips and the setup wizard. Same rule as `label` |
+| `description` | string or closure | No | Longer description shown in tooltips. Same rule as `label` |
 | `hook` | string | Yes | WordPress action hook name to listen on |
 | `user_callback` | callable | Yes | Receives the hook arguments. Must return the WordPress user ID to award points to |
 | `metadata_callback` | callable | No | Receives the hook arguments. Returns an array merged into event metadata (available in `wb_gam_points_for_action` filter) |
 | `once_per_object` | callable | No | Receives the hook arguments. Returns an object ID, such as a lesson or quiz. A member earns this action once per object, so a retake earns nothing |
 | `reverse_on` | array | No | Hook name => callable that receives that hook's arguments and returns the removed object ID (or IDs, or `0` to skip). When the content is trashed, rejected or deleted, the award for it is taken back once. Needs `once_per_object` and `async => false`. Added in 1.6.8 |
+| `penalty` | bool | No | The action takes points away: its points setting is the amount taken, a positive number. It never takes a balance below zero, no multiplier applies, no badge or level-up fires, and a `reverse_on` gives the points back (exactly what was taken). Penalties are left out of the earning guide. |
 | `restore_on` | array | No | Same shape as `reverse_on`, for hooks that bring the content back (untrash, unspam). Gives back exactly the award that was taken. Added in 1.6.8 |
 | `permanent` | string | One of this or `reverse_on` | Why the award is never taken back, for milestones such as a course completed, a quiz passed or a sign-up. Every trigger declares its exit: `reverse_on` for anything that can be removed, `permanent` for what cannot. Added in 1.6.8 |
 | `owner_callback` | callable | No | Receives the hook's arguments and returns the user ID that owns the content (the post's author for a reaction, the poll's creator for a vote). When it is the member being paid, the award is skipped with reason `own_content`. Added in 1.6.8 |

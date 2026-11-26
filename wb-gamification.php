@@ -3,7 +3,7 @@
  * Plugin Name: WB Gamification
  * Plugin URI:  https://wbcomdesigns.com/
  * Description: Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.
- * Version:     1.6.8
+ * Version:     1.7.0
  * Author:      Wbcom Designs
  * Author URI:  https://wbcomdesigns.com/
  * License:     GPL-2.0+
@@ -33,7 +33,7 @@ if ( defined( 'WB_GAM_VERSION' ) ) {
 // Plugin Check's internal phpcs invocation.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-define( 'WB_GAM_VERSION', '1.6.8' );
+define( 'WB_GAM_VERSION', '1.7.0' );
 define( 'WB_GAM_FILE', __FILE__ );
 define( 'WB_GAM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WB_GAM_URL', plugin_dir_url( __FILE__ ) );
@@ -425,6 +425,7 @@ final class WB_Gamification {
 			// the root cause of the chronic Setup Wizard reopen — fragile
 			// timing when WP_Filter::do_action is already mid-iteration.
 			SettingsPage::init();
+			\WBGam\Admin\AdminNav::init();
 			\WBGam\Admin\IntegrationsTab::init();
 			SetupWizard::init();
 			AnalyticsDashboard::init();
@@ -735,6 +736,15 @@ final class WB_Gamification {
 		$wb_gam_toast_readers = is_user_logged_in() && ! \WBGam\Engine\NotificationBridge::toasts_held();
 		if ( $wb_gam_toast_readers ) {
 			wp_enqueue_script( 'wb-gamification-realtime' );
+
+			// Inside a BuddyNext community the page already refreshes its own counters and follows the community's
+			// rule of keeping background requests few, so this plugin adapts: it polls at the slow steady rate and
+			// still bursts to the fast rate right after the member's own action. Standalone it keeps its own rate.
+			// A site can set any rate with the wb_gam_realtime_interval filter (seconds, 5 to 120).
+			$wb_gam_interval = (int) apply_filters( 'wb_gam_realtime_interval', function_exists( 'buddynext_service' ) ? 60 : 15 );
+			if ( $wb_gam_interval >= 5 && $wb_gam_interval <= 120 && 15 !== $wb_gam_interval ) {
+				wp_add_inline_script( 'wb-gamification-realtime', 'window.wbGamRealtimeInterval=' . $wb_gam_interval . ';', 'before' );
+			}
 		}
 
 		// SSE transport (scaffold; feature-flagged off by default). Loads
@@ -845,9 +855,25 @@ final class WB_Gamification {
 					// labels + the last-resort points-unit fallback). Seeded here
 					// because toast.js has no server-rendered markup to read.
 					'i18n'     => array(
-						'region'  => __( 'Notifications', 'wb-gamification' ),
-						'dismiss' => __( 'Dismiss', 'wb-gamification' ),
-						'points'  => __( 'points', 'wb-gamification' ),
+						'region'        => __( 'Notifications', 'wb-gamification' ),
+						'dismiss'       => __( 'Dismiss', 'wb-gamification' ),
+						'points'        => __( 'points', 'wb-gamification' ),
+						// The one summary toast for awards that land together (toast.js). Titles stay
+						// under 40 characters.
+						'welcome'       => __( 'Welcome aboard!', 'wb-gamification' ),
+						'andBadge'      => __( 'and a new badge', 'wb-gamification' ),
+						/* translators: %d: number of badges (2 or more). */
+						'andBadges'     => __( 'and %d new badges', 'wb-gamification' ),
+						'andChallenge'  => __( 'and a challenge done', 'wb-gamification' ),
+						/* translators: %d: number of challenges (2 or more). */
+						'andChallenges' => __( 'and %d challenges done', 'wb-gamification' ),
+						'andKudos'      => __( 'and kudos', 'wb-gamification' ),
+						/* translators: %d: number of rewards (2 or more). */
+						'andRewards'    => __( 'and %d rewards', 'wb-gamification' ),
+						/* translators: %d: number of rewards (2 or more). */
+						'rewards'       => __( '%d new rewards', 'wb-gamification' ),
+						/* translators: %s: name of the member who gave kudos. */
+						'kudosFrom'     => __( 'Kudos from %s', 'wb-gamification' ),
 					),
 				)
 			);

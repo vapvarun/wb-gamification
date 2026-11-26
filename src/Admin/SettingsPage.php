@@ -38,14 +38,17 @@ defined( 'ABSPATH' ) || exit;
 final class SettingsPage {
 
 	/**
+	 * Largest points value a single action can award from the Points tab (the field's own max).
+	 */
+
+
+	/**
 	 * Register admin_menu and form-handler hooks.
 	 */
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
 		// After every page has registered, and after ModuleToggles (999) has removed the switched-off ones.
-		add_action( 'admin_menu', array( __CLASS__, 'order_submenu' ), 1000 );
 		add_action( 'admin_init', array( __CLASS__, 'handle_save' ) );
-		add_action( 'admin_init', array( __CLASS__, 'handle_dismiss_welcome' ) );
 		add_action( 'admin_init', array( __CLASS__, 'handle_dismiss_checklist' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_page_css' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_settings_toggles' ) );
@@ -100,64 +103,6 @@ final class SettingsPage {
 			'dashicons-awards',
 			56
 		);
-	}
-
-	/**
-	 * The submenu in the order an owner works through it: set up, configure, monitor, moderate, develop.
-	 * Each page registers itself, so registration order is load order, not a design. A slug that is not
-	 * listed (a page another module adds) keeps its place after the listed ones.
-	 */
-	private const MENU_ORDER = array(
-		'wb-gamification',
-		'wb-gamification-import',
-		'wb-gamification-badges',
-		'wb-gam-levels',
-		'wb-gam-challenges',
-		'wb-gam-community-challenges',
-		'wb-gam-redemption',
-		'wb-gam-point-types',
-		'wb-gam-conversions',
-		'wb-gam-multipliers',
-		'wb-gamification-analytics',
-		'wb-gamification-members',
-		'wb-gamification-award',
-		'wb-gamification-streaks',
-		'wb-gamification-kudos-moderation',
-		'wb-gam-submissions',
-		'wb-gam-webhooks',
-		'wb-gam-api-keys',
-	);
-
-	/**
-	 * Reorder the plugin's submenu and name its first entry for what it is.
-	 *
-	 * @since 1.6.5
-	 */
-	public static function order_submenu(): void {
-		global $submenu;
-		if ( empty( $submenu['wb-gamification'] ) || ! is_array( $submenu['wb-gamification'] ) ) {
-			return;
-		}
-		$submenu['wb-gamification'] = self::sort_submenu( $submenu['wb-gamification'] ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- reordering our own submenu is the point of this hook.
-	}
-
-	/**
-	 * Sort submenu rows by MENU_ORDER (unlisted slugs last, in their existing order).
-	 *
-	 * @param array<int, array<int, string>> $items Submenu rows: title, capability, slug.
-	 * @return array<int, array<int, string>>
-	 */
-	public static function sort_submenu( array $items ): array {
-		$rank = array_flip( self::MENU_ORDER );
-		$rows = array();
-		foreach ( array_values( $items ) as $i => $row ) {
-			if ( 'wb-gamification' === ( $row[2] ?? '' ) ) {
-				$row[0] = __( 'Dashboard', 'wb-gamification' );
-			}
-			$rows[] = array( $rank[ $row[2] ?? '' ] ?? PHP_INT_MAX, $i, $row );
-		}
-		usort( $rows, static fn( $a, $b ) => array( $a[0], $a[1] ) <=> array( $b[0], $b[1] ) );
-		return array_column( $rows, 2 );
 	}
 
 	// ── Form handlers ─────────────────────────────────────────────────────────
@@ -237,24 +182,6 @@ final class SettingsPage {
 	}
 
 	/**
-	 * Dismiss the first-run welcome card for the current admin.
-	 */
-	public static function handle_dismiss_welcome(): void {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce checked below.
-		if ( empty( $_GET['dismiss_welcome'] ) || empty( $_GET['_wpnonce'] ) ) {
-			return;
-		}
-		if ( ! wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'wb_gam_dismiss_welcome' ) ) {
-			return;
-		}
-		if ( current_user_can( 'manage_options' ) ) {
-			update_user_meta( get_current_user_id(), 'wb_gam_dismissed_welcome', 1 );
-			wp_safe_redirect( admin_url( 'admin.php?page=wb-gamification' ) );
-			exit;
-		}
-	}
-
-	/**
 	 * Dismiss the setup-progress checklist for the current admin.
 	 *
 	 * Separate from the welcome card — admins may want to keep "Getting
@@ -282,68 +209,85 @@ final class SettingsPage {
 	 * never need to manually mark a step done — it self-checks. Returns
 	 * a list of associative arrays consumed by the dashboard render.
 	 *
-	 * @param int $hub_page_id Current hub page ID (0 if not yet auto-created).
-	 * @param int $points_total Last-30-days point total from analytics.
-	 * @return array<int, array{title:string, desc:string, done:bool, action_url?:string, action_label?:string, action_target?:string}>
+	 * @param int  $hub_page_id   Current hub page ID (0 if not yet auto-created).
+	 * @param bool $challenges_on Whether the Challenges module is on.
+	 * @return array<int, array{title:string, desc:string, done:bool, key?:string, action?:string, action_url?:string, action_label?:string}>
 	 */
-	private static function compute_setup_checklist( int $hub_page_id, int $points_total ): array {
+	private static function compute_setup_checklist( int $hub_page_id, bool $challenges_on ): array {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- One small COUNT for setup-checklist UI; not a hot path.
-		$badge_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_badge_defs" );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Same.
-		$level_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_levels" );
-
-		$wizard_done = (bool) get_option( 'wb_gam_wizard_complete' );
-		$template    = (string) get_option( 'wb_gam_template', '' );
-
-		$hub_url  = $hub_page_id ? get_permalink( $hub_page_id ) : '';
-		$hub_edit = $hub_page_id ? get_edit_post_link( $hub_page_id ) : '';
-
-		return array(
+		$steps = array(
 			array(
-				'title'        => __( 'Run the Setup Wizard', 'wb-gamification' ),
-				'desc'         => __( 'Pick a starter template so points + leaderboard are pre-configured for your community.', 'wb-gamification' ),
-				'done'         => $wizard_done && '' !== $template,
+				'title'        => __( 'Choose your plugins and rewards', 'wb-gamification' ),
+				'desc'         => __( 'Pick what members earn for, how fast, and what they get.', 'wb-gamification' ),
+				'done'         => (bool) get_option( SetupWizard::COMPLETED_OPTION ),
 				'action_url'   => admin_url( 'admin.php?page=wb-gamification-setup' ),
-				'action_label' => __( 'Run wizard', 'wb-gamification' ),
+				'action_label' => __( 'Open setup', 'wb-gamification' ),
 			),
 			array(
-				'title'        => __( 'Define your levels', 'wb-gamification' ),
-				'desc'         => __( 'Levels turn point thresholds into named milestones (e.g. Newcomer → Regular → Expert).', 'wb-gamification' ),
-				'done'         => $level_count > 0,
-				'action_url'   => admin_url( 'admin.php?page=wb-gam-levels' ),
-				'action_label' => __( 'Add levels', 'wb-gamification' ),
+				'title'        => __( 'See a toast as a member', 'wb-gamification' ),
+				'desc'         => __( 'Give yourself 10 points, then open the site to see what members see.', 'wb-gamification' ),
+				// Set the first time this account earns (NotificationBridge), i.e. when it has seen a toast.
+				'done'         => (bool) get_user_meta( get_current_user_id(), 'wb_gam_seen_first_earn_toast', true ),
+				'action'       => 'test_event',
+				'action_label' => __( 'Send me a test toast', 'wb-gamification' ),
 			),
 			array(
-				'title'        => __( 'Build your badge library', 'wb-gamification' ),
-				'desc'         => __( 'Badges are the visible rewards - earned on milestones, streaks, or specific actions.', 'wb-gamification' ),
-				'done'         => $badge_count > 0,
-				'action_url'   => admin_url( 'admin.php?page=wb-gamification-badges' ),
-				'action_label' => __( 'Add badges', 'wb-gamification' ),
-			),
-			array(
-				'title'        => __( 'Place the Hub block on a page', 'wb-gamification' ),
-				'desc'         => $hub_url
-					? sprintf(
-						/* translators: %s: relative URL to the hub page */
-						__( 'Auto-created at %s. Edit the page to customize the layout.', 'wb-gamification' ),
-						wp_make_link_relative( $hub_url )
-					)
-					: __( 'Auto-creates on activation; if you deleted the page, place [wb_gam_hub] on any page.', 'wb-gamification' ),
-				'done'         => $hub_page_id > 0,
-				'action_url'   => $hub_edit ?: admin_url( 'edit.php?post_type=page' ),
-				'action_label' => $hub_edit ? __( 'Edit Hub page', 'wb-gamification' ) : __( 'Create page', 'wb-gamification' ),
-			),
-			array(
-				'title'         => __( 'See points flow end-to-end', 'wb-gamification' ),
-				'desc'          => __( 'Click "Send a test event" above (or do a real action like publishing a post) to confirm the engine fires.', 'wb-gamification' ),
-				'done'          => $points_total > 0,
-				'action_url'    => $hub_url ?: admin_url( 'admin.php?page=wb-gamification' ),
-				'action_label'  => __( 'Open Hub', 'wb-gamification' ),
-				'action_target' => '_blank',
+				'title'        => __( 'Add the Gamification page to your menu', 'wb-gamification' ),
+				'desc'         => $hub_page_id
+					? __( 'Members find their points, badges and leaderboard there.', 'wb-gamification' )
+					: __( 'The Gamification page was removed. Add the Gamification Hub block to any page.', 'wb-gamification' ),
+				'done'         => $hub_page_id > 0 && self::hub_in_menu( $hub_page_id ),
+				'action_url'   => ! $hub_page_id
+					? admin_url( 'post-new.php?post_type=page' )
+					: ( wp_is_block_theme() ? admin_url( 'site-editor.php?p=%2Fnavigation' ) : admin_url( 'nav-menus.php' ) ),
+				'action_label' => $hub_page_id ? __( 'Open menus', 'wb-gamification' ) : __( 'Create page', 'wb-gamification' ),
 			),
 		);
+
+		if ( $challenges_on ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- One COUNT on a small definitions table, dashboard only.
+			$challenge_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_challenges" );
+			$steps[]         = array(
+				'key'          => 'challenge',
+				'title'        => __( 'Create a first challenge', 'wb-gamification' ),
+				'desc'         => __( 'A goal with a deadline gives members a reason to come back this week.', 'wb-gamification' ),
+				'done'         => $challenge_count > 0,
+				'action_url'   => admin_url( 'admin.php?page=wb-gam-challenges' ),
+				'action_label' => __( 'Start one', 'wb-gamification' ),
+			);
+		}
+
+		return $steps;
+	}
+
+	/**
+	 * Is the Gamification page in a site menu? Classic menus and block-theme Navigation posts.
+	 * A site has a handful of menus, so this reads them all (dashboard only).
+	 *
+	 * @param int $page_id Hub page ID.
+	 */
+	private static function hub_in_menu( int $page_id ): bool {
+		foreach ( wp_get_nav_menus() as $menu ) {
+			foreach ( (array) wp_get_nav_menu_items( $menu->term_id, array( 'update_post_term_cache' => false ) ) as $item ) {
+				if ( 'page' === $item->object && $page_id === (int) $item->object_id ) {
+					return true;
+				}
+			}
+		}
+		$navs = get_posts(
+			array(
+				'post_type'   => 'wp_navigation',
+				'post_status' => 'publish',
+				'numberposts' => 20,
+			)
+		);
+		foreach ( $navs as $nav ) {
+			if ( preg_match( '/"id":\s*' . $page_id . '\b/', $nav->post_content ) || false !== strpos( $nav->post_content, (string) get_permalink( $page_id ) ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -388,55 +332,13 @@ final class SettingsPage {
 	}
 
 	/**
-	 * Form field name for a per-action setting. Render and save both call this, so the two
-	 * can never disagree. Action ids such as "myplugin/Action.name" are not safe POST keys
-	 * (sanitize_key() strips "/" and capitals, PHP rewrites "." and spaces), so every unsafe
-	 * character becomes "_". The stored option name stays the raw action id.
-	 *
-	 * @param string $prefix    Field prefix, e.g. 'wb_gam_point_type_'.
-	 * @param string $action_id Registered action id.
-	 */
-	public static function field_name( string $prefix, string $action_id ): string {
-		return $prefix . preg_replace( '/[^A-Za-z0-9_]/', '_', $action_id );
-	}
-
-	/**
-	 * Persist per-action point values and enable/disable toggles from the Points tab.
+	 * Save the Points tab form: history retention and point expiry. Each action's own settings
+	 * (switch, amount, point type, limits) save on their own through
+	 * POST /actions/{id}/overrides, so the form never carries them (one save path).
 	 * Nonce is verified by check_admin_referer() in handle_save().
 	 */
 	private static function save_points_settings(): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified by check_admin_referer() in handle_save().
-		$actions    = Registry::get_actions();
-		$pt_service = new \WBGam\Services\PointTypeService();
-
-		foreach ( $actions as $action_id => $action ) {
-			$key    = self::field_name( 'wb_gam_points_', (string) $action_id );
-			$points = isset( $_POST[ $key ] ) ? absint( wp_unslash( $_POST[ $key ] ) ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-
-			if ( null !== $points && $points >= 0 ) {
-				update_option( 'wb_gam_points_' . $action_id, $points );
-			}
-
-			$enabled_key = self::field_name( 'wb_gam_enabled_', (string) $action_id );
-			// 1/0, never true/false: update_option( key, false ) on a missing option matches the
-			// get_option() default and stores nothing, so "off" never saved.
-			update_option( 'wb_gam_enabled_' . $action_id, isset( $_POST[ $enabled_key ] ) ? 1 : 0 );
-
-			// Per-action currency override. Stored only when set and known —
-			// PointTypeService::resolve() falls back to primary for any
-			// unknown slug, so we don't write garbage. Empty submit clears
-			// the override (action falls back to manifest declaration).
-			$type_key = self::field_name( 'wb_gam_point_type_', (string) $action_id );
-			if ( isset( $_POST[ $type_key ] ) ) {
-				$raw_type = sanitize_key( wp_unslash( $_POST[ $type_key ] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-				if ( '' === $raw_type ) {
-					delete_option( 'wb_gam_point_type_' . $action_id );
-				} elseif ( $pt_service->get( $raw_type ) ) {
-					update_option( 'wb_gam_point_type_' . $action_id, $raw_type );
-				}
-			}
-		}
-
 		// Also save log retention.
 		if ( isset( $_POST['wb_gam_log_retention_months'] ) ) {
 			$months = max( 1, min( 24, absint( wp_unslash( $_POST['wb_gam_log_retention_months'] ) ) ) );
@@ -1003,19 +905,18 @@ final class SettingsPage {
 		if ( 'toplevel_page_wb-gamification' !== $hook_suffix ) {
 			return;
 		}
-
-		$dismissed = get_user_meta( get_current_user_id(), 'wb_gam_dismissed_welcome', true );
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only force flag for dev browser-test.
-		$force = isset( $_GET['wb_gam_force_welcome'] ) && '1' === $_GET['wb_gam_force_welcome'];
-		if ( $dismissed && ! $force ) {
+		// The "See a toast as a member" checklist step carries the button; once this account has
+		// earned, the step is done and the script is not needed.
+		if ( get_user_meta( get_current_user_id(), 'wb_gam_seen_first_earn_toast', true ) ) {
 			return;
 		}
+		self::load_test_event_script();
+	}
 
-		$stats = AnalyticsDashboard::get_stats( 30 );
-		if ( ! $force && ( (int) $stats['points_total'] > 0 || (int) $stats['active_members'] > 0 ) ) {
-			return;
-		}
-
+	/**
+	 * The "Send me a test toast" button's script (Overview checklist and Setup step 4).
+	 */
+	public static function load_test_event_script(): void {
 		wp_enqueue_script(
 			'wb-gam-admin-test-event',
 			plugins_url( 'assets/js/admin-test-event.js', WB_GAM_FILE ),
@@ -1037,8 +938,8 @@ final class SettingsPage {
 				'hubUrl'  => esc_url_raw( $hub_url ),
 				'i18n'    => array(
 					'sending' => __( 'Awarding…', 'wb-gamification' ),
-					'success' => __( 'Test event sent. Visit your Hub to see the welcome toast.', 'wb-gamification' ),
-					'viewHub' => __( 'Open Hub', 'wb-gamification' ),
+					'success' => __( '10 points sent. Open the site to see your toast.', 'wb-gamification' ),
+					'viewHub' => __( 'View as a member', 'wb-gamification' ),
 					'error'   => __( 'Could not send test event. Check the error log.', 'wb-gamification' ),
 					'note'    => __( 'Sent from the Setup Wizard test-event button.', 'wb-gamification' ),
 				),
@@ -1070,6 +971,30 @@ final class SettingsPage {
 			array(
 				'restBase' => rest_url( 'wb-gamification/v1/actions/' ),
 				'nonce'    => wp_create_nonce( 'wp_rest' ),
+				'i18n'     => array(
+					'saved'       => __( 'Saved.', 'wb-gamification' ),
+					'undone'      => __( 'Change undone.', 'wb-gamification' ),
+					'restored'    => __( 'Defaults restored.', 'wb-gamification' ),
+					'switchedOff' => __( 'Switched off.', 'wb-gamification' ),
+					'notSaved'    => __( 'Not saved. The previous value is back; try again.', 'wb-gamification' ),
+					'noLimit'     => __( 'No limit', 'wb-gamification' ),
+					/* translators: %d: most awards per day. */
+					'perDay'      => __( '%d a day', 'wb-gamification' ),
+					/* translators: %d: most awards per week. */
+					'perWeek'     => __( '%d a week', 'wb-gamification' ),
+					/* translators: %s: time between awards, e.g. "30s". */
+					'apart'       => __( '%s apart', 'wb-gamification' ),
+					/* translators: %d: seconds. */
+					'seconds'     => __( '%ds', 'wb-gamification' ),
+					/* translators: %d: minutes. */
+					'minutes'     => __( '%d min', 'wb-gamification' ),
+					/* translators: %d: hours. */
+					'hours'       => __( '%d h', 'wb-gamification' ),
+					/* translators: %d: number of actions. */
+					'count'       => __( '%d actions', 'wb-gamification' ),
+					/* translators: 1: actions shown, 2: all actions. */
+					'countOf'     => __( '%1$d of %2$d actions', 'wb-gamification' ),
+				),
 			)
 		);
 	}
@@ -1151,99 +1076,7 @@ final class SettingsPage {
 			</header>
 		<div class="wbgam-settings-wrap">
 
-			<!-- Sidebar -->
-			<div class="wbgam-settings-sidebar">
-
-				<!-- CORE -->
-				<div class="wbgam-settings-nav-group">
-					<span class="wbgam-settings-nav-group__label"><?php esc_html_e( 'Core', 'wb-gamification' ); ?></span>
-					<a class="wbgam-settings-nav-item" href="#dashboard" data-section="dashboard">
-						<span class="icon-layout-dashboard"></span>
-						<?php esc_html_e( 'Dashboard', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#points" data-section="points">
-						<span class="icon-star"></span>
-						<?php esc_html_e( 'Points', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-levels' ) ); ?>">
-						<span class="icon-chart-bar"></span>
-						<?php esc_html_e( 'Levels', 'wb-gamification' ); ?>
-					</a>
-				</div>
-
-				<!-- ENGAGEMENT -->
-				<div class="wbgam-settings-nav-group">
-					<span class="wbgam-settings-nav-group__label"><?php esc_html_e( 'Engagement', 'wb-gamification' ); ?></span>
-					<?php if ( \WBGam\Engine\ModuleToggles::enabled( 'challenges' ) ) : // Its page is removed when the module is off. ?>
-					<a class="wbgam-settings-nav-item" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-challenges' ) ); ?>">
-						<span class="icon-flag"></span>
-						<?php esc_html_e( 'Challenges', 'wb-gamification' ); ?>
-					</a>
-					<?php endif; ?>
-					<a class="wbgam-settings-nav-item" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-badges' ) ); ?>">
-						<span class="icon-shield"></span>
-						<?php esc_html_e( 'Badges', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#kudos" data-section="kudos">
-						<span class="icon-thumbs-up"></span>
-						<?php esc_html_e( 'Kudos', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#cohort" data-section="cohort">
-						<span class="icon-users"></span>
-						<?php esc_html_e( 'Cohort Leagues', 'wb-gamification' ); ?>
-					</a>
-				</div>
-
-				<!-- AUTOMATION -->
-				<div class="wbgam-settings-nav-group">
-					<span class="wbgam-settings-nav-group__label"><?php esc_html_e( 'Automation', 'wb-gamification' ); ?></span>
-					<a class="wbgam-settings-nav-item" href="#rules" data-section="rules">
-						<span class="icon-refresh-cw"></span>
-						<?php esc_html_e( 'Rules', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#emails" data-section="emails">
-						<span class="icon-mail"></span>
-						<?php esc_html_e( 'Emails', 'wb-gamification' ); ?>
-					</a>
-				</div>
-
-				<!-- ADVANCED -->
-				<div class="wbgam-settings-nav-group">
-					<span class="wbgam-settings-nav-group__label"><?php esc_html_e( 'Advanced', 'wb-gamification' ); ?></span>
-					<a class="wbgam-settings-nav-item" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-api-keys' ) ); ?>">
-						<span class="icon-network"></span>
-						<?php esc_html_e( 'API Keys', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#access" data-section="access">
-						<span class="icon-user-x"></span>
-						<?php esc_html_e( 'Access', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#realtime" data-section="realtime">
-						<span class="icon-zap"></span>
-						<?php esc_html_e( 'Realtime', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#integrations" data-section="integrations">
-						<span class="icon-link"></span>
-						<?php esc_html_e( 'Integrations', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#modules" data-section="modules">
-						<span class="icon-sliders-horizontal"></span>
-						<?php esc_html_e( 'Modules', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#engagement" data-section="engagement">
-						<span class="icon-rocket"></span>
-						<?php esc_html_e( 'Habits & Profiles', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#appearance" data-section="appearance">
-						<span class="icon-palette"></span>
-						<?php esc_html_e( 'Appearance', 'wb-gamification' ); ?>
-					</a>
-					<a class="wbgam-settings-nav-item" href="#tools" data-section="tools">
-						<span class="icon-wrench"></span>
-						<?php esc_html_e( 'Tools', 'wb-gamification' ); ?>
-					</a>
-				</div>
-			</div>
+			<?php AdminNav::render_sidebar( 'wb-gamification' ); ?>
 
 			<!-- Content -->
 			<div class="wbgam-settings-content">
@@ -1422,177 +1255,152 @@ final class SettingsPage {
 				);
 				?>
 
+				<?php
+				$wb_gam_total = count( $actions );
+				?>
+				<div class="wbgam-earn-toolbar" data-wb-gam-earn-toolbar>
+					<label class="screen-reader-text" for="wbgam-earn-search"><?php esc_html_e( 'Find an action', 'wb-gamification' ); ?></label>
+					<input type="search" id="wbgam-earn-search" class="wbgam-input wbgam-earn-toolbar__search" placeholder="<?php esc_attr_e( 'Find an action', 'wb-gamification' ); ?>" data-wb-gam-earn-search>
+					<div class="wbgam-earn-toolbar__chips" role="group" aria-label="<?php esc_attr_e( 'Show', 'wb-gamification' ); ?>">
+						<?php
+						foreach ( array(
+							'all'     => __( 'All', 'wb-gamification' ),
+							'on'      => __( 'On', 'wb-gamification' ),
+							'off'     => __( 'Off', 'wb-gamification' ),
+							'penalty' => __( 'Takes points', 'wb-gamification' ),
+							'limited' => __( 'Has a limit', 'wb-gamification' ),
+						) as $wb_gam_filter => $wb_gam_filter_label ) :
+							?>
+							<button type="button" class="wbgam-earn-chip" data-wb-gam-earn-filter="<?php echo esc_attr( $wb_gam_filter ); ?>" aria-pressed="<?php echo 'all' === $wb_gam_filter ? 'true' : 'false'; ?>"><?php echo esc_html( $wb_gam_filter_label ); ?></button>
+						<?php endforeach; ?>
+					</div>
+					<label class="screen-reader-text" for="wbgam-earn-plugin"><?php esc_html_e( 'Plugin', 'wb-gamification' ); ?></label>
+					<select id="wbgam-earn-plugin" class="wbgam-select wbgam-select--sm" data-wb-gam-earn-plugin>
+						<option value=""><?php esc_html_e( 'All plugins', 'wb-gamification' ); ?></option>
+						<?php foreach ( array_keys( $by_plugin ) as $wb_gam_plugin_name ) : ?>
+							<option value="<?php echo esc_attr( (string) $wb_gam_plugin_name ); ?>"><?php echo esc_html( (string) $wb_gam_plugin_name ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<p class="wbgam-earn-toolbar__count" aria-live="polite" data-wb-gam-earn-count>
+						<?php
+						/* translators: %d: number of earning actions. */
+						echo esc_html( sprintf( _n( '%d action', '%d actions', $wb_gam_total, 'wb-gamification' ), $wb_gam_total ) );
+						?>
+					</p>
+				</div>
+
+				<p class="wbgam-earn-none" data-wb-gam-earn-none hidden><?php esc_html_e( 'No action matches. Clear the search or choose All.', 'wb-gamification' ); ?></p>
+
 				<?php foreach ( $by_plugin as $plugin => $plugin_actions ) : ?>
-					<details class="wbgam-settings-card wbgam-stack-block wbgam-accordion"<?php echo 'WordPress' === $plugin ? ' open' : ''; ?>>
+					<details class="wbgam-settings-card wbgam-stack-block wbgam-accordion" data-wb-gam-earn-group="<?php echo esc_attr( (string) $plugin ); ?>"<?php echo 'WordPress' === $plugin ? ' open' : ''; ?>>
 						<summary class="wbgam-settings-card__head wbgam-accordion__head">
 							<span class="wbgam-accordion__chevron icon-chevron-right" aria-hidden="true"></span>
 							<span class="wbgam-accordion__head-text">
 								<span class="wbgam-settings-card__title"><?php echo esc_html( $plugin ); ?></span>
 								<span class="wbgam-settings-card__desc">
 									<?php
-									printf(
-										/* translators: %d = number of actions for this integration */
-										esc_html( _n( '%d action from this integration.', '%d actions from this integration.', count( $plugin_actions ), 'wb-gamification' ) ),
-										count( $plugin_actions )
-									);
+									/* translators: %d = number of actions for this integration */
+									echo esc_html( sprintf( _n( '%d action', '%d actions', count( $plugin_actions ), 'wb-gamification' ), count( $plugin_actions ) ) );
 									?>
 								</span>
 							</span>
 						</summary>
-						<div class="wbgam-settings-card__body">
-							<div class="wbgam-table-scroll">
-								<table class="wbgam-table wbgam-table-reset wb-gam-settings-table">
-									<thead>
-									<tr>
-										<th class="wb-gam-col-toggle"><?php esc_html_e( 'On', 'wb-gamification' ); ?></th>
-										<th><?php esc_html_e( 'Action', 'wb-gamification' ); ?></th>
-										<th class="wb-gam-col-points"><?php esc_html_e( 'Amount', 'wb-gamification' ); ?></th>
-										<?php if ( $wb_gam_multi_currency ) : ?>
-											<th class="wb-gam-col-currency"><?php esc_html_e( 'Currency', 'wb-gamification' ); ?></th>
-										<?php endif; ?>
-										<th class="wb-gam-col-flag"><?php esc_html_e( 'Repeat', 'wb-gamification' ); ?></th>
-										<th class="wb-gam-col-flag"><?php esc_html_e( 'Cooldown (s)', 'wb-gamification' ); ?></th>
-										<th class="wb-gam-col-flag"><?php esc_html_e( 'Daily cap', 'wb-gamification' ); ?></th>
-										<th class="wb-gam-col-flag"><?php esc_html_e( 'Weekly cap', 'wb-gamification' ); ?></th>
-										<th class="wb-gam-col-flag"><?php esc_html_e( 'Members can submit', 'wb-gamification' ); ?></th>
-									</tr>
-									</thead>
-									<tbody>
-									<?php
-									foreach ( $plugin_actions as $action ) :
-										$action_id  = $action['id'];
-										$pts        = (int) get_option( 'wb_gam_points_' . $action_id, $action['default_points'] );
-										$enabled    = (bool) get_option( 'wb_gam_enabled_' . $action_id, true );
-										$repeatable = (bool) ( $action['repeatable'] ?? true );
-										$daily_cap  = (int) ( $action['daily_cap'] ?? 0 );
-										// The engine has ENFORCED a weekly cap since the rate-limit
-										// gate was written (PointsEngine::passes_rate_limits), the
-										// Registry defaults it, and the REST override endpoint accepts
-										// it — but this table never rendered a field for it, so no
-										// owner could ever set one. Engine-enforced, admin-invisible:
-										// the capability existed on paper only, and CAPABILITIES.md
-										// listed it as shipped.
-										$weekly_cap = (int) ( $action['weekly_cap'] ?? 0 );
-										// Resolve current currency: admin override > manifest > primary.
-										$action_type = \WBGam\Engine\Registry::resolve_action_point_type( $action );
-										if ( '' === $action_type ) {
-											$action_type = $wb_gam_default_slug;
-										}
-										?>
-										<tr>
-											<td>
-												<label class="wbgam-switch">
-													<input
-														type="checkbox"
-														name="<?php echo esc_attr( self::field_name( 'wb_gam_enabled_', (string) $action_id ) ); ?>"
-														aria-label="<?php /* translators: %s: gamification action label */ echo esc_attr( sprintf( __( 'Enable %s', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
-														<?php checked( $enabled ); ?>
-													>
-													<span class="wbgam-switch__track" aria-hidden="true"></span>
-												</label>
-											</td>
-											<td>
-												<div class="wbgam-action-cell">
-													<strong class="wbgam-action-cell__title"><?php echo esc_html( $action['label'] ?? $action_id ); ?></strong>
-													<?php if ( ! empty( $action['description'] ) ) : ?>
-														<span class="wbgam-action-cell__desc"><?php echo esc_html( $action['description'] ); ?></span>
-													<?php endif; ?>
-												</div>
-											</td>
-											<td>
-												<input
-													type="number"
-													name="<?php echo esc_attr( self::field_name( 'wb_gam_points_', (string) $action_id ) ); ?>"
-													aria-label="<?php /* translators: %s: gamification action label */ echo esc_attr( sprintf( __( 'Amount for %s', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
-													value="<?php echo esc_attr( (string) $pts ); ?>"
-													min="0"
-													max="9999"
-													class="wbgam-input wbgam-input--xs"
-												>
-											</td>
-											<?php if ( $wb_gam_multi_currency ) : ?>
-												<td>
-													<select
-														name="<?php echo esc_attr( self::field_name( 'wb_gam_point_type_', (string) $action_id ) ); ?>"
-														class="wbgam-select wbgam-select--sm"
-														aria-label="<?php /* translators: %s: gamification action label */ echo esc_attr( sprintf( __( 'Currency for %s', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
-													>
-														<?php foreach ( $wb_gam_pt_catalog as $wb_gam_pt_choice ) : ?>
-															<option value="<?php echo esc_attr( (string) $wb_gam_pt_choice['slug'] ); ?>" <?php selected( $action_type, (string) $wb_gam_pt_choice['slug'] ); ?>>
-																<?php echo esc_html( (string) $wb_gam_pt_choice['label'] ); ?>
-															</option>
-														<?php endforeach; ?>
-													</select>
-												</td>
-											<?php endif; ?>
-											<td>
-												<?php if ( $repeatable ) : ?>
-													<span class="wbgam-pill wbgam-pill--info"><?php esc_html_e( 'Yes', 'wb-gamification' ); ?></span>
-												<?php else : ?>
-													<span class="wbgam-pill wbgam-pill--inactive"><?php esc_html_e( 'Once', 'wb-gamification' ); ?></span>
-												<?php endif; ?>
-											</td>
-											<td>
-												<?php $wb_gam_cooldown = (int) ( $action['cooldown'] ?? 0 ); ?>
-												<input
-													type="number"
-													data-wb-gam-action-override="cooldown"
-													data-wb-gam-action-id="<?php echo esc_attr( $action_id ); ?>"
-													value="<?php echo esc_attr( (string) $wb_gam_cooldown ); ?>"
-													min="0"
-													max="86400"
-													step="1"
-													class="wbgam-input wbgam-input--xs"
-													aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Cooldown in seconds for %s', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
-												>
-											</td>
-											<td>
-												<input
-													type="number"
-													data-wb-gam-action-override="daily_cap"
-													data-wb-gam-action-id="<?php echo esc_attr( $action_id ); ?>"
-													value="<?php echo esc_attr( (string) $daily_cap ); ?>"
-													min="0"
-													max="9999"
-													step="1"
-													class="wbgam-input wbgam-input--xs"
-													aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Daily cap for %s (0 = unlimited)', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
-												>
-											</td>
-											<td>
-												<input
-													type="number"
-													data-wb-gam-action-override="weekly_cap"
-													data-wb-gam-action-id="<?php echo esc_attr( $action_id ); ?>"
-													value="<?php echo esc_attr( (string) $weekly_cap ); ?>"
-													min="0"
-													max="99999"
-													step="1"
-													class="wbgam-input wbgam-input--xs"
-													aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Weekly cap for %s (0 = unlimited)', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
-												>
-											</td>
-											<td>
-												<?php
-												// Submit Achievement only offers actions the owner ticks here
-												// (or a manifest marks submittable). Off by default.
-												?>
-												<input
-													type="checkbox"
-													data-wb-gam-action-override="submittable"
-													data-wb-gam-action-id="<?php echo esc_attr( $action_id ); ?>"
-													<?php checked( \WBGam\Engine\Registry::is_submittable( $action_id ) ); ?>
-													aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Members can submit %s for review', 'wb-gamification' ), $action['label'] ?? $action_id ) ); ?>"
-												>
-											</td>
-										</tr>
-									<?php endforeach; ?>
-									</tbody>
-								</table>
-							</div>
+						<div class="wbgam-earn-group__tools">
+							<button type="button" class="wbgam-btn wbgam-btn--secondary wbgam-btn--sm" data-wb-gam-earn-restore>
+								<?php /* translators: %s: plugin name */ echo esc_html( sprintf( __( 'Restore %s defaults', 'wb-gamification' ), $plugin ) ); ?>
+							</button>
+							<button type="button" class="wbgam-btn wbgam-btn--secondary wbgam-btn--sm" data-wb-gam-earn-alloff><?php esc_html_e( 'Switch all off', 'wb-gamification' ); ?></button>
 						</div>
+						<div class="wbgam-earn-head" aria-hidden="true">
+							<span><?php esc_html_e( 'On', 'wb-gamification' ); ?></span>
+							<span><?php esc_html_e( 'Action', 'wb-gamification' ); ?></span>
+							<span><?php echo esc_html( $wb_gam_default_label ); ?></span>
+							<span><?php esc_html_e( 'Limit', 'wb-gamification' ); ?></span>
+							<span><?php esc_html_e( 'Members can submit', 'wb-gamification' ); ?></span>
+						</div>
+						<ul class="wbgam-earn-list">
+							<?php
+							foreach ( $plugin_actions as $action ) :
+								$action_id   = (string) $action['id'];
+								$wb_gam_name = (string) ( $action['label'] ?? $action_id );
+								$penalty     = ! empty( $action['penalty'] );
+								$enabled     = (bool) get_option( 'wb_gam_enabled_' . $action_id, true );
+								$action_type = \WBGam\Engine\Registry::resolve_action_point_type( $action );
+								if ( '' === $action_type ) {
+									$action_type = $wb_gam_default_slug;
+								}
+								$wb_gam_limits = array(
+									'cooldown'   => array( (int) ( $action['cooldown'] ?? 0 ), __( 'Time between awards (seconds)', 'wb-gamification' ), 86400 ),
+									'daily_cap'  => array( (int) ( $action['daily_cap'] ?? 0 ), __( 'Most per day', 'wb-gamification' ), 9999 ),
+									'weekly_cap' => array( (int) ( $action['weekly_cap'] ?? 0 ), __( 'Most per week', 'wb-gamification' ), 99999 ),
+								);
+								?>
+								<li class="wbgam-earn-row" data-wb-gam-earn-row="<?php echo esc_attr( $action_id ); ?>" data-search="<?php echo esc_attr( strtolower( $wb_gam_name . ' ' . ( $action['description'] ?? '' ) . ' ' . $action_id ) ); ?>"<?php echo $penalty ? ' data-penalty' : ''; ?>>
+									<label class="wbgam-switch wbgam-earn-row__on">
+										<input type="checkbox" data-wb-gam-action-override="enabled" <?php checked( $enabled ); ?>
+											aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Pay for %s', 'wb-gamification' ), $wb_gam_name ) ); ?>">
+										<span class="wbgam-switch__track" aria-hidden="true"></span>
+									</label>
+									<div class="wbgam-earn-row__action">
+										<strong><?php echo esc_html( $wb_gam_name ); ?></strong>
+										<?php if ( $penalty ) : ?>
+											<span class="wbgam-pill wbgam-pill--warning"><?php esc_html_e( 'Takes points', 'wb-gamification' ); ?></span>
+										<?php endif; ?>
+										<?php if ( empty( $action['repeatable'] ?? true ) ) : ?>
+											<span class="wbgam-pill wbgam-pill--inactive"><?php esc_html_e( 'Once per member', 'wb-gamification' ); ?></span>
+										<?php endif; ?>
+										<?php if ( ! empty( $action['description'] ) ) : ?>
+											<span class="wbgam-earn-row__desc"><?php echo esc_html( $action['description'] ); ?></span>
+										<?php endif; ?>
+									</div>
+									<div class="wbgam-earn-row__points">
+										<span class="wbgam-earn-row__label" aria-hidden="true"><?php echo esc_html( $wb_gam_default_label ); ?></span>
+										<input type="number" class="wbgam-input wbgam-input--xs" data-wb-gam-action-override="points" min="0" max="<?php echo esc_attr( (string) \WBGam\Engine\Registry::POINTS_MAX ); ?>"
+											value="<?php echo esc_attr( (string) (int) get_option( 'wb_gam_points_' . $action_id, $action['default_points'] ) ); ?>"
+											aria-label="<?php echo esc_attr( sprintf( $penalty ? /* translators: %s: action label */ __( 'Points taken for %s', 'wb-gamification' ) : /* translators: %s: action label */ __( 'Amount for %s', 'wb-gamification' ), $wb_gam_name ) ); ?>">
+										<?php if ( $wb_gam_multi_currency ) : ?>
+											<select class="wbgam-select wbgam-select--sm" data-wb-gam-action-override="point_type"
+												aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Point type for %s', 'wb-gamification' ), $wb_gam_name ) ); ?>">
+												<?php foreach ( $wb_gam_pt_catalog as $wb_gam_pt_choice ) : ?>
+													<option value="<?php echo esc_attr( (string) $wb_gam_pt_choice['slug'] ); ?>" <?php selected( $action_type, (string) $wb_gam_pt_choice['slug'] ); ?>><?php echo esc_html( (string) $wb_gam_pt_choice['label'] ); ?></option>
+												<?php endforeach; ?>
+											</select>
+										<?php endif; ?>
+									</div>
+									<details class="wbgam-earn-limit">
+										<summary data-wb-gam-earn-limit-summary aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Limits for %s', 'wb-gamification' ), $wb_gam_name ) ); ?>"><?php esc_html_e( 'Limit', 'wb-gamification' ); ?></summary>
+										<div class="wbgam-earn-limit__panel">
+											<?php foreach ( $wb_gam_limits as $wb_gam_field => $wb_gam_limit ) : ?>
+												<label>
+													<span><?php echo esc_html( $wb_gam_limit[1] ); ?></span>
+													<input type="number" class="wbgam-input wbgam-input--xs" data-wb-gam-action-override="<?php echo esc_attr( $wb_gam_field ); ?>" min="1" max="<?php echo esc_attr( (string) $wb_gam_limit[2] ); ?>" step="1"
+														value="<?php echo $wb_gam_limit[0] > 0 ? esc_attr( (string) $wb_gam_limit[0] ) : ''; ?>" placeholder="<?php esc_attr_e( 'No limit', 'wb-gamification' ); ?>">
+												</label>
+											<?php endforeach; ?>
+											<p class="description"><?php esc_html_e( 'Leave a field empty for no limit.', 'wb-gamification' ); ?></p>
+										</div>
+									</details>
+									<div class="wbgam-earn-row__submit">
+										<?php if ( $penalty ) : ?>
+											<span class="wbgam-earn-row__na"><?php esc_html_e( 'Not for penalties', 'wb-gamification' ); ?></span>
+										<?php else : ?>
+											<label>
+												<input type="checkbox" data-wb-gam-action-override="submittable" <?php checked( \WBGam\Engine\Registry::is_submittable( $action_id ) ); ?>>
+												<span class="wbgam-earn-row__label"><?php esc_html_e( 'Members can submit', 'wb-gamification' ); ?></span>
+												<span class="screen-reader-text"><?php /* translators: %s: action label */ echo esc_html( sprintf( __( 'for %s', 'wb-gamification' ), $wb_gam_name ) ); ?></span>
+											</label>
+										<?php endif; ?>
+									</div>
+								</li>
+							<?php endforeach; ?>
+						</ul>
 					</details>
 				<?php endforeach; ?>
+
+				<div class="wbgam-earn-status" role="status" aria-live="polite" data-wb-gam-earn-status hidden>
+					<span data-wb-gam-earn-status-text></span>
+					<button type="button" class="wbgam-btn wbgam-btn--secondary wbgam-btn--sm" data-wb-gam-earn-undo><?php esc_html_e( 'Undo', 'wb-gamification' ); ?></button>
+				</div>
 
 				<?php self::enqueue_action_overrides_script(); ?>
 
@@ -1735,90 +1543,43 @@ final class SettingsPage {
 			<?php
 		endif;
 
-		// Show first-run welcome card if no points awarded yet and admin hasn't dismissed it.
-		// `?wb_gam_force_welcome=1` bypasses the gate so admins (or the QA browser
-		// runner) can re-open the card on a populated install.
-		$dismissed = get_user_meta( get_current_user_id(), 'wb_gam_dismissed_welcome', true );
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only force flag.
-		$force_welcome = isset( $_GET['wb_gam_force_welcome'] ) && '1' === $_GET['wb_gam_force_welcome'];
-		$show_welcome  = $force_welcome || ( ! $dismissed && 0 === (int) $stats['points_total'] && 0 === (int) $stats['active_members'] );
-		if ( $show_welcome ) :
-			?>
-			<div class="wbgam-settings-card wbgam-stack-block wbgam-card--accent" data-wb-gam-welcome>
-				<div class="wbgam-card-header">
-					<h3 class="wbgam-card-title"><?php esc_html_e( 'Getting Started', 'wb-gamification' ); ?></h3>
-					<span class="wbgam-card-header__actions">
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-setup' ) ); ?>" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary" title="<?php esc_attr_e( 'Re-run the Setup Wizard to pick a different starter template or change defaults.', 'wb-gamification' ); ?>"><?php esc_html_e( 'Re-run wizard', 'wb-gamification' ); ?></a>
-						<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=wb-gamification&dismiss_welcome=1' ), 'wb_gam_dismiss_welcome' ) ); ?>" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary"><?php esc_html_e( 'Dismiss', 'wb-gamification' ); ?></a>
-					</span>
-				</div>
-				<div class="wbgam-card-body">
-					<p><?php esc_html_e( 'Your gamification system is active! Points, badges, and levels will appear here as members interact with your site. Here are some next steps:', 'wb-gamification' ); ?></p>
-					<p class="wbgam-actions-row">
-						<button
-							type="button"
-							class="wbgam-btn wbgam-btn--secondary"
-							data-wb-gam-test-event
-							data-points="10"
-						>
-							<span class="icon-zap" aria-hidden="true"></span>
-							<?php esc_html_e( 'Send a test event (award yourself 10 points)', 'wb-gamification' ); ?>
-						</button>
-						<span class="wbgam-test-event-status" data-wb-gam-test-event-status role="status" aria-live="polite"></span>
-					</p>
-					<p class="wbgam-quick-nav">
-						<?php if ( $hub_url ) : ?>
-							<a href="<?php echo esc_url( $hub_url ); ?>" target="_blank" rel="noopener" class="wbgam-quick-nav__item">
-								<span class="icon-external-link"></span>
-								<?php esc_html_e( 'Visit your Hub (preview as member)', 'wb-gamification' ); ?>
-							</a>
-						<?php endif; ?>
-						<a href="#points" class="wbgam-quick-nav__item" data-section="points">
-							<span class="icon-star"></span>
-							<?php esc_html_e( 'Configure point values', 'wb-gamification' ); ?>
-						</a>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-point-types' ) ); ?>" class="wbgam-quick-nav__item">
-							<span class="icon-tag"></span>
-							<?php esc_html_e( 'Add a currency (XP, Coins…)', 'wb-gamification' ); ?>
-						</a>
-						<?php if ( \WBGam\Engine\ModuleToggles::enabled( 'challenges' ) ) : ?>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gam-challenges' ) ); ?>" class="wbgam-quick-nav__item">
-							<span class="icon-flag"></span>
-							<?php esc_html_e( 'Create a challenge', 'wb-gamification' ); ?>
-						</a>
-						<?php endif; ?>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-badges' ) ); ?>" class="wbgam-quick-nav__item">
-							<span class="icon-award"></span>
-							<?php esc_html_e( 'View badge library', 'wb-gamification' ); ?>
-						</a>
-					</p>
-				</div>
-			</div>
-			<?php
-		endif;
+		$challenges_on = \WBGam\Engine\ModuleToggles::enabled( 'challenges' );
 
-		// Setup-progress checklist — visible until every step is checked OR the
-		// admin dismisses it. Each step queries the live site state; admins
-		// don't need to manually mark anything done. Hides itself once the
-		// last step turns green.
+		// One click to the two things an owner does most from here.
+		?>
+		<p class="wbgam-actions-row wbgam-overview-actions">
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-award' ) ); ?>" class="wbgam-btn wbgam-btn--primary">
+				<span class="icon-plus" aria-hidden="true"></span>
+				<?php esc_html_e( 'Award points', 'wb-gamification' ); ?>
+			</a>
+			<?php if ( $hub_url ) : ?>
+				<a href="<?php echo esc_url( $hub_url ); ?>" target="_blank" rel="noopener" class="wbgam-btn wbgam-btn--secondary">
+					<span class="icon-external-link" aria-hidden="true"></span>
+					<?php esc_html_e( 'View as a member', 'wb-gamification' ); ?>
+				</a>
+			<?php endif; ?>
+		</p>
+		<?php
+
+		// "Finish setting up": every item reads the site's real state and disappears when done.
 		$checklist_dismissed = (bool) get_user_meta( get_current_user_id(), 'wb_gam_dismissed_checklist', true );
-		$checklist_steps     = self::compute_setup_checklist( $hub_page_id, (int) $stats['points_total'] );
+		$checklist_steps     = self::compute_setup_checklist( $hub_page_id, $challenges_on );
 		$checklist_done      = count( array_filter( $checklist_steps, static fn( $step ) => $step['done'] ) );
 		$checklist_total     = count( $checklist_steps );
+		$has_challenge       = (bool) array_filter( $checklist_steps, static fn( $step ) => 'challenge' === ( $step['key'] ?? '' ) && $step['done'] );
 
 		if ( ! $checklist_dismissed && $checklist_done < $checklist_total ) :
 			?>
 			<div class="wbgam-settings-card wbgam-stack-block wbgam-card--accent">
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title">
-						<?php
-						printf(
+						<?php esc_html_e( 'Finish setting up', 'wb-gamification' ); ?>
+						<span class="wbgam-pill wbgam-pill--neutral">
+							<?php
 							/* translators: 1: completed step count, 2: total step count */
-							esc_html__( 'Setup checklist (%1$d / %2$d)', 'wb-gamification' ),
-							(int) $checklist_done,
-							(int) $checklist_total
-						);
-						?>
+							echo esc_html( sprintf( __( '%1$d of %2$d', 'wb-gamification' ), $checklist_done, $checklist_total ) );
+							?>
+						</span>
 					</h3>
 					<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=wb-gamification&dismiss_checklist=1' ), 'wb_gam_dismiss_checklist' ) ); ?>" class="wbgam-btn wbgam-btn--sm wbgam-btn--secondary">
 						<?php esc_html_e( 'Dismiss', 'wb-gamification' ); ?>
@@ -1828,15 +1589,16 @@ final class SettingsPage {
 					<ul class="wbgam-checklist">
 						<?php foreach ( $checklist_steps as $step ) : ?>
 							<li class="wbgam-checklist__item <?php echo $step['done'] ? 'is-done' : ''; ?>">
-								<span class="wbgam-checklist__icon icon-<?php echo $step['done'] ? 'check-circle' : 'circle'; ?>" aria-hidden="true"></span>
+								<span class="wbgam-checklist__icon icon-<?php echo $step['done'] ? 'circle-check' : 'circle'; ?>" aria-hidden="true"></span>
 								<span class="wbgam-checklist__body">
 									<strong class="wbgam-checklist__title"><?php echo esc_html( $step['title'] ); ?></strong>
 									<span class="wbgam-checklist__desc"><?php echo esc_html( $step['desc'] ); ?></span>
 								</span>
-								<?php if ( ! $step['done'] && ! empty( $step['action_url'] ) ) : ?>
-									<a class="wbgam-btn wbgam-btn--sm wbgam-checklist__action" href="<?php echo esc_url( $step['action_url'] ); ?>"<?php echo ! empty( $step['action_target'] ) ? ' target="' . esc_attr( $step['action_target'] ) . '" rel="noopener"' : ''; ?>>
-										<?php echo esc_html( $step['action_label'] ); ?>
-									</a>
+								<?php if ( ! $step['done'] && 'test_event' === ( $step['action'] ?? '' ) ) : ?>
+									<button type="button" class="wbgam-btn wbgam-btn--sm wbgam-checklist__action" data-wb-gam-test-event data-points="10"><?php echo esc_html( $step['action_label'] ); ?></button>
+									<span class="wbgam-test-event-status" data-wb-gam-test-event-status role="status" aria-live="polite"></span>
+								<?php elseif ( ! $step['done'] && ! empty( $step['action_url'] ) ) : ?>
+									<a class="wbgam-btn wbgam-btn--sm wbgam-checklist__action" href="<?php echo esc_url( $step['action_url'] ); ?>"><?php echo esc_html( $step['action_label'] ); ?></a>
 								<?php endif; ?>
 							</li>
 						<?php endforeach; ?>
@@ -1849,111 +1611,138 @@ final class SettingsPage {
 		<div class="wb-gam-admin-kpi-strip">
 			<?php
 			AnalyticsDashboard::kpi_card(
-				__( 'Points Awarded', 'wb-gamification' ),
+				__( 'Points awarded, 30 days', 'wb-gamification' ),
 				number_format_i18n( $stats['points_total'] ),
-				__( 'Last 30 days', 'wb-gamification' ),
+				'',
 				'icon-star'
 			);
 			AnalyticsDashboard::kpi_card(
-				__( 'Active Members', 'wb-gamification' ),
+				__( 'Members earning', 'wb-gamification' ),
 				number_format_i18n( $stats['active_members'] ),
 				sprintf(
-					/* translators: %d = total member count */
-					__( '%d total members', 'wb-gamification' ),
-					$stats['total_members']
+					/* translators: %s: total member count */
+					__( 'of %s members', 'wb-gamification' ),
+					number_format_i18n( (int) $stats['total_members'] )
 				),
 				'icon-users'
 			);
 			AnalyticsDashboard::kpi_card(
-				__( 'Badges Earned', 'wb-gamification' ),
+				__( 'Badges earned', 'wb-gamification' ),
 				number_format_i18n( $stats['badges_earned'] ),
-				sprintf(
-					/* translators: %s: percentage of active members. */
-					__( '%s%% of active members', 'wb-gamification' ),
-					$stats['badge_earner_pct']
-				),
+				'',
 				'icon-medal'
 			);
-			AnalyticsDashboard::kpi_card(
-				__( 'Challenges Completed', 'wb-gamification' ),
-				number_format_i18n( $stats['challenges_completed'] ),
-				sprintf(
-					/* translators: %s: completion rate percentage. */
-					__( '%s%% completion rate', 'wb-gamification' ),
-					$stats['challenge_completion_pct']
-				),
-				'icon-target'
-			);
-			AnalyticsDashboard::kpi_card(
-				__( 'Active Streaks', 'wb-gamification' ),
-				number_format_i18n( $stats['active_streaks'] ),
-				sprintf(
-					/* translators: %s: streak health percentage. */
-					__( '%s%% streak health', 'wb-gamification' ),
-					$stats['streak_health_pct']
-				),
-				'icon-flame'
-			);
-			AnalyticsDashboard::kpi_card(
-				__( 'Kudos Given', 'wb-gamification' ),
-				number_format_i18n( $stats['kudos_given'] ),
-				__( 'Last 30 days', 'wb-gamification' ),
-				'icon-heart-handshake'
-			);
+			if ( $challenges_on ) {
+				AnalyticsDashboard::kpi_card(
+					__( 'Challenges completed', 'wb-gamification' ),
+					number_format_i18n( $stats['challenges_completed'] ),
+					'',
+					'icon-target',
+					0 === (int) $stats['challenges_completed'] && ! $has_challenge
+						? array(
+							'url'   => admin_url( 'admin.php?page=wb-gam-challenges' ),
+							'label' => __( 'Create your first challenge', 'wb-gamification' ),
+						)
+						: null
+				);
+			}
 			?>
 		</div>
 
-		<div class="wb-gam-admin-quick-links">
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-analytics' ) ); ?>"
-				class="wbgam-btn wbgam-btn--primary">
-				<?php esc_html_e( 'Full Analytics', 'wb-gamification' ); ?>
-			</a>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-award' ) ); ?>"
-				class="wbgam-btn wbgam-btn--secondary">
-				<?php esc_html_e( 'Award Points', 'wb-gamification' ); ?>
-			</a>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification#points' ) ); ?>"
-				class="wbgam-btn wbgam-btn--secondary">
-				<?php esc_html_e( 'Configure Points', 'wb-gamification' ); ?>
-			</a>
-		</div>
-
 		<?php
-		// Activity proof + engagement signal — what a customer wants to see
-		// every time they open the Dashboard: "Is the system running? Who's
-		// winning right now? What's earning the most points?". The same
-		// $stats payload already powers the standalone Analytics page; reusing
-		// it here keeps Dashboard cheap and Analytics consistent.
-		$has_top_earners = ! empty( $stats['top_earners'] );
-		$has_top_actions = ! empty( $stats['top_actions'] );
-		$recent_kudos    = \WBGam\Engine\KudosEngine::get_recent( 6 );
+		// Hand awards are shown apart from what members earned by taking part, and a gentle note
+		// appears when they are an unusual share of the month (a migration, or points used as a
+		// manual prize). top_actions holds the ten biggest actions by points, so a hand-award
+		// total outside it is small by definition.
+		$all_actions  = (array) $stats['top_actions'];
+		$manual_pts   = 0;
+		$earn_actions = array();
+		foreach ( $all_actions as $row ) {
+			if ( in_array( $row['action_id'] ?? '', ManualAwardPage::ACTION_IDS, true ) ) {
+				$manual_pts += (int) ( $row['pts'] ?? 0 );
+			} else {
+				$earn_actions[] = $row;
+			}
+		}
+		$manual_share = (int) $stats['points_total'] > 0 ? (int) round( 100 * $manual_pts / (int) $stats['points_total'] ) : 0;
+
+		if ( $manual_share >= 30 ) :
+			?>
+			<div class="wbgam-banner wbgam-banner--warning wbgam-stack-block" role="note">
+				<span class="wbgam-banner__icon icon-info" aria-hidden="true"></span>
+				<div class="wbgam-banner__body">
+					<strong><?php esc_html_e( 'Needs a look', 'wb-gamification' ); ?></strong>
+					<p>
+						<?php
+						/* translators: %d: percentage of this month's points awarded by hand. */
+						echo esc_html( sprintf( __( '%d%% of this month\'s points were awarded by hand. If that is a migration or a one-off, nothing to do.', 'wb-gamification' ), $manual_share ) );
+						?>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-award' ) ); ?>"><?php esc_html_e( 'See manual awards', 'wb-gamification' ); ?></a>
+					</p>
+				</div>
+			</div>
+			<?php
+		endif;
 		?>
 		<div class="wbgam-dashboard-row">
+
+			<!-- Top actions (30d) -->
+			<div class="wbgam-card">
+				<div class="wbgam-card-header">
+					<h3 class="wbgam-card-title">
+						<span class="icon-zap" aria-hidden="true"></span>
+						<?php esc_html_e( 'Top actions, 30 days', 'wb-gamification' ); ?>
+					</h3>
+					<a class="wbgam-card-link" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification#points' ) ); ?>">
+						<?php esc_html_e( 'Earning', 'wb-gamification' ); ?>
+					</a>
+				</div>
+				<div class="wbgam-card-body">
+					<?php if ( ! $earn_actions && ! $manual_pts ) : ?>
+						<p class="wbgam-empty"><?php esc_html_e( 'Nothing earned yet. Actions appear here as members take part.', 'wb-gamification' ); ?></p>
+					<?php else : ?>
+						<ul class="wbgam-action-list" role="list">
+							<?php foreach ( array_slice( $earn_actions, 0, 5 ) as $row ) : ?>
+								<li class="wbgam-action-list__item">
+									<span class="wbgam-action-list__name"><?php echo esc_html( Registry::label_for( (string) ( $row['action_id'] ?? '' ) ) ); ?></span>
+									<span class="wbgam-action-list__points"><?php echo esc_html( number_format_i18n( (int) ( $row['pts'] ?? 0 ) ) ); ?></span>
+								</li>
+							<?php endforeach; ?>
+							<?php if ( $manual_pts ) : ?>
+								<li class="wbgam-action-list__item wbgam-action-list__item--manual">
+									<span class="wbgam-action-list__name"><?php esc_html_e( 'Awarded by hand', 'wb-gamification' ); ?></span>
+									<span class="wbgam-action-list__points"><?php echo esc_html( number_format_i18n( $manual_pts ) ); ?></span>
+								</li>
+							<?php endif; ?>
+						</ul>
+					<?php endif; ?>
+				</div>
+			</div>
 
 			<!-- Top members (30d) -->
 			<div class="wbgam-card">
 				<div class="wbgam-card-header">
 					<h3 class="wbgam-card-title">
 						<span class="icon-trophy" aria-hidden="true"></span>
-						<?php esc_html_e( 'Top members - last 30 days', 'wb-gamification' ); ?>
+						<?php esc_html_e( 'Top members, 30 days', 'wb-gamification' ); ?>
 					</h3>
-					<a class="wbgam-card-link" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification-analytics' ) ); ?>">
-						<?php esc_html_e( 'View all', 'wb-gamification' ); ?>
-					</a>
+					<?php if ( $hub_url ) : ?>
+						<a class="wbgam-card-link" href="<?php echo esc_url( $hub_url ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Open the leaderboard', 'wb-gamification' ); ?></a>
+					<?php endif; ?>
 				</div>
 				<div class="wbgam-card-body">
-					<?php if ( ! $has_top_earners ) : ?>
-						<p class="wbgam-empty"><?php esc_html_e( 'No earnings yet - points will appear here as members engage.', 'wb-gamification' ); ?></p>
+					<?php if ( empty( $stats['top_earners'] ) ) : ?>
+						<p class="wbgam-empty"><?php esc_html_e( 'No one has earned yet. Members appear here as they take part.', 'wb-gamification' ); ?></p>
 					<?php else : ?>
 						<ol class="wbgam-rank-list" role="list">
 							<?php
 							$rank = 0;
-							foreach ( array_slice( (array) $stats['top_earners'], 0, 6 ) as $row ) :
-								++$rank;
+							foreach ( array_slice( (array) $stats['top_earners'], 0, 5 ) as $row ) :
 								$user = isset( $row['user_id'] ) ? get_userdata( (int) $row['user_id'] ) : null;
 								if ( ! $user ) {
 									continue;
 								}
+								++$rank;
 								?>
 								<li class="wbgam-rank-list__item">
 									<span class="wbgam-rank-list__rank">#<?php echo esc_html( (string) $rank ); ?></span>
@@ -1966,81 +1755,7 @@ final class SettingsPage {
 					<?php endif; ?>
 				</div>
 			</div>
-
-			<!-- Top actions (30d) -->
-			<div class="wbgam-card">
-				<div class="wbgam-card-header">
-					<h3 class="wbgam-card-title">
-						<span class="icon-zap" aria-hidden="true"></span>
-						<?php esc_html_e( 'Top actions - last 30 days', 'wb-gamification' ); ?>
-					</h3>
-					<a class="wbgam-card-link" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification#points' ) ); ?>">
-						<?php esc_html_e( 'Configure', 'wb-gamification' ); ?>
-					</a>
-				</div>
-				<div class="wbgam-card-body">
-					<?php if ( ! $has_top_actions ) : ?>
-						<p class="wbgam-empty"><?php esc_html_e( 'No actions logged yet.', 'wb-gamification' ); ?></p>
-					<?php else : ?>
-						<ul class="wbgam-action-list" role="list">
-							<?php foreach ( array_slice( (array) $stats['top_actions'], 0, 6 ) as $row ) : ?>
-								<li class="wbgam-action-list__item">
-									<span class="wbgam-action-list__name"><?php echo esc_html( Registry::label_for( (string) ( $row['action_id'] ?? '' ) ) ); ?></span>
-									<span class="wbgam-action-list__count">
-										<?php
-										printf(
-											/* translators: %d: number of times this action fired in the last 30 days */
-											esc_html( _n( '%d event', '%d events', (int) ( $row['events'] ?? 0 ), 'wb-gamification' ) ),
-											(int) ( $row['events'] ?? 0 )
-										);
-										?>
-									</span>
-									<span class="wbgam-action-list__points"><?php echo esc_html( number_format_i18n( (int) ( $row['pts'] ?? 0 ) ) ); ?></span>
-								</li>
-							<?php endforeach; ?>
-						</ul>
-					<?php endif; ?>
-				</div>
-			</div>
-
 		</div>
-
-		<?php if ( ! empty( $recent_kudos ) ) : ?>
-			<div class="wbgam-card wbgam-dashboard-row__full">
-				<div class="wbgam-card-header">
-					<h3 class="wbgam-card-title">
-						<span class="icon-heart-handshake" aria-hidden="true"></span>
-						<?php esc_html_e( 'Recent kudos', 'wb-gamification' ); ?>
-					</h3>
-					<a class="wbgam-card-link" href="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification#kudos' ) ); ?>">
-						<?php esc_html_e( 'Manage kudos', 'wb-gamification' ); ?>
-					</a>
-				</div>
-				<div class="wbgam-card-body">
-					<ul class="wbgam-kudos-feed" role="list">
-						<?php foreach ( $recent_kudos as $kudo ) : ?>
-							<li class="wbgam-kudos-feed__item">
-								<span class="wbgam-kudos-feed__giver"><?php echo esc_html( $kudo['giver_name'] ); ?></span>
-								<span class="wbgam-kudos-feed__arrow" aria-hidden="true">→</span>
-								<span class="wbgam-kudos-feed__receiver"><?php echo esc_html( $kudo['receiver_name'] ); ?></span>
-								<?php if ( ! empty( $kudo['message'] ) ) : ?>
-									<span class="wbgam-kudos-feed__message"><?php echo esc_html( '“' . wp_trim_words( (string) $kudo['message'], 14 ) . '”' ); ?></span>
-								<?php endif; ?>
-								<span class="wbgam-kudos-feed__time">
-									<?php
-									printf(
-										/* translators: %s: human-readable time difference. */
-										esc_html__( '%s ago', 'wb-gamification' ),
-										esc_html( human_time_diff( strtotime( (string) $kudo['created_at'] . ' UTC' ), time() ) )
-									);
-									?>
-								</span>
-							</li>
-						<?php endforeach; ?>
-					</ul>
-				</div>
-			</div>
-		<?php endif; ?>
 		<?php
 	}
 

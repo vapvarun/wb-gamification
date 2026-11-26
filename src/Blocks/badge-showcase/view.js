@@ -23,7 +23,46 @@
 ( function () {
 	'use strict';
 
-	var BOUND = '__wbGamBadgeBound';
+	var BOUND    = '__wbGamBadgeBound';
+	var EXPANDED = '__wbGamBadgeExpanded';
+
+	function pageSize( root ) {
+		return parseInt( root.getAttribute( 'data-page-size' ), 10 ) || 0;
+	}
+
+	/** The cards of the current tab (All / Earned / Locked), in order. */
+	function inTab( root ) {
+		var filter = root.getAttribute( 'data-filter' ) || 'all';
+		return Array.prototype.filter.call(
+			root.querySelectorAll( '.wb-gam-badge-showcase__badge' ),
+			function ( li ) {
+				return 'all' === filter || li.getAttribute( 'data-state' ) === filter;
+			}
+		);
+	}
+
+	/**
+	 * A big collection shows its first cards and a "Show all N badges" button, per tab. Every card
+	 * is in the page (rendered on the server); this only folds the long tail away.
+	 */
+	function fold( root ) {
+		var size  = pageSize( root );
+		var cards = inTab( root );
+		var more  = root.querySelector( '[data-wb-gam-more]' );
+		root.querySelectorAll( '.wb-gam-badge-showcase__badge' ).forEach( function ( li ) {
+			li.hidden = false;
+		} );
+		var folding = size > 0 && ! root[ EXPANDED ] && cards.length > size;
+		if ( folding ) {
+			cards.slice( size ).forEach( function ( li ) {
+				li.hidden = true;
+			} );
+		}
+		if ( more ) {
+			more.hidden = ! folding;
+			more.textContent = ( more.getAttribute( 'data-label' ) || '' ).replace( '%d', cards.length.toLocaleString() );
+		}
+	}
 
 	function bindRoot( root ) {
 		if ( ! root || root[ BOUND ] ) {
@@ -46,7 +85,25 @@
 				other.classList.toggle( 'is-active', active );
 				other.setAttribute( 'aria-selected', active ? 'true' : 'false' );
 			} );
+			root[ EXPANDED ] = false; // A new tab starts folded again.
+			fold( root );
 		} );
+
+		// "Show all N badges": unfold the current tab and move focus to the first card it revealed.
+		root.addEventListener( 'click', function ( event ) {
+			var more = event.target.closest( '[data-wb-gam-more]' );
+			if ( ! more || ! root.contains( more ) ) {
+				return;
+			}
+			var first = inTab( root )[ pageSize( root ) ];
+			root[ EXPANDED ] = true;
+			fold( root );
+			if ( first ) {
+				first.setAttribute( 'tabindex', '-1' );
+				first.focus();
+			}
+		} );
+		fold( root );
 
 		// The share toggle. A badge is private until its owner publishes it -- the share card, the
 		// OpenBadges credential and the public share page all refuse to render one that has not been --

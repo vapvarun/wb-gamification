@@ -28,8 +28,9 @@ This journey asserts the boot invariants no static gate enforces today:
    plugins_loaded callback.
 2. Every admin page is on the menu after `admin_init` fires.
 3. Every REST controller registers its routes after `rest_api_init`.
-4. The setup wizard's `maybe_redirect` is bound on `admin_init@1` and
-   consumes the `wb_gam_pending_setup_redirect` option exactly once.
+4. The Setup screen's (`SetupWizard`, Tools > Setup) `maybe_redirect` is
+   bound on `admin_init@1` and consumes the `wb_gam_pending_setup_redirect`
+   option exactly once.
 5. The community-challenges admin page enqueues `admin-rest-form.js` when
    visited via either hook name (`gamification_page_*` or `admin_page_*`).
 
@@ -99,7 +100,7 @@ wp user meta delete 1 wb_gam_setup_seen
 - **Expect**: every line ends `200` (admin page renders) or `302` (auth redirect on a logged-out probe). Never `500`, `404`, or `400`.
 - **On fail**: the slug returning a non-2xx/3xx code is missing from the admin menu (registration didn't fire) or its render method is fataling. Inspect the page class's `register_page()` and check the `admin_menu` hook timing.
 
-### 4. Setup wizard auto-redirect fires once on first admin visit
+### 4. Setup auto-redirect fires once on first admin visit
 
 - **Action**:
   ```bash
@@ -147,7 +148,7 @@ ALL of the following hold:
 1. Step 1 — no nested `plugins_loaded` callbacks anywhere in the plugin's PHP.
 2. Step 2 — every admin module class is invoked directly from `register_hooks()`.
 3. Step 3 — every admin page slug returns 2xx or 3xx (no 4xx/5xx).
-4. Step 4 — first-admin-visit triggers the wizard redirect; second visit does not (loop guard intact).
+4. Step 4 — first-admin-visit triggers the Setup redirect; second visit does not (loop guard intact).
 5. Step 5 — community challenges page enqueues `admin-rest-form.js`.
 6. Step 6 — all 17 REST controllers' routes resolve under `/wb-gamification/v1`.
 7. Step 7 — debug.log is clean of fatals during the admin bootstrap.

@@ -4,7 +4,7 @@ Tags: gamification, points, badges, leaderboard, buddypress
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.6.8
+Stable tag: 1.7.0
 License: GPL-2.0+
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,13 +12,13 @@ Complete gamification for WordPress + BuddyPress. Points, badges, levels, leader
 
 == Description ==
 
-WB Gamification is a universal gamification engine that works with any WordPress site. Install, activate, pick a template - gamification starts immediately. No configuration required.
+WB Gamification is a universal gamification engine that works with any WordPress site. Install, activate, run a two-minute Setup that reads the plugins on your site - gamification starts immediately. Or skip it: every plugin's own defaults already work.
 
 The engine awards points automatically when members perform actions on your site. Points unlock badges, advance levels, fuel leaderboards, and power streaks. Everything is configurable from the admin, but sensible defaults mean it works from day one.
 
 = Why WB Gamification? =
 
-* **Zero config** - 5 starter templates pre-configure everything. Pick one and go.
+* **Zero config** - Setup finds every plugin on your site with gamification actions. Pick the ones to reward, choose a pace, and launch.
 * **Universal** - Works with plain WordPress, BuddyPress, WooCommerce, LearnDash, bbPress and 18 more plugins. Auto-detects what you have installed.
 * **Scalable** - Async award pipeline, snapshot-cached leaderboards, object caching everywhere. Built for 100K+ members.
 * **API-first** - 80 REST endpoints, outbound webhooks, WP Abilities API. Mobile apps, headless frontends, and AI agents are first-class consumers. Admin UI is REST-driven internally - what the admin saves is what the API exposes (no parallel form-post surface).
@@ -84,7 +84,7 @@ The free plugin ships every gamification mechanic out of the box. Future add-ons
 
 1. Upload the `wb-gamification` folder to `/wp-content/plugins/`.
 2. Activate the plugin through the **Plugins** menu in WordPress.
-3. You will be redirected to the **Setup Wizard**. Choose a starter template that matches your site type, or skip to configure manually.
+3. **Setup** opens on your next admin page. Choose which plugins reward members and how generously, then click **Launch gamification**. Or click **Skip setup, I'll configure it myself** to keep each plugin's own defaults. Run it again any time from **Gamification > Tools > Setup**.
 4. Points start awarding automatically as members interact with your site.
 5. Add gamification blocks to any page using the block editor, or use shortcodes in the classic editor.
 
@@ -111,7 +111,7 @@ Three ways: (1) Automatically on BuddyPress profiles - level name, points, and p
 
 = Can I customize point values? =
 
-Yes. Every action has a configurable point value in **Gamification > Settings > Points**. You can also enable/disable individual actions, set daily caps, and configure cooldown periods. The setup wizard pre-configures sensible defaults based on your site type.
+Yes. Every action has a configurable point value in **Gamification > Settings > Points**. You can also enable/disable individual actions, set daily caps, and configure cooldown periods. **Gamification > Tools > Setup** lets you pick which plugins reward members, choose a pace for the limits, and change amounts before launch.
 
 = Will this slow down my site? =
 
@@ -146,6 +146,33 @@ Daily caps, weekly caps and per-action cooldowns are enforced silently. A member
 Since 1.6.4 a badge is private until the member shares it, so links published before the upgrade stop resolving until the member presses Share on their badge board. That is what stops strangers enumerating badge pages by guessing IDs. If you deliberately run an open community and want the old links working again, `wp wb-gamification share grandfather` publishes every existing badge in one pass, and `wp wb-gamification share reset` makes them private again.
 
 == Changelog ==
+
+= 1.7.0 - November 2026 =
+
+Setup, the admin and the toasts rebuilt around the plugins on your site.
+
+* New      - Setup starts from the plugins on your site: choose which to reward, how generous (Relaxed, Balanced, Competitive), see levels, badges and the leaderboard, then launch; nothing is saved before Launch.
+* New      - One admin menu in six groups (Overview, Earning, Rewards, Members, Experience, Tools), the same in the WordPress menu and on every plugin screen.
+* New      - The Earning screen lists every action by plugin with search and filters; each change saves on its own, shows "Saved" and can be undone for 10 seconds.
+* New      - The Overview shows four numbers for 30 days, a "Finish setting up" checklist that follows your site, and hand awards apart from what members earned.
+* New      - Awards that land together show as one summary toast that counts up, with the badge's picture; a level-up shows alone first.
+* New      - Forum topics and replies from Jetonomy earn points you control, with limits that stop farming (topics 5 a day, replies 20 a day and 30 seconds apart).
+* Improve  - Toasts use your site's font and accent colour, are one width everywhere and never show more than two at once (one on phones).
+* Improve  - Every toast closes by itself (4 seconds, or 8 with a button), closes on Escape and waits while a popup is open or you are typing.
+* Improve  - A big badge collection shows 12 badges per tab with "Show all"; the header counts the whole collection.
+* Improve  - Limits read in words ("20 a day, 30s apart") and an empty limit means no limit.
+* Fix      - Saving the Points settings could switch every earning action off when a save did not carry each action's checkbox.
+* Fix      - With Jetonomy and no BuddyNext, points toasts on forum pages showed "[object Object]".
+* Fix      - A fresh install with several plugins activated together could log "Duplicate column" or "Duplicate key name" database errors.
+* Fix      - Accent buttons inside BuddyNext (Send Kudos, the daily bonus, Share Your Year) now meet text contrast, and the gold #1 badge is readable in dark mode.
+* Fix      - Streak and challenge bonus points now appear in the toast, so it agrees with the points history.
+* Fix      - Spacing was missing on several admin screens.
+* Fix      - The release zip compresses every file, so upload firewalls no longer reject it.
+* Dev      - New filter wb_gam_leaderboard_exclusion_sql adds your own rule for who appears on every leaderboard and rank.
+* Dev      - New filter wb_gam_badge_showcase_page_size sets how many badges show before "Show all" (0 shows all).
+* Dev      - POST /actions/{id}/overrides now also takes points and point_type, accepts any registered action id, and DELETE restores the whole row.
+* Dev      - The wb_gamification_setup_wizard_started and _completed actions now pass 'launch' or 'skip' instead of a template slug.
+* Compat   - Aligned with BuddyNext 1.3.0 (suspended members stay off the leaderboard) and Jetonomy 2.1.0.
 
 = 1.6.8 - November 2026 =
 
@@ -580,7 +607,7 @@ Distribution pipeline and admin polish ahead of the integration release.
 2. **Badge Library** - Grid display of all badges with earned counts and auto-award/manual indicators. Click to edit.
 3. **Challenge Manager** - Create challenges with action, target, bonus points, and date range. All fields have helper descriptions.
 4. **Analytics Dashboard** - 6 KPI cards (points, members, badges, challenges, streaks, kudos), top actions table, daily sparkline.
-5. **Setup Wizard** - 5 starter templates with point previews. Choose your site type and go.
+5. **Setup** - Four steps: the plugins on your site, how members earn, what members get, review and launch.
 6. **Award Points** - Manual point award page with user selector, point amount, and reason field.
 7. **API Keys** - Generate and manage API keys for remote site authentication.
 8. **Member Hub (Frontend)** - The default Hub page combining points total, level progress, badge count, streak, and a leaderboard widget showing the member's rank.

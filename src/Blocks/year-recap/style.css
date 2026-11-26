@@ -250,7 +250,7 @@
 	align-items: center;
 	gap: 0.5rem;
 	padding: 0.75rem 2rem;
-	background: var(--wb-gam-recap-accent, #6f42c1);
+	background: var(--wb-gam-pop-accent); /* With --wb-gam-pop-accent-fg: the solid fill its text colour was computed for (4.29:1 on the raw accent). */
 	color: var(--wb-gam-pop-accent-fg);
 	border: none;
 	border-radius: 999px;

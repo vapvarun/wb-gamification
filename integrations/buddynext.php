@@ -328,7 +328,7 @@ return array(
 				'buddynext_space_member_left'    => static fn( $space_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $space_id ),
 				'buddynext_space_member_removed' => static fn( $space_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $space_id ),
 			),
-			'default_points'    => 5,
+			'default_points'    => 10,
 			'category'          => 'community',
 			'icon'              => 'icon-users',
 			'repeatable'        => true,
