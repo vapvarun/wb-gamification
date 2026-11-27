@@ -437,6 +437,8 @@ final class NotificationBridge {
 			'message'   => $pt_service->format( $points, $wb_gam_point_type, true ),
 			// The plural name, for toast.js when it merges repeats into one total.
 			'unit_many' => $pt_service->name_for( 2, $wb_gam_point_type ),
+			// The recipient's locale (BCP 47), so toast.js groups the count-up number the way this member reads it.
+			'locale'    => str_replace( '_', '-', get_locale() ),
 			'detail'    => self::resolve_award_detail( $event ),
 		);
 

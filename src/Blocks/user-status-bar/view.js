@@ -138,7 +138,7 @@
 				return '0';
 			}
 			var int = parseInt( n, 10 ) || 0;
-			return int.toLocaleString();
+			return int.toLocaleString( document.documentElement.lang || undefined );
 		}
 
 		function subscribe() {

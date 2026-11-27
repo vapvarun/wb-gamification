@@ -168,8 +168,7 @@ final class TransactionalEmailEngine {
 		}
 
 		$pt_service   = new PointTypeService();
-		$pt_record    = $pt_service->get( $pt_service->default_slug() );
-		$points_label = (string) ( $pt_record['label'] ?? __( 'Points', 'wb-gamification' ) );
+		$points_label = $pt_service->name_for( 2 );
 
 		$body = Email::render(
 			'level-up',
@@ -329,8 +328,7 @@ final class TransactionalEmailEngine {
 		}
 
 		$pt_service   = new PointTypeService();
-		$pt_record    = $pt_service->get( (string) ( $item['point_type'] ?? $pt_service->default_slug() ) );
-		$points_label = (string) ( $pt_record['label'] ?? __( 'points', 'wb-gamification' ) );
+		$points_label = $pt_service->name_for( 2, (string) ( $item['point_type'] ?? '' ) );
 
 		$body = Email::render(
 			'redemption-confirmed',

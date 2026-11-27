@@ -489,10 +489,22 @@
 		return !! ( window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches );
 	}
 
+	/**
+	 * Group a number the way the reader reads it: the recipient's locale from the toast payload,
+	 * else the page language. Never the browser's own locale, which is not the language the page is in.
+	 */
+	function formatNumber( n, locale ) {
+		try {
+			return new Intl.NumberFormat( locale || document.documentElement.lang || undefined ).format( n );
+		} catch ( e ) {
+			return String( n );
+		}
+	}
+
 	/** The title with its {count} token as the final number, for readers and for stacks that do not count. */
 	function countText( opts ) {
 		var c = opts.count;
-		return String( opts.title || '' ).replace( '{count}', c ? Number( c.to ).toLocaleString() : '' );
+		return String( opts.title || '' ).replace( '{count}', c ? formatNumber( Number( c.to ), c.locale ) : '' );
 	}
 
 	/**
@@ -526,19 +538,19 @@
 		var from = Number( c.from ) || 0;
 		var to   = Number( c.to ) || 0;
 		if ( reducedMotion() || from === to ) {
-			num.textContent = to.toLocaleString();
+			num.textContent = formatNumber( to, c.locale );
 			return;
 		}
 		var start = 0;
 		var step  = function ( t ) {
 			start = start || t;
 			var k = Math.min( 1, ( t - start ) / COUNT_MS );
-			num.textContent = Math.round( from + ( to - from ) * ( 1 - Math.pow( 1 - k, 3 ) ) ).toLocaleString();
+			num.textContent = formatNumber( Math.round( from + ( to - from ) * ( 1 - Math.pow( 1 - k, 3 ) ) ), c.locale );
 			if ( k < 1 ) {
 				handle.countFrame = window.requestAnimationFrame( step );
 			}
 		};
-		num.textContent = from.toLocaleString();
+		num.textContent = formatNumber( from, c.locale );
 		handle.countFrame = window.requestAnimationFrame( step );
 	}
 

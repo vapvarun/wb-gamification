@@ -302,7 +302,7 @@
 		function formatPoints( n, label ) {
 			var num  = parseInt( n, 10 ) || 0;
 			var name = ( 1 === Math.abs( num ) && label.one ) ? label.one : label.many;
-			return num.toLocaleString() + ( name ? ' ' + name : '' );
+			return num.toLocaleString( document.documentElement.lang || undefined ) + ( name ? ' ' + name : '' );
 		}
 
 		function bump( el ) {

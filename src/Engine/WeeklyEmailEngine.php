@@ -502,8 +502,7 @@ final class WeeklyEmailEngine {
 		// Resolve the configured currency label so the email reads
 		// "You earned 240 Coins this week" on coins-default sites.
 		$pt_service   = new \WBGam\Services\PointTypeService();
-		$pt_record    = $pt_service->get( $pt_service->default_slug() );
-		$points_label = (string) ( $pt_record['label'] ?? __( 'Points', 'wb-gamification' ) );
+		$points_label = $pt_service->name_for( 2 );
 
 		return compact(
 			'points_this_week',

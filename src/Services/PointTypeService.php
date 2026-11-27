@@ -100,6 +100,8 @@ final class PointTypeService {
 
 	/**
 	 * The point type's name for an amount: the singular name for exactly one, else the plural.
+	 * Every member-facing surface reads the name here (never `$row['label']`), so the seeded
+	 * "Points" / "Point" comes out in the reader's locale and an owner's own wording is kept.
 	 *
 	 * @since 1.6.5
 	 *
@@ -111,6 +113,11 @@ final class PointTypeService {
 		$record   = $this->get( $this->resolve( '' === $slug ? null : $slug ) );
 		$plural   = is_array( $record ) ? trim( (string) ( $record['label'] ?? '' ) ) : '';
 		$singular = is_array( $record ) ? trim( (string) ( $record['label_singular'] ?? '' ) ) : '';
+		if ( 'Points' === $plural && in_array( $singular, array( '', 'Point' ), true ) ) {
+			// The untouched seeded default (the installer stores the English words): read in the
+			// reader's own language. A name the owner typed is never in this branch, so it is shown as typed.
+			$plural = '';
+		}
 		if ( '' === $plural ) {
 			// No point type configured yet: the plugin's own words, pluralised by amount.
 			return _n( 'Point', 'Points', abs( $amount ), 'wb-gamification' );

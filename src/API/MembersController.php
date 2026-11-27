@@ -1340,8 +1340,7 @@ class MembersController extends WP_REST_Controller {
 						// reads correctly on multi-currency sites.
 						if ( empty( $toast['message'] ) ) {
 							$pt_service   = new \WBGam\Services\PointTypeService();
-							$pt_record    = $pt_service->get( $pt_service->default_slug() );
-							$label_plural = (string) ( $pt_record['label'] ?? __( 'points', 'wb-gamification' ) );
+							$label_plural = $pt_service->name_for( 2 );
 							$message      = sprintf(
 								/* translators: 1: signed point delta, 2: currency label. */
 								__( '+%1$d %2$s', 'wb-gamification' ),

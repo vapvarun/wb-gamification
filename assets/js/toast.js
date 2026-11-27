@@ -87,7 +87,7 @@
 			return;
 		}
 		if ( ! sum || ! sum.handle || sum.handle.gone ) {
-			sum = { handle: null, total: 0, shown: 0, unitMany: '', firstMessage: '', pointItems: 0, labels: [], counts: {}, badges: [], challenges: [], kudos: [], streaks: [], singles: [], welcome: null, image: '', url: '', urlLabel: '' };
+			sum = { handle: null, total: 0, shown: 0, unitMany: '', locale: '', firstMessage: '', pointItems: 0, labels: [], counts: {}, badges: [], challenges: [], kudos: [], streaks: [], singles: [], welcome: null, image: '', url: '', urlLabel: '' };
 		}
 		items.forEach( add );
 		var opts = summarise();
@@ -125,6 +125,7 @@
 				sum.total += n;
 				sum.pointItems++;
 				sum.unitMany     = sum.unitMany || t.unit_many || toastI18n( 'points', 'points' );
+				sum.locale       = sum.locale || t.locale || '';
 				sum.firstMessage = sum.firstMessage || t.message || '';
 				if ( BONUS_ACTIONS.indexOf( t.action ) === -1 ) {
 					label( t.detail );
@@ -167,6 +168,9 @@
 			} else {
 				title = '+{count} ' + sum.unitMany;
 				count = { from: sum.shown, to: sum.total };
+				if ( sum.locale ) {
+					count.locale = sum.locale;
+				}
 			}
 			if ( sum.welcome ) {
 				// The welcome is the detail line: at 360px next to its button, "+10 Points. Welcome

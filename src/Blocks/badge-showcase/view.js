@@ -60,7 +60,7 @@
 		}
 		if ( more ) {
 			more.hidden = ! folding;
-			more.textContent = ( more.getAttribute( 'data-label' ) || '' ).replace( '%d', cards.length.toLocaleString() );
+			more.textContent = ( more.getAttribute( 'data-label' ) || '' ).replace( '%d', cards.length.toLocaleString( document.documentElement.lang || undefined ) );
 		}
 	}
 

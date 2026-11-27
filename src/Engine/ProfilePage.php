@@ -201,8 +201,7 @@ final class ProfilePage {
 		}
 
 		$pt_service   = new PointTypeService();
-		$pt_record    = $pt_service->get( $pt_service->default_slug() );
-		$points_label = (string) ( $pt_record['label'] ?? __( 'Points', 'wb-gamification' ) );
+		$points_label = $pt_service->name_for( 2 );
 		$points       = (int) PointsEngine::get_total( (int) $user->ID );
 		$level        = LevelEngine::get_level_for_user( (int) $user->ID );
 		$badge_count  = count( BadgeEngine::get_user_earned_badge_ids( (int) $user->ID ) );
@@ -399,8 +398,7 @@ final class ProfilePage {
 	 */
 	private static function render_profile( \WP_User $user ): void {
 		$pt_service   = new PointTypeService();
-		$pt_record    = $pt_service->get( $pt_service->default_slug() );
-		$points_label = (string) ( $pt_record['label'] ?? __( 'Points', 'wb-gamification' ) );
+		$points_label = $pt_service->name_for( 2 );
 
 		$points      = (int) PointsEngine::get_total( (int) $user->ID );
 		$level       = LevelEngine::get_level_for_user( (int) $user->ID );

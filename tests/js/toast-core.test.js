@@ -387,3 +387,14 @@ test( 'own stack: a toast with a button puts it under the text, and loses that w
 	p.toast( { title: '+10 Points' } );
 	assert.ok( ! p.w.document.querySelectorAll( '.wb-gam-toast' )[ 1 ].classList.contains( 'wb-gam-toast--action' ), 'a plain toast stays one row' );
 } );
+
+test( 'the count-up number is grouped by the recipient locale, not the browser locale', () => {
+	const read = ( locale ) => {
+		const p = page();
+		p.w.requestAnimationFrame = () => 0;
+		p.toast( { title: '+{count} Punkte', count: { from: 6000, to: 6000, locale } } );
+		return p.w.document.querySelector( '.wb-gam-toast' ).textContent;
+	};
+	assert.match( read( 'de-DE' ), /\+6\.000 Punkte/, 'German grouping for a de-DE recipient' );
+	assert.match( read( 'en-US' ), /\+6,000 Punkte/ );
+} );
