@@ -2,7 +2,7 @@
 # This file is distributed under the GPL-2.0+.
 msgid ""
 msgstr ""
-"Project-Id-Version: WB Gamification 1.6.7\n"
+"Project-Id-Version: WB Gamification 1.7.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wb-gamification\n"
 "POT-Creation-Date: 2026-11-26T13:19:59+00:00\n"
 "PO-Revision-Date: 2026-11-18T07:34:55+00:00\n"
@@ -5276,7 +5276,7 @@ msgstr "%d s"
 
 #: src/Admin/SettingsPage.php:990
 #. translators: %d: minutes.
-#, fuzzy, php-format
+#, php-format
 msgid "%d min"
 msgstr "%d min"
 
@@ -5288,7 +5288,7 @@ msgstr "%d h"
 
 #: src/Admin/SettingsPage.php:994
 #. translators: %d: number of actions.
-#, fuzzy, php-format
+#, php-format
 msgid "%d actions"
 msgstr "%d actions"
 
@@ -5364,7 +5364,7 @@ msgstr "Toutes les extensions"
 #. translators: %d: number of earning actions.
 #. translators: %d = number of actions for this integration
 #. translators: %d: number of actions.
-#, fuzzy, php-format
+#, php-format
 msgid "%d action"
 msgid_plural "%d actions"
 msgstr[0] "%d action"
