@@ -155,13 +155,13 @@ Setup, the admin and the toasts rebuilt around the plugins on your site.
 * New      - One admin menu in six groups (Overview, Earning, Rewards, Members, Experience, Tools), the same in the WordPress menu and on every plugin screen.
 * New      - The Earning screen lists every action by plugin with search and filters; each change saves on its own, shows "Saved" and can be undone for 10 seconds.
 * New      - The Overview shows four numbers for 30 days, a "Finish setting up" checklist that follows your site, and hand awards apart from what members earned.
-* New      - Awards that land together show as one summary toast that counts up, with the badge's picture; a level-up shows alone first.
+* New      - Awards that land together show as one summary toast; a level-up shows alone first. With BuddyNext 1.3.0 (the build that supports toast counts and icons) the summary counts up and carries the badge's picture; on an older build or without BuddyNext it shows the final number as text.
 * New      - Forum topics and replies from Jetonomy earn points you control, with limits that stop farming (topics 5 a day, replies 20 a day and 30 seconds apart).
 * Improve  - Toasts use your site's font and accent colour, are one width everywhere and never show more than two at once (one on phones).
 * Improve  - Every toast closes by itself (4 seconds, or 8 with a button), closes on Escape and waits while a popup is open or you are typing.
 * Improve  - A big badge collection shows 12 badges per tab with "Show all"; the header counts the whole collection.
 * Improve  - Limits read in words ("20 a day, 30s apart") and an empty limit means no limit.
-* Improve  - German, Spanish, French, Italian and Brazilian Portuguese are fully translated, and the script translation files are rebuilt so every translated script loads them.
+* Improve  - German, Spanish, French, Italian and Brazilian Portuguese cover every string in the plugin and the script translation files are rebuilt so every translated script loads them; the Integrations tab (a bundled library) stays English, and a toast reads in the member's language when the site has that language pack.
 * Improve  - Date formats in the streak heatmap and the redemption log follow the site's language and date settings.
 * Fix      - Saving the Points settings could switch every earning action off when a save did not carry each action's checkbox.
 * Fix      - With Jetonomy and no BuddyNext, points toasts on forum pages showed "[object Object]".
@@ -182,7 +182,7 @@ Setup, the admin and the toasts rebuilt around the plugins on your site.
 * Fix      - Finishing Setup no longer sends you back to the first step, and a blank or out of range amount is reported next to the field instead of Launch doing nothing.
 * Fix      - The Wbcom Family heading and its subtitle have the standard gap.
 * Fix      - Badge Showcase no longer emits notices for a badge without an id, counts a badge returned twice once, and keeps the All, Earned and Locked tabs when nothing is earned yet.
-* Fix      - Hover and press text on Send Kudos, Share Your Year and the other accent buttons stays at least 4.5:1, for any accent colour.
+* Fix      - Hover and press text on Send Kudos, Share Your Year and the other accent buttons stays at least 4.5:1 on Reign, Twenty Twenty-Five, BuddyX and BuddyX Pro, and the accent buttons keep their own fill and label colour where a theme restyles buttons.
 * Fix      - Owner Card background and Accent colours stay readable on every block in the light and the dark theme, including a dark card on a light theme, Year Recap, the Leaderboard medals, the User Status Bar and keyboard focus rings.
 * Fix      - Toasts, notifications, emails and activity posts read in the recipient's language, not the language of the admin or cron that triggered them.
 * Fix      - Hub nudges, cohort tier names, the starter badge and level library and the API key placeholders are now translatable.
@@ -190,12 +190,14 @@ Setup, the admin and the toasts rebuilt around the plugins on your site.
 * Fix      - Toast counts and point names read in the recipient's language, and a renamed point type keeps the owner's wording.
 * Fix      - Badge icons on a dark owner Card background now sit on a pale disc, and the hub icon discs draw their glyph in the card-derived accent text, so icon art keeps 3:1 contrast.
 * Fix      - The em-dash character is gone from the plugin description, block descriptions, emails, admin text and every translation.
-* Fix      - Keyboard focus rings are visible on every block and the hub, on any card colour and theme, including Year Recap, the Hub sign-in button and Give Kudos.
+* Fix      - Keyboard focus rings are visible on every block and the hub on any card colour, checked on Reign, Twenty Twenty-Five, BuddyX and BuddyX Pro, including Year Recap, the Hub sign-in button and Give Kudos.
 * Fix      - Member names and links inside a block with an owner card colour use the card's text colour, so they stay readable on BuddyX dark.
 * Fix      - The folded award toast joins its phrases ("and a new badge") in the member's own language, and the count-up no longer flashes a negative number.
 * Fix      - The streak flame, Overview rank numbers and the Earning Undo button meet contrast minimums.
-* Fix      - A reload or navigation shortly after an award no longer loses the reward toast: toasts count as delivered only once the page has shown them, so a page that closes first leaves them for the next page.
+* Fix      - A reload or navigation after an award, including one with a level-up, no longer loses the reward toast: a toast counts as delivered only once it has appeared, so a page that closes first leaves it for the next page.
 * Fix      - A negative or single point amount in the toasts REST fallback reads "-2 Points" or "+1 Point" instead of "+-2 Points" or "+1 Points".
+* Fix      - A reward toast held behind a level-up card is no longer lost if the page reloads before it shows, the acknowledgement refuses another member's row, and the count-up reads "+1 Point".
+* Fix      - Keyboard focus rings and the accent buttons (Send Kudos and the others) keep their own colours on BuddyX and BuddyX Pro, where the theme forces its own outline and button styles.
 * Dev      - bin/check-i18n.sh stops the build on a string missing from the .pot, a broken placeholder or a stale translation file, and warns when a language is under 95% translated.
 * Dev      - New POST /members/me/toasts/ack route; queued toast payloads carry _ack beside _id.
 * Dev      - bin/build-i18n-json.sh builds the script translation files keyed to the shipped script paths (run it after any .po or JS change), and bin/check-no-emdash.sh stops the build on an em-dash in shipped source.
@@ -203,7 +205,7 @@ Setup, the admin and the toasts rebuilt around the plugins on your site.
 * Dev      - New filter wb_gam_badge_showcase_page_size sets how many badges show before "Show all" (0 shows all).
 * Dev      - POST /actions/{id}/overrides now also takes points and point_type, accepts any registered action id, and DELETE restores the whole row.
 * Dev      - The wb_gamification_setup_wizard_started and _completed actions now pass 'launch' or 'skip' instead of a template slug.
-* Compat   - Aligned with BuddyNext 1.3.0 (suspended members stay off the leaderboard) and Jetonomy 2.1.0.
+* Compat   - Aligned with BuddyNext 1.3.0 (the build with toast count and icon support; suspended members stay off the leaderboard) and Jetonomy 2.1.0.
 
 = 1.6.8 - November 2026 =
 

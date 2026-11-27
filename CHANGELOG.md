@@ -10,14 +10,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 - New POST /members/me/toasts/ack route; queued toast payloads carry _ack beside _id.
 - bin/build-i18n-json.sh builds the script translation files keyed to the shipped script paths (run it after any .po or JS change), and bin/check-no-emdash.sh stops the build on an em-dash in shipped source.
-- German, Spanish, French, Italian and Brazilian Portuguese are fully translated, and the script translation files are rebuilt so every translated script loads them.
+- German, Spanish, French, Italian and Brazilian Portuguese cover every string in the plugin and the script translation files are rebuilt so every translated script loads them; the Integrations tab (a bundled library) stays English, and a toast reads in the member's language when the site has that language pack.
 - Date formats in the streak heatmap and the redemption log follow the site's language and date settings.
 - bin/check-i18n.sh stops the build on a string missing from the .pot, a broken placeholder or a stale translation file, and warns when a language is under 95% translated.
 - One admin menu in six groups (Overview, Earning, Rewards, Members, Experience, Tools), the same in the WordPress menu and on every plugin screen. Old page addresses still open.
 - Earning: every action grouped by plugin, with search and filters. Every change saves on its own, shows "Saved" and can be undone for 10 seconds; limits read in words and an empty limit means no limit.
 - Setup starts from the plugins on the site: choose which to reward, how generous (Relaxed, Balanced, Competitive), see the levels, badges and leaderboard, then launch. Nothing is saved before Launch, Skip changes nothing, and running it again starts from your current values. The six starter templates are gone.
 - The Overview dashboard shows four numbers for 30 days, a "Finish setting up" checklist that follows your site, points awarded by hand apart from what members earned, and a note when hand awards are an unusual share.
-- Awards that land together show as one summary toast that counts up, with the badge's picture; a level-up shows alone first. Toasts use the site's font and accent and are one width everywhere.
+- Awards that land together show as one summary toast; a level-up shows alone first. With BuddyNext 1.3.0 (the build that supports toast counts and icons) the summary counts up and carries the badge's picture; on an older build or without BuddyNext it shows the final number as text. Toasts use the site's font and accent and are one width everywhere.
 - A big badge collection shows 12 badges per tab and "Show all N badges"; the `wb_gam_badge_showcase_page_size` filter changes the 12.
 
 - Inside a BuddyNext community the realtime client polls every 60 seconds instead of 15, and still bursts to 5 seconds right after the member's own action; standalone sites keep 15 seconds. The `wb_gam_realtime_interval` filter sets any rate from 5 to 120 seconds.
@@ -47,7 +47,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - Finishing Setup no longer sends you back to the first step, and a blank or out of range amount is reported next to the field instead of Launch doing nothing.
 - The Wbcom Family heading and its subtitle have the standard gap.
 - Badge Showcase no longer emits notices for a badge without an id, counts a badge returned twice once, and keeps the All, Earned and Locked tabs when nothing is earned yet.
-- Hover and press text on Send Kudos, Share Your Year and the other accent buttons stays at least 4.5:1, for any accent colour.
+- Hover and press text on Send Kudos, Share Your Year and the other accent buttons stays at least 4.5:1 on Reign, Twenty Twenty-Five, BuddyX and BuddyX Pro, and the accent buttons keep their own fill and label colour where a theme restyles buttons.
 - Owner Card background and Accent colours stay readable on every block in the light and the dark theme, including a dark card on a light theme, Year Recap, the Leaderboard medals, the User Status Bar and keyboard focus rings.
 - Toasts, notifications, emails and activity posts read in the recipient's language, not the language of the admin or cron that triggered them.
 - Hub nudges, cohort tier names, the starter badge and level library and the API key placeholders are now translatable.
@@ -55,12 +55,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - Toast counts and point names read in the recipient's language, and a renamed point type keeps the owner's wording.
 - Badge icons on a dark owner Card background now sit on a pale disc, and the hub icon discs draw their glyph in the card-derived accent text, so icon art keeps 3:1 contrast.
 - The em-dash character is gone from the plugin description, block descriptions, emails, admin text and every translation.
-- Keyboard focus rings are visible on every block and the hub, on any card colour and theme, including Year Recap, the Hub sign-in button and Give Kudos.
+- Keyboard focus rings are visible on every block and the hub on any card colour, checked on Reign, Twenty Twenty-Five, BuddyX and BuddyX Pro, including Year Recap, the Hub sign-in button and Give Kudos.
 - Member names and links inside a block with an owner card colour use the card's text colour, so they stay readable on BuddyX dark.
 - The folded award toast joins its phrases ("and a new badge") in the member's own language, and the count-up no longer flashes a negative number.
 - The streak flame, Overview rank numbers and the Earning Undo button meet contrast minimums.
-- A reload or navigation shortly after an award no longer loses the reward toast: toasts count as delivered only once the page has shown them, so a page that closes first leaves them for the next page.
+- A reload or navigation after an award, including one with a level-up, no longer loses the reward toast: a toast counts as delivered only once it has appeared, so a page that closes first leaves it for the next page.
 - A negative or single point amount in the toasts REST fallback reads "-2 Points" or "+1 Point" instead of "+-2 Points" or "+1 Points".
+- A reward toast held behind a level-up card is no longer lost if the page reloads before it shows, the acknowledgement refuses another member's row, and the count-up reads "+1 Point".
+- Keyboard focus rings and the accent buttons (Send Kudos and the others) keep their own colours on BuddyX and BuddyX Pro, where the theme forces its own outline and button styles.
 - Saving the Points settings could switch every earning action off: any save that did not carry each action's checkbox (a script, another plugin, or a host that cuts long forms) wrote "off" for all of them. Each action now saves on its own, and the settings form no longer touches them.
 - A fresh install with several plugins activated at once could log "Duplicate column" or "Duplicate key name" database errors; the install now runs once, and upgrades wait for it.
 - Accent buttons inside BuddyNext (Send Kudos, the daily bonus, "Let's go") met text contrast only on the default theme; they now use the accent their text colour was made for. The gold #1 badge is readable in dark mode.

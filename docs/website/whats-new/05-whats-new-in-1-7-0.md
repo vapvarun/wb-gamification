@@ -50,7 +50,7 @@ The dashboard shows four numbers for the last 30 days, a **Finish setting up** c
 
 ## Toasts that fit any site
 
-Awards that land together become one summary toast that counts up, with the badge's picture. A level-up shows on its own first. At most two toasts show at once (one on a phone), each closes by itself, Escape closes the newest, and they use your site's font and accent colour. Titles are short fixed phrases with names on the line below, so nothing is cut off. See [Notifications](../features/160-notifications.md).
+Awards that land together become one summary toast. With BuddyNext 1.3.0 (the build that supports toast counts and icons) it counts up and shows the badge's picture; otherwise it shows the final number as text. A level-up shows on its own first. At most two toasts show at once (one on a phone), each closes by itself, Escape closes the newest, and they use your site's font and accent colour. Titles are short fixed phrases with names on the line below, so nothing is cut off. See [Notifications](../features/160-notifications.md).
 
 ## Also new
 

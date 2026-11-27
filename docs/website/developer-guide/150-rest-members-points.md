@@ -289,7 +289,7 @@ curl https://example.com/wp-json/wb-gamification/v1/members/me/toasts \
 
 ### POST /members/me/toasts/ack
 
-Tells the server the page has shown the toasts up to a position. Body: `{ "id": <int> }`, the `_ack` value of the last payload received. The delivery position only moves forward and never past the member's newest queued toast; an id above that is refused. `GET /members/me/toasts`, the heartbeat and SSE no longer mark toasts delivered, so a page that closes before showing a toast leaves it for the next page. Each payload carries `_id` (its queue row) and `_ack`.
+Tells the server the page has shown the toasts up to a position. Body: `{ "id": <int> }`, the `_ack` value of the last payload received. `id` must be the id of one of the caller's own queue rows (`_id` or `_ack`); another member's row, a trimmed row, an id past the newest or 0 returns 400. The delivery position only moves forward. toast.js acks the highest row of the contiguous displayed prefix and keeps a client-only record of displayed ids in sessionStorage (`wbgam-shown:<userId>`); the points payload carries `unit_one`, and `wbGamToast` carries `userId`. `GET /members/me/toasts`, the heartbeat and SSE no longer mark toasts delivered, so a page that closes before showing a toast leaves it for the next page. Each payload carries `_id` (its queue row) and `_ack`.
 
 ### POST /points/award
 
