@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WB Gamification 1.7.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wb-gamification\n"
-"POT-Creation-Date: 2026-11-27T16:00:04+00:00\n"
+"POT-Creation-Date: 2026-11-27T17:18:47+00:00\n"
 "PO-Revision-Date: 2026-11-18T07:34:55+00:00\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -1500,7 +1500,7 @@ msgstr "Acceso"
 msgid "Experience"
 msgstr "Experiencia"
 
-#: src/Admin/AdminNav.php:196 wb-gamification.php:863
+#: src/Admin/AdminNav.php:196 src/Engine/NotificationBridge.php:1421
 #: assets/js/toast-core.js:135
 msgid "Notifications"
 msgstr "Notificaciones"
@@ -2133,8 +2133,8 @@ msgid "Copy it now - it will not be shown again."
 msgstr "Cópiala ahora: no se volverá a mostrar."
 
 #: src/Admin/ApiKeysPage.php:175 src/Admin/SettingsPage.php:1585
-#: src/Blocks/redemption-store/render.php:375 wb-gamification.php:864
-#: assets/js/toast-core.js:586
+#: src/Blocks/redemption-store/render.php:375
+#: src/Engine/NotificationBridge.php:1422 assets/js/toast-core.js:588
 msgid "Dismiss"
 msgstr "Descartar"
 
@@ -2294,7 +2294,7 @@ msgstr "semana"
 msgid "month"
 msgstr "mes"
 
-#: src/Admin/BadgeAdminPage.php:215 wb-gamification.php:865
+#: src/Admin/BadgeAdminPage.php:215 src/Engine/NotificationBridge.php:1423
 msgid "points"
 msgstr "puntos"
 
@@ -7491,13 +7491,13 @@ msgid "You have not earned this badge."
 msgstr "No has ganado esta insignia."
 
 #: src/API/BadgeShareController.php:305 src/API/CredentialController.php:267
-#: src/API/MembersController.php:666 src/API/MembersController.php:695
-#: src/API/MembersController.php:737 src/API/MembersController.php:771
-#: src/API/MembersController.php:808 src/API/MembersController.php:836
-#: src/API/MembersController.php:896 src/API/MembersController.php:992
-#: src/API/MembersController.php:1051 src/API/MembersController.php:1159
-#: src/API/MembersController.php:1203 src/API/MembersController.php:1225
-#: src/API/MembersController.php:1285 src/API/PointsController.php:230
+#: src/API/MembersController.php:688 src/API/MembersController.php:717
+#: src/API/MembersController.php:759 src/API/MembersController.php:793
+#: src/API/MembersController.php:830 src/API/MembersController.php:858
+#: src/API/MembersController.php:918 src/API/MembersController.php:1014
+#: src/API/MembersController.php:1073 src/API/MembersController.php:1181
+#: src/API/MembersController.php:1225 src/API/MembersController.php:1247
+#: src/API/MembersController.php:1307 src/API/PointsController.php:230
 #: src/API/RecapController.php:161 src/API/RecapController.php:192
 msgid "Member not found."
 msgstr "Miembro no encontrado."
@@ -7659,7 +7659,7 @@ msgstr "No tienes permiso para moderar los kudos."
 msgid "You must be logged in to give kudos."
 msgstr "Debes iniciar sesión para dar kudos."
 
-#: src/API/KudosController.php:210 src/API/MembersController.php:880
+#: src/API/KudosController.php:210 src/API/MembersController.php:902
 msgid "You must be logged in."
 msgstr "Debes iniciar sesión."
 
@@ -7711,44 +7711,42 @@ msgstr "El nivel inicial (min_points = 0) no se puede eliminar."
 msgid "Could not delete level."
 msgstr "No se ha podido eliminar el nivel."
 
-#: src/API/MembersController.php:452
+#: src/API/MembersController.php:474
 msgid "You do not have permission to manage members."
 msgstr "No tienes permiso para gestionar los miembros."
 
-#: src/API/MembersController.php:705
+#: src/API/MembersController.php:727
 msgid "Failed to reset points."
 msgstr "No se han podido restablecer los puntos."
 
-#: src/API/MembersController.php:814
+#: src/API/MembersController.php:836
 msgid "This member's profile is not public."
 msgstr "El perfil de este miembro no es público."
 
-#: src/API/MembersController.php:842
+#: src/API/MembersController.php:864
 msgid "You do not have permission to view this member's activity history."
 msgstr "No tienes permiso para ver el historial de actividad de este miembro."
 
-#: src/API/MembersController.php:860
+#: src/API/MembersController.php:882
 msgid "You must be logged in to view toasts."
 msgstr "Debes iniciar sesión para ver los mensajes emergentes."
 
-#: src/API/MembersController.php:958
+#: src/API/MembersController.php:980
 msgid "Profile visibility is set on your community profile."
 msgstr "La visibilidad del perfil se configura en tu perfil de la comunidad."
 
-#. translators: 1: signed point delta, 2: currency label.
-#: src/API/MembersController.php:1346
-#, php-format
-msgid "+%1$d %2$s"
-msgstr "+%1$d %2$s"
+#: src/API/MembersController.php:1345
+msgid "That notification position is not yours to acknowledge."
+msgstr "No puedes confirmar esa posición de notificación."
 
 #. translators: %s: new level name
-#: src/API/MembersController.php:1367
+#: src/API/MembersController.php:1399
 #, php-format
 msgid "Level up: %s"
 msgstr "Subes de nivel: %s"
 
 #. translators: %d: streak day count.
-#: src/API/MembersController.php:1375 src/Engine/NotificationBridge.php:565
+#: src/API/MembersController.php:1407 src/Engine/NotificationBridge.php:565
 #, php-format
 msgid "%d-day streak!"
 msgid_plural "%d-day streak!"
@@ -9935,11 +9933,11 @@ msgstr "Se restablece la próxima semana."
 msgid "Your first points."
 msgstr "¡Tus primeros puntos!"
 
-#: src/Engine/NotificationBridge.php:400 wb-gamification.php:868
+#: src/Engine/NotificationBridge.php:400 src/Engine/NotificationBridge.php:1424
 msgid "Welcome aboard!"
 msgstr "¡Bienvenido/a!"
 
-#: src/Engine/NotificationBridge.php:403 src/Engine/NotificationBridge.php:1295
+#: src/Engine/NotificationBridge.php:403 src/Engine/NotificationBridge.php:1345
 msgid "See progress"
 msgstr "Ver progreso"
 
@@ -10057,15 +10055,55 @@ msgstr "Kudos recibidos"
 msgid "Level up!"
 msgstr "¡Subes de nivel!"
 
-#: src/Engine/NotificationBridge.php:1287
+#: src/Engine/NotificationBridge.php:1337
 msgid "Since your last visit"
 msgstr "Desde tu última visita"
 
-#: src/Engine/NotificationBridge.php:1293
+#: src/Engine/NotificationBridge.php:1343
 msgid "You earned points and rewards."
 msgstr "Has ganado puntos y recompensas."
 
-#: src/Engine/NotificationBridge.php:1484
+#. translators: %d: number of badges earned together with the points.
+#: src/Engine/NotificationBridge.php:1428
+msgid "and a new badge"
+msgid_plural "and %d new badges"
+msgstr[0] "y una insignia nueva"
+msgstr[1] "y %d insignias nuevas"
+
+#. translators: %d: number of challenges finished together with the points.
+#: src/Engine/NotificationBridge.php:1435
+msgid "and a challenge done"
+msgid_plural "and %d challenges done"
+msgstr[0] "y un desafío completado"
+msgstr[1] "y %d desafíos completados"
+
+#: src/Engine/NotificationBridge.php:1439
+msgid "and kudos"
+msgstr "y kudos"
+
+#. translators: %d: number of rewards (2 or more) earned together with the points.
+#: src/Engine/NotificationBridge.php:1443
+#, php-format
+msgid "and %d reward"
+msgid_plural "and %d rewards"
+msgstr[0] "y %d recompensa"
+msgstr[1] "y %d recompensas"
+
+#. translators: %d: number of rewards earned together, with no points among them.
+#: src/Engine/NotificationBridge.php:1450
+#, php-format
+msgid "%d new reward"
+msgid_plural "%d new rewards"
+msgstr[0] "%d recompensa nueva"
+msgstr[1] "%d recompensas nuevas"
+
+#. translators: %s: name of the member who gave kudos.
+#: src/Engine/NotificationBridge.php:1455
+#, php-format
+msgid "Kudos from %s"
+msgstr "Kudos de %s"
+
+#: src/Engine/NotificationBridge.php:1602
 msgid "Points awarded"
 msgstr "Puntos concedidos"
 
@@ -11089,48 +11127,6 @@ msgstr ""
 "incompleto, así que las actualizaciones automáticas están desactivadas. "
 "Vuelve a instalar el plugin desde un paquete completo para restaurarlas. El "
 "resto de funciones funciona con normalidad."
-
-#: wb-gamification.php:869
-msgid "and a new badge"
-msgstr "y una nueva insignia"
-
-#. translators: %d: number of badges (2 or more).
-#: wb-gamification.php:871
-#, php-format
-msgid "and %d new badges"
-msgstr "y %d nuevas insignias"
-
-#: wb-gamification.php:872
-msgid "and a challenge done"
-msgstr "y un desafío completado"
-
-#. translators: %d: number of challenges (2 or more).
-#: wb-gamification.php:874
-#, php-format
-msgid "and %d challenges done"
-msgstr "y %d desafíos completados"
-
-#: wb-gamification.php:875
-msgid "and kudos"
-msgstr "y kudos"
-
-#. translators: %d: number of rewards (2 or more).
-#: wb-gamification.php:877
-#, php-format
-msgid "and %d rewards"
-msgstr "y %d recompensas"
-
-#. translators: %d: number of rewards (2 or more).
-#: wb-gamification.php:879
-#, php-format
-msgid "%d new rewards"
-msgstr "%d nuevas recompensas"
-
-#. translators: %s: name of the member who gave kudos.
-#: wb-gamification.php:881
-#, php-format
-msgid "Kudos from %s"
-msgstr "Kudos de %s"
 
 #. translators: %d minimum convert amount
 #: assets/js/hub-convert.js:88
@@ -12326,6 +12322,26 @@ msgstr "retrospectiva"
 msgctxt "block keyword"
 msgid "summary"
 msgstr "resumen"
+
+#, php-format
+#~ msgid "+%1$d %2$s"
+#~ msgstr "+%1$d %2$s"
+
+#, php-format
+#~ msgid "and %d new badges"
+#~ msgstr "y %d nuevas insignias"
+
+#, php-format
+#~ msgid "and %d challenges done"
+#~ msgstr "y %d desafíos completados"
+
+#, php-format
+#~ msgid "and %d rewards"
+#~ msgstr "y %d recompensas"
+
+#, php-format
+#~ msgid "%d new rewards"
+#~ msgstr "%d nuevas recompensas"
 
 #, php-format
 #~ msgid ""

@@ -190,7 +190,14 @@ Setup, the admin and the toasts rebuilt around the plugins on your site.
 * Fix      - Toast counts and point names read in the recipient's language, and a renamed point type keeps the owner's wording.
 * Fix      - Badge icons on a dark owner Card background now sit on a pale disc, and the hub icon discs draw their glyph in the card-derived accent text, so icon art keeps 3:1 contrast.
 * Fix      - The em-dash character is gone from the plugin description, block descriptions, emails, admin text and every translation.
+* Fix      - Keyboard focus rings are visible on every block and the hub, on any card colour and theme, including Year Recap, the Hub sign-in button and Give Kudos.
+* Fix      - Member names and links inside a block with an owner card colour use the card's text colour, so they stay readable on BuddyX dark.
+* Fix      - The folded award toast joins its phrases ("and a new badge") in the member's own language, and the count-up no longer flashes a negative number.
+* Fix      - The streak flame, Overview rank numbers and the Earning Undo button meet contrast minimums.
+* Fix      - A reload or navigation shortly after an award no longer loses the reward toast: toasts count as delivered only once the page has shown them, so a page that closes first leaves them for the next page.
+* Fix      - A negative or single point amount in the toasts REST fallback reads "-2 Points" or "+1 Point" instead of "+-2 Points" or "+1 Points".
 * Dev      - bin/check-i18n.sh stops the build on a string missing from the .pot, a broken placeholder or a stale translation file, and warns when a language is under 95% translated.
+* Dev      - New POST /members/me/toasts/ack route; queued toast payloads carry _ack beside _id.
 * Dev      - bin/build-i18n-json.sh builds the script translation files keyed to the shipped script paths (run it after any .po or JS change), and bin/check-no-emdash.sh stops the build on an em-dash in shipped source.
 * Dev      - New filter wb_gam_leaderboard_exclusion_sql adds your own rule for who appears on every leaderboard and rank.
 * Dev      - New filter wb_gam_badge_showcase_page_size sets how many badges show before "Show all" (0 shows all).

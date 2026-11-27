@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Changed
 
+- New POST /members/me/toasts/ack route; queued toast payloads carry _ack beside _id.
 - bin/build-i18n-json.sh builds the script translation files keyed to the shipped script paths (run it after any .po or JS change), and bin/check-no-emdash.sh stops the build on an em-dash in shipped source.
 - German, Spanish, French, Italian and Brazilian Portuguese are fully translated, and the script translation files are rebuilt so every translated script loads them.
 - Date formats in the streak heatmap and the redemption log follow the site's language and date settings.
@@ -54,6 +55,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - Toast counts and point names read in the recipient's language, and a renamed point type keeps the owner's wording.
 - Badge icons on a dark owner Card background now sit on a pale disc, and the hub icon discs draw their glyph in the card-derived accent text, so icon art keeps 3:1 contrast.
 - The em-dash character is gone from the plugin description, block descriptions, emails, admin text and every translation.
+- Keyboard focus rings are visible on every block and the hub, on any card colour and theme, including Year Recap, the Hub sign-in button and Give Kudos.
+- Member names and links inside a block with an owner card colour use the card's text colour, so they stay readable on BuddyX dark.
+- The folded award toast joins its phrases ("and a new badge") in the member's own language, and the count-up no longer flashes a negative number.
+- The streak flame, Overview rank numbers and the Earning Undo button meet contrast minimums.
+- A reload or navigation shortly after an award no longer loses the reward toast: toasts count as delivered only once the page has shown them, so a page that closes first leaves them for the next page.
+- A negative or single point amount in the toasts REST fallback reads "-2 Points" or "+1 Point" instead of "+-2 Points" or "+1 Points".
 - Saving the Points settings could switch every earning action off: any save that did not carry each action's checkbox (a script, another plugin, or a host that cuts long forms) wrote "off" for all of them. Each action now saves on its own, and the settings form no longer touches them.
 - A fresh install with several plugins activated at once could log "Duplicate column" or "Duplicate key name" database errors; the install now runs once, and upgrades wait for it.
 - Accent buttons inside BuddyNext (Send Kudos, the daily bonus, "Let's go") met text contrast only on the default theme; they now use the accent their text colour was made for. The gold #1 badge is readable in dark mode.

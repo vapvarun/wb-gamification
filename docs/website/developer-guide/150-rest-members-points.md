@@ -17,6 +17,7 @@ Endpoints for member profiles, the points ledger, point types, and currency conv
 | `DELETE` | `/members/{id}/streak` | `wb_gam_manage_members` |
 | `GET` | `/members/{id}/intelligence` | Self or `wb_gam_view_analytics`/admin |
 | `GET` | `/members/me/toasts` | Must be logged in |
+| `POST` | `/members/me/toasts/ack` | Must be logged in |
 | `GET` | `/members/me/profile-visibility` | Must be logged in |
 | `POST` | `/members/me/profile-visibility` | Must be logged in |
 | `GET` | `/members/{id}/preferences` | Self or admin |
@@ -285,6 +286,10 @@ curl https://example.com/wp-json/wb-gamification/v1/members/me/toasts \
 |--------|----------|------------|
 | `POST` | `/points/award` | `manage_options` or `wb_gam_award_manual` |
 | `DELETE` | `/points/{id}` | `manage_options` |
+
+### POST /members/me/toasts/ack
+
+Tells the server the page has shown the toasts up to a position. Body: `{ "id": <int> }`, the `_ack` value of the last payload received. The delivery position only moves forward and never past the member's newest queued toast; an id above that is refused. `GET /members/me/toasts`, the heartbeat and SSE no longer mark toasts delivered, so a page that closes before showing a toast leaves it for the next page. Each payload carries `_id` (its queue row) and `_ack`.
 
 ### POST /points/award
 
