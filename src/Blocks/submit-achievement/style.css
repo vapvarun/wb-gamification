@@ -37,21 +37,14 @@
 .wb-gam-submit-achievement__field textarea {
 	width: 100%;
 	padding: 10px 12px;
-	border: 1px solid var(--wb-gam-color-border);
+	border-width: 1px;
+	border-style: solid;
 	border-radius: 8px;
-	background: var(--wb-gam-color-white);
 	font-size: 14px;
 	font-family: inherit;
 }
 
 .wb-gam-submit-achievement__field textarea { resize: vertical; min-height: 72px; }
-
-.wb-gam-submit-achievement__field select:focus,
-.wb-gam-submit-achievement__field input:focus,
-.wb-gam-submit-achievement__field textarea:focus {
-	outline: 2px solid var(--wb-gam-focus-ring, var(--wb-gam-color-accent-ring));
-	border-color: var(--wb-gam-focus-ring, var(--wb-gam-color-accent));
-}
 
 .wb-gam-submit-achievement__submit {
 	align-self: flex-start;

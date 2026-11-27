@@ -504,6 +504,39 @@ body.buddyx-dark-theme,
 	outline-offset: 2px !important;
 	box-shadow: 0 0 0 6px var(--wb-gam-color-surface, #fff) !important;
 }
+/* ── Form controls: text, fill, border, placeholder and autofill from the card's own tokens ──
+ * BuddyX styles `input[type=text]`, `textarea`, `select` and their :focus at (0,1,1) / (0,2,1) with its
+ * own colour, fill and border: on a dark owner card the typed text read rgb(80,80,80) on rgb(20,33,61)
+ * (1.95:1) and the recipient field turned white. Every input, textarea and select in our blocks, the hub
+ * convert form and the shortcode forms takes the card's tokens instead, !important so no theme form rule
+ * splits the pair. --wb-gam-color-text / -surface / -text-light are the card-derived tokens on an owner
+ * card (CSS.php card_tokens()) and the theme-derived ones elsewhere. The border is the only boundary of
+ * a field that shares the card's colour, so it is mixed 65% toward the text colour (3:1 or more on any
+ * card, WCAG 1.4.11); the placeholder is --wb-gam-color-text-light (4.5:1, opacity 1 because Firefox
+ * dims it). Chromium paints an autofilled field with its own fill: the text fill colour is forced and the
+ * fill transition is held so the card colour stays. Checkboxes, radios and buttons keep their own look. */
+:is([class*="wp-block-wb-gamification"], .wb-gam-give-kudos, .wb-gam-submit-achievement, .wbgam-convert-form) :is(input:not([type="checkbox"], [type="radio"], [type="hidden"], [type="submit"], [type="button"], [type="reset"], [type="range"], [type="color"], [type="file"], [type="image"]), textarea, select) {
+	--wb-gam-field-border: color-mix(in srgb, var(--wb-gam-color-text) 65%, var(--wb-gam-color-surface));
+	color: var(--wb-gam-color-text) !important;
+	background-color: var(--wb-gam-color-surface) !important;
+	border-color: var(--wb-gam-field-border) !important;
+}
+:is([class*="wp-block-wb-gamification"], .wb-gam-give-kudos, .wb-gam-submit-achievement, .wbgam-convert-form) :is(input:not([type="checkbox"], [type="radio"], [type="hidden"], [type="submit"], [type="button"], [type="reset"], [type="range"], [type="color"], [type="file"], [type="image"]), textarea, select):is(:focus, :focus-visible) {
+	border-color: var(--wb-gam-focus-ring, var(--wb-gam-color-accent-text)) !important;
+}
+:is([class*="wp-block-wb-gamification"], .wb-gam-give-kudos, .wb-gam-submit-achievement, .wbgam-convert-form) :is(input, textarea)::placeholder {
+	color: var(--wb-gam-color-text-light) !important;
+	opacity: 1 !important;
+}
+:is([class*="wp-block-wb-gamification"], .wb-gam-give-kudos, .wb-gam-submit-achievement, .wbgam-convert-form) :is(input, textarea, select):-webkit-autofill {
+	-webkit-text-fill-color: var(--wb-gam-color-text) !important;
+	caret-color: var(--wb-gam-color-text);
+	transition: background-color 600000s 0s !important;
+}
+:is([class*="wp-block-wb-gamification"], .wb-gam-give-kudos, .wb-gam-submit-achievement, .wbgam-convert-form) select option {
+	color: var(--wb-gam-color-text) !important;
+	background-color: var(--wb-gam-color-surface) !important;
+}
 /* ── Accent buttons: fill AND label from the one pair the helper computed ──
  * --wb-gam-pop-accent is the fill, --wb-gam-pop-accent-fg its contrast-safe label (4.5:1 on any accent,
  * derived above), --wb-gam-pop-accent-hover the pressed fill. A theme's own button rule (BuddyX

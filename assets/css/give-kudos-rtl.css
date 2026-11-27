@@ -49,22 +49,11 @@
 	padding: 10px 12px;
 	font-size: var( --wb-gam-font-md, 15px );
 	font-family: inherit;
-	color: var( --wb-gam-color-text, #1a1a1a );
-	background: var( --wb-gam-color-surface, #ffffff );
-	border: 1px solid var( --wb-gam-color-border-strong, #cbd2dc );
+	/* Text, fill, border, placeholder and focus border: the shared form-control rule in design-tokens.css. */
+	border-width: 1px;
+	border-style: solid;
 	border-radius: var( --wb-gam-radius-md, 10px );
 	transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.wb-gam-give-kudos__input::placeholder,
-.wb-gam-give-kudos__textarea::placeholder {
-	color: var( --wb-gam-color-text-light, #9aa3b2 );
-}
-
-.wb-gam-give-kudos__input:focus,
-.wb-gam-give-kudos__textarea:focus {
-	/* The ring is the shared :focus-visible rule in design-tokens.css; the border only follows it. */
-	border-color: var( --wb-gam-focus-ring, var( --wb-gam-color-accent, #3b82f6 ) );
 }
 
 .wb-gam-give-kudos__textarea {

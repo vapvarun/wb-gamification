@@ -814,19 +814,10 @@
   width: 100%;
   min-height: var(--wb-gam-btn-h);
   padding: 8px 12px;
-  border: 1px solid var(--wb-gam-pop-line);
+  border-width: 1px;
+  border-style: solid;
   border-radius: var(--wb-gam-btn-r);
-  background: var(--wb-gam-pop-surface);
-  color: var(--wb-gam-pop-text);
   font-size: 14px;
-}
-.wbgam-convert-form__field select:focus,
-.wbgam-convert-form__field select:focus-visible,
-.wbgam-convert-form__field input:focus,
-.wbgam-convert-form__field input:focus-visible {
-  border-color: var(--wb-gam-pop-accent);
-  background: var(--wb-gam-pop-surface);
-  color: var(--wb-gam-pop-text);
 }
 .wbgam-convert-form__preview {
   margin: 0;
