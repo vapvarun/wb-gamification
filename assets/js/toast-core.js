@@ -451,7 +451,9 @@
 		} else {
 			link.hidden = true;
 		}
-
+		// With a button the text keeps the full width and the button sits under it, so a
+		// 40-character title reads in full at 360px (TOASTS.md).
+		el.classList.toggle( 'wb-gam-toast--action', hasLink );
 
 		// Every toast closes by itself; one with a link stays longer so it can be read and followed.
 		handle.ms = hasLink ? LINK_MS : DISMISS_MS;
@@ -554,6 +556,7 @@
 		el.appendChild( disc );
 
 		var body = document.createElement( 'div' );
+		body.className = 'wb-gam-toast__text';
 		var message = document.createElement( 'strong' );
 		message.className = 'wb-gam-toast__message';
 		var detail = document.createElement( 'span' );
@@ -563,7 +566,7 @@
 		body.appendChild( message );
 		body.appendChild( detail );
 		el.appendChild( body );
-		el.appendChild( link ); // Its own column: a small button on the right.
+		el.appendChild( link ); // A small button; under the text (popups.css .wb-gam-toast--action).
 
 		var close = document.createElement( 'button' );
 		close.type = 'button';

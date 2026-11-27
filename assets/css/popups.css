@@ -224,12 +224,15 @@ body.admin-bar .wb-gam-toasts--top-right {
 .wb-gam-toast--exit {
 	animation: wb-gam-toast-out var(--wb-gam-dur-toast) ease both;
 }
+/* Title and detail may wrap to two lines, then ellipsis: a 40-character title (TOASTS.md) needs
+ * about 300px at 15px and the text column is 230-254px beside the icon and the close. */
 .wb-gam-toast__message,
 .wb-gam-toast__detail {
-	display: block;
+	display: -webkit-box;
 	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis; /* One line each: the toast stays one height (TOASTS.md). */
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow-wrap: anywhere;
 }
 .wb-gam-toast__message {
 	font-size: 15px;
@@ -240,14 +243,6 @@ body.admin-bar .wb-gam-toasts--top-right {
 	font-size: 13px;
 	line-height: 1.35;
 	opacity: 0.78;
-}
-/* Beside an action button the detail gets two lines (about 135px wide there); the title stays one. */
-.wb-gam-toast__detail {
-	display: -webkit-box;
-	white-space: normal;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
-	overflow-wrap: anywhere;
 }
 .wb-gam-count { font-variant-numeric: tabular-nums; }
 .wb-gam-toast .screen-reader-text {
@@ -298,6 +293,22 @@ body.admin-bar .wb-gam-toasts--top-right {
 	background: color-mix(in srgb, currentColor 12%, transparent);
 }
 .wb-gam-toast__link[hidden] { display: none; }
+/* With a button the text keeps the full row beside the icon and the close, and the button sits
+ * under the text. Beside the text it left the title about 135px, so "Since your last visit" was
+ * cut. Grid columns follow the writing direction, so RTL mirrors with no extra rule. */
+.wb-gam-toast--action {
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	row-gap: 6px;
+}
+.wb-gam-toast--action .wb-gam-toast__link {
+	grid-column: 2;
+	grid-row: 2;
+	justify-self: start;
+}
+.wb-gam-toast--action .wb-gam-close {
+	grid-column: 3;
+	grid-row: 1;
+}
 .wb-gam-toast .wb-gam-close {
 	width: 32px;
 	height: 32px;

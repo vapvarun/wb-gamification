@@ -375,3 +375,15 @@ test( 'BuddyNext still starting: a toast waits for its real stack instead of dra
 	assert.strictEqual( p.bnCalls.length, 1 );
 	assert.strictEqual( p.bnCalls[ 0 ].o.title, '+10 Points' );
 } );
+
+test( 'own stack: a toast with a button puts it under the text, and loses that when the button goes', () => {
+	const p = page();
+	const h = p.toast( { ...LINK, key: 'action' } );
+	const el = p.w.document.querySelector( '.wb-gam-toast' );
+	assert.ok( el.classList.contains( 'wb-gam-toast--action' ), 'button toast gets the stacked layout' );
+	assert.ok( el.querySelector( '.wb-gam-toast__text' ), 'the text column is styleable' );
+	h.update( { title: 'You earned points' } ); // Own stack repaints from the options given.
+	assert.ok( ! el.classList.contains( 'wb-gam-toast--action' ), 'no button, one row again' );
+	p.toast( { title: '+10 Points' } );
+	assert.ok( ! p.w.document.querySelectorAll( '.wb-gam-toast' )[ 1 ].classList.contains( 'wb-gam-toast--action' ), 'a plain toast stays one row' );
+} );
