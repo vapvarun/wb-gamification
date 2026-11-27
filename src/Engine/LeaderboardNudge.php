@@ -301,7 +301,8 @@ final class LeaderboardNudge {
 		$in_progress[ $user_id ] = true;
 
 		try {
-			self::do_send_nudge( $user_id );
+			// The email is the member's: build it in their language, not the cron's or an admin's.
+			RecipientLocale::run_as_user( $user_id, static fn() => self::do_send_nudge( $user_id ) );
 		} finally {
 			unset( $in_progress[ $user_id ] );
 		}

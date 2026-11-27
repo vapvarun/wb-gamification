@@ -27,7 +27,7 @@ final class ChallengeStream {
 	 * Wire the engine action to this poster.
 	 */
 	public static function init(): void {
-		add_action( 'wb_gam_challenge_completed', array( __CLASS__, 'post' ), 10, 2 );
+		add_action( 'wb_gam_challenge_completed', \WBGam\Engine\RecipientLocale::site( array( __CLASS__, 'post' ) ), 10, 2 );
 	}
 
 	/**

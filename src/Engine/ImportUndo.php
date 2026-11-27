@@ -154,7 +154,11 @@ final class ImportUndo {
 		}
 
 		$state['status'] = 'failed';
-		$state['error']  = sprintf( 'Unknown undo phase "%s".', (string) $state['phase'] );
+		$state['error']  = sprintf(
+			/* translators: %s: internal undo phase name. */
+			__( 'Unknown undo phase "%s".', 'wb-gamification' ),
+			(string) $state['phase']
+		);
 	}
 
 	/**
@@ -275,7 +279,7 @@ final class ImportUndo {
 		// null is a rolled-back transaction. Reading it as "no events left" would skip on to the next
 		// phase with events still in place, so it is a failure and the page runs again on resume.
 		if ( null === $removed ) {
-			throw new \RuntimeException( 'Removing a page of imported events was rolled back.' );
+			throw new \RuntimeException( esc_html__( 'Removing a page of imported events was rolled back.', 'wb-gamification' ) );
 		}
 
 		if ( $removed > 0 ) {

@@ -121,7 +121,7 @@ class AwardSkipToastTest extends TestCase {
 		);
 
 		$this->assertStringContainsString(
-			"add_action( 'wb_gam_award_skipped', array( __CLASS__, 'on_award_skipped' ), 99, 4 );",
+			"add_action( 'wb_gam_award_skipped', \\WBGam\\Engine\\RecipientLocale::user( array( __CLASS__, 'on_award_skipped' ) ), 99, 4 );",
 			$src,
 			'The listener has to be registered, or the filter it reads can never run.'
 		);

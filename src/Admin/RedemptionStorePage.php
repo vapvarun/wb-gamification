@@ -563,7 +563,7 @@ final class RedemptionStorePage {
 									$txn_status     = $status_meta[ $txn_status_key ] ?? array( 'info', ucfirst( str_replace( '_', ' ', $txn_status_key ) ) );
 									?>
 									<tr>
-										<td><?php echo esc_html( $txn_when ? wp_date( 'M j, Y · H:i', strtotime( $txn_when . ' UTC' ) ) : '—' ); ?></td>
+										<td><?php echo esc_html( $txn_when ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $txn_when . ' UTC' ) ) : '—' ); ?></td>
 										<td><?php echo esc_html( $txn_user_name ); ?></td>
 										<td><?php echo esc_html( (string) $txn['title'] ); ?></td>
 										<td><strong><?php echo esc_html( number_format_i18n( (int) $txn['points_cost'] ) ); ?></strong></td>

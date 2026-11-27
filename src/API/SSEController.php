@@ -268,7 +268,7 @@ final class SSEController {
 			return new \WP_REST_Response(
 				array(
 					'code'      => 'sse_disabled',
-					'message'   => 'Server-Sent Events transport is not enabled on this install.',
+					'message'   => __( 'Server-Sent Events transport is not enabled on this install.', 'wb-gamification' ),
 					'transport' => self::get_transport(),
 				),
 				503,

@@ -128,11 +128,12 @@ final class NudgeEngine {
 		foreach ( $challenges as $ch ) {
 			// A completed challenge is worth celebrating — bonus points were auto-awarded.
 			if ( ! empty( $ch['completed'] ) ) {
-				$title = $ch['title'] ?? 'a challenge';
+				$title = $ch['title'] ?? __( 'a challenge', 'wb-gamification' );
 				$bonus = (int) ( $ch['bonus_points'] ?? 0 );
 				return array(
 					'message' => sprintf(
-						'You completed %s! +%d bonus points earned',
+						/* translators: 1: challenge title, 2: bonus points earned. */
+						__( 'You completed %1$s! +%2$d bonus points earned', 'wb-gamification' ),
 						$title,
 						$bonus
 					),
@@ -168,7 +169,8 @@ final class NudgeEngine {
 		if ( $remaining > 0 && $remaining <= ( $threshold * 0.2 ) ) {
 			return array(
 				'message' => sprintf(
-					"You're %d points from %s — keep going!",
+					/* translators: 1: points still needed, 2: next level name. */
+					__( "You're %1\$d points from %2\$s - keep going!", 'wb-gamification' ),
 					$remaining,
 					$next_level['name']
 				),
@@ -209,7 +211,8 @@ final class NudgeEngine {
 
 		return array(
 			'message' => sprintf(
-				"Don't break your %d-day streak! Do any activity to keep it",
+				/* translators: %d: current streak length in days. */
+				_n( "Don't break your %d-day streak! Do any activity to keep it", "Don't break your %d-day streak! Do any activity to keep it", (int) $streak['current_streak'], 'wb-gamification' ),
 				(int) $streak['current_streak']
 			),
 			'panel'   => 'earning',
@@ -245,9 +248,9 @@ final class NudgeEngine {
 		if ( $recent_count > 0 ) {
 			return array(
 				'message' => sprintf(
-					'You earned %d new badge%s! Check them out',
-					$recent_count,
-					1 === $recent_count ? '' : 's'
+					/* translators: %d: number of badges earned in the last 7 days. */
+					_n( 'You earned %d new badge! Check it out', 'You earned %d new badges! Check them out', $recent_count, 'wb-gamification' ),
+					$recent_count
 				),
 				'panel'   => 'badges',
 				'icon'    => 'award',
@@ -284,8 +287,9 @@ final class NudgeEngine {
 			if ( $pct > 50 ) {
 				return array(
 					'message' => sprintf(
-						'%s is %d%% done — %d more to complete it',
-						$ch['title'] ?? 'Challenge',
+						/* translators: 1: challenge title, 2: percent complete, 3: progress still needed. */
+						__( '%1$s is %2$d%% done - %3$d more to complete it', 'wb-gamification' ),
+						$ch['title'] ?? __( 'Challenge', 'wb-gamification' ),
 						$pct,
 						$remaining
 					),
@@ -311,7 +315,7 @@ final class NudgeEngine {
 	private static function check_no_challenges( array $challenges ): ?array {
 		if ( empty( $challenges ) ) {
 			return array(
-				'message' => 'Try a challenge to earn bonus points',
+				'message' => __( 'Try a challenge to earn bonus points', 'wb-gamification' ),
 				'panel'   => 'challenges',
 				'icon'    => 'target',
 			);
@@ -333,7 +337,8 @@ final class NudgeEngine {
 
 		return array(
 			'message' => sprintf(
-				"Keep going! You've earned %d points so far",
+				/* translators: %d: member's total points. */
+				__( "Keep going! You've earned %d points so far", 'wb-gamification' ),
 				$total
 			),
 			'panel'   => 'earning',

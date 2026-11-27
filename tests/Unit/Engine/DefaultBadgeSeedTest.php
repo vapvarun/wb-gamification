@@ -35,6 +35,7 @@ class DefaultBadgeSeedTest extends TestCase {
 		Monkey\setUp();
 		Functions\when( 'current_time' )->justReturn( '2026-10-31 00:00:00' );
 		Functions\when( 'wp_json_encode' )->alias( 'json_encode' );
+		Functions\when( '__' )->alias( static fn( $text ) => 'T:' . $text );
 
 		$this->db = new class() {
 			public string $prefix = 'wp_';
@@ -101,5 +102,16 @@ class DefaultBadgeSeedTest extends TestCase {
 	public function test_the_removed_switches_are_gone_from_the_flag_list(): void {
 		$this->assertArrayNotHasKey( 'tenure_badges', FeatureFlags::get_defaults() );
 		$this->assertArrayNotHasKey( 'site_first_badges', FeatureFlags::get_defaults() );
+	}
+
+	/**
+	 * The starter library is translatable: a site installed in another language gets its names and
+	 * descriptions in that language, not English.
+	 */
+	public function test_every_seeded_badge_name_and_description_is_translated(): void {
+		foreach ( $this->db->defs as $id => $def ) {
+			$this->assertStringStartsWith( 'T:', $def['name'], $id . ' name is not wrapped for translation.' );
+			$this->assertStringStartsWith( 'T:', $def['description'], $id . ' description is not wrapped for translation.' );
+		}
 	}
 }

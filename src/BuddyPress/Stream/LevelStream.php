@@ -31,7 +31,7 @@ final class LevelStream {
 	 * Wire the engine action to this poster.
 	 */
 	public static function init(): void {
-		add_action( 'wb_gam_level_changed', array( __CLASS__, 'post' ), 10, 3 );
+		add_action( 'wb_gam_level_changed', \WBGam\Engine\RecipientLocale::site( array( __CLASS__, 'post' ) ), 10, 3 );
 	}
 
 	/**

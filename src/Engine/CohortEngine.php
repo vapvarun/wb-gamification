@@ -111,6 +111,26 @@ final class CohortEngine {
 	}
 
 	/**
+	 * The shipped, translated name of a tier, before any admin edit.
+	 *
+	 * TIERS stays the slot list (its count is the tier count); the words members read go through
+	 * here so a site in another language does not see "Bronze League".
+	 *
+	 * @param int $tier 0-indexed tier slot.
+	 * @return string
+	 */
+	public static function default_tier_name( int $tier ): string {
+		$names = array(
+			__( 'Bronze', 'wb-gamification' ),
+			__( 'Silver', 'wb-gamification' ),
+			__( 'Gold', 'wb-gamification' ),
+			__( 'Diamond', 'wb-gamification' ),
+			__( 'Obsidian', 'wb-gamification' ),
+		);
+		return $names[ $tier ] ?? $names[0];
+	}
+
+	/**
 	 * Resolve the display name for a given tier index.
 	 *
 	 * Reads {@see SETTINGS_OPTION} so admin tier-name edits flow to every
@@ -123,7 +143,7 @@ final class CohortEngine {
 	 * @return string The customised name if admins set one, else the default.
 	 */
 	public static function get_tier_name( int $tier ): string {
-		$default  = self::TIERS[ $tier ] ?? 'Bronze';
+		$default  = self::default_tier_name( $tier );
 		$settings = get_option( self::SETTINGS_OPTION );
 		if ( ! is_array( $settings ) ) {
 			return $default;

@@ -77,10 +77,10 @@ final class TransactionalEmailEngine {
 	 * without touching code.
 	 */
 	public static function init(): void {
-		add_action( 'wb_gam_level_changed', array( __CLASS__, 'on_level_up' ), 10, 3 );
-		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'on_badge_earned' ), 10, 3 );
-		add_action( 'wb_gam_challenge_completed', array( __CLASS__, 'on_challenge_completed' ), 10, 2 );
-		add_action( 'wb_gam_points_redeemed', array( __CLASS__, 'on_redemption' ), 10, 4 );
+		add_action( 'wb_gam_level_changed', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_level_up' ) ), 10, 3 );
+		add_action( 'wb_gam_badge_awarded', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_badge_earned' ) ), 10, 3 );
+		add_action( 'wb_gam_challenge_completed', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_challenge_completed' ) ), 10, 2 );
+		add_action( 'wb_gam_points_redeemed', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_redemption' ), 1 ), 10, 4 );
 		add_action( self::AS_HOOK, array( __CLASS__, 'send_async' ), 10, 1 );
 	}
 

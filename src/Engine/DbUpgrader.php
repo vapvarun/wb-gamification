@@ -1405,9 +1405,9 @@ final class DbUpgrader {
 			$wpdb->prepare(
 				"INSERT IGNORE INTO {$wpdb->prefix}wb_gam_point_types (slug, label, label_singular, description, icon, is_default, position) VALUES (%s, %s, %s, %s, %s, %d, %d)",
 				'points',
-				'Points',
-				'Point',
-				'Primary points currency. Renamable; the slug stays as `points` for back-compat.',
+				__( 'Points', 'wb-gamification' ),
+				__( 'Point', 'wb-gamification' ),
+				__( 'Primary points currency. Renamable; the slug stays as `points` for back-compat.', 'wb-gamification' ),
 				'star',
 				1,
 				0

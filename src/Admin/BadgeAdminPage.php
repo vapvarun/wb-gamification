@@ -429,7 +429,7 @@ final class BadgeAdminPage {
 									<th><label for="wb-gam-badge-id"><?php esc_html_e( 'Badge ID', 'wb-gamification' ); ?></label></th>
 									<td>
 										<input type="text" name="id" id="wb-gam-badge-id" class="regular-text wbgam-input"
-											value="" placeholder="e.g. first_post" required>
+											value="" placeholder="<?php echo esc_attr__( 'e.g. first_post', 'wb-gamification' ); ?>" required>
 										<p class="description"><?php esc_html_e( 'Lowercase letters, numbers, underscores only.', 'wb-gamification' ); ?></p>
 									</td>
 								</tr>

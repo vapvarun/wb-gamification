@@ -191,11 +191,11 @@ final class CohortSettingsController extends WP_REST_Controller {
 		$settings = (array) get_option( self::OPTION_KEY, array() );
 
 		return array(
-			'tier_1'      => isset( $settings['tier_1'] ) ? (string) $settings['tier_1'] : 'Bronze',
-			'tier_2'      => isset( $settings['tier_2'] ) ? (string) $settings['tier_2'] : 'Silver',
-			'tier_3'      => isset( $settings['tier_3'] ) ? (string) $settings['tier_3'] : 'Gold',
-			'tier_4'      => isset( $settings['tier_4'] ) ? (string) $settings['tier_4'] : 'Diamond',
-			'tier_5'      => isset( $settings['tier_5'] ) ? (string) $settings['tier_5'] : 'Obsidian',
+			'tier_1'      => isset( $settings['tier_1'] ) ? (string) $settings['tier_1'] : \WBGam\Engine\CohortEngine::default_tier_name( 0 ),
+			'tier_2'      => isset( $settings['tier_2'] ) ? (string) $settings['tier_2'] : \WBGam\Engine\CohortEngine::default_tier_name( 1 ),
+			'tier_3'      => isset( $settings['tier_3'] ) ? (string) $settings['tier_3'] : \WBGam\Engine\CohortEngine::default_tier_name( 2 ),
+			'tier_4'      => isset( $settings['tier_4'] ) ? (string) $settings['tier_4'] : \WBGam\Engine\CohortEngine::default_tier_name( 3 ),
+			'tier_5'      => isset( $settings['tier_5'] ) ? (string) $settings['tier_5'] : \WBGam\Engine\CohortEngine::default_tier_name( 4 ),
 			'promote_pct' => isset( $settings['promote_pct'] ) ? (int) $settings['promote_pct'] : 20,
 			'demote_pct'  => isset( $settings['demote_pct'] ) ? (int) $settings['demote_pct'] : 20,
 			'duration'    => isset( $settings['duration'] ) ? (string) $settings['duration'] : 'weekly',

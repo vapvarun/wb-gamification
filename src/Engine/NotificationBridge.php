@@ -214,12 +214,12 @@ final class NotificationBridge {
 
 	public static function init(): void {
 		// Collect events from action hooks.
-		add_action( 'wb_gam_points_awarded', array( __CLASS__, 'on_points_awarded' ), 99, 3 );
-		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'on_badge_awarded' ), 99, 3 );
-		add_action( 'wb_gam_level_changed', array( __CLASS__, 'on_level_changed' ), 99, 3 );
-		add_action( 'wb_gam_streak_milestone', array( __CLASS__, 'on_streak_milestone' ), 99, 2 );
-		add_action( 'wb_gam_challenge_completed', array( __CLASS__, 'on_challenge_completed' ), 99, 2 );
-		add_action( 'wb_gam_kudos_given', array( __CLASS__, 'on_kudos_given' ), 99, 4 );
+		add_action( 'wb_gam_points_awarded', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_points_awarded' ) ), 99, 3 );
+		add_action( 'wb_gam_badge_awarded', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_badge_awarded' ) ), 99, 3 );
+		add_action( 'wb_gam_level_changed', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_level_changed' ) ), 99, 3 );
+		add_action( 'wb_gam_streak_milestone', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_streak_milestone' ) ), 99, 2 );
+		add_action( 'wb_gam_challenge_completed', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_challenge_completed' ) ), 99, 2 );
+		add_action( 'wb_gam_kudos_given', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_kudos_given' ), 1 ), 99, 4 );
 
 		// ...and take it back when a moderator revokes it. This action was fired and never listened to,
 		// so a revoked kudos still congratulated the receiver.
@@ -253,13 +253,13 @@ final class NotificationBridge {
 		//
 		// The default is what protects members (nobody sees a skip toast unless an owner turns one
 		// on). The filter is what keeps our word.
-		add_action( 'wb_gam_award_skipped', array( __CLASS__, 'on_award_skipped' ), 99, 4 );
+		add_action( 'wb_gam_award_skipped', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_award_skipped' ) ), 99, 4 );
 
 		// Moments and results that used to fire an event and show the member nothing.
-		add_action( 'wb_gam_cohort_outcome', array( __CLASS__, 'on_cohort_outcome' ), 99, 4 );
-		add_action( 'wb_gam_community_goal_reached', array( __CLASS__, 'on_community_goal' ), 99, 3 );
-		add_action( 'wb_gam_submission_approved', array( __CLASS__, 'on_submission_approved' ), 99, 3 );
-		add_action( 'wb_gam_submission_rejected', array( __CLASS__, 'on_submission_rejected' ), 99, 5 );
+		add_action( 'wb_gam_cohort_outcome', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_cohort_outcome' ) ), 99, 4 );
+		add_action( 'wb_gam_community_goal_reached', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_community_goal' ) ), 99, 3 );
+		add_action( 'wb_gam_submission_approved', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_submission_approved' ), 1 ), 99, 3 );
+		add_action( 'wb_gam_submission_rejected', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_submission_rejected' ), 1 ), 99, 5 );
 
 		// Output markup + seed script once, in the footer.
 		add_action( 'wp_footer', array( __CLASS__, 'render' ), 5 );

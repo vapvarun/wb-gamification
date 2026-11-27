@@ -30,19 +30,19 @@ final class CommunityNotifications {
 	 * the contract's types filter.
 	 */
 	public static function init(): void {
-		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'on_badge_awarded' ), 20, 3 );
-		add_action( 'wb_gam_level_changed', array( __CLASS__, 'on_level_changed' ), 20, 3 );
-		add_action( 'wb_gam_kudos_given', array( __CLASS__, 'on_kudos_given' ), 20, 4 );
+		add_action( 'wb_gam_badge_awarded', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_badge_awarded' ) ), 20, 3 );
+		add_action( 'wb_gam_level_changed', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_level_changed' ) ), 20, 3 );
+		add_action( 'wb_gam_kudos_given', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_kudos_given' ), 1 ), 20, 4 );
 		add_action( 'wb_gam_kudos_revoked', array( __CLASS__, 'on_kudos_revoked' ), 20, 1 );
-		add_action( 'wb_gam_challenge_completed', array( __CLASS__, 'on_challenge_completed' ), 20, 2 );
-		add_action( 'wb_gam_redemption_fulfilled', array( __CLASS__, 'on_redemption_fulfilled' ), 20, 2 );
-		add_action( 'wb_gam_credential_expired', array( __CLASS__, 'on_credential_expired' ), 20, 2 );
-		add_action( 'wb_gam_personal_record', array( __CLASS__, 'on_personal_record' ), 20, 5 );
-		add_action( 'wb_gam_streak_milestone', array( __CLASS__, 'on_streak_milestone' ), 20, 2 );
-		add_action( 'wb_gam_cohort_outcome', array( __CLASS__, 'on_cohort_outcome' ), 20, 4 );
-		add_action( 'wb_gam_community_goal_reached', array( __CLASS__, 'on_community_goal' ), 20, 3 );
-		add_action( 'wb_gam_submission_approved', array( __CLASS__, 'on_submission_approved' ), 20, 3 );
-		add_action( 'wb_gam_submission_rejected', array( __CLASS__, 'on_submission_rejected' ), 20, 3 );
+		add_action( 'wb_gam_challenge_completed', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_challenge_completed' ) ), 20, 2 );
+		add_action( 'wb_gam_redemption_fulfilled', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_redemption_fulfilled' ), 1 ), 20, 2 );
+		add_action( 'wb_gam_credential_expired', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_credential_expired' ) ), 20, 2 );
+		add_action( 'wb_gam_personal_record', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_personal_record' ) ), 20, 5 );
+		add_action( 'wb_gam_streak_milestone', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_streak_milestone' ) ), 20, 2 );
+		add_action( 'wb_gam_cohort_outcome', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_cohort_outcome' ) ), 20, 4 );
+		add_action( 'wb_gam_community_goal_reached', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_community_goal' ) ), 20, 3 );
+		add_action( 'wb_gam_submission_approved', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_submission_approved' ), 1 ), 20, 3 );
+		add_action( 'wb_gam_submission_rejected', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_submission_rejected' ), 1 ), 20, 3 );
 
 		// A deleted badge definition takes every notification that named it —
 		// both the award and any expiry notice — with it. One fire regardless

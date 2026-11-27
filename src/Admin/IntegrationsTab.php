@@ -32,6 +32,18 @@ class IntegrationsTab {
 		}
 		wp_enqueue_style( 'wbcom-family', WB_GAM_URL . 'assets/admin/family.css', array(), WB_GAM_VERSION );
 		wp_enqueue_script( 'wbcom-family', WB_GAM_URL . 'assets/admin/family.js', array(), WB_GAM_VERSION, true );
-		wp_localize_script( 'wbcom-family', 'wbcomFamily', array( 'ajax' => admin_url( 'admin-ajax.php' ) ) );
+		wp_localize_script(
+			'wbcom-family',
+			'wbcomFamily',
+			array(
+				'ajax' => admin_url( 'admin-ajax.php' ),
+				'i18n' => array(
+					'error'      => __( 'Error', 'wb-gamification' ),
+					'installing' => __( 'Installing...', 'wb-gamification' ),
+					'activated'  => __( 'Activated', 'wb-gamification' ),
+					'failed'     => __( 'Failed', 'wb-gamification' ),
+				),
+			)
+		);
 	}
 }

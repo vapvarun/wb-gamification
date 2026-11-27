@@ -53,7 +53,7 @@ final class BadgeStream {
 	 * Wire the engine action to this poster.
 	 */
 	public static function init(): void {
-		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'post' ), 10, 3 );
+		add_action( 'wb_gam_badge_awarded', \WBGam\Engine\RecipientLocale::site( array( __CLASS__, 'post' ) ), 10, 3 );
 	}
 
 	/**

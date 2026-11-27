@@ -35,11 +35,6 @@ final class CohortSettingsPage {
 	 * @var array
 	 */
 	private const DEFAULTS = array(
-		'tier_1'      => 'Bronze',
-		'tier_2'      => 'Silver',
-		'tier_3'      => 'Gold',
-		'tier_4'      => 'Diamond',
-		'tier_5'      => 'Obsidian',
 		'promote_pct' => 20,
 		'demote_pct'  => 20,
 		'duration'    => 'weekly',
@@ -130,9 +125,15 @@ final class CohortSettingsPage {
 	 * @return array
 	 */
 	private static function get_settings(): array {
+		// The tier names are the shipped, translated ones until the owner renames them.
+		$tier_defaults = array();
+		foreach ( range( 0, 4 ) as $tier ) {
+			$tier_defaults[ 'tier_' . ( $tier + 1 ) ] = \WBGam\Engine\CohortEngine::default_tier_name( $tier );
+		}
+
 		return wp_parse_args(
 			(array) get_option( self::OPTION_KEY, array() ),
-			self::DEFAULTS
+			$tier_defaults + self::DEFAULTS
 		);
 	}
 

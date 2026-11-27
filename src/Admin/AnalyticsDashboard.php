@@ -1012,7 +1012,14 @@ final class AnalyticsDashboard {
 			// and disappears, so "a few points" and "no points at all" looked identical.
 			$h = $pts > 0 ? max( 2, (int) round( ( $pts / $max ) * 100 ) ) : 0;
 
-			$bar_title = esc_attr( $day . ': ' . number_format_i18n( $pts ) . ' ' . __( 'pts', 'wb-gamification' ) );
+			$bar_title = esc_attr(
+				sprintf(
+					/* translators: 1: date, 2: points earned that day (a number). */
+					__( '%1$s: %2$s pts', 'wb-gamification' ),
+					$day,
+					number_format_i18n( $pts )
+				)
+			);
 			$bar_width = esc_attr( number_format( $w, 4 ) );
 
 			echo '<div class="wb-gam-analytics__spark-bar' . ( 0 === $h ? ' is-empty' : '' ) . '" style="--bar-h:' . (int) $h . '%;--bar-w:' . $bar_width . '%" title="' . $bar_title . '"></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $h is an int; $bar_width and $bar_title are esc_attr()-escaped.

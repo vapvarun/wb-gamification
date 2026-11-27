@@ -54,6 +54,7 @@ class PersonalRecordTest extends TestCase {
 			}
 		);
 		Functions\when( '__' )->returnArg( 1 );
+		Functions\when( 'switch_to_user_locale' )->justReturn( false );
 		Functions\when( '_n' )->alias( static fn( $s, $p, $n ) => 1 === (int) $n ? $s : $p );
 		Functions\when( 'number_format_i18n' )->alias( static fn( $n ) => (string) $n );
 		Functions\when( 'wp_cache_get' )->justReturn( false );

@@ -83,7 +83,7 @@ final class IntelligenceController extends WP_REST_Controller {
 			return new WP_REST_Response(
 				array(
 					'code'    => 'no_data',
-					'message' => 'No intelligence signals available for this user yet.',
+					'message' => __( 'No intelligence signals available for this user yet.', 'wb-gamification' ),
 				),
 				404
 			);

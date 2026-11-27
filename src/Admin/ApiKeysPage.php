@@ -188,14 +188,14 @@ final class ApiKeysPage {
 							<tr>
 								<th><label for="key_label"><?php esc_html_e( 'Label', 'wb-gamification' ); ?></label></th>
 								<td>
-									<input type="text" id="key_label" name="key_label" class="regular-text wbgam-input" placeholder="e.g. MediaVerse Production" required>
+									<input type="text" id="key_label" name="key_label" class="regular-text wbgam-input" placeholder="<?php echo esc_attr__( 'e.g. MediaVerse Production', 'wb-gamification' ); ?>" required>
 									<p class="description"><?php esc_html_e( 'A human-readable name to identify this key, e.g. the site or application it belongs to.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 							<tr>
 								<th><label for="site_id"><?php esc_html_e( 'Site ID', 'wb-gamification' ); ?></label></th>
 								<td>
-									<input type="text" id="site_id" name="site_id" class="regular-text wbgam-input" placeholder="e.g. mediaverse-prod">
+									<input type="text" id="site_id" name="site_id" class="regular-text wbgam-input" placeholder="<?php echo esc_attr__( 'e.g. mediaverse-prod', 'wb-gamification' ); ?>">
 									<p class="description"><?php esc_html_e( 'Unique identifier for the remote site. Used for per-site reporting.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>

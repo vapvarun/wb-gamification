@@ -271,11 +271,15 @@ final class StatusRetentionEngine {
 	 * @param int   $pts_needed Points gap to the next level.
 	 */
 	private static function send_nudge( int $user_id, array $level, array $next, int $pts_needed ): void {
-		$message = sprintf(
-			/* translators: 1: points needed, 2: next level name */
-			__( 'Earn %1$s more points this week to reach %2$s!', 'wb-gamification' ),
-			number_format_i18n( $pts_needed ),
-			$next['name']
+		// Handed to the retention-nudge hook and read by the member: build it in their language, not the cron's.
+		$message = RecipientLocale::run_as_user(
+			$user_id,
+			static fn(): string => sprintf(
+				/* translators: 1: points needed, 2: next level name */
+				__( 'Earn %1$s more points this week to reach %2$s!', 'wb-gamification' ),
+				number_format_i18n( $pts_needed ),
+				$next['name']
+			)
 		);
 
 		// BP notification (non-blocking).

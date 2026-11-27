@@ -356,6 +356,16 @@ final class WeeklyEmailEngine {
 	 * @param int $user_id User ID to send the email to.
 	 */
 	public static function send_to_user( int $user_id ): void {
+		// The email is the member's: build it in their language, not the cron's or an admin's.
+		RecipientLocale::run_as_user( $user_id, static fn() => self::do_send_to_user( $user_id ) );
+	}
+
+	/**
+	 * Build and send the weekly summary email; send_to_user() runs it in the member's locale.
+	 *
+	 * @param int $user_id User ID to send the email to.
+	 */
+	private static function do_send_to_user( int $user_id ): void {
 		$user = get_userdata( $user_id );
 		if ( ! $user || ! $user->user_email ) {
 			return;

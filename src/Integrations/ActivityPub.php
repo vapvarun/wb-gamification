@@ -46,7 +46,7 @@ final class ActivityPub {
 		// (handlers run; just no-op when AP isn't there).
 		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'on_badge_awarded' ), 30, 3 );
 		add_action( 'wb_gam_level_changed', array( __CLASS__, 'on_level_changed' ), 30, 3 );
-		add_action( 'wb_gam_challenge_completed', array( __CLASS__, 'on_challenge_completed' ), 30, 2 );
+		add_action( 'wb_gam_challenge_completed', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_challenge_completed' ) ), 30, 2 );
 	}
 
 	/**

@@ -231,7 +231,7 @@ BlockHooks::before( 'streak', $wb_gam_attrs );
 				$wb_gam_pts   = (int) ( $wb_gam_heatmap[ $wb_gam_date ] ?? 0 );
 				$wb_gam_level = $wb_gam_pts > 0 ? (int) ceil( ( $wb_gam_pts / $wb_gam_max_pts ) * 4 ) : 0;
 
-				$wb_gam_formatted_date = wp_date( 'M j', $wb_gam_day->getTimestamp() );
+				$wb_gam_formatted_date = wp_date( _x( 'M j', 'short date format: month and day', 'wb-gamification' ), $wb_gam_day->getTimestamp() );
 				$wb_gam_title          = $wb_gam_pts > 0
 					? sprintf( /* translators: 1 = formatted date, 2 = points */ __( '%1$s: %2$s points', 'wb-gamification' ), $wb_gam_formatted_date, number_format_i18n( $wb_gam_pts ) )
 					: sprintf( /* translators: %s = formatted date */ __( '%s: No activity', 'wb-gamification' ), $wb_gam_formatted_date );

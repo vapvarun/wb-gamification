@@ -145,7 +145,8 @@ final class PersonalRecordEngine {
 			return;
 		}
 
-		$message = self::build_message( $period, $current, $previous );
+		// The sentence travels with the hook to the member's inbox: build it in their language, not the actor's.
+		$message = RecipientLocale::run_as_user( $user_id, static fn(): string => self::build_message( $period, $current, $previous ) );
 
 		// BuddyPress notification, under the same rule as the community inbox
 		// (CommunityNotifications::on_personal_record): week and month, previous best >= 10.

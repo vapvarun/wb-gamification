@@ -577,7 +577,16 @@ final class RedemptionEngine {
 		$coupon->set_email_restrictions( array( $user->user_email ) );
 		$coupon->set_individual_use( true );
 		$coupon->set_date_expires( strtotime( '+30 days' ) );
-		$coupon->set_description( sprintf( 'Redeemed via WB Gamification — %s', $item['title'] ) );
+		// A note for the shop admin who reads it on the coupon, not for the member who redeemed.
+		$coupon->set_description(
+			RecipientLocale::run_in_site(
+				static fn(): string => sprintf(
+					/* translators: %s: reward title. */
+					__( 'Redeemed via WB Gamification - %s', 'wb-gamification' ),
+					$item['title']
+				)
+			)
+		);
 		$coupon->save();
 
 		return $code;
