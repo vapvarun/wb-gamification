@@ -60,12 +60,21 @@ class SharedDeliveryCursorTest extends TestCase {
 		$GLOBALS['wpdb'] = new class() {
 			public string $prefix = 'wp_';
 			private int $after   = 0;
+			private int $row     = 0;
 			public function prepare( $sql, ...$args ) {
-				$this->after = (int) ( $args[1] ?? 0 );
+				if ( str_contains( $sql, 'AND user_id' ) ) {
+					$this->row = (int) ( $args[0] ?? 0 ); // Primary-key lookup of one row of this member.
+				} else {
+					$this->after = (int) ( $args[1] ?? 0 );
+				}
 				return $sql;
 			}
 			public function get_var( $sql ) {
-				return 10; // The member's newest queue row.
+				if ( str_contains( $sql, 'MAX(id)' ) ) {
+					return 10; // The member's newest queue row.
+				}
+				// Member 7 owns rows 1..10 except 5, which is another member's (queue ids are global).
+				return ( $this->row >= 1 && $this->row <= 10 && 5 !== $this->row ) ? $this->row : null;
 			}
 			public function get_results( $sql, $output = null ) {
 				$rows = array();
@@ -121,6 +130,13 @@ class SharedDeliveryCursorTest extends TestCase {
 		$this->assertFalse( NotificationBridge::acknowledge( 7, 0 ) );
 		$this->assertFalse( NotificationBridge::acknowledge( 0, 5 ) );
 		$this->assertSame( 0, NotificationBridge::cursor( 7 ) );
+	}
+
+	#[Test]
+	public function an_acknowledgement_of_another_members_row_is_refused_and_the_position_stays(): void {
+		$this->assertFalse( NotificationBridge::acknowledge( 7, 5 ), 'Row 5 is below the caller\'s newest row (10) but belongs to someone else: it must not move the caller\'s position past rows 1-4 and 6-10.' );
+		$this->assertSame( 0, NotificationBridge::cursor( 7 ) );
+		$this->assertSame( array( 6, 7, 8, 9, 10 ), array_column( NotificationBridge::read_pending( 7 ), '_id' ), 'The caller\'s unseen rows are still delivered.' );
 	}
 
 	#[Test]

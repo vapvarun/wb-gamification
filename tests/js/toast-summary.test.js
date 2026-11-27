@@ -124,3 +124,12 @@ test( 'the join phrase comes from the server table in the recipient language, by
 	q.tick( 1500 );
 	assert.strictEqual( q.drawn[ 0 ].o.title, '+{count} Points und 2 neue Abzeichen' );
 } );
+
+test( 'the count carries the site\'s singular and plural names so the frame reading 1 says "Point"', () => {
+	const p = page();
+	p.send( [ { ...pts( 3, 'x' ), unit_one: 'Point' }, { ...pts( 2, 'y' ), unit_one: 'Point' } ] );
+	p.tick( 1600 );
+	const count = JSON.parse( JSON.stringify( p.drawn[ 0 ].o.count ) );
+	assert.strictEqual( count.unitOne, 'Point' );
+	assert.strictEqual( count.unitMany, 'Points' );
+} );

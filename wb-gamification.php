@@ -855,6 +855,8 @@ final class WB_Gamification {
 				array(
 					'restUrl'  => rest_url( 'wb-gamification/v1/' ),
 					'nonce'    => wp_create_nonce( 'wp_rest' ),
+					// Keys the browser's record of toasts already shown (sessionStorage), so two members sharing a browser never read each other's.
+					'userId'   => get_current_user_id(),
 					'position' => \WBGam\Engine\NotificationBridge::get_toast_position(),
 					// Translated strings the renderer builds client-side (aria
 					// labels + the last-resort points-unit fallback). Seeded here

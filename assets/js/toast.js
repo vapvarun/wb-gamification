@@ -96,7 +96,7 @@
 			return;
 		}
 		if ( ! sum || ! sum.handle || sum.handle.gone ) {
-			sum = { handle: null, total: 0, shown: 0, unitMany: '', locale: '', firstMessage: '', pointItems: 0, labels: [], counts: {}, badges: [], challenges: [], kudos: [], streaks: [], singles: [], welcome: null, image: '', url: '', urlLabel: '' };
+			sum = { handle: null, total: 0, shown: 0, unitMany: '', unitOne: '', locale: '', firstMessage: '', pointItems: 0, labels: [], counts: {}, badges: [], challenges: [], kudos: [], streaks: [], singles: [], welcome: null, image: '', url: '', urlLabel: '' };
 		}
 		items.forEach( add );
 		var opts = summarise();
@@ -106,10 +106,9 @@
 			sum.handle = window.wbGam.toast( opts );
 		}
 		sum.shown = sum.total;
-		if ( ackHeld ) {
-			acknowledge( ackHeld );
-			ackHeld = 0;
-		}
+		// The rows are DISPLAYED once the summary is on screen, not when it is handed over: it can wait
+		// behind a level-up card or a dialog, and a reload then must still find them on the server.
+		whenShown( sum.handle, items.map( function ( t ) { return t._id; } ) );
 	}
 
 	function label( text ) {
@@ -138,6 +137,7 @@
 				sum.total += n;
 				sum.pointItems++;
 				sum.unitMany     = sum.unitMany || t.unit_many || toastI18n( 'points', 'points' );
+				sum.unitOne      = sum.unitOne || t.unit_one || '';
 				sum.locale       = sum.locale || t.locale || '';
 				sum.firstMessage = sum.firstMessage || t.message || '';
 				if ( BONUS_ACTIONS.indexOf( t.action ) === -1 ) {
@@ -183,6 +183,11 @@
 				count = { from: sum.shown, to: sum.total };
 				if ( sum.locale ) {
 					count.locale = sum.locale;
+				}
+				if ( sum.unitOne && sum.unitMany && sum.unitOne !== sum.unitMany ) {
+					// The frame that reads 1 says "Point", not "Points".
+					count.unitOne  = sum.unitOne;
+					count.unitMany = sum.unitMany;
 				}
 			}
 			if ( sum.welcome ) {
@@ -232,21 +237,21 @@
 		}
 		switch ( toast.type ) {
 			case 'skip':
-				window.wbGam.toast( { type: 'skip', tone: 'info', icon: ICONS.skip, title: toast.message || '', body: toast.detail || '' } );
+				whenShown( window.wbGam.toast( { type: 'skip', tone: 'info', icon: ICONS.skip, title: toast.message || '', body: toast.detail || '' } ), [ toast._id ] );
 				return;
 
 			case 'submission':
-				window.wbGam.toast( {
+				whenShown( window.wbGam.toast( {
 					type: 'submission',
 					tone: 'approved' === toast.outcome ? 'success' : 'info',
 					icon: toast.icon || ( 'approved' === toast.outcome ? 'icon-check' : 'icon-info' ),
 					title: toast.message || '',
 					body: toast.detail || '',
-				} );
+				} ), [ toast._id ] );
 				return;
 
 			default:
-				window.wbGam.toast( {
+				whenShown( window.wbGam.toast( {
 					type: toast.type || 'points',
 					tone: 'reward',
 					icon: toast.icon || ICONS[ toast.type ] || ICONS.points,
@@ -254,49 +259,144 @@
 					body: toast.detail || '',
 					href: toast.url || '',
 					hrefLabel: toast.url_label || '',
-				} );
+				} ), [ toast._id ] );
 		}
 	}
 
 	/**
-	 * Tell the server the toasts up to the highest `_ack` in this batch reached the page, so its
-	 * delivery position moves. Until then every reader re-delivers, so a page that vanishes first
-	 * (a reload right after a post) loses nothing; the next page shows the batch, once.
+	 * Delivery: what the member has actually SEEN, and the one server position that follows it.
 	 *
-	 * Sent once handed to the renderer (drawn, or queued behind another toast; not after the display
-	 * hold) and never while a reward is only waiting in the collect window, after the Moment-card store has
-	 * run (DOMContentLoaded) and a frame, with keepalive so it survives the page unloading.
+	 * The server keeps one monotonic position per member and re-delivers every row above it, so a page
+	 * that vanishes before showing something (a reload right after a post) loses nothing. The page moves
+	 * the position by acknowledging, and it may acknowledge only rows it DISPLAYED. "Displayed" means the
+	 * toast element is attached to the page (its frame is painted next), or the Moment card was opened
+	 * (assets/interactivity/notifications.js); a reward still waiting in the 1.5s collect window, behind
+	 * a level-up card, behind a dialog or in BuddyNext's line is not displayed yet.
 	 *
-	 * @param {Array<object>} toasts One delivered batch.
+	 * Display order is not row order (a level-up row is newer than the points rows but shows first), and
+	 * the position is one number, so the page acknowledges the highest row of the contiguous displayed
+	 * PREFIX of the rows it received: every received row at or below it has been displayed. A row held
+	 * behind the level-up pins the position below itself until it is shown.
+	 *
+	 * Rows displayed above the pinned position are remembered in this tab (sessionStorage, per member,
+	 * pruned to rows above the acknowledged position). If the page is reloaded meanwhile, the next page
+	 * receives them again, does not paint them a second time, and counts them as displayed. The record
+	 * lives only in the browser: nothing on the server stores what a tab has seen, so there is nothing
+	 * to clean up on uninstall.
 	 */
-	var ackSent = 0;
-	var ackHeld = 0; // Highest position of rewards still in the 1.5s collect window (not handed to the renderer yet).
+	var SHOWN_KEY  = 'wbgam-shown:' + ( parseInt( wbGamToast.userId, 10 ) || 0 );
+	var SHOWN_KEEP = 100;
+	var received = new Map(); // Row id => displayed on this page.
+	var head     = 0;         // Highest `_ack` the server sent: the end of the window it read.
+	var ackSent  = 0;
+	var record   = new Set();
+
+	try {
+		JSON.parse( window.sessionStorage.getItem( SHOWN_KEY ) || '[]' ).forEach( function ( id ) {
+			if ( 'number' === typeof id ) {
+				record.add( id );
+			}
+		} );
+	} catch ( e ) { /* No storage: a reload may show the Moment card again, never lose a toast. */ }
+
+	function persist() {
+		try {
+			var ids = Array.from( record ).sort( function ( a, b ) { return a - b; } ).slice( -SHOWN_KEEP );
+			window.sessionStorage.setItem( SHOWN_KEY, JSON.stringify( ids ) );
+		} catch ( e ) { /* Storage full or blocked. */ }
+	}
+
+	/** Rows displayed: remember them, then move the acknowledgement as far as the prefix allows. */
+	function shown( ids ) {
+		var any = false;
+		( ids || [] ).forEach( function ( id ) {
+			id = parseInt( id, 10 );
+			if ( id > 0 ) {
+				record.add( id );
+				if ( received.has( id ) ) {
+					received.set( id, true );
+				}
+				any = true;
+			}
+		} );
+		if ( any ) {
+			persist();
+			advance();
+		}
+	}
+
+	function advance() {
+		var ids = Array.from( received.keys() ).sort( function ( a, b ) { return a - b; } );
+		var upTo = 0;
+		var i = 0;
+		while ( i < ids.length && received.get( ids[ i ] ) ) {
+			upTo = ids[ i++ ];
+		}
+		if ( i === ids.length ) {
+			upTo = Math.max( upTo, head ); // Everything received is displayed: take the whole window (undecodable rows included).
+		}
+		acknowledge( upTo );
+	}
+
 	function acknowledge( ack ) {
 		if ( ack <= ackSent ) {
 			return;
 		}
 		var prev = ackSent;
 		ackSent  = ack;
-		var send = function () {
-			window.wbGam.rest( wbGamToast.restUrl + 'members/me/toasts/ack', {
-				method: 'POST',
-				body: { id: ack },
-				nonce: wbGamToast.nonce,
-				keepalive: true,
-			} ).catch( function () {
-				ackSent = Math.min( ackSent, prev ); // Network failure: the next batch asks again.
+		window.wbGam.rest( wbGamToast.restUrl + 'members/me/toasts/ack', {
+			method: 'POST',
+			body: { id: ack },
+			nonce: wbGamToast.nonce,
+			keepalive: true,
+		} ).then( function ( result ) {
+			if ( result && result.status >= 500 ) {
+				ackSent = Math.min( ackSent, prev );
+				return;
+			}
+			record.forEach( function ( id ) { // The server is past these: nothing will re-deliver them.
+				if ( id <= ack ) {
+					record.delete( id );
+				}
 			} );
-		};
-		var queue = window.requestAnimationFrame || function ( fn ) { return setTimeout( fn, 0 ); };
-		if ( 'loading' === document.readyState ) {
-			document.addEventListener( 'DOMContentLoaded', function () { queue( send ); }, { once: true } );
-		} else {
-			queue( send );
-		}
+			persist();
+		} ).catch( function () {
+			ackSent = Math.min( ackSent, prev ); // Network failure: the next displayed row asks again, and the rows stay for re-delivery.
+		} );
 	}
 
 	/**
-	 * Render a queued payload, deduping by `_id` so the same event never paints twice.
+	 * Mark rows displayed once the toast handle is on screen. A toast waiting behind a level-up card,
+	 * a dialog or BuddyNext's line is polled until it shows; a handle that is already gone (nothing to
+	 * say, or dismissed from the line) has nothing left to lose.
+	 *
+	 * @param {Object}        handle The renderer's handle.
+	 * @param {Array<number>} ids    Queue rows this toast shows.
+	 */
+	function whenShown( handle, ids ) {
+		ids = ids.filter( function ( id ) { return id != null; } );
+		if ( ! ids.length || ! handle ) {
+			return;
+		}
+		var tries = 0;
+		( function check() {
+			if ( ( handle.el && handle.el.isConnected ) || handle.gone ) {
+				shown( ids );
+			} else if ( ++tries < 2000 ) {
+				setTimeout( check, 150 );
+			}
+		}() );
+	}
+
+	// For the Moment-card store (a separate module): skip rows an earlier page already showed, report cards shown.
+	window.wbGamDelivery = {
+		consumed: function ( id ) { return record.has( parseInt( id, 10 ) ); },
+		shown: shown,
+	};
+
+	/**
+	 * Render a queued payload, deduping by `_id` so the same event never paints twice, and never
+	 * painting a row an earlier page of this tab already displayed.
 	 *
 	 * @param {Array<object>|undefined} toasts From the heartbeat / REST poll / seed.
 	 */
@@ -307,6 +407,11 @@
 		toasts.forEach( function ( toast ) {
 			if ( ! toast || typeof toast !== 'object' ) {
 				return;
+			}
+			var id = parseInt( toast._id, 10 ) || 0;
+			head = Math.max( head, parseInt( toast._ack, 10 ) || 0 );
+			if ( id && ! received.has( id ) ) {
+				received.set( id, record.has( id ) );
 			}
 			// Moment cards are the Interactivity store's surface; they must not also paint a toast.
 			if ( MOMENT_TYPES.indexOf( toast.type ) !== -1 ) {
@@ -319,17 +424,12 @@
 				return;
 			}
 			seenIds.add( key );
+			if ( id && record.has( id ) ) {
+				return; // Shown by the page before this one: counted as displayed, not shown twice.
+			}
 			showOne( toast );
 		} );
-		var ack = 0;
-		toasts.forEach( function ( t ) {
-			ack = Math.max( ack, t && parseInt( t._ack, 10 ) || 0 );
-		} );
-		if ( collectTimer ) {
-			ackHeld = Math.max( ackHeld, ack ); // Sent by flush() once the summary is handed to the renderer.
-		} else {
-			acknowledge( ack );
-		}
+		advance();
 	}
 
 	/**

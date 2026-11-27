@@ -419,3 +419,41 @@ test( 'the count-up never shows a negative number when a frame timestamp precede
 	assert.ok( seen.every( ( s ) => /^\d+$/.test( s ) ), 'only digits, never "-1": ' + seen.join( ' ' ) );
 	assert.strictEqual( seen[ seen.length - 1 ], '35' );
 } );
+
+test( 'the count-up says "Point" on the frame that reads 1 and "Points" on every other', () => {
+	const p = page();
+	const queue = [];
+	p.w.requestAnimationFrame = ( fn ) => queue.push( fn );
+	p.w.cancelAnimationFrame = () => {};
+	p.toast( { title: '+{count} Points and a new badge', count: { from: 0, to: 3, unitOne: 'Point', unitMany: 'Points' } } );
+	const msg = p.w.document.querySelector( '.wb-gam-toast__message > span' );
+	const seen = [ msg.textContent ];
+	for ( const t of [ 1000, 1040, 1100, 1400 ] ) {
+		const fn = queue.shift();
+		if ( ! fn ) {
+			break;
+		}
+		fn( t );
+		seen.push( msg.textContent );
+	}
+	assert.ok( seen.includes( '+1 Point and a new badge' ), 'a frame reading 1 is singular: ' + seen.join( ' | ' ) );
+	assert.ok( ! seen.includes( '+1 Points and a new badge' ), 'never "+1 Points": ' + seen.join( ' | ' ) );
+	assert.strictEqual( seen[ seen.length - 1 ], '+3 Points and a new badge' );
+} );
+
+test( 'a total of exactly 1 reads "+1 Point" in the final text, the screen reader copy and a stack that does not count', () => {
+	const own = page();
+	own.toast( { title: '+{count} Points', count: { from: 1, to: 1, unitOne: 'Point', unitMany: 'Points' } } );
+	assert.strictEqual( own.w.document.querySelector( '.wb-gam-toast__message .screen-reader-text' ).textContent, '+1 Point' );
+	assert.strictEqual( own.w.document.querySelector( '.wb-gam-toast__message > span' ).textContent, '+1 Point' );
+
+	const bn = page( { bn: true } ); // BuddyNext before its rebuild: the final number goes in the title.
+	bn.toast( { title: '+{count} Points', count: { from: 0, to: 1, unitOne: 'Point', unitMany: 'Points' } } );
+	assert.strictEqual( bn.bnCalls[ 0 ].o.title, '+1 Point' );
+} );
+
+test( 'without the unit names the text is left as sent', () => {
+	const p = page();
+	p.toast( { title: '+{count} Points', count: { from: 1, to: 1 } } );
+	assert.strictEqual( p.w.document.querySelector( '.wb-gam-toast__message .screen-reader-text' ).textContent, '+1 Points' );
+} );

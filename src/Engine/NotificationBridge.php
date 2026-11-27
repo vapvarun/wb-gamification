@@ -435,7 +435,8 @@ final class NotificationBridge {
 			'action'    => $event->action_id,
 			// "+1 Point", "+5 Points": the site's names, singular for exactly one.
 			'message'   => $pt_service->format( $points, $wb_gam_point_type, true ),
-			// The plural name, for toast.js when it merges repeats into one total.
+			// The site names for one and for many, for toast.js when it merges repeats into one total and counts up (a frame reading 1 says "Point").
+			'unit_one'  => $pt_service->name_for( 1, $wb_gam_point_type ),
 			'unit_many' => $pt_service->name_for( 2, $wb_gam_point_type ),
 			// The recipient's locale (BCP 47), so toast.js groups the count-up number the way this member reads it.
 			'locale'    => str_replace( '_', '-', get_locale() ),
@@ -1211,9 +1212,10 @@ final class NotificationBridge {
 	 * Reading is not delivering. A page can be torn down (BuddyNext reloads after a post, a
 	 * member navigates) between the read and the toast being painted, and a cursor that
 	 * moved on read would lose the award for good. So this only reads: the position moves
-	 * when the page that displayed the toasts acknowledges them ({@see self::acknowledge()},
-	 * POST members/me/toasts/ack). Until then every read returns the same rows, so the next
-	 * page delivers what a vanished page never showed. Two tabs open at once both show the
+	 * when the page that DISPLAYED the toasts acknowledges them ({@see self::acknowledge()},
+	 * POST members/me/toasts/ack; toast.js acks only the contiguous run of rows it has painted).
+	 * Until then every read returns the same rows, so the next page delivers what a vanished
+	 * page never showed. Two tabs open at once both show the
 	 * same rows once each; the position still only moves forward.
 	 *
 	 * Each payload carries `_id` (its queue row, the key toast.js dedupes on) and `_ack`
@@ -1261,17 +1263,19 @@ final class NotificationBridge {
 	}
 
 	/**
-	 * A page has displayed (or queued for display) the toasts up to $id: move the position.
+	 * A page has DISPLAYED the toasts up to $id: move the position.
 	 *
-	 * Forward only, and never past what the member has: an id above their newest queue row
-	 * is refused, so a client cannot skip toasts it never received, and another member's id
-	 * (ids are global) cannot move this member's position beyond their own rows.
+	 * Forward only, and only to a row of this member's own queue: queue ids are global, so an
+	 * id that is merely below the caller's newest row can belong to someone else, and moving the
+	 * position to it would skip the caller's unseen rows. One primary-key lookup with the user id
+	 * answers both "exists" and "is mine"; an id past the newest row, a trimmed row and another
+	 * member's row all fail it.
 	 *
 	 * @since 1.7.0
 	 *
 	 * @param int $user_id Member id.
-	 * @param int $id      Highest queue row id the page received (`_ack`).
-	 * @return bool True when $id is acceptable (the position is at or past it).
+	 * @param int $id      A queue row id of this member the page has displayed (`_id` / `_ack`).
+	 * @return bool True when $id is this member's row (the position is at or past it).
 	 */
 	public static function acknowledge( int $user_id, int $id ): bool {
 		if ( $user_id <= 0 || $id <= 0 || ! self::queue_ready() ) {
@@ -1281,13 +1285,14 @@ final class NotificationBridge {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$newest = (int) $wpdb->get_var(
+		$owned = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT MAX(id) FROM {$wpdb->prefix}wb_gam_notifications_queue WHERE user_id = %d",
+				"SELECT id FROM {$wpdb->prefix}wb_gam_notifications_queue WHERE id = %d AND user_id = %d",
+				$id,
 				$user_id
 			)
 		);
-		if ( $id > $newest ) {
+		if ( $owned !== $id ) {
 			return false;
 		}
 

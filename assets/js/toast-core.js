@@ -504,7 +504,16 @@
 	/** The title with its {count} token as the final number, for readers and for stacks that do not count. */
 	function countText( opts ) {
 		var c = opts.count;
-		return String( opts.title || '' ).replace( '{count}', c ? formatNumber( Number( c.to ), c.locale ) : '' );
+		return nameFor( String( opts.title || '' ).replace( '{count}', c ? formatNumber( Number( c.to ), c.locale ) : '' ), c, Number( c && c.to ) );
+	}
+
+	/**
+	 * The text after the number, with the unit in its singular for exactly 1 ("+1 Point", "+2 Points").
+	 * `count.unitOne` / `count.unitMany` are the site's own names, sent by the server; without them the
+	 * text is left as it is.
+	 */
+	function nameFor( text, c, n ) {
+		return ( c && c.unitOne && c.unitMany && 1 === n ) ? text.replace( c.unitMany, c.unitOne ) : text;
 	}
 
 	/**
@@ -528,7 +537,9 @@
 		num.setAttribute( 'aria-hidden', 'true' );
 		var shown = document.createElement( 'span' );
 		shown.setAttribute( 'aria-hidden', 'true' );
-		shown.append( parts[ 0 ], num, parts.slice( 1 ).join( '{count}' ) );
+		var tail = parts.slice( 1 ).join( '{count}' );
+		var rest = document.createTextNode( tail );
+		shown.append( parts[ 0 ], num, rest );
 		var said = document.createElement( 'span' );
 		said.className = 'screen-reader-text';
 		said.textContent = countText( opts );
@@ -537,8 +548,13 @@
 
 		var from = Number( c.from ) || 0;
 		var to   = Number( c.to ) || 0;
+		// One number, one place that writes it, so the unit follows the number on every frame.
+		var write = function ( n ) {
+			num.textContent = formatNumber( n, c.locale );
+			rest.nodeValue  = nameFor( tail, c, n );
+		};
 		if ( reducedMotion() || from === to ) {
-			num.textContent = formatNumber( to, c.locale );
+			write( to );
 			return;
 		}
 		var start = 0;
@@ -547,12 +563,12 @@
 			// A frame's timestamp can precede the first one's (it is the frame start, not the call time): without the
 			// lower bound k went slightly negative and the number dipped below `from`, flashing "+-1" for a frame.
 			var k = Math.max( 0, Math.min( 1, ( t - start ) / COUNT_MS ) );
-			num.textContent = formatNumber( Math.round( from + ( to - from ) * ( 1 - Math.pow( 1 - k, 3 ) ) ), c.locale );
+			write( Math.round( from + ( to - from ) * ( 1 - Math.pow( 1 - k, 3 ) ) ) );
 			if ( k < 1 ) {
 				handle.countFrame = window.requestAnimationFrame( step );
 			}
 		};
-		num.textContent = formatNumber( from, c.locale );
+		write( from );
 		handle.countFrame = window.requestAnimationFrame( step );
 	}
 
