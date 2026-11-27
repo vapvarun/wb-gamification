@@ -89,7 +89,6 @@
 	border-radius: var(--wbgam-card-radius);
 	background: var(--wbgam-card-bg);
 }
-.wbgam-setup__panel[hidden] { display: none; }
 .wbgam-setup__panel h2 { margin: 0 0 6px; font-size: var(--wbgam-fs-xl); }
 .wbgam-setup__lede { margin: 0 0 var(--wbgam-gap); color: var(--wbgam-text-secondary); max-width: 70ch; }
 
@@ -149,7 +148,6 @@
 	border: 1px solid var(--wbgam-border);
 	border-radius: var(--wbgam-radius-md);
 }
-.wbgam-setup__group[hidden] { display: none; }
 .wbgam-setup__group > summary {
 	display: flex;
 	flex-wrap: wrap;
