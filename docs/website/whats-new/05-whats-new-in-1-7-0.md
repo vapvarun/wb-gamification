@@ -71,6 +71,7 @@ Awards that land together become one summary toast that counts up, with the badg
 - Filtered Earning rows hide, and every Earning change keeps its own 10 second Undo.
 - Finishing Setup no longer sends you back to the first step, and a blank or out of range amount is reported next to the field.
 - Toasts, notifications, emails and activity posts read in each member's own language.
+- Block editor panels and controls, toast counts and point names also follow the language, and badge icons stay readable on a dark owner card.
 - Badge Showcase counts a badge returned twice once and keeps its tabs when nothing is earned yet.
 
 ## For developers

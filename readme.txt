@@ -186,7 +186,12 @@ Setup, the admin and the toasts rebuilt around the plugins on your site.
 * Fix      - Owner Card background and Accent colours stay readable on every block in the light and the dark theme, including a dark card on a light theme, Year Recap, the Leaderboard medals, the User Status Bar and keyboard focus rings.
 * Fix      - Toasts, notifications, emails and activity posts read in the recipient's language, not the language of the admin or cron that triggered them.
 * Fix      - Hub nudges, cohort tier names, the starter badge and level library and the API key placeholders are now translatable.
+* Fix      - Block editor panels, controls and labels now appear in the site's language: the script translation files are keyed to the shipped block scripts.
+* Fix      - Toast counts and point names read in the recipient's language, and a renamed point type keeps the owner's wording.
+* Fix      - Badge icons on a dark owner Card background now sit on a pale disc, and the hub icon discs draw their glyph in the card-derived accent text, so icon art keeps 3:1 contrast.
+* Fix      - The em-dash character is gone from the plugin description, block descriptions, emails, admin text and every translation.
 * Dev      - bin/check-i18n.sh stops the build on a string missing from the .pot, a broken placeholder or a stale translation file, and warns when a language is under 95% translated.
+* Dev      - bin/build-i18n-json.sh builds the script translation files keyed to the shipped script paths (run it after any .po or JS change), and bin/check-no-emdash.sh stops the build on an em-dash in shipped source.
 * Dev      - New filter wb_gam_leaderboard_exclusion_sql adds your own rule for who appears on every leaderboard and rank.
 * Dev      - New filter wb_gam_badge_showcase_page_size sets how many badges show before "Show all" (0 shows all).
 * Dev      - POST /actions/{id}/overrides now also takes points and point_type, accepts any registered action id, and DELETE restores the whole row.

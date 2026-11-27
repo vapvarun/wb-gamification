@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-27T13:55:23+00:00\n"
+"POT-Creation-Date: 2026-11-27T16:00:04+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wb-gamification\n"
@@ -31,7 +31,7 @@ msgstr ""
 
 #. Description of the plugin
 #: wb-gamification.php
-msgid "Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box."
+msgid "Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks - zero config, works out of the box."
 msgstr ""
 
 #. Author of the plugin
@@ -1477,15 +1477,10 @@ msgstr ""
 #: src/Admin/SettingsPage.php:1209
 #: src/Admin/SetupWizard.php:813
 #: src/BuddyPress/ProfileIntegration.php:74
-#: src/CLI/EmailCommand.php:64
 #: src/CLI/MemberCommand.php:67
 #: src/Engine/DbUpgrader.php:1408
 #: src/Engine/Installer.php:1190
 #: src/Engine/Privacy.php:310
-#: src/Engine/ProfilePage.php:205
-#: src/Engine/ProfilePage.php:403
-#: src/Engine/TransactionalEmailEngine.php:172
-#: src/Engine/WeeklyEmailEngine.php:506
 #: src/Extensions/functions.php:500
 #: src/Blocks/user-status-bar/edit.js:118
 msgid "Points"
@@ -1499,7 +1494,7 @@ msgstr ""
 #: src/Admin/RedemptionStorePage.php:536
 #: src/Admin/StreaksPage.php:167
 #: src/Admin/SubmissionsPage.php:148
-#: src/CLI/EmailCommand.php:85
+#: src/CLI/EmailCommand.php:84
 #: src/Engine/Installer.php:1145
 msgid "Member"
 msgstr ""
@@ -1869,7 +1864,7 @@ msgstr ""
 #: src/Admin/SettingsPage.php:1585
 #: src/Blocks/redemption-store/render.php:375
 #: wb-gamification.php:864
-#: assets/js/toast-core.js:574
+#: assets/js/toast-core.js:586
 msgid "Dismiss"
 msgstr ""
 
@@ -2038,8 +2033,6 @@ msgid "month"
 msgstr ""
 
 #: src/Admin/BadgeAdminPage.php:215
-#: src/API/MembersController.php:1344
-#: src/Engine/TransactionalEmailEngine.php:333
 #: wb-gamification.php:865
 msgid "points"
 msgstr ""
@@ -4391,7 +4384,7 @@ msgstr ""
 
 #. translators: %s = site name
 #: src/Admin/SettingsPage.php:529
-#: src/Engine/WeeklyEmailEngine.php:533
+#: src/Engine/WeeklyEmailEngine.php:532
 #, php-format
 msgid "Your week in %s"
 msgstr ""
@@ -5450,7 +5443,7 @@ msgstr ""
 
 #: src/Admin/SettingsPage.php:2656
 #: src/BuddyPress/Stream/ActivityCard.php:219
-#: src/Engine/NotificationBridge.php:546
+#: src/Engine/NotificationBridge.php:548
 msgid "Level up"
 msgstr ""
 
@@ -6522,7 +6515,7 @@ msgstr ""
 #. translators: %s: the rejected parameter name.
 #: src/API/EventsController.php:193
 #, php-format
-msgid "\"%s\" cannot be set on a live event. Use POST /events/import to backdate or replay history — it requires the capability to manage members."
+msgid "\"%s\" cannot be set on a live event. Use POST /events/import to backdate or replay history - it requires the capability to manage members."
 msgstr ""
 
 #: src/API/EventsController.php:214
@@ -6657,20 +6650,20 @@ msgid "Profile visibility is set on your community profile."
 msgstr ""
 
 #. translators: 1: signed point delta, 2: currency label.
-#: src/API/MembersController.php:1347
+#: src/API/MembersController.php:1346
 #, php-format
 msgid "+%1$d %2$s"
 msgstr ""
 
 #. translators: %s: new level name
-#: src/API/MembersController.php:1368
+#: src/API/MembersController.php:1367
 #, php-format
 msgid "Level up: %s"
 msgstr ""
 
 #. translators: %d: streak day count.
-#: src/API/MembersController.php:1376
-#: src/Engine/NotificationBridge.php:563
+#: src/API/MembersController.php:1375
+#: src/Engine/NotificationBridge.php:565
 #, php-format
 msgid "%d-day streak!"
 msgid_plural "%d-day streak!"
@@ -7232,10 +7225,10 @@ msgstr ""
 #: src/Blocks/hub/render.php:227
 #: src/Blocks/user-status-bar/render.php:134
 #: src/BuddyPress/ProfileIntegration.php:166
-#: src/CLI/EmailCommand.php:84
+#: src/CLI/EmailCommand.php:83
 #: src/Engine/Installer.php:1140
-#: src/Engine/ProfilePage.php:230
-#: src/Engine/ProfilePage.php:431
+#: src/Engine/ProfilePage.php:229
+#: src/Engine/ProfilePage.php:429
 msgid "Newcomer"
 msgstr ""
 
@@ -7430,8 +7423,8 @@ msgstr ""
 #. translators: %d: number of badges earned.
 #: src/Blocks/leaderboard/render.php:226
 #: src/BuddyPress/DirectoryIntegration.php:201
-#: src/Engine/ProfilePage.php:227
-#: src/Engine/ProfilePage.php:428
+#: src/Engine/ProfilePage.php:226
+#: src/Engine/ProfilePage.php:426
 #, php-format
 msgid "%d badge"
 msgid_plural "%d badges"
@@ -7906,55 +7899,55 @@ msgid "A new milestone reached."
 msgstr ""
 
 #. translators: %s: level name
-#: src/CLI/EmailCommand.php:91
+#: src/CLI/EmailCommand.php:90
 #, php-format
 msgid "[TEST] You reached %s!"
 msgstr ""
 
-#: src/CLI/EmailCommand.php:100
+#: src/CLI/EmailCommand.php:99
 msgid "Sample Badge"
 msgstr ""
 
-#: src/CLI/EmailCommand.php:101
+#: src/CLI/EmailCommand.php:100
 msgid "A sample badge for email testing."
 msgstr ""
 
-#: src/CLI/EmailCommand.php:105
+#: src/CLI/EmailCommand.php:104
 msgid "[TEST] You earned the Sample Badge!"
 msgstr ""
 
-#: src/CLI/EmailCommand.php:111
+#: src/CLI/EmailCommand.php:110
 msgid "Sample Challenge"
 msgstr ""
 
-#: src/CLI/EmailCommand.php:112
+#: src/CLI/EmailCommand.php:111
 msgid "A sample challenge for email testing."
 msgstr ""
 
-#: src/CLI/EmailCommand.php:115
+#: src/CLI/EmailCommand.php:114
 msgid "[TEST] Challenge completed: Sample Challenge"
 msgstr ""
 
-#: src/CLI/EmailCommand.php:122
+#: src/CLI/EmailCommand.php:121
 msgid "Sample Reward"
 msgstr ""
 
-#: src/CLI/EmailCommand.php:128
+#: src/CLI/EmailCommand.php:127
 msgid "[TEST] Your redemption: Sample Reward"
 msgstr ""
 
 #. translators: %s: site name
-#: src/CLI/EmailCommand.php:149
+#: src/CLI/EmailCommand.php:148
 #, php-format
 msgid "[TEST] Your week in %s"
 msgstr ""
 
-#: src/CLI/EmailCommand.php:157
+#: src/CLI/EmailCommand.php:156
 msgid "You're #3 this week with 240 points."
 msgstr ""
 
 #. translators: %s: site name
-#: src/CLI/EmailCommand.php:163
+#: src/CLI/EmailCommand.php:162
 #, php-format
 msgid "[TEST] Your weekly community ranking at %s"
 msgstr ""
@@ -8305,7 +8298,7 @@ msgstr ""
 
 #: src/Engine/DbUpgrader.php:1409
 #: src/Engine/Installer.php:1191
-#: src/Services/PointTypeService.php:116
+#: src/Services/PointTypeService.php:123
 msgid "Point"
 msgid_plural "Points"
 msgstr[0] ""
@@ -8447,7 +8440,7 @@ msgid "Content Creator"
 msgstr ""
 
 #: src/Engine/Installer.php:806
-msgid "Published 25 posts — a committed contributor."
+msgid "Published 25 posts - a committed contributor."
 msgstr ""
 
 #: src/Engine/Installer.php:807
@@ -8463,7 +8456,7 @@ msgid "Engaged Reader"
 msgstr ""
 
 #: src/Engine/Installer.php:808
-msgid "Left 10 comments — always adding to the conversation."
+msgid "Left 10 comments - always adding to the conversation."
 msgstr ""
 
 #: src/Engine/Installer.php:811
@@ -8487,7 +8480,7 @@ msgid "Community Voice"
 msgstr ""
 
 #: src/Engine/Installer.php:813
-msgid "Posted 50 activity updates — your voice shapes this community."
+msgid "Posted 50 activity updates - your voice shapes this community."
 msgstr ""
 
 #: src/Engine/Installer.php:814
@@ -8503,7 +8496,7 @@ msgid "Social Connector"
 msgstr ""
 
 #: src/Engine/Installer.php:815
-msgid "Made 10 connections — growing the community network."
+msgid "Made 10 connections - growing the community network."
 msgstr ""
 
 #: src/Engine/Installer.php:816
@@ -8575,7 +8568,7 @@ msgid "Founding Member"
 msgstr ""
 
 #: src/Engine/Installer.php:826
-msgid "A founding member — here from the very beginning."
+msgid "A founding member - here from the very beginning."
 msgstr ""
 
 #: src/Engine/Installer.php:827
@@ -8756,7 +8749,7 @@ msgid "Email me about my rewards"
 msgstr ""
 
 #: src/Engine/MemberPrefs.php:161
-#: src/Engine/ProfilePage.php:498
+#: src/Engine/ProfilePage.php:496
 msgid "Could not save. Please try again."
 msgstr ""
 
@@ -8814,136 +8807,136 @@ msgid "Welcome aboard!"
 msgstr ""
 
 #: src/Engine/NotificationBridge.php:403
-#: src/Engine/NotificationBridge.php:1293
+#: src/Engine/NotificationBridge.php:1295
 msgid "See progress"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:474
+#: src/Engine/NotificationBridge.php:476
 msgid "New badge"
 msgstr ""
 
 #. translators: %s: new level name.
-#: src/Engine/NotificationBridge.php:522
-#: src/Engine/TransactionalEmailEngine.php:198
+#: src/Engine/NotificationBridge.php:524
+#: src/Engine/TransactionalEmailEngine.php:197
 #, php-format
 msgid "You reached %s!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:523
-#: src/Engine/NotificationBridge.php:547
+#: src/Engine/NotificationBridge.php:525
+#: src/Engine/NotificationBridge.php:549
 msgid "You leveled up!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:550
-#: src/Engine/NotificationBridge.php:607
-#: src/Engine/NotificationBridge.php:647
+#: src/Engine/NotificationBridge.php:552
+#: src/Engine/NotificationBridge.php:609
+#: src/Engine/NotificationBridge.php:649
 msgid "Awesome!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:571
+#: src/Engine/NotificationBridge.php:573
 #: src/Engine/Registry.php:805
 msgid "Streak milestone"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:573
+#: src/Engine/NotificationBridge.php:575
 msgid "Keep showing up - you're on fire!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:575
+#: src/Engine/NotificationBridge.php:577
 msgid "Keep it up!"
 msgstr ""
 
 #. translators: %s: league name.
-#: src/Engine/NotificationBridge.php:601
+#: src/Engine/NotificationBridge.php:603
 #, php-format
 msgid "You moved up to %s League"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:602
+#: src/Engine/NotificationBridge.php:604
 msgid "League up"
 msgstr ""
 
 #. translators: %s: league name.
-#: src/Engine/NotificationBridge.php:604
+#: src/Engine/NotificationBridge.php:606
 #, php-format
 msgid "%s League"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:605
+#: src/Engine/NotificationBridge.php:607
 msgid "You moved up this week."
 msgstr ""
 
 #. translators: %s: community challenge title.
-#: src/Engine/NotificationBridge.php:639
+#: src/Engine/NotificationBridge.php:641
 #, php-format
 msgid "Goal reached: %s"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:640
+#: src/Engine/NotificationBridge.php:642
 msgid "Goal reached"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:641
+#: src/Engine/NotificationBridge.php:643
 msgid "Your community did it"
 msgstr ""
 
 #. translators: %s: formatted points, e.g. "50 Points".
-#: src/Engine/NotificationBridge.php:644
+#: src/Engine/NotificationBridge.php:646
 #, php-format
 msgid "You helped, and earned %s."
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:645
+#: src/Engine/NotificationBridge.php:647
 msgid "Thank you for helping."
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:669
+#: src/Engine/NotificationBridge.php:671
 msgid "Submission approved"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:694
+#: src/Engine/NotificationBridge.php:696
 msgid "Submission not approved"
 msgstr ""
 
 #. translators: 1: action label, 2: the moderator's reason.
-#: src/Engine/NotificationBridge.php:697
+#: src/Engine/NotificationBridge.php:699
 #, php-format
 msgid "%1$s: %2$s"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:715
+#: src/Engine/NotificationBridge.php:717
 msgid "Challenge complete"
 msgstr ""
 
 #. translators: 1: display name of the member who gave the kudos, 2: their message.
-#: src/Engine/NotificationBridge.php:739
+#: src/Engine/NotificationBridge.php:741
 #, php-format
 msgid "From %1$s: %2$s"
 msgstr ""
 
 #. translators: %s: display name of the member who gave the kudos.
-#: src/Engine/NotificationBridge.php:741
+#: src/Engine/NotificationBridge.php:743
 #, php-format
 msgid "From %s"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:751
+#: src/Engine/NotificationBridge.php:753
 msgid "Kudos received"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:868
+#: src/Engine/NotificationBridge.php:870
 msgid "Level up!"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:1285
+#: src/Engine/NotificationBridge.php:1287
 msgid "Since your last visit"
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:1291
+#: src/Engine/NotificationBridge.php:1293
 msgid "You earned points and rewards."
 msgstr ""
 
-#: src/Engine/NotificationBridge.php:1482
+#: src/Engine/NotificationBridge.php:1484
 msgid "Points awarded"
 msgstr ""
 
@@ -9148,27 +9141,27 @@ msgid "Cohort league tier"
 msgstr ""
 
 #: src/Engine/Privacy.php:441
-msgid "Personal record — best day"
+msgid "Personal record - best day"
 msgstr ""
 
 #: src/Engine/Privacy.php:442
-msgid "Personal record — best week"
+msgid "Personal record - best week"
 msgstr ""
 
 #: src/Engine/Privacy.php:443
-msgid "Personal record — best month"
+msgid "Personal record - best month"
 msgstr ""
 
 #: src/Engine/Privacy.php:444
-msgid "Personal record — points today"
+msgid "Personal record - points today"
 msgstr ""
 
 #: src/Engine/Privacy.php:445
-msgid "Personal record — points this week"
+msgid "Personal record - points this week"
 msgstr ""
 
 #: src/Engine/Privacy.php:446
-msgid "Personal record — points this month"
+msgid "Personal record - points this month"
 msgstr ""
 
 #: src/Engine/Privacy.php:447
@@ -9236,7 +9229,7 @@ msgstr ""
 #. translators: %s: database table holding the member's data.
 #: src/Engine/Privacy.php:676
 #, php-format
-msgid "Gamification — %s"
+msgid "Gamification - %s"
 msgstr ""
 
 #. translators: %d = number of database rows removed
@@ -9258,48 +9251,48 @@ msgid "The member has chosen not to share their achievements."
 msgstr ""
 
 #. translators: 1: display name, 2: site name
-#: src/Engine/ProfilePage.php:215
+#: src/Engine/ProfilePage.php:214
 #, php-format
 msgid "%1$s - %2$s"
 msgstr ""
 
 #. translators: 1: display name, 2: amount, 3: currency label, 4: badge count with label, 5: level name
-#: src/Engine/ProfilePage.php:221
+#: src/Engine/ProfilePage.php:220
 #, php-format
 msgid "%1$s has earned %2$d %3$s, %4$s, and reached %5$s."
 msgstr ""
 
 #. translators: 1: amount, 2: currency, 3: badge count with label, 4: level
-#: src/Engine/ProfilePage.php:423
+#: src/Engine/ProfilePage.php:421
 #, php-format
 msgid "%1$d %2$s · %3$s · %4$s"
 msgstr ""
 
-#: src/Engine/ProfilePage.php:489
+#: src/Engine/ProfilePage.php:487
 msgid "This profile is visible to anyone with the link."
 msgstr ""
 
-#: src/Engine/ProfilePage.php:490
+#: src/Engine/ProfilePage.php:488
 msgid "Only you and site admins can see this profile."
 msgstr ""
 
-#: src/Engine/ProfilePage.php:491
+#: src/Engine/ProfilePage.php:489
 msgid "Make profile public"
 msgstr ""
 
-#: src/Engine/ProfilePage.php:492
+#: src/Engine/ProfilePage.php:490
 msgid "Make profile private"
 msgstr ""
 
-#: src/Engine/ProfilePage.php:504
+#: src/Engine/ProfilePage.php:502
 msgid "Profile visibility"
 msgstr ""
 
-#: src/Engine/ProfilePage.php:519
+#: src/Engine/ProfilePage.php:517
 msgid "Saving…"
 msgstr ""
 
-#: src/Engine/ProfilePage.php:527
+#: src/Engine/ProfilePage.php:525
 msgid "Note: public profiles are currently turned off site-wide by the administrator, so your profile is hidden regardless of this setting."
 msgstr ""
 
@@ -9649,39 +9642,39 @@ msgid "Earn %1$s more points this week to reach %2$s!"
 msgstr ""
 
 #. translators: %s: badge name
-#: src/Engine/TransactionalEmailEngine.php:248
+#: src/Engine/TransactionalEmailEngine.php:247
 #, php-format
 msgid "You earned the %s badge!"
 msgstr ""
 
 #. translators: %s: challenge title
-#: src/Engine/TransactionalEmailEngine.php:298
+#: src/Engine/TransactionalEmailEngine.php:297
 #, php-format
 msgid "Challenge completed: %s"
 msgstr ""
 
-#: src/Engine/TransactionalEmailEngine.php:344
+#: src/Engine/TransactionalEmailEngine.php:342
 msgid "Your reward"
 msgstr ""
 
 #. translators: %s: reward title.
-#: src/Engine/TransactionalEmailEngine.php:361
+#: src/Engine/TransactionalEmailEngine.php:359
 #, php-format
 msgid "Your redemption: %s"
 msgstr ""
 
-#: src/Engine/TransactionalEmailEngine.php:362
+#: src/Engine/TransactionalEmailEngine.php:360
 msgid "reward"
 msgstr ""
 
 #. translators: %s: the weekly recap email subject.
-#: src/Engine/WeeklyEmailEngine.php:542
+#: src/Engine/WeeklyEmailEngine.php:541
 #, php-format
 msgid "%s - Personal best!"
 msgstr ""
 
 #. translators: %s: the weekly recap email subject.
-#: src/Engine/WeeklyEmailEngine.php:545
+#: src/Engine/WeeklyEmailEngine.php:544
 #, php-format
 msgid "%s - Streak active"
 msgstr ""
@@ -9727,7 +9720,7 @@ msgid "My Achievements"
 msgstr ""
 
 #. translators: 1: an amount, e.g. "+10" or "250", 2: the site's name for points, e.g. "Points" or "Karma".
-#: src/Services/PointTypeService.php:137
+#: src/Services/PointTypeService.php:144
 #, php-format
 msgid "%1$s %2$s"
 msgstr ""
@@ -9818,7 +9811,7 @@ msgstr ""
 #. translators: %s: new level name
 #: templates/emails/level-up.php:47
 #, php-format
-msgid "You just reached %s — congratulations!"
+msgid "You just reached %s - congratulations!"
 msgstr ""
 
 #. translators: 1: old level name, 2: new level name
@@ -9992,7 +9985,7 @@ msgstr ""
 #. translators: 1: spent amount, 2: from-label, 3: credited amount, 4: to-label
 #: assets/js/hub-convert.js:100
 #, js-format
-msgid "Spend %1$d %2$s — receive %3$d %4$s."
+msgid "Spend %1$d %2$s - receive %3$d %4$s."
 msgstr ""
 
 #: assets/js/hub-convert.js:182
@@ -10119,7 +10112,7 @@ msgid "Gamification Hub"
 msgstr ""
 
 #: src/Blocks/hub/edit.js:48
-msgid "Member dashboard — points, level, badges, challenges, leaderboard, and kudos in a connected card layout."
+msgid "Member dashboard - points, level, badges, challenges, leaderboard, and kudos in a connected card layout."
 msgstr ""
 
 #: src/Blocks/hub/edit.js:52
@@ -10295,7 +10288,7 @@ msgid "Card border colour"
 msgstr ""
 
 #: src/Blocks/redemption-store/edit.js:318
-msgid "Member-facing rewards catalog — active redemption items with point cost and a Redeem button."
+msgid "Member-facing rewards catalog - active redemption items with point cost and a Redeem button."
 msgstr ""
 
 #. translators: 1: number of rewards shown, 2: number of columns.
@@ -10687,7 +10680,7 @@ msgstr ""
 
 #: src/Blocks/cohort-rank/block.json
 msgctxt "block description"
-msgid "Display the current member's cohort league standing — tier, rank within cohort, points this week."
+msgid "Display the current member's cohort league standing - tier, rank within cohort, points this week."
 msgstr ""
 
 #: src/Blocks/cohort-rank/block.json
@@ -10713,7 +10706,7 @@ msgstr ""
 
 #: src/Blocks/community-challenges/block.json
 msgctxt "block description"
-msgid "Display active community challenges (Pokémon GO style — global counter accumulates as everyone contributes)."
+msgid "Display active community challenges (Pokémon GO style - global counter accumulates as everyone contributes)."
 msgstr ""
 
 #: src/Blocks/community-challenges/block.json
@@ -10765,7 +10758,7 @@ msgstr ""
 
 #: src/Blocks/earning-guide/block.json
 msgctxt "block description"
-msgid "Show members how to earn points — lists all enabled actions with their point values, grouped by category."
+msgid "Show members how to earn points - lists all enabled actions with their point values, grouped by category."
 msgstr ""
 
 #: src/Blocks/earning-guide/block.json
@@ -10837,7 +10830,7 @@ msgstr ""
 
 #: src/Blocks/hub/block.json
 msgctxt "block description"
-msgid "Member gamification dashboard — stats, badges, challenges, leaderboard, and more in a connected card layout with slide-in detail panels."
+msgid "Member gamification dashboard - stats, badges, challenges, leaderboard, and more in a connected card layout with slide-in detail panels."
 msgstr ""
 
 #: src/Blocks/hub/block.json

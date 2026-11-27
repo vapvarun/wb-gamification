@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Changed
 
+- bin/build-i18n-json.sh builds the script translation files keyed to the shipped script paths (run it after any .po or JS change), and bin/check-no-emdash.sh stops the build on an em-dash in shipped source.
 - German, Spanish, French, Italian and Brazilian Portuguese are fully translated, and the script translation files are rebuilt so every translated script loads them.
 - Date formats in the streak heatmap and the redemption log follow the site's language and date settings.
 - bin/check-i18n.sh stops the build on a string missing from the .pot, a broken placeholder or a stale translation file, and warns when a language is under 95% translated.
@@ -49,6 +50,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - Owner Card background and Accent colours stay readable on every block in the light and the dark theme, including a dark card on a light theme, Year Recap, the Leaderboard medals, the User Status Bar and keyboard focus rings.
 - Toasts, notifications, emails and activity posts read in the recipient's language, not the language of the admin or cron that triggered them.
 - Hub nudges, cohort tier names, the starter badge and level library and the API key placeholders are now translatable.
+- Block editor panels, controls and labels now appear in the site's language: the script translation files are keyed to the shipped block scripts.
+- Toast counts and point names read in the recipient's language, and a renamed point type keeps the owner's wording.
+- Badge icons on a dark owner Card background now sit on a pale disc, and the hub icon discs draw their glyph in the card-derived accent text, so icon art keeps 3:1 contrast.
+- The em-dash character is gone from the plugin description, block descriptions, emails, admin text and every translation.
 - Saving the Points settings could switch every earning action off: any save that did not carry each action's checkbox (a script, another plugin, or a host that cuts long forms) wrote "off" for all of them. Each action now saves on its own, and the settings form no longer touches them.
 - A fresh install with several plugins activated at once could log "Duplicate column" or "Duplicate key name" database errors; the install now runs once, and upgrades wait for it.
 - Accent buttons inside BuddyNext (Send Kudos, the daily bonus, "Let's go") met text contrast only on the default theme; they now use the accent their text colour was made for. The gold #1 badge is readable in dark mode.

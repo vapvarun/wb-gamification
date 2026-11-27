@@ -44,7 +44,7 @@ If you click **Skip setup, I'll configure it myself**, nothing is saved and memb
 
 ## Languages
 
-WB Gamification includes German, French, Spanish, Italian and Brazilian Portuguese translations. Set **Settings > General > Site Language** to one of them and the admin screens and blocks follow. Toasts, notifications and emails are written in each member's own language.
+WB Gamification includes German, French, Spanish, Italian and Brazilian Portuguese translations. Set **Settings > General > Site Language** to one of them and the admin screens and blocks follow. Toasts, notifications and emails are written in each member's own language, with numbers and the point name in that language too: the untouched default "Points" is translated for each reader, and a point type you renamed is shown exactly as you typed it. The block editor's panels and controls follow the language too.
 
 ## Updates and Licence
 
