@@ -389,6 +389,25 @@ class ContentReversalTest extends TestCase {
 	}
 
 	#[Test]
+	public function deleting_a_buddynext_post_takes_back_its_comments_and_reactions(): void {
+		$comment  = $this->bn_trigger( 'bn_comment_created' );
+		$reaction = $this->bn_trigger( 'bn_reaction_received' );
+
+		// Amina (7) wrote posts 16 and 160. Elena (8) comments on 16; Kwame (9) reacts to both.
+		$this->earn_if_allowed( 8, $comment, array( 300, 'post', 16, 8 ) );
+		$this->earn_if_allowed( 7, $reaction, array( 16, 7, 9, 'like' ) );
+		$this->earn_if_allowed( 7, $reaction, array( 160, 7, 9, 'like' ) );
+		$this->assertSame( 4, $this->db->totals[7]['points'] );
+
+		// PostService::delete(): buddynext_post_deleted( post, deleter, author ), then the comments it swept.
+		$this->fire_reverse( $reaction, 'buddynext_post_deleted', array( 16, 7, 7 ) );
+		$this->fire_reverse( $comment, 'buddynext_post_comments_deleted', array( array( 300 ), 16, array( 300 => 8 ) ) );
+
+		$this->assertSame( 0, $this->db->totals[8]['points'], 'The commenter loses the comment award.' );
+		$this->assertSame( 2, $this->db->totals[7]['points'], 'The author loses the reaction on 16, keeps the one on 160.' );
+	}
+
+	#[Test]
 	public function history_names_the_reversal_after_the_action(): void {
 		$this->assertSame( 'Wp Publish Post (content removed)', Registry::label_for( 'wp_publish_post_removed' ) );
 		$this->assertSame( 'Wp Publish Post (content restored)', Registry::label_for( 'wp_publish_post_restored' ) );

@@ -1480,6 +1480,47 @@ final class PointsEngine {
 	}
 
 	/**
+	 * Object ids of a member's awards for one action whose event recorded a metadata value.
+	 *
+	 * For a `reverse_on` whose partner hook names the parent, not the awarded objects: a deleted
+	 * post takes back the reactions its author was paid for, though the reactors are gone with the
+	 * reaction rows. Read from the member's own events (idx_user_action), then matched exactly.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int    $user_id    Member who was paid.
+	 * @param string $action_id  Action id.
+	 * @param string $meta_key   Metadata key the action's metadata_callback writes.
+	 * @param int    $meta_value Value to match.
+	 * @return int[] Object ids to hand to {@see reverse_object_awards()}.
+	 */
+	public static function object_ids_by_meta( int $user_id, string $action_id, string $meta_key, int $meta_value ): array {
+		global $wpdb;
+		if ( $user_id <= 0 || $meta_value <= 0 ) {
+			return array();
+		}
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- write path (a reversal), must read the live ledger.
+		$rows = (array) $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT object_id, metadata FROM {$wpdb->prefix}wb_gam_events WHERE user_id = %d AND action_id = %s AND object_id IS NOT NULL AND metadata LIKE %s",
+				$user_id,
+				$action_id,
+				'%' . $wpdb->esc_like( '"' . $meta_key . '":' . $meta_value ) . '%'
+			),
+			ARRAY_A
+		);
+		$ids  = array();
+		foreach ( $rows as $row ) {
+			$meta = json_decode( (string) ( $row['metadata'] ?? '' ), true );
+			// LIKE also matches 12 inside 123: keep exact matches only.
+			if ( is_array( $meta ) && (int) ( $meta[ $meta_key ] ?? 0 ) === $meta_value ) {
+				$ids[ (int) $row['object_id'] ] = true;
+			}
+		}
+		return array_keys( $ids );
+	}
+
+	/**
 	 * Reverse or restore: read the object's rows FOR UPDATE and write the difference, in one transaction.
 	 *
 	 * Reverse and restore share this one locked read-then-write, so two of them for the same object

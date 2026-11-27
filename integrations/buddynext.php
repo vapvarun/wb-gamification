@@ -135,7 +135,11 @@ return array(
 				);
 			},
 			'once_per_object'   => static fn( $comment_id ): int => (int) $comment_id,
-			'reverse_on'        => array( 'buddynext_comment_deleted' => static fn( $comment_id ): int => (int) $comment_id ),
+			// A deleted post removes its comments in bulk and reports them once per post, not per comment.
+			'reverse_on'        => array(
+				'buddynext_comment_deleted'       => static fn( $comment_id ): int => (int) $comment_id,
+				'buddynext_post_comments_deleted' => static fn( $comment_ids ): array => array_map( 'intval', (array) $comment_ids ),
+			),
 			'owner_callback'    => static fn( $comment_id, $object_type, $object_id ): int => 'post' === $object_type ? $wb_gam_bn_post_owner( $object_id ) : 0,
 			'default_points'    => 3,
 			'category'          => 'content',
@@ -166,6 +170,9 @@ return array(
 			// Per reactor and post: removing the reaction takes the author's points back.
 			'reverse_on'        => array(
 				'buddynext_reaction_removed' => static fn( $object_type, $object_id, $user_id ): int => 'post' === $object_type ? \WBGam\Engine\Registry::object_key( (int) $user_id, 'post', (int) $object_id ) : 0,
+				// A deleted post takes its reactions with it and names only its author (arg 3), so the
+				// author's awards for that post are found by the post id their events recorded.
+				'buddynext_post_deleted'     => static fn( $post_id, $user_id = 0, $author_id = 0 ): array => \WBGam\Engine\PointsEngine::object_ids_by_meta( (int) $author_id, 'bn_reaction_received', 'post_id', (int) $post_id ),
 			),
 			'default_points'    => 2,
 			'category'          => 'content',
