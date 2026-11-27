@@ -205,6 +205,13 @@
 	display: none !important;
 }
 
+/* The user-agent [hidden] rule has no specificity, so any author `display`
+   (grid rows, inline-flex buttons) silently wins and the attribute does
+   nothing. Restore it once for the whole admin stack instead of per class. */
+[hidden] {
+	display: none !important;
+}
+
 .wbgam-is-link-clean {
 	text-decoration: none;
 }

@@ -1203,7 +1203,6 @@ details.wbgam-settings-nav-group .wbgam-settings-nav-item {
 	color: #fff;
 	box-shadow: var(--wbgam-card-shadow-hover);
 }
-.wbgam-earn-status[hidden] { display: none; }
 .wbgam-earn-status[data-error] { background: var(--wbgam-danger-dark); }
 
 @media (max-width: 640px) {

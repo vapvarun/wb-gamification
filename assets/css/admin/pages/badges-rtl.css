@@ -222,10 +222,6 @@
 	gap: 6px;
 }
 
-.wb-gam-condition-fields[hidden] {
-	display: none;
-}
-
 .wb-gam-condition-unit {
 	color: var(--wbgam-wp-text, #50575e);
 	font-size: var(--wbgam-fs-xs, 0.75rem);
