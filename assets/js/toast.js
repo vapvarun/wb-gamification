@@ -68,8 +68,17 @@
 	var collectTimer = 0;
 	var sum = null;     // The summary on screen (or waiting), still taking awards.
 
+	/**
+	 * A phrase with a count. The server sends it for the recipient's language, one string per count
+	 * (an array indexed 0..N, built with _n() so every plural form of the language is right); a plain
+	 * string is the fallback for pages that did not get the table. Counts past the table use its last form.
+	 */
 	function fmt( key, fallback, n ) {
-		return toastI18n( key, fallback ).replace( '%d', n ).replace( '%s', n );
+		var v = wbGamToast.i18n && wbGamToast.i18n[ key ];
+		if ( Array.isArray( v ) ) {
+			v = v[ Math.min( n, v.length - 1 ) ];
+		}
+		return String( v || fallback ).replace( '%d', n ).replace( '%s', n );
 	}
 
 	function collect( toast ) {
@@ -153,9 +162,9 @@
 	/** One title under 40 characters, one detail line, one optional button. */
 	function summarise() {
 		var extras = [
-			[ sum.badges, 'andBadge', 'and a new badge', 'andBadges', 'and %d new badges' ],
-			[ sum.challenges, 'andChallenge', 'and a challenge done', 'andChallenges', 'and %d challenges done' ],
-			[ sum.kudos, 'andKudos', 'and kudos', 'andKudos', 'and kudos' ],
+			[ sum.badges, 'andBadges', 'and a new badge', 'and %d new badges' ],
+			[ sum.challenges, 'andChallenges', 'and a challenge done', 'and %d challenges done' ],
+			[ sum.kudos, 'andKudos', 'and kudos', 'and kudos' ],
 		].filter( function ( e ) { return e[ 0 ].length; } );
 		var others = sum.badges.length + sum.challenges.length + sum.kudos.length;
 		var title;
@@ -177,7 +186,7 @@
 				// aboard!" did not fit one line.
 			} else if ( 1 === extras.length ) {
 				var e = extras[ 0 ];
-				title += ' ' + ( 1 === e[ 0 ].length ? toastI18n( e[ 1 ], e[ 2 ] ) : fmt( e[ 3 ], e[ 4 ], e[ 0 ].length ) );
+				title += ' ' + fmt( e[ 1 ], 1 === e[ 0 ].length ? e[ 2 ] : e[ 3 ], e[ 0 ].length );
 			} else if ( extras.length > 1 ) {
 				title += ' ' + fmt( 'andRewards', 'and %d rewards', others );
 			}

@@ -398,3 +398,24 @@ test( 'the count-up number is grouped by the recipient locale, not the browser l
 	assert.match( read( 'de-DE' ), /\+6\.000 Punkte/, 'German grouping for a de-DE recipient' );
 	assert.match( read( 'en-US' ), /\+6,000 Punkte/ );
 } );
+
+test( 'the count-up never shows a negative number when a frame timestamp precedes the first one', () => {
+	const p = page();
+	const frames = [ 1000, 996, 1010, 1200, 1500 ]; // The second frame is stamped earlier than the first.
+	const queue = [];
+	p.w.requestAnimationFrame = ( fn ) => queue.push( fn );
+	p.w.cancelAnimationFrame = () => {};
+	p.toast( { title: '+{count} Points', count: { from: 0, to: 35 } } );
+	const num = p.w.document.querySelector( '.wb-gam-count' );
+	const seen = [ num.textContent ];
+	for ( const t of frames ) {
+		const fn = queue.shift();
+		if ( ! fn ) {
+			break;
+		}
+		fn( t );
+		seen.push( num.textContent );
+	}
+	assert.ok( seen.every( ( s ) => /^\d+$/.test( s ) ), 'only digits, never "-1": ' + seen.join( ' ' ) );
+	assert.strictEqual( seen[ seen.length - 1 ], '35' );
+} );

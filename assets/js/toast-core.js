@@ -415,7 +415,7 @@
 				waiting = held.concat( waiting );
 				return;
 			}
-			// The page is clear: show what waited, one at a time on a phone, up to three otherwise.
+			// The page is clear: show what waited, one at a time on a phone, up to MAX_VISIBLE (two) otherwise.
 			var phone = window.matchMedia( ONE_AT_A_TIME ).matches;
 			var shown = function () {
 				return ( container ? container.children.length : 0 ) + bnLive.length;
@@ -544,7 +544,9 @@
 		var start = 0;
 		var step  = function ( t ) {
 			start = start || t;
-			var k = Math.min( 1, ( t - start ) / COUNT_MS );
+			// A frame's timestamp can precede the first one's (it is the frame start, not the call time): without the
+			// lower bound k went slightly negative and the number dipped below `from`, flashing "+-1" for a frame.
+			var k = Math.max( 0, Math.min( 1, ( t - start ) / COUNT_MS ) );
 			num.textContent = formatNumber( Math.round( from + ( to - from ) * ( 1 - Math.pow( 1 - k, 3 ) ) ), c.locale );
 			if ( k < 1 ) {
 				handle.countFrame = window.requestAnimationFrame( step );
@@ -703,8 +705,8 @@
 	 * Is window.bnToast BuddyNext's own toast (which takes an options object)? Other plugins define
 	 * a text-only window.bnToast when BuddyNext is absent (Jetonomy's header.js), and BuddyNext's
 	 * early stub is text-only too; handing either an object printed "[object Object]". BuddyNext's
-	 * real one is the named function `bnToast` (shell/dialog.js) and, from BuddyNext 1.3.1, says
-	 * what it supports.
+	 * real one is the named function `bnToast` (shell/dialog.js) and, from the BuddyNext 1.3.0
+	 * toast rebuild, says what it supports (bnToast.supports); a build from before the rebuild has no flag and gets the final number as text.
 	 *
 	 * @return {boolean}
 	 */

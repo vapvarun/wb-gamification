@@ -27,7 +27,7 @@
 
 .wb-gam-streak__flame {
 	display: inline-flex;
-	color: var(--wb-gam-color-fire);
+	color: var(--wb-gam-color-fire-strong); /* The glyph is non-text: 3:1 needed, fire (#f59e0b) is 2.15:1 on white. */
 	line-height: 1;
 }
 

@@ -586,7 +586,7 @@ details.wbgam-settings-nav-group .wbgam-settings-nav-item {
 
 .wbgam-rank-list__rank {
 	font-weight: 700;
-	color: var(--wbgam-text-muted);
+	color: var(--wbgam-text-secondary); /* 4.8:1 on white; text-muted is 2.5:1. */
 	font-variant-numeric: tabular-nums;
 }
 
@@ -1205,6 +1205,15 @@ details.wbgam-settings-nav-group .wbgam-settings-nav-item {
 	box-shadow: var(--wbgam-card-shadow-hover);
 }
 .wbgam-earn-status[data-error] { background: var(--wbgam-danger-dark); }
+/* The Undo button sits on the dark bar: the secondary button's own purple read 2.45:1 there. */
+.wbgam-earn-status .wbgam-btn--secondary,
+.wbgam-earn-status .wbgam-btn--secondary:hover,
+.wbgam-earn-status .wbgam-btn--secondary:focus-visible {
+	color: #fff;
+	border-color: #fff;
+	background: transparent;
+}
+.wbgam-earn-status .wbgam-btn--secondary:hover { background: rgba(255, 255, 255, 0.16); }
 
 @media (max-width: 640px) {
 	.wbgam-earn-toolbar__count { margin-inline-start: 0; flex-basis: 100%; }

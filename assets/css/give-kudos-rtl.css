@@ -63,9 +63,8 @@
 
 .wb-gam-give-kudos__input:focus,
 .wb-gam-give-kudos__textarea:focus {
-	outline: 2px solid transparent; /* forced-colors repaints it; the ring below is dropped there */
+	/* The ring is the shared :focus-visible rule in design-tokens.css; the border only follows it. */
 	border-color: var( --wb-gam-focus-ring, var( --wb-gam-color-accent, #3b82f6 ) );
-	box-shadow: 0 0 0 3px var( --wb-gam-color-accent-ring, rgba( 59, 130, 246, 0.2 ) );
 }
 
 .wb-gam-give-kudos__textarea {
@@ -96,12 +95,6 @@
 .wb-gam-give-kudos__submit:active {
 	background: var(--wb-gam-pop-accent-hover);
 	transform: translateY( 1px );
-}
-
-.wb-gam-give-kudos__submit:focus-visible {
-	/* Transparent, not none: forced-colors mode drops the ring and repaints this outline. */
-	outline: 2px solid transparent;
-	box-shadow: 0 0 0 3px var( --wb-gam-focus-ring, var( --wb-gam-color-accent-ring, rgba( 59, 130, 246, 0.35 ) ) );
 }
 
 .wb-gam-give-kudos__submit[disabled] {

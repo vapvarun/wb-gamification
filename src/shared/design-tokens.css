@@ -486,10 +486,24 @@ body.buddyx-dark-theme,
 	--wb-gam-pop-subtle: var(--wb-gam-color-surface-alt);
 	--wb-gam-pop-inv-bg: var(--wb-gam-color-text);
 }
-/* A theme's own focus ring (white on a dark theme) is read against the page, not the owner's card. */
-.wb-gam-scheme-light :is(a, button, input, select, textarea, [tabindex]):focus-visible:not([class*="wb-gam-give-kudos__"]),
-.wb-gam-scheme-dark :is(a, button, input, select, textarea, [tabindex]):focus-visible:not([class*="wb-gam-give-kudos__"]) {
-	outline-color: var(--wb-gam-focus-ring, currentColor);
+/* ── Keyboard focus ring: one rule for every control in the 19 blocks and the hub ──
+ * A 2px ring, offset 2px, in --wb-gam-focus-ring: the card's own ink (or accent text) when the owner set
+ * card colours (CSS.php card_tokens()), else the accent's text colour on the theme surface; both read 4.5:1
+ * on the surface they sit on. A 4px halo in the surface colour sits either side of it (the box-shadow
+ * spans the gap and the band outside the ring), so the pair stays visible on a card of any colour and on
+ * any page colour around it: whichever of ring or halo the backdrop swallows, the other reaches 3:1.
+ * Specificity (0,4,0) beats the per-control rules and a theme's `a:focus { outline: 0 }` resets; :focus-visible
+ * keeps it off mouse clicks. There is no outline: none anywhere in the blocks without this replacement. */
+[class*="wp-block-wb-gamification"] :is(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+	outline: 2px solid var(--wb-gam-focus-ring, var(--wb-gam-color-accent-text, currentColor));
+	outline-offset: 2px;
+	box-shadow: 0 0 0 6px var(--wb-gam-color-surface, #fff);
+}
+/* Links inside a block that carries owner colours take the card's text colour, not the theme's link colour
+ * (BuddyX dark paints #f5f5f5 links on a cream card, 1.1:1). Buttons and other classed controls keep their own. */
+:is(.wb-gam-scheme-light, .wb-gam-scheme-dark) a:not([class*="btn"], [class*="__action"], [class*="__cta"], [class*="__login"]):is(:link, :visited) {
+	/* !important: BuddyX styles content links at (0,5,1) (.entry-content a:not(...)x4), above anything a block can write. */
+	color: var(--wb-gam-color-text) !important;
 }
 .wb-gam-scheme-light :is(h1, h2, h3, h4, h5, h6),
 .wb-gam-scheme-dark :is(h1, h2, h3, h4, h5, h6) {

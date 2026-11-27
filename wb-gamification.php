@@ -859,27 +859,7 @@ final class WB_Gamification {
 					// Translated strings the renderer builds client-side (aria
 					// labels + the last-resort points-unit fallback). Seeded here
 					// because toast.js has no server-rendered markup to read.
-					'i18n'     => array(
-						'region'        => __( 'Notifications', 'wb-gamification' ),
-						'dismiss'       => __( 'Dismiss', 'wb-gamification' ),
-						'points'        => __( 'points', 'wb-gamification' ),
-						// The one summary toast for awards that land together (toast.js). Titles stay
-						// under 40 characters.
-						'welcome'       => __( 'Welcome aboard!', 'wb-gamification' ),
-						'andBadge'      => __( 'and a new badge', 'wb-gamification' ),
-						/* translators: %d: number of badges (2 or more). */
-						'andBadges'     => __( 'and %d new badges', 'wb-gamification' ),
-						'andChallenge'  => __( 'and a challenge done', 'wb-gamification' ),
-						/* translators: %d: number of challenges (2 or more). */
-						'andChallenges' => __( 'and %d challenges done', 'wb-gamification' ),
-						'andKudos'      => __( 'and kudos', 'wb-gamification' ),
-						/* translators: %d: number of rewards (2 or more). */
-						'andRewards'    => __( 'and %d rewards', 'wb-gamification' ),
-						/* translators: %d: number of rewards (2 or more). */
-						'rewards'       => __( '%d new rewards', 'wb-gamification' ),
-						/* translators: %s: name of the member who gave kudos. */
-						'kudosFrom'     => __( 'Kudos from %s', 'wb-gamification' ),
-					),
+					'i18n'     => \WBGam\Engine\NotificationBridge::toast_i18n(),
 				)
 			);
 		}

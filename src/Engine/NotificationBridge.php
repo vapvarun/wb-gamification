@@ -1341,6 +1341,74 @@ final class NotificationBridge {
 	}
 
 	/**
+	 * The strings toast.js builds a title from, in the reader's language.
+	 *
+	 * The summary title ("+6.000 Punkte and a new badge") is joined in the browser from the point name the
+	 * server already sent in the recipient's language and these phrases. They are built here, in the
+	 * logged-in member's locale (a front-end request otherwise runs in the site language), so no word of the
+	 * sentence is in another language than the number and the point name before it. Phrases with a count are
+	 * a list indexed by the count (0 unused), each made with _n(), so languages with more than two plural
+	 * forms are right; toast.js uses the last entry for larger counts.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param int $user_id Reader; 0 for the current member.
+	 * @return array<string, string|array<int, string>>
+	 */
+	public static function toast_i18n( int $user_id = 0 ): array {
+		return RecipientLocale::run_as_user(
+			$user_id > 0 ? $user_id : get_current_user_id(),
+			static function (): array {
+				// ponytail: 21 forms per phrase; a 22nd award in one burst reuses the 21st form. Raise if that reads wrong.
+				$counted = static function ( callable $phrase ): array {
+					$list = array( '' );
+					for ( $n = 1; $n <= 21; $n++ ) {
+						$list[] = $phrase( $n );
+					}
+					return $list;
+				};
+				return array(
+					'region'        => __( 'Notifications', 'wb-gamification' ),
+					'dismiss'       => __( 'Dismiss', 'wb-gamification' ),
+					'points'        => __( 'points', 'wb-gamification' ),
+					'welcome'       => __( 'Welcome aboard!', 'wb-gamification' ),
+					'andBadges'     => $counted(
+						static fn( int $n ): string => sprintf(
+							/* translators: %d: number of badges earned together with the points. */
+							_n( 'and a new badge', 'and %d new badges', $n, 'wb-gamification' ), // phpcs:ignore WordPress.WP.I18n.MissingSingularPlaceholder -- English reads "a new badge" for one.
+							$n
+						)
+					),
+					'andChallenges' => $counted(
+						static fn( int $n ): string => sprintf(
+							/* translators: %d: number of challenges finished together with the points. */
+							_n( 'and a challenge done', 'and %d challenges done', $n, 'wb-gamification' ), // phpcs:ignore WordPress.WP.I18n.MissingSingularPlaceholder -- English reads "a challenge" for one.
+							$n
+						)
+					),
+					'andKudos'      => __( 'and kudos', 'wb-gamification' ),
+					'andRewards'    => $counted(
+						static fn( int $n ): string => sprintf(
+							/* translators: %d: number of rewards (2 or more) earned together with the points. */
+							_n( 'and %d reward', 'and %d rewards', $n, 'wb-gamification' ),
+							$n
+						)
+					),
+					'rewards'       => $counted(
+						static fn( int $n ): string => sprintf(
+							/* translators: %d: number of rewards earned together, with no points among them. */
+							_n( '%d new reward', '%d new rewards', $n, 'wb-gamification' ),
+							$n
+						)
+					),
+					/* translators: %s: name of the member who gave kudos. */
+					'kudosFrom'     => __( 'Kudos from %s', 'wb-gamification' ),
+				);
+			}
+		);
+	}
+
+	/**
 	 * Where this member sees their progress: the host community's profile when one
 	 * owns profiles (BuddyNext hooks this filter), else the plugin's own hub page.
 	 *
