@@ -173,6 +173,22 @@ final class Engine {
 	);
 
 	/**
+	 * Unregistered action ids that are not earnings, so the earning exclusion does not apply:
+	 * an admin's manual grant or deduction, a spend, a redemption.
+	 *
+	 * @since 1.7.1
+	 */
+	private const EXEMPT_FROM_EXCLUSION = array(
+		'manual',
+		'manual_award',
+		'manual_admin',
+		'manual_admin_deduct',
+		'manual_debit',
+		'debit',
+		'redemption',
+	);
+
+	/**
 	 * Whether an action_id is engine-internal (not a manifest action).
 	 *
 	 * @param string $action_id Action identifier.
@@ -480,6 +496,16 @@ final class Engine {
 		}
 
 		$action = Registry::get_action( $event->action_id );
+
+		// Unregistered events (kudos given and received, streak and challenge bonuses) never reach
+		// passes_rate_limits(), which is where the earning exclusion is asked, so an excluded or
+		// suspended member still earned from them. Ask it here. Deliberate grants, spends and
+		// imports are not earnings and stay exempt.
+		if ( null === $action && ! $is_import && ! in_array( $event->action_id, self::EXEMPT_FROM_EXCLUSION, true )
+			&& ! PointsEngine::user_can_earn( $event->user_id ) ) {
+			do_action( 'wb_gam_award_skipped', $event->user_id, $event->action_id, 'excluded', array() );
+			return false;
+		}
 
 		// Unknown action_id + no manual points → typo or missing manifest.
 		// The silent path here was the #1 confusion during integration testing:
