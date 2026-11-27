@@ -67,7 +67,7 @@
 }
 
 .wb-gam-submit-achievement__submit:hover:not(:disabled) {
-	filter: brightness(0.95);
+	background: var(--wb-gam-pop-accent-hover);
 }
 
 .wb-gam-submit-achievement__submit:focus-visible {

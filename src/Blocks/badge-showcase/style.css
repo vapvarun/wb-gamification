@@ -103,8 +103,13 @@
 	transition: background 160ms ease, color 160ms ease;
 }
 
-.wb-gam-badge-showcase__filter:hover {
+.wb-gam-badge-showcase__filter:hover:not(:disabled) {
 	color: var( --wb-gam-badge-text );
+}
+
+/* An empty tab (no earned badges yet): present and readable, not clickable. No opacity: the label keeps its contrast. */
+.wb-gam-badge-showcase__filter:disabled {
+	cursor: default;
 }
 
 .wb-gam-badge-showcase__filter.is-active {

@@ -248,6 +248,11 @@
 	 * accent-inverse, Reign's button text), so read that pair before assuming white: Reign dark's
 	 * #97c0ee button with white text measured 1.89:1, with Reign's own #111111 it is 9.97:1. */
 	--wb-gam-pop-accent-fg: var(--bn-accent-fg, var(--bx-color-accent-inverse, var(--reign-site-button-text-color, #ffffff)));
+	/* Hover / pressed fill for a button on the accent. Hover feedback must move the fill AWAY from the
+	 * label (opacity, brightness() and a darker mix with a dark label all moved it toward the label and
+	 * measured 3.79:1 to 4.36:1). The browsers below that cannot read the label back keep a white label,
+	 * so darken; the @supports block further down replaces this with the exact opposite of the label. */
+	--wb-gam-pop-accent-hover: color-mix(in srgb, var(--wb-gam-pop-accent) 88%, #000000);
 	--wb-gam-pop-accent-100: var(--bn-accent-100, color-mix(in srgb, var(--wb-gam-pop-accent) 12%, var(--wb-gam-pop-surface)));
 	--wb-gam-pop-accent-200: var(--bn-accent-200, color-mix(in srgb, var(--wb-gam-pop-accent) 24%, var(--wb-gam-pop-surface)));
 	--wb-gam-pop-success: var(--bn-success, var(--wb-gam-color-success));
@@ -363,6 +368,7 @@ body.buddyx-dark-theme,
 	/* Text on the lightened brand accent: white on it is 2.68:1, this ink is 6.37:1. A theme's
 	 * own pair still wins. */
 	--wb-gam-pop-accent-fg: var(--bn-accent-fg, var(--bx-color-accent-inverse, var(--reign-site-button-text-color, #1a1a2e)));
+	--wb-gam-pop-accent-hover: color-mix(in srgb, var(--wb-gam-pop-accent) 88%, #ffffff);
 
 	/* Lift the "-strong" status inks, info and the deepest heatmap step for a dark surface. The
 	 * light values measure 2.3:1 to 3.6:1 on #161616 / #1f2937 / #15181f (heatmap-4 1.3:1); the
@@ -394,6 +400,7 @@ body.buddyx-dark-theme,
 		/* Text on the lightened brand accent: white on it is 2.68:1, this ink is 6.37:1. A theme's
 		 * own pair still wins. */
 		--wb-gam-pop-accent-fg: var(--bn-accent-fg, var(--bx-color-accent-inverse, var(--reign-site-button-text-color, #1a1a2e)));
+		--wb-gam-pop-accent-hover: color-mix(in srgb, var(--wb-gam-pop-accent) 88%, #ffffff);
 
 		/* Lift the "-strong" status inks, info and the deepest heatmap step for a dark surface. The
 		 * light values measure 2.3:1 to 3.6:1 on #161616 / #1f2937 / #15181f (heatmap-4 1.3:1); the
@@ -408,11 +415,15 @@ body.buddyx-dark-theme,
 	}
 }
 
-/* Label colour on accent buttons, picked from the accent's own lightness: dark text on a light accent
- * (white on an orange theme accent measured 2.59:1), white on a dark one. Overrides a theme's button
- * text pair, which is the one that failed. Browsers without relative colours keep the value above.
+/* Label colour on accent buttons, picked from the accent's own relative luminance: black on an accent
+ * lighter than Y = 0.1791, white on a darker one. That is the luminance where black and white tie, so
+ * the winner is at least 4.58:1 on ANY accent; the earlier pick by oklch lightness (round(1.07 - l))
+ * measured 3.98:1 on about 2% of the sRGB gamut (an owner-chosen mid-tone accent). Overrides a theme's
+ * button text pair, which is the one that failed. Browsers without relative colours keep the value above.
  * Inside BuddyNext its own pair wins (--bn-accent-fg with --bn-accent-solid, the fill above): the two
- * rules disagree near the middle, and the default blue got a black label from this one. */
+ * rules disagree near the middle, and the default blue got a black label from this one.
+ * --wb-gam-pop-accent-hover is the pressed / hover fill: the accent moved 12% AWAY from the label (toward
+ * white under a black label, toward black under a white one), so the pair is never worse than at rest. */
 @supports (color: oklch(from red l c h)) {
 	/* The dark selectors too: they restore the theme's pair (BuddyX dark: white on its orange, 3.36:1). */
 	:root,
@@ -421,11 +432,13 @@ body.buddyx-dark-theme,
 	body.buddyx-dark-theme,
 	.wb-gam-scheme-light,
 	.wb-gam-scheme-dark {
-		--wb-gam-pop-accent-fg: var(--bn-accent-fg, oklch(from var(--wb-gam-pop-accent) round(1.07 - l) 0 0));
+		--wb-gam-pop-accent-fg: var(--bn-accent-fg, color(from var(--wb-gam-pop-accent) srgb-linear calc(1 - round(clamp(0, calc((0.2126 * r + 0.7152 * g + 0.0722 * b - 0.1791) * 1000), 1))) calc(1 - round(clamp(0, calc((0.2126 * r + 0.7152 * g + 0.0722 * b - 0.1791) * 1000), 1))) calc(1 - round(clamp(0, calc((0.2126 * r + 0.7152 * g + 0.0722 * b - 0.1791) * 1000), 1)))));
+		--wb-gam-pop-accent-hover: color-mix(in srgb, var(--wb-gam-pop-accent) 88%, oklch(from var(--wb-gam-pop-accent-fg) round(1 - l) 0 0));
 	}
 	@media (prefers-color-scheme: dark) {
 		:root[data-bx-mode="auto"] {
-			--wb-gam-pop-accent-fg: var(--bn-accent-fg, oklch(from var(--wb-gam-pop-accent) round(1.07 - l) 0 0));
+			--wb-gam-pop-accent-fg: var(--bn-accent-fg, color(from var(--wb-gam-pop-accent) srgb-linear calc(1 - round(clamp(0, calc((0.2126 * r + 0.7152 * g + 0.0722 * b - 0.1791) * 1000), 1))) calc(1 - round(clamp(0, calc((0.2126 * r + 0.7152 * g + 0.0722 * b - 0.1791) * 1000), 1))) calc(1 - round(clamp(0, calc((0.2126 * r + 0.7152 * g + 0.0722 * b - 0.1791) * 1000), 1)))));
+			--wb-gam-pop-accent-hover: color-mix(in srgb, var(--wb-gam-pop-accent) 88%, oklch(from var(--wb-gam-pop-accent-fg) round(1 - l) 0 0));
 		}
 	}
 }

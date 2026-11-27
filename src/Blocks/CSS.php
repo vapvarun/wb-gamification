@@ -303,7 +303,8 @@ final class CSS {
 		'--wb-gam-fill'               => 'var(--wb-gam-color-accent)',
 		'--wb-gam-recap-accent'       => 'var(--wb-gam-color-accent)',
 		'--wb-gam-pop-accent'         => 'var(--wb-gam-color-accent)',
-		'--wb-gam-pop-accent-fg'      => 'oklch(from var(--wb-gam-color-accent) round(1.07 - l) 0 0)',
+		'--wb-gam-pop-accent-fg'      => 'color(from var(--wb-gam-color-accent) srgb-linear calc(1 - round(clamp(0, calc((0.2126 * r + 0.7152 * g + 0.0722 * b - 0.1791) * 1000), 1))) calc(1 - round(clamp(0, calc((0.2126 * r + 0.7152 * g + 0.0722 * b - 0.1791) * 1000), 1))) calc(1 - round(clamp(0, calc((0.2126 * r + 0.7152 * g + 0.0722 * b - 0.1791) * 1000), 1))))',
+		'--wb-gam-pop-accent-hover'   => 'color-mix(in srgb, var(--wb-gam-color-accent) 88%, oklch(from var(--wb-gam-pop-accent-fg) round(1 - l) 0 0))',
 		'--gam-accent-text'           => 'color-mix(in srgb, var(--wb-gam-color-accent) var(--wb-gam-owner-accent-mix, 50%), var(--wb-gam-color-accent-ink))',
 	);
 

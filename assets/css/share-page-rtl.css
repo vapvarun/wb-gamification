@@ -233,7 +233,7 @@
 }
 
 .wb-gam-share-card__cta-primary:hover {
-	background: var( --wb-gam-color-accent-hover, #2563eb );
+	background: var(--wb-gam-pop-accent-hover); /* Same pair as the resting fill; the old accent-hover token had no label of its own. */
 }
 
 .wb-gam-share-card__cta-secondary {

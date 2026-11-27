@@ -257,16 +257,18 @@
 	font-size: 0.9375rem;
 	font-weight: 700;
 	cursor: pointer;
-	transition: opacity 0.15s, transform 0.1s;
+	transition: background-color 0.15s, transform 0.1s;
 	letter-spacing: 0.02em;
 }
 
 .wb-gam-recap__share-btn:hover {
-	opacity: 0.9;
+	/* A state fill, not opacity: opacity blended the fill toward the light card and the label (chosen against the opaque fill) fell to 4.36:1. */
+	background: var(--wb-gam-pop-accent-hover);
 	transform: translateY(-1px);
 }
 
 .wb-gam-recap__share-btn:active {
+	background: var(--wb-gam-pop-accent-hover);
 	transform: translateY(0);
 }
 

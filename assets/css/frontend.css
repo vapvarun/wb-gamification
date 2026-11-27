@@ -495,7 +495,7 @@
 }
 
 .wb-gam-profile-privacy__toggle:hover {
-	filter: brightness(0.94);
+	background: var(--wb-gam-pop-accent-hover);
 }
 
 .wb-gam-profile-privacy__toggle:focus-visible {

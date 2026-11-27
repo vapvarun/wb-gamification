@@ -115,6 +115,36 @@ if ( '' !== $wb_gam_category ) {
  */
 $wb_gam_badges = (array) apply_filters( 'wb_gam_block_badge_showcase_data', $wb_gam_badges, $wb_gam_attrs, $wb_gam_user_id );
 
+// Normalise the filtered list ONCE. The filter is public API, so a callback can hand back anything:
+// non-array entries, records missing keys, or the same badge twice. Every count, tab and card below
+// reads this one list, so they cannot disagree. A record keeps its slot; a repeated id is folded into
+// the first copy (the earned copy wins, so a member is never shown a badge as locked and earned).
+$wb_gam_clean = array();
+$wb_gam_seen  = array();
+foreach ( $wb_gam_badges as $wb_gam_row ) {
+	if ( ! is_array( $wb_gam_row ) ) {
+		continue;
+	}
+	$wb_gam_row['id']        = (string) ( $wb_gam_row['id'] ?? '' );
+	$wb_gam_row['name']      = (string) ( $wb_gam_row['name'] ?? '' );
+	$wb_gam_row['earned']    = (bool) ( $wb_gam_row['earned'] ?? false );
+	$wb_gam_row['image_url'] = (string) ( $wb_gam_row['image_url'] ?? '' );
+
+	if ( '' !== $wb_gam_row['id'] && isset( $wb_gam_seen[ $wb_gam_row['id'] ] ) ) {
+		$wb_gam_slot = $wb_gam_seen[ $wb_gam_row['id'] ];
+		if ( $wb_gam_row['earned'] && ! $wb_gam_clean[ $wb_gam_slot ]['earned'] ) {
+			$wb_gam_clean[ $wb_gam_slot ] = $wb_gam_row;
+		}
+		continue;
+	}
+	if ( '' !== $wb_gam_row['id'] ) {
+		$wb_gam_seen[ $wb_gam_row['id'] ] = count( $wb_gam_clean );
+	}
+	$wb_gam_clean[] = $wb_gam_row;
+}
+$wb_gam_badges = $wb_gam_clean;
+unset( $wb_gam_clean, $wb_gam_seen, $wb_gam_row, $wb_gam_slot );
+
 // Ladder order comes from the engine (category, then threshold), the same order the admin
 // badge list uses. Earned-first is a stable partition on top of it (usort is stable on
 // PHP 8), never a re-sort: re-sorting by name put "10-Year" before "2-Year".
@@ -226,7 +256,8 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 				<div class="wb-gam-badge-showcase__progress-fill" style="width: <?php echo esc_attr( (string) $wb_gam_progress_pct ); ?>%"></div>
 			</div>
 
-			<?php if ( $wb_gam_show_locked && $wb_gam_locked_count > 0 && $wb_gam_earned_count > 0 ) : ?>
+			<?php // The tabs show whenever the member can see locked badges and there is a collection. A tab with nothing in it is disabled, not removed: removing all of them left a member with only locked badges unable to switch views. ?>
+			<?php if ( $wb_gam_show_locked && $wb_gam_total_count > 0 ) : ?>
 				<nav class="wb-gam-badge-showcase__filters" role="tablist" aria-label="<?php esc_attr_e( 'Filter badges', 'wb-gamification' ); ?>">
 					<button type="button" class="wb-gam-badge-showcase__filter is-active"
 						role="tab" aria-selected="true" data-wb-gam-filter="all">
@@ -234,12 +265,12 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 						<span class="wb-gam-badge-showcase__filter-count"><?php echo esc_html( number_format_i18n( $wb_gam_total_count ) ); ?></span>
 					</button>
 					<button type="button" class="wb-gam-badge-showcase__filter"
-						role="tab" aria-selected="false" data-wb-gam-filter="earned">
+						role="tab" aria-selected="false" data-wb-gam-filter="earned"<?php echo 0 === $wb_gam_earned_count ? ' disabled' : ''; ?>>
 						<?php esc_html_e( 'Earned', 'wb-gamification' ); ?>
 						<span class="wb-gam-badge-showcase__filter-count"><?php echo esc_html( number_format_i18n( $wb_gam_earned_count ) ); ?></span>
 					</button>
 					<button type="button" class="wb-gam-badge-showcase__filter"
-						role="tab" aria-selected="false" data-wb-gam-filter="locked">
+						role="tab" aria-selected="false" data-wb-gam-filter="locked"<?php echo 0 === $wb_gam_locked_count ? ' disabled' : ''; ?>>
 						<?php esc_html_e( 'Locked', 'wb-gamification' ); ?>
 						<span class="wb-gam-badge-showcase__filter-count"><?php echo esc_html( number_format_i18n( $wb_gam_locked_count ) ); ?></span>
 					</button>
@@ -312,12 +343,12 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 					//
 					// Not rendered for anyone else's board. There is no version of this button that makes
 					// sense pointed at somebody else's achievement.
-					if ( $wb_gam_is_earned && $wb_gam_is_own_board ) :
-						$wb_gam_shared = \WBGam\Engine\BadgeShare::is_shared( $wb_gam_user_id, (string) $wb_gam_badge['id'] );
+					if ( $wb_gam_is_earned && $wb_gam_is_own_board && '' !== $wb_gam_badge['id'] ) :
+						$wb_gam_shared = \WBGam\Engine\BadgeShare::is_shared( $wb_gam_user_id, $wb_gam_badge['id'] );
 						?>
 						<button type="button"
 							class="wb-gam-badge-showcase__share"
-							data-wb-gam-share="<?php echo esc_attr( (string) $wb_gam_badge['id'] ); ?>"
+							data-wb-gam-share="<?php echo esc_attr( $wb_gam_badge['id'] ); ?>"
 							data-rest-url="<?php echo esc_url( rest_url( 'wb-gamification/v1/badges/' . $wb_gam_badge['id'] . '/share' ) ); ?>"
 							data-rest-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>"
 							data-shared="<?php echo $wb_gam_shared ? '1' : '0'; ?>"
@@ -335,7 +366,7 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 						<?php
 						// Once shared, the member needs the link itself: to open it, or to paste it
 						// elsewhere. Rendered for a badge already shared; view.js fills it in on share.
-						$wb_gam_share_url = $wb_gam_shared ? \WBGam\Engine\BadgeSharePage::get_share_url( (string) $wb_gam_badge['id'], $wb_gam_user_id ) : '';
+						$wb_gam_share_url = $wb_gam_shared ? \WBGam\Engine\BadgeSharePage::get_share_url( $wb_gam_badge['id'], $wb_gam_user_id ) : '';
 						?>
 						<span class="wb-gam-badge-showcase__share-link" data-wb-gam-share-link <?php echo $wb_gam_shared ? '' : 'hidden'; ?>>
 							<a href="<?php echo esc_url( $wb_gam_share_url ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Open share page', 'wb-gamification' ); ?></a>

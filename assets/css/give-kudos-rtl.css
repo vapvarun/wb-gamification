@@ -89,10 +89,12 @@
 }
 
 .wb-gam-give-kudos__submit:hover {
-	background: color-mix(in srgb, var(--wb-gam-pop-accent) 88%, #000000);
+	/* The label stays --wb-gam-pop-accent-fg: the hover fill is the accent moved away from it. */
+	background: var(--wb-gam-pop-accent-hover);
 }
 
 .wb-gam-give-kudos__submit:active {
+	background: var(--wb-gam-pop-accent-hover);
 	transform: translateY( 1px );
 }
 

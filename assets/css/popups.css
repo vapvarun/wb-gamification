@@ -86,7 +86,7 @@
 	cursor: progress;
 }
 @media (hover: hover) {
-	.wb-gam-btn--primary:hover { background: color-mix(in srgb, var(--wb-gam-pop-accent) 88%, #000000); }
+	.wb-gam-btn--primary:hover { background: var(--wb-gam-pop-accent-hover); }
 	.wb-gam-btn--secondary:hover { border-color: var(--wb-gam-pop-text-3); }
 	.wb-gam-btn--danger:hover { background: color-mix(in srgb, var(--wb-gam-pop-danger) 88%, #000000); }
 }
