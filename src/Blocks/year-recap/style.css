@@ -282,8 +282,6 @@
 	align-items: center;
 	gap: 0.5rem;
 	padding: 0.75rem 2rem;
-	background: var(--wb-gam-pop-accent); /* With --wb-gam-pop-accent-fg: the solid fill its text colour was computed for (4.29:1 on the raw accent). */
-	color: var(--wb-gam-pop-accent-fg);
 	border: none;
 	border-radius: 999px;
 	font-size: 0.9375rem;
@@ -294,13 +292,10 @@
 }
 
 .wb-gam-recap__share-btn:hover {
-	/* A state fill, not opacity: opacity blended the fill toward the light card and the label (chosen against the opaque fill) fell to 4.36:1. */
-	background: var(--wb-gam-pop-accent-hover);
 	transform: translateY(-1px);
 }
 
 .wb-gam-recap__share-btn:active {
-	background: var(--wb-gam-pop-accent-hover);
 	transform: translateY(0);
 }
 

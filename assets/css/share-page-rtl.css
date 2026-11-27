@@ -161,12 +161,6 @@
 	background: var( --wb-gam-color-success-soft, rgba( 34, 197, 94, 0.14 ) );
 }
 
-.wb-gam-share-card__action:focus-visible {
-	/* Transparent, not none: forced-colors mode drops the ring and repaints this outline. */
-	outline: 2px solid transparent;
-	box-shadow: 0 0 0 3px var( --wb-gam-color-accent-ring, rgba( 59, 130, 246, 0.3 ) );
-}
-
 .wb-gam-share-card__copy-status {
 	min-height: 1.1em;
 	margin: 0 0 var( --wb-gam-space-md, 16px );
@@ -225,15 +219,9 @@
 	padding: 0 24px;
 	font-size: var( --wb-gam-font-sm, 14px );
 	font-weight: 600;
-	color: var( --wb-gam-pop-accent-fg );
 	text-decoration: none;
-	background: var(--wb-gam-pop-accent); /* With --wb-gam-pop-accent-fg: the solid fill its text colour was computed for. */
 	border-radius: var( --wb-gam-radius-full, 999px );
 	transition: background-color 0.15s ease;
-}
-
-.wb-gam-share-card__cta-primary:hover {
-	background: var(--wb-gam-pop-accent-hover); /* Same pair as the resting fill; the old accent-hover token had no label of its own. */
 }
 
 .wb-gam-share-card__cta-secondary {

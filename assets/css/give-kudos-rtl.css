@@ -79,21 +79,14 @@
 	font-size: var( --wb-gam-font-sm, 14px );
 	font-weight: 600;
 	font-family: inherit;
-	color: var( --wb-gam-pop-accent-fg );
-	background: var(--wb-gam-pop-accent); /* With --wb-gam-pop-accent-fg: the solid fill its text colour was computed for. */
+	/* Fill, label and border come from the shared accent-button rule in design-tokens.css (theme-proof). */
 	border: none;
 	border-radius: var( --wb-gam-radius-full, 999px );
 	cursor: pointer;
 	transition: background-color 0.15s ease, transform 0.05s ease;
 }
 
-.wb-gam-give-kudos__submit:hover {
-	/* The label stays --wb-gam-pop-accent-fg: the hover fill is the accent moved away from it. */
-	background: var(--wb-gam-pop-accent-hover);
-}
-
 .wb-gam-give-kudos__submit:active {
-	background: var(--wb-gam-pop-accent-hover);
 	transform: translateY( 1px );
 }
 

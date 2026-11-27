@@ -68,10 +68,7 @@
 	cursor: pointer;
 	transition: background-color var(--wb-gam-dur-fast) var(--wb-gam-ease), border-color var(--wb-gam-dur-fast) var(--wb-gam-ease), opacity var(--wb-gam-dur-fast) var(--wb-gam-ease);
 }
-.wb-gam-btn--primary {
-	background: var(--wb-gam-pop-accent);
-	color: var(--wb-gam-pop-accent-fg);
-}
+/* .wb-gam-btn--primary: fill, label and hover come from the shared accent-button rule in design-tokens.css. */
 .wb-gam-btn--secondary {
 	background: var(--wb-gam-pop-subtle);
 	border-color: var(--wb-gam-pop-line);
@@ -87,7 +84,6 @@
 	cursor: progress;
 }
 @media (hover: hover) {
-	.wb-gam-btn--primary:hover { background: var(--wb-gam-pop-accent-hover); }
 	.wb-gam-btn--secondary:hover { border-color: var(--wb-gam-pop-text-3); }
 	.wb-gam-btn--danger:hover { background: color-mix(in srgb, var(--wb-gam-pop-danger) 88%, #000000); }
 }
@@ -130,14 +126,6 @@
 }
 @media (hover: hover) {
 	.wb-gam-close:hover { opacity: 1; background: color-mix(in srgb, currentColor 12%, transparent); }
-}
-
-.wb-gam-btn:focus-visible,
-.wb-gam-close:focus-visible,
-.wb-gam-toast__link:focus-visible,
-.wb-gam-banner__action:focus-visible {
-	outline: 2px solid var( --wb-gam-focus-ring, var(--wb-gam-pop-accent) );
-	outline-offset: 2px;
 }
 
 /* ── Toast ─────────────────────────────────────────────────────────────────── */

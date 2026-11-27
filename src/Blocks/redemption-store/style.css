@@ -176,8 +176,10 @@
 }
 
 .wb-gam-redemption__btn[ disabled ]:not( .is-loading ) {
-	background: var( --wb-gam-color-disabled );
-	color: var( --wb-gam-color-disabled-text );
+	/* !important: the shared accent-button rule (design-tokens.css) is !important too, and this state must win. */
+	background: var( --wb-gam-color-disabled ) !important;
+	border-color: var( --wb-gam-color-disabled ) !important;
+	color: var( --wb-gam-color-disabled-text ) !important;
 	cursor: not-allowed;
 }
 

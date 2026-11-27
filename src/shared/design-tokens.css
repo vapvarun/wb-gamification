@@ -492,12 +492,33 @@ body.buddyx-dark-theme,
  * on the surface they sit on. A 4px halo in the surface colour sits either side of it (the box-shadow
  * spans the gap and the band outside the ring), so the pair stays visible on a card of any colour and on
  * any page colour around it: whichever of ring or halo the backdrop swallows, the other reaches 3:1.
- * Specificity (0,4,0) beats the per-control rules and a theme's `a:focus { outline: 0 }` resets; :focus-visible
- * keeps it off mouse clicks. There is no outline: none anywhere in the blocks without this replacement. */
-[class*="wp-block-wb-gamification"] :is(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
-	outline: 2px solid var(--wb-gam-focus-ring, var(--wb-gam-color-accent-text, currentColor));
-	outline-offset: 2px;
-	box-shadow: 0 0 0 6px var(--wb-gam-color-surface, #fff);
+ * !important with specificity (0,4,0): BuddyX 5.1.3 ships `:focus-visible { outline: 2px solid #2271b1 !important }`
+ * (0,1,0) and `... :focus { box-shadow: none !important }`; between two !important declarations the higher
+ * specificity wins, so the ring stays ours inside our own controls and the theme's applies everywhere else.
+ * :focus-visible keeps it off mouse clicks. There is no outline: none anywhere in the blocks without this
+ * replacement. The second selector list covers the controls that sit outside a block wrapper (popups, the
+ * badge share page, the profile privacy toggle, the hub's convert form), at (0,2,0). */
+[class*="wp-block-wb-gamification"] :is(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible,
+:is(.wb-gam-btn, .wb-gam-close, .wb-gam-toast__link, .wb-gam-banner__action, .wb-gam-share-card__action, .wb-gam-profile-privacy__toggle, .gam-stat__convert, .gam-card, .wbgam-convert-form__field select, .wbgam-convert-form__field input):focus-visible {
+	outline: 2px solid var(--wb-gam-focus-ring, var(--wb-gam-color-accent-text, currentColor)) !important;
+	outline-offset: 2px !important;
+	box-shadow: 0 0 0 6px var(--wb-gam-color-surface, #fff) !important;
+}
+/* ── Accent buttons: fill AND label from the one pair the helper computed ──
+ * --wb-gam-pop-accent is the fill, --wb-gam-pop-accent-fg its contrast-safe label (4.5:1 on any accent,
+ * derived above), --wb-gam-pop-accent-hover the pressed fill. A theme's own button rule (BuddyX
+ * `button[type=submit]`, (0,1,1), and its :hover, (0,2,1)) beats a single-class selector, so the fill went
+ * to the theme's red under our white label (3.46:1 on BuddyX, 3.87:1 on BuddyX Pro). One rule here, !important
+ * so no theme can split the pair; the per-component stylesheets keep only layout. A disabled control keeps
+ * its own colours only where a component says so with !important (the Redeem button). */
+:is(.wb-gam-give-kudos__submit, .wb-gam-submit-achievement__submit, .wb-gam-recap__share-btn, .gam-nudge__action, .wb-gam-btn--primary, .wb-gam-share-card__cta-primary, .wb-gam-profile-privacy__toggle, .gam-lb-pill--active) {
+	background-color: var(--wb-gam-pop-accent) !important;
+	border-color: var(--wb-gam-pop-accent) !important;
+	color: var(--wb-gam-pop-accent-fg) !important;
+}
+:is(.wb-gam-give-kudos__submit, .wb-gam-submit-achievement__submit, .wb-gam-recap__share-btn, .gam-nudge__action, .wb-gam-btn--primary, .wb-gam-share-card__cta-primary, .wb-gam-profile-privacy__toggle, .gam-lb-pill--active):is(:hover, :active):not(:disabled) {
+	background-color: var(--wb-gam-pop-accent-hover) !important;
+	border-color: var(--wb-gam-pop-accent-hover) !important;
 }
 /* Links inside a block that carries owner colours take the card's text colour, not the theme's link colour
  * (BuddyX dark paints #f5f5f5 links on a cream card, 1.1:1). Buttons and other classed controls keep their own. */
