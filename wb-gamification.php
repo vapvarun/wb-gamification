@@ -347,10 +347,10 @@ final class WB_Gamification {
 		BootOrder::register( 'leaderboard_engine', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( LeaderboardEngine::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
 
-		// Overview / Analytics KPI cache: dropped whenever points move (awards, revokes, spends all
-		// route through LeaderboardEngine::invalidate_cache()). Registered outside is_admin() because
-		// awards happen on the front end and over REST.
-		add_action( 'wb_gam_leaderboard_cache_invalidated', array( AnalyticsDashboard::class, 'flush_stats' ) );
+		// Overview / Analytics KPI cache: dropped when an admin moves points (hand award, deduction,
+		// revoke, reset), all of which route through LeaderboardEngine::invalidate_cache(). Registered
+		// outside is_admin() because the REST routes behind them run there too.
+		add_action( 'wb_gam_leaderboard_cache_invalidated', array( AnalyticsDashboard::class, 'flush_for_admin' ) );
 
 		// v2.5 + AI v1 — read-side projection. Daily cron computes
 		// engagement / churn / diversity signals from the event log.

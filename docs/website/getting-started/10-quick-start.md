@@ -35,7 +35,7 @@ Points appear immediately in three places:
 
 ## Step 5: View the Analytics Dashboard (30 seconds)
 
-Go to **Gamification > Overview > Analytics**. You will see KPI cards showing total points awarded, active members, badges earned, and more. The dashboard refreshes whenever points are awarded, revoked or spent.
+Go to **Gamification > Overview > Analytics**. You will see KPI cards showing total points awarded, active members, badges earned, and more. The dashboard refreshes every 10 minutes, and straight away after you award, deduct or revoke points.
 
 ## What Happens Automatically
 

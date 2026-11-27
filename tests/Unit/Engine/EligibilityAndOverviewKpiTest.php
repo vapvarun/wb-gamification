@@ -225,6 +225,22 @@ class EligibilityAndOverviewKpiTest extends TestCase {
 	}
 
 	/**
+	 * A member's own award is the hot path: it must not pay for the cache deletes. Only a user who
+	 * can read the Overview (a hand award, a deduction, a revoke) flushes it.
+	 */
+	public function test_only_an_admin_made_change_flushes_the_overview(): void {
+		$this->store['wb_gamification:wb_gam_analytics_30'] = array( 'points_total' => 1 );
+
+		Functions\when( 'current_user_can' )->justReturn( false );
+		AnalyticsDashboard::flush_for_admin();
+		$this->assertArrayHasKey( 'wb_gamification:wb_gam_analytics_30', $this->store, 'a member award must not flush' );
+
+		Functions\when( 'current_user_can' )->justReturn( true );
+		AnalyticsDashboard::flush_for_admin();
+		$this->assertArrayNotHasKey( 'wb_gamification:wb_gam_analytics_30', $this->store );
+	}
+
+	/**
 	 * The flush is wired to the one action every ledger change fires, outside wp-admin, and a
 	 * revoke reaches that action.
 	 */
@@ -233,7 +249,7 @@ class EligibilityAndOverviewKpiTest extends TestCase {
 		$boot = (string) file_get_contents( $root . '/wb-gamification.php' );
 		$eng  = (string) file_get_contents( $root . '/src/Engine/LeaderboardEngine.php' );
 
-		$this->assertMatchesRegularExpression( "/add_action\(\s*'wb_gam_leaderboard_cache_invalidated',\s*array\(\s*AnalyticsDashboard::class,\s*'flush_stats'/", $boot );
+		$this->assertMatchesRegularExpression( "/add_action\(\s*'wb_gam_leaderboard_cache_invalidated',\s*array\(\s*AnalyticsDashboard::class,\s*'flush_for_admin'/", $boot );
 		$this->assertMatchesRegularExpression( "/add_action\(\s*'wb_gam_points_revoked',\s*array\(\s*__CLASS__,\s*'invalidate_cache'/", $eng );
 	}
 

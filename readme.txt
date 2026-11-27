@@ -177,7 +177,7 @@ Setup, the admin and the toasts rebuilt around the plugins on your site.
 * Fix      - A toast with a button now shows its whole title, with the button under the text.
 * Fix      - A credential badge that expired can be earned again.
 * Fix      - Your own leaderboard rank and the doctor check now follow the same exclusions as the board (opt-outs, excluded roles, suspended members).
-* Fix      - The Overview points total and Awarded by hand update as soon as points are awarded, revoked or spent, and small hand awards are counted.
+* Fix      - The Overview points total and Awarded by hand update straight away after you award, deduct or revoke points, and small hand awards are counted.
 * Fix      - Filtered Earning rows and the Undo button after a failed save now hide as they should, and every Earning change keeps its own 10 second Undo.
 * Fix      - Finishing Setup no longer sends you back to the first step, and a blank or out of range amount is reported next to the field instead of Launch doing nothing.
 * Fix      - The Wbcom Family heading and its subtitle have the standard gap.

@@ -58,10 +58,7 @@ final class AnalyticsDashboard {
 	/**
 	 * Drop the cached stats so the next read sees the points that just moved.
 	 *
-	 * Hooked (always, not only in wp-admin) to `wb_gam_leaderboard_cache_invalidated`, which
-	 * LeaderboardEngine::invalidate_cache() fires on every award, batch award, debit, bulk debit,
-	 * revoke, import undo and progress reset: one place for every ledger change. A delete, never
-	 * a rebuild; the next dashboard view recomputes once.
+	 * A delete, never a rebuild; the next dashboard view recomputes once.
 	 *
 	 * @return void
 	 */
@@ -69,6 +66,23 @@ final class AnalyticsDashboard {
 		foreach ( self::PERIODS as $period ) {
 			wp_cache_delete( "wb_gam_analytics_{$period}", self::CACHE_GROUP );
 			delete_transient( "wb_gam_analytics_{$period}" );
+		}
+	}
+
+	/**
+	 * Flush after a ledger change made by someone who reads these numbers.
+	 *
+	 * Hooked to `wb_gam_leaderboard_cache_invalidated`, which every award, debit, revoke, import undo
+	 * and progress reset fires. A member's own award is the hot path (thousands a minute on a busy
+	 * site) and must not pay for six cache deletes, so only a change made by a user who can open the
+	 * Overview flushes: a hand award, a deduction, a revoke, a reset. Everything else shows within the
+	 * cache window. The capability check reads the already-loaded user, so it costs no query.
+	 *
+	 * @return void
+	 */
+	public static function flush_for_admin(): void {
+		if ( current_user_can( 'wb_gam_view_analytics' ) ) {
+			self::flush_stats();
 		}
 	}
 

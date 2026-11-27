@@ -26,7 +26,7 @@ A short checklist sits at the top until every step is done, for example "Finish 
 
 ## The Four Numbers
 
-All four cover the last 30 days. They update as soon as points are awarded, revoked or spent, and are cached for up to 10 minutes between changes.
+All four cover the last 30 days. A hand award, a deduction or a revoke shows on the next page load; other awards show within 10 minutes, because the numbers are cached.
 
 | Number | What it counts |
 |---|---|
@@ -49,6 +49,6 @@ For the full picture, open **Overview > Analytics**. See [Analytics](../features
 
 ## Tips
 
-- The numbers look low or empty? Reload the page. The totals are cached for up to 10 minutes and are cleared whenever points are awarded, revoked or spent.
+- The numbers look low or empty? Reload the page. The totals are cached for up to 10 minutes and are cleared when you award, deduct or revoke points yourself.
 - **Members earning** only counts members who earned points, so a quiet month lowers it even if nobody left.
 - Run setup again any time from **Tools > Setup**. It opens with your current values.

@@ -40,7 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - A toast with a button shows its whole title; the button sits under the text and a title may wrap to two lines.
 - A credential badge that expired can be earned again: the lapsed row is cleared so the award inserts and fires the awarded event.
 - Your own leaderboard rank and the doctor check now follow the same exclusions as the board (opt-outs, excluded roles, suspended members).
-- The Overview points total and Awarded by hand update as soon as points are awarded, revoked or spent, and small hand awards are counted.
+- The Overview points total and Awarded by hand update straight away after you award, deduct or revoke points, and small hand awards are counted.
 - Filtered Earning rows and the Undo button after a failed save now hide as they should, and every Earning change keeps its own 10 second Undo.
 - Finishing Setup no longer sends you back to the first step, and a blank or out of range amount is reported next to the field instead of Launch doing nothing.
 - The Wbcom Family heading and its subtitle have the standard gap.
