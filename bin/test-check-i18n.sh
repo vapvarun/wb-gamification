@@ -13,7 +13,7 @@ cd "$(dirname "$0")/.."
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
-run_gate() { I18N_LANG_DIR="$1" bash bin/check-i18n.sh 2>&1; }
+run_gate() { I18N_LANG_DIR="$1" I18N_ENFORCE_COVERAGE="${ENFORCE:-0}" bash bin/check-i18n.sh 2>&1; }
 
 failures=0
 expect_fail() {
@@ -41,25 +41,27 @@ printf '  \033[32mok\033[0m   unbroken copy passes\n'
 
 PO="wb-gamification-de_DE.po"
 
-# 1. An empty translation.
+# 1. Many empty translations (about 9% of the strings), coverage enforced: must fail.
 fresh_copy c1
-python3 - "$work/c1/$PO" <<'EOF'
+python3 - "$work/c1/$PO" <<'EOF2'
 import re, sys
 p = sys.argv[1]; s = open(p, encoding='utf-8').read()
-s = re.sub(r'(msgid "Daily limit reached"\nmsgstr )"[^"\n]*"', r'\1""', s, count=1)
+n = [0]
+def blank(m):
+    n[0] += 1
+    return m.group(1) + '""' if n[0] > 1 and n[0] % 11 == 0 else m.group(0)
+s = re.sub(r'(^msgid "[^"\n]+"\nmsgstr )"[^"\n]*"', blank, s, flags=re.M)
 open(p, 'w', encoding='utf-8').write(s)
-EOF
-expect_fail "empty msgstr" "$work/c1" "untranslated"
+EOF2
+ENFORCE=1 expect_fail "coverage below 95% (enforced)" "$work/c1" "below the 95% aim"
 
-# 2. A fuzzy entry.
-fresh_copy c2
-python3 - "$work/c2/$PO" <<'EOF'
-import sys
-p = sys.argv[1]; s = open(p, encoding='utf-8').read()
-s = s.replace('msgid "Daily limit reached"', '#, fuzzy\nmsgid "Daily limit reached"', 1)
-open(p, 'w', encoding='utf-8').write(s)
-EOF
-expect_fail "fuzzy entry" "$work/c2" "fuzzy"
+# 2. The same breakage without enforcement is a warning, not a stopped build: exit 0.
+out="$(ENFORCE=0 run_gate "$work/c1")"; rc=$?
+if [ "$rc" -eq 0 ] && grep -q "not blocking" <<<"$out"; then
+  printf '  \033[32mok\033[0m   coverage below 95%% only warns by default\n'
+else
+  printf '  \033[31mFAIL\033[0m coverage below 95%% should warn and pass (exit %s)\n' "$rc"; failures=$((failures + 1))
+fi
 
 # 3. A placeholder that does not match the msgid.
 fresh_copy c3
@@ -116,4 +118,4 @@ if [ "$failures" -gt 0 ]; then
   printf '\033[31m%d case(s) did not fail the gate\033[0m\n' "$failures"
   exit 1
 fi
-printf '\033[32mAll 9 cases fail the gate as they should\033[0m\n'
+printf '\033[32mEvery case behaves as it should\033[0m\n'

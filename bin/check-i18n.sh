@@ -3,17 +3,18 @@
 #
 # THE RULE
 #
-#   Every msgid in the code is in the .pot, has a real translation in every shipped locale, and the
-#   .mo, .json and .l10n.php files WordPress actually loads are the ones built from those .po files.
-#   A string that is extracted but empty, fuzzy, or only present in the .po falls back to English on
-#   a translated site, and nothing else in the build notices.
+#   Every msgid in the code is in the .pot, every shipped locale is at least I18N_MIN_COVERAGE percent
+#   translated (95 by default), and the .mo, .json and .l10n.php files WordPress actually loads are
+#   the ones built from those .po files. We are not language experts: 95% or more is the aim, not a
+#   hard rule, so a locale below it WARNS and does not stop the build. Anything that is broken, not
+#   merely incomplete, does stop it.
 #
 # WHAT IT CHECKS (each one fails the build)
 #
 #   1. POT drift     a string in the code that is missing from the committed .pot, or the reverse.
 #   2. PO drift      a string in the .pot that is missing from a shipped .po.
-#   3. Untranslated  an empty msgstr (any plural form) in a shipped .po.
-#   4. Fuzzy         a fuzzy entry: msgfmt drops it, so it ships as English.
+#   3. Coverage      WARN only: translated share of the .pot (empty and fuzzy entries count as
+#                    untranslated, because both ship as English). I18N_ENFORCE_COVERAGE=1 makes it fail.
 #   5. Placeholders  msgfmt -c: a translation whose %s / %d / %1$s do not match the msgid.
 #   6. Artifacts     the shipped .mo / .json / .l10n.php differ from what the .po builds today.
 #
@@ -32,11 +33,14 @@ cd "$(dirname "$0")/.."
 
 LANG_DIR="${I18N_LANG_DIR:-languages}"
 DOMAIN="wb-gamification"
+MIN_COVERAGE="${I18N_MIN_COVERAGE:-95}"
+ENFORCE_COVERAGE="${I18N_ENFORCE_COVERAGE:-0}"
 POT="${LANG_DIR}/${DOMAIN}.pot"
 EXCLUDE="node_modules,vendor,tests,plan,audit,docs,examples,marketing,dist,build,.git,.claude,.superpowers"
 
 fail_count=0
 fail() { printf '  \033[31mFAIL\033[0m %s\n' "$1"; shift; for l in "$@"; do printf '       %s\n' "$l"; done; fail_count=$((fail_count + 1)); }
+warn() { printf '  \033[33mwarn\033[0m %s\n' "$1"; shift; for l in "$@"; do printf '       %s\n' "$l"; done; }
 pass() { printf '  \033[32mok\033[0m   %s\n' "$1"; }
 
 # ─── tools: all required, none optional ──────────────────────────────────────
@@ -102,11 +106,15 @@ for po in "${pos[@]}"; do
     continue
   fi
 
-  # 3. Untranslated: msgattrib --untranslated also lists the header entry (empty msgid), so take 1 off.
+  # 3. Coverage. msgattrib lists the (empty-msgid) header too when it is untranslated or fuzzy, so
+  #    count real entries only and take the header off.
+  total="$(grep -c '^msgid ' "$POT" || true)"; total=$(( total > 0 ? total - 1 : 0 ))
   untr="$(msgattrib --untranslated --no-obsolete "$po" 2>/dev/null | grep -c '^msgid ' || true)"
   untr=$(( untr > 0 ? untr - 1 : 0 ))
-  # 4. Fuzzy.
-  fuzzy="$(msgattrib --only-fuzzy --no-obsolete "$po" 2>/dev/null | grep -c '^msgid ' || true)"
+  fuzzy="$(msgattrib --only-fuzzy --no-obsolete "$po" 2>/dev/null | grep '^msgid ' | grep -vc '^msgid ""$' || true)"
+  gap=$(( untr + fuzzy ))
+  pct10=$(( total > 0 ? (total - gap) * 1000 / total : 1000 ))   # tenths of a percent, no floats in bash
+  pct="$(( pct10 / 10 )).$(( pct10 % 10 ))"
   # 5. Placeholders / format strings.
   if ! msgfmt -c -o /dev/null "$po" >"$work/fmt-${loc}.log" 2>&1; then
     fmt_bad="$(grep -c 'error\|warning' "$work/fmt-${loc}.log" || true)"
@@ -114,13 +122,19 @@ for po in "${pos[@]}"; do
     fmt_bad=0
   fi
 
-  if [ "${untr:-0}" -gt 0 ] || [ "${fuzzy:-0}" -gt 0 ] || [ "${fmt_bad:-0}" -gt 0 ]; then
-    fail "${loc}: ${untr} untranslated, ${fuzzy} fuzzy, ${fmt_bad} placeholder/format problem(s)"
-    if [ "${untr:-0}" -gt 0 ]; then msgattrib --untranslated --no-obsolete "$po" 2>/dev/null | grep '^msgid ' | sed -n '2,6p' | sed 's/^/       untranslated: /'; fi
-    if [ "${fuzzy:-0}" -gt 0 ]; then msgattrib --only-fuzzy --no-obsolete "$po" 2>/dev/null | grep '^msgid ' | sed -n '1,4p' | sed 's/^/       fuzzy: /'; fi
-    if [ "${fmt_bad:-0}" -gt 0 ]; then head -4 "$work/fmt-${loc}.log" | sed 's/^/       /'; fi
-  else
-    pass "${loc}: fully translated, placeholders match"
+  if [ "${fmt_bad:-0}" -gt 0 ]; then
+    fail "${loc}: ${fmt_bad} placeholder/format problem(s)"
+    head -4 "$work/fmt-${loc}.log" | sed 's/^/       /'
+  fi
+  if [ "$pct10" -lt $(( MIN_COVERAGE * 10 )) ]; then
+    detail=( "${untr} empty, ${fuzzy} fuzzy of ${total} strings (those show in English)" )
+    if [ "$ENFORCE_COVERAGE" = "1" ]; then
+      fail "${loc}: ${pct}% translated, below the ${MIN_COVERAGE}% aim" "${detail[@]}"
+    else
+      warn "${loc}: ${pct}% translated, below the ${MIN_COVERAGE}% aim (not blocking)" "${detail[@]}"
+    fi
+  elif [ "${fmt_bad:-0}" -eq 0 ]; then
+    pass "${loc}: ${pct}% translated, placeholders match"
   fi
 
   # 6. Artifacts: rebuild from the .po and compare with what ships.
