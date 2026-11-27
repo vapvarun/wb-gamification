@@ -93,7 +93,12 @@ return array(
 					'post_id'  => $post_id,
 				);
 			},
-			'permanent'         => 'No removal hook in BuddyNext 1.3.0: ShareService::unshare() deletes with no action (card on the BuddyNext board).',
+			// Per sharer and original post (a re-share gets a new share id): unsharing, or deleting the
+			// repost card, takes it back, so share/unshare loops net to one award.
+			'once_per_object'   => static fn( int $share_id, int $post_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $post_id ),
+			'reverse_on'        => array(
+				'buddynext_post_unshared' => static fn( $share_id, $post_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $post_id ),
+			),
 			'default_points'    => 5,
 			'category'          => 'content',
 			'icon'              => 'icon-share-2',
@@ -185,7 +190,12 @@ return array(
 					'option_id' => $option_id,
 				);
 			},
-			'permanent'         => 'No removal hook in BuddyNext 1.3.0: PollService removes a vote with no action (card on the BuddyNext board).',
+			// Per voter and poll: a vote taken back (toggle off, or the old side of a switch) takes the
+			// point back, so a switch or a vote/remove loop nets to one award.
+			'once_per_object'   => static fn( int $post_id, int $option_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $post_id ),
+			'reverse_on'        => array(
+				'buddynext_poll_vote_removed' => static fn( $post_id, $option_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $post_id ),
+			),
 			'owner_callback'    => static fn( $post_id ): int => $wb_gam_bn_post_owner( $post_id ),
 			'default_points'    => 1,
 			'category'          => 'content',
