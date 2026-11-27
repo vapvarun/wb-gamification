@@ -1,11 +1,11 @@
 /**
- * Admin: API Keys — REST-driven (replaces 3 admin-post.php form-post handlers).
+ * Admin: API Keys - REST-driven (replaces 3 admin-post.php form-post handlers).
  *
- * /wb-gamification/v1/api-keys              — POST + GET (list)
- * /wb-gamification/v1/api-keys/{id}/revoke  — PATCH
- * /wb-gamification/v1/api-keys/{id}         — DELETE
+ * /wb-gamification/v1/api-keys              - POST + GET (list)
+ * /wb-gamification/v1/api-keys/{id}/revoke  - PATCH
+ * /wb-gamification/v1/api-keys/{id}         - DELETE
  *
- * v1.1+ ID-based routes — server stores hashed keys, can't look up by full
+ * v1.1+ ID-based routes - server stores hashed keys, can't look up by full
  * secret because the secret is never persisted. Each row has a stable id
  * the admin UI uses for revoke/delete. Full secret is only ever returned
  * in the create response.
@@ -59,11 +59,11 @@
 			tr.dataset.keyId      = String( item.id || '' );
 
 			tr.appendChild( cellText( item.label || '', { strong: true } ) );
-			tr.appendChild( cellCode( item.site_id || '—' ) );
+			tr.appendChild( cellCode( item.site_id || '-' ) );
 			tr.appendChild( cellCode( item.key_preview || '' ) );
 			// REST returns UTC; the server-rendered table shows site time, so label these explicitly.
 			tr.appendChild( cellText( item.created_at ? item.created_at + ' UTC' : '' ) );
-			tr.appendChild( cellText( item.last_used ? item.last_used + ' UTC' : '—' ) );
+			tr.appendChild( cellText( item.last_used ? item.last_used + ' UTC' : '-' ) );
 
 			const tdStatus = document.createElement( 'td' );
 			const pill = document.createElement( 'span' );
@@ -129,7 +129,7 @@
 		code.textContent = secret;
 		panel.classList.remove( 'wbgam-is-hidden' );
 
-		// Wire the inline-banner dismiss button (idempotent — only attaches once).
+		// Wire the inline-banner dismiss button (idempotent - only attaches once).
 		const dismiss = panel.querySelector( '[data-wb-gam-banner-dismiss]' );
 		if ( dismiss && ! dismiss.dataset.wired ) {
 			dismiss.dataset.wired = '1';
@@ -193,7 +193,7 @@
 
 		// Server-side action targets the row by stable id. Pre-1.1 the action
 		// targeted the full key, which broke after migration to hashed
-		// storage (the server can't look up by full key anymore — it only
+		// storage (the server can't look up by full key anymore - it only
 		// has the hash). The id is exposed by the list response and rendered
 		// into tr.dataset.keyId on every refresh.
 		const keyId = tr.dataset.keyId;

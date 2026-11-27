@@ -1,9 +1,9 @@
 <?php
 /**
- * WB Gamification — Cross-cutting log helper.
+ * WB Gamification - Cross-cutting log helper.
  *
  * Single helper used by every engine. No engine should call error_log()
- * directly after this lands — they all go through Log::warning() /
+ * directly after this lands - they all go through Log::warning() /
  * Log::error() / Log::debug().
  *
  * The log goes to PHP's error log via error_log(); the file location is
@@ -11,13 +11,13 @@
  * wp-content/debug.log on a development install, or syslog on prod).
  *
  * Severity rules:
- *   - error()   — always logs. Use for genuine failures the site owner
+ *   - error()   - always logs. Use for genuine failures the site owner
  *                 needs to see (DB write failed, wp_mail failed, webhook
  *                 delivery permanently failed after retries).
- *   - warning() — logs only when WP_DEBUG is enabled. Use for soft
+ *   - warning() - logs only when WP_DEBUG is enabled. Use for soft
  *                 failures (badge already earned, event skipped by
- *                 rate limiter — useful while debugging, noise in prod).
- *   - debug()   — logs only when WP_DEBUG is enabled. Use for tracing
+ *                 rate limiter - useful while debugging, noise in prod).
+ *   - debug()   - logs only when WP_DEBUG is enabled. Use for tracing
  *                 individual events through the pipeline.
  *
  * Every log line is prefixed with `[wb_gam] {LEVEL}` so the team can
@@ -41,12 +41,12 @@ final class Log {
 	/**
 	 * Log an error. Always written, regardless of WP_DEBUG.
 	 *
-	 * Use for failures the site owner needs to see — DB writes that
+	 * Use for failures the site owner needs to see - DB writes that
 	 * failed, async jobs that exhausted retries, wp_mail() returning
 	 * false, webhook deliveries that gave up.
 	 *
 	 * @param string $message   Human-readable summary. Don't include
-	 *                          sensitive data (passwords, full tokens) —
+	 *                          sensitive data (passwords, full tokens) -
 	 *                          this lands in the error log.
 	 * @param array  $context   Structured context to append. Serialized
 	 *                          JSON-style for grep-friendliness.
@@ -58,7 +58,7 @@ final class Log {
 	/**
 	 * Log a warning. Only written when WP_DEBUG is enabled.
 	 *
-	 * Use for soft failures — events skipped by rate limiter, badges
+	 * Use for soft failures - events skipped by rate limiter, badges
 	 * already earned, attempts to award invalid actions.
 	 *
 	 * @param string $message Human-readable summary.

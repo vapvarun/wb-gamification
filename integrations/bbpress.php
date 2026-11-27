@@ -1,15 +1,15 @@
 <?php
 /**
- * WB Gamification — bbPress Integration Manifest
+ * WB Gamification - bbPress Integration Manifest
  *
  * Auto-loaded by ManifestLoader. Fires only when bbPress is active.
  *
  * Actions covered:
- *   New topic created      — bbp_new_topic
- *   New reply posted       — bbp_new_reply
- *   Topic closed           — bbp_closed_topic (topic author)
+ *   New topic created      - bbp_new_topic
+ *   New reply posted       - bbp_new_reply
+ *   Topic closed           - bbp_closed_topic (topic author)
  *
- * Note: These run as standalone_only: false — they fire alongside BuddyPress
+ * Note: These run as standalone_only: false - they fire alongside BuddyPress
  * activity feed triggers because bbPress actions are structurally different
  * from BP activity updates (different content types, different communities).
  *

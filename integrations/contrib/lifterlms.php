@@ -1,18 +1,18 @@
 <?php
 /**
- * WB Gamification — LifterLMS Integration Manifest
+ * WB Gamification - LifterLMS Integration Manifest
  *
  * Auto-loaded by ManifestLoader when this file exists in integrations/.
  * Triggers fire only when LifterLMS is active.
  *
  * Actions covered:
- *   Course completed   — lifterlms_course_completed
- *   Lesson completed   — lifterlms_lesson_completed
- *   Quiz passed        — lifterlms_quiz_passed
- *   Course enrolled    — llms_user_enrolled_in_course
- *   Membership joined  — llms_user_added_to_membership_level
- *   Achievement earned — llms_user_earned_achievement
- *   Certificate earned — llms_user_earned_certificate
+ *   Course completed   - lifterlms_course_completed
+ *   Lesson completed   - lifterlms_lesson_completed
+ *   Quiz passed        - lifterlms_quiz_passed
+ *   Course enrolled    - llms_user_enrolled_in_course
+ *   Membership joined  - llms_user_added_to_membership_level
+ *   Achievement earned - llms_user_earned_achievement
+ *   Certificate earned - llms_user_earned_certificate
  *
  * A member earns each of these once per course, lesson, quiz, membership, achievement or certificate.
  *

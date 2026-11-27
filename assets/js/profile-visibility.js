@@ -1,10 +1,10 @@
 /**
- * Profile visibility toggle — owner control on /u/{login}.
+ * Profile visibility toggle - owner control on /u/{login}.
  *
  * POSTs the member's own visibility choice to
  * `wb-gamification/v1/members/me/profile-visibility` and updates the button +
  * status copy in place. Self-contained via data attributes on the section
- * (REST url + nonce), matching the give-kudos pattern — no localized globals.
+ * (REST url + nonce), matching the give-kudos pattern - no localized globals.
  *
  * @since 1.5.5
  */

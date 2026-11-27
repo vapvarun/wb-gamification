@@ -69,7 +69,7 @@ final class OpenApiController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Build the OpenAPI 3.0.3 spec array. Pure data — no HTTP context.
+	 * Build the OpenAPI 3.0.3 spec array. Pure data - no HTTP context.
 	 *
 	 * Same builder serves the runtime REST endpoint AND the CLI
 	 * `wp wb-gamification openapi export` command (which writes the

@@ -3,14 +3,14 @@
  * WB Gamification Manifest Loader
  *
  * Auto-discovers gamification manifest files at boot time.
- * No plugin needs to register with WB Gamification — just drop a
+ * No plugin needs to register with WB Gamification - just drop a
  * file named 'wb-gamification.php' in the plugin directory.
  *
  * Discovery order (both run at plugins_loaded priority 5):
  *   1. First-party manifests: WB_GAM_PATH . 'integrations/*.php'
  *   2. Third-party manifests: WP_PLUGIN_DIR/{plugin}/wb-gamification.php
  *
- * Manifest files return a plain PHP array — no dependency on this
+ * Manifest files return a plain PHP array - no dependency on this
  * plugin being active. The file is simply ignored if this plugin
  * is not installed.
  *
@@ -22,15 +22,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -120,7 +120,7 @@ final class ManifestLoader {
 		foreach ( self::$buffered as $id => $trigger ) {
 			if ( isset( self::$superseded[ $id ] ) ) {
 				Log::warning(
-					'ManifestLoader: trigger superseded by a canonical sibling — skipped.',
+					'ManifestLoader: trigger superseded by a canonical sibling - skipped.',
 					array( 'action_id' => $id )
 				);
 				continue;
@@ -140,7 +140,7 @@ final class ManifestLoader {
 	 *
 	 * Set by load_from_plugins() before each register_from_file() call and
 	 * cleared after. Used by register_manifest() to silently skip duplicate
-	 * action_ids that third-party manifests redeclare — first-party (in-tree)
+	 * action_ids that third-party manifests redeclare - first-party (in-tree)
 	 * manifests always win precedence on collision so this plugin can ship
 	 * the canonical definition and bundled manifests gracefully fill gaps.
 	 *
@@ -155,8 +155,8 @@ final class ManifestLoader {
 	 */
 	private static function load_first_party( bool $bp_active ): void {
 		// Two-tier first-party manifest layout:
-		// integrations/            — direct-vendor integrations (BP, WC, WP-core)
-		// integrations/contrib/    — third-party-shipped contrib manifests
+		// integrations/            - direct-vendor integrations (BP, WC, WP-core)
+		// integrations/contrib/    - third-party-shipped contrib manifests
 		// (LifterLMS, MemberPress, GiveWP, The Events Calendar)
 		// Both directories are scanned at top level (no recursive descent).
 		$paths = array(
@@ -204,7 +204,7 @@ final class ManifestLoader {
 	 * Scan all active plugin directories for third-party manifest files.
 	 *
 	 * A third-party plugin ships its own `wb-gamification.php` manifest in its
-	 * plugin directory. The file is only loaded when that plugin is active —
+	 * plugin directory. The file is only loaded when that plugin is active -
 	 * deactivated plugins leave the file on disk, but their manifest must not
 	 * register actions (otherwise the Registry stays polluted with stale IDs
 	 * after deactivation).
@@ -300,9 +300,9 @@ final class ManifestLoader {
 	 * Register all triggers from a manifest array.
 	 *
 	 * Trigger flags:
-	 *   standalone_only: true     — skip when BuddyPress is active (BP covers the same event).
-	 *   requires_buddypress: true — skip when BuddyPress is NOT active.
-	 *   supersedes: [id, ...]     — once this trigger survives validation, drop the
+	 *   standalone_only: true     - skip when BuddyPress is active (BP covers the same event).
+	 *   requires_buddypress: true - skip when BuddyPress is NOT active.
+	 *   supersedes: [id, ...]     - once this trigger survives validation, drop the
 	 *                               listed action ids from the registration set so
 	 *                               the same event is never awarded twice.
 	 *

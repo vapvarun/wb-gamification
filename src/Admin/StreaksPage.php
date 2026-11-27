@@ -127,7 +127,7 @@ final class StreaksPage {
 		}
 
 		// Read-only list navigation via GET; sanitized + whitelisted, so no nonce
-		// is required (no state change happens here — the write actions are
+		// is required (no state change happens here - the write actions are
 		// separately nonce-gated REST calls).
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$orderby = isset( $_GET['orderby'] ) ? sanitize_key( wp_unslash( $_GET['orderby'] ) ) : 'current_streak';
@@ -187,7 +187,7 @@ final class StreaksPage {
 											</td>
 											<td class="wb-gam-streaks-table__current" data-col="current"><?php echo esc_html( (string) $row['current_streak'] ); ?></td>
 											<td class="wb-gam-streaks-table__longest"><?php echo esc_html( (string) $row['longest_streak'] ); ?></td>
-											<td class="wb-gam-streaks-table__last"><?php echo esc_html( $row['last_active'] ? $row['last_active'] : '—' ); ?></td>
+											<td class="wb-gam-streaks-table__last"><?php echo esc_html( $row['last_active'] ? $row['last_active'] : '-' ); ?></td>
 											<td class="wb-gam-streaks-table__grace">
 												<?php if ( $row['grace_used'] ) : ?>
 													<span class="wbgam-badge wbgam-badge--warning"><?php esc_html_e( 'Used', 'wb-gamification' ); ?></span>

@@ -12,15 +12,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -78,7 +78,7 @@ final class Registry {
 	private static bool $initialized = false;
 
 	/**
-	 * Initialize the registry — fires 'wb_gam_register' action
+	 * Initialize the registry - fires 'wb_gam_register' action
 	 * so all extensions can register their actions.
 	 */
 	public static function init(): void {
@@ -148,7 +148,7 @@ final class Registry {
 
 		$action = wp_parse_args( $args, $defaults );
 
-		// Validate point_type slug shape (we don't hit the DB here — resolution
+		// Validate point_type slug shape (we don't hit the DB here - resolution
 		// happens at award-time in PointTypeService::resolve(), which falls back
 		// to the primary type if the slug isn't registered).
 		if ( '' !== $action['point_type'] ) {
@@ -176,7 +176,7 @@ final class Registry {
 
 		self::$actions[ $action['id'] ] = $action;
 
-		// Auto-hook to WordPress — routes through Engine::process() (Phase 0+).
+		// Auto-hook to WordPress - routes through Engine::process() (Phase 0+).
 		// $accepted_args=10 ensures hooks that pass multiple args (e.g. wp_login
 		// passes $user_login + $user) forward all of them to user_callback.
 		add_action(
@@ -358,7 +358,7 @@ final class Registry {
 	private static function fire( array $action, array $params ): void {
 		$user_id = (int) call_user_func_array( $action['user_callback'], $params );
 		if ( $user_id <= 0 ) {
-			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			/** This filter is documented in src/Engine/PointsEngine.php - see wb_gam_award_skipped. */
 			do_action(
 				'wb_gam_award_skipped',
 				$user_id,
@@ -372,7 +372,7 @@ final class Registry {
 		// Acting on your own content earns nothing: owner_callback names whose content the hook is
 		// about, and a member is never paid for their own.
 		if ( isset( $action['owner_callback'] ) && is_callable( $action['owner_callback'] ) && (int) call_user_func_array( $action['owner_callback'], $params ) === $user_id ) {
-			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			/** This filter is documented in src/Engine/PointsEngine.php - see wb_gam_award_skipped. */
 			do_action( 'wb_gam_award_skipped', $user_id, (string) $action['id'], 'own_content', array() );
 			return;
 		}
@@ -382,7 +382,7 @@ final class Registry {
 			? (array) call_user_func_array( $action['metadata_callback'], $params )
 			: array();
 
-		// Dynamic point scaling — when the manifest declares a
+		// Dynamic point scaling - when the manifest declares a
 		// points_callback, invoke it with the hook args so the action
 		// can scale points by rank, streak length, order total, etc.
 		// Result is stashed in metadata['_dynamic_points'] and picked
@@ -419,7 +419,7 @@ final class Registry {
 			)
 		);
 
-		// Repeatable actions run async by default — high-volume and must not
+		// Repeatable actions run async by default - high-volume and must not
 		// block the request path. Non-repeatable once-only actions run sync
 		// so callers get immediate confirmation. $action['async'] overrides.
 		if ( $action['async'] ?? $action['repeatable'] ) {
@@ -620,20 +620,20 @@ final class Registry {
 	 * Suggest registered action IDs similar to an unknown one.
 	 *
 	 * Used by the Engine to turn silent "action not in registry" misses into
-	 * actionable "did you mean…" hints — the #1 footgun is a typo'd action_id
+	 * actionable "did you mean…" hints - the #1 footgun is a typo'd action_id
 	 * that resolves to `$action === null`, drops `$points` to 0, and returns
 	 * false from `Engine::process()` without surfacing anything to the caller
 	 * or the debug log. Worked example: `wc_product_review` (singular) ->
 	 * suggests `wc_product_reviewed` (manifest's canonical past-tense form).
 	 *
 	 * Matching strategy (combined for breadth):
-	 *   1. Substring match — catches singular/plural and missing tense
+	 *   1. Substring match - catches singular/plural and missing tense
 	 *      affixes (`wc_product_review` ⊂ `wc_product_reviewed`).
-	 *   2. Levenshtein distance ≤ 3 — catches transpositions and single-char
+	 *   2. Levenshtein distance ≤ 3 - catches transpositions and single-char
 	 *      typos.
 	 *
 	 * Results are deduplicated and ranked by score, capped at $limit. When
-	 * nothing fits the bar, an empty array is returned — "no suggestions"
+	 * nothing fits the bar, an empty array is returned - "no suggestions"
 	 * is more honest than namespace-prefix noise that doesn't help the
 	 * caller. The owning plugin may simply be inactive, in which case the
 	 * canonical action isn't registered to be suggested.
@@ -660,7 +660,7 @@ final class Registry {
 		foreach ( $candidates as $candidate ) {
 			$cand_lower = strtolower( $candidate );
 
-			// Substring either direction — strongest signal.
+			// Substring either direction - strongest signal.
 			if ( false !== strpos( $cand_lower, $lower ) || false !== strpos( $lower, $cand_lower ) ) {
 				$scored[ $candidate ] = -1;
 				continue;
@@ -900,9 +900,9 @@ final class Registry {
 	 * always agree on which currency the action belongs to.
 	 *
 	 * Resolution order:
-	 *   1. Admin override — `wb_gam_point_type_<action_id>` option
-	 *   2. Manifest declaration — `$action['point_type']`
-	 *   3. Empty string — caller passes through `PointTypeService::resolve()`
+	 *   1. Admin override - `wb_gam_point_type_<action_id>` option
+	 *   2. Manifest declaration - `$action['point_type']`
+	 *   3. Empty string - caller passes through `PointTypeService::resolve()`
 	 *      which falls back to the primary slug.
 	 *
 	 * @param array $action Registered action config.

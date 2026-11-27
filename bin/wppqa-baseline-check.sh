@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# bin/wppqa-baseline-check.sh — validates a recent wppqa baseline exists.
+# bin/wppqa-baseline-check.sh - validates a recent wppqa baseline exists.
 #
 # `wp-plugin-qa` is a Claude-level MCP server (mcp__wp-plugin-qa__*). The
 # orchestrator (Claude) runs the four canonical wppqa checks against the
@@ -68,7 +68,7 @@ if [ -n "$BASELINE_DATE" ]; then
     fi
 fi
 
-# Cleanliness check — SUMMARY.md must declare `failed=0` (or have no
+# Cleanliness check - SUMMARY.md must declare `failed=0` (or have no
 # `failed=` row at all, which the consolidator omits when everything is
 # green). A `failed=` row with a non-zero number is a fail.
 DIRTY=$(grep -E 'failed[[:space:]]*=[[:space:]]*[1-9]' "$SUMMARY" || true)

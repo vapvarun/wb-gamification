@@ -1,5 +1,5 @@
 /**
- * WB Gamification — Settings Page CSS
+ * WB Gamification - Settings Page CSS
  * =====================================================================
  * Per-page styles for `WBGam\Admin\SettingsPage` (menu slug:
  * `wb-gamification`). The Settings page is the most complex admin
@@ -84,7 +84,7 @@
 	color: var(--wbgam-wp-text-light);
 }
 
-/* Nav groups — compact density. */
+/* Nav groups - compact density. */
 .wbgam-settings-nav,
 .wbgam-settings-nav-group {
 	margin-bottom: 0;
@@ -274,7 +274,7 @@ details.wbgam-settings-nav-group .wbgam-settings-nav-item {
 	padding: 16px 20px;
 }
 
-/* Section visibility — JS toggles .is-active */
+/* Section visibility - JS toggles .is-active */
 .wbgam-settings-section {
 	display: none;
 }
@@ -369,7 +369,7 @@ details.wbgam-settings-nav-group .wbgam-settings-nav-item {
 }
 
 /* ==========================================================================
-   3. Dashboard Tab — KPI Strip + Quick Links + Checklist + Dashboard Rows
+   3. Dashboard Tab - KPI Strip + Quick Links + Checklist + Dashboard Rows
    ========================================================================== */
 
 .wb-gam-admin-kpi-strip {
@@ -379,7 +379,7 @@ details.wbgam-settings-nav-group .wbgam-settings-nav-item {
 	margin-block-end: 1.5rem;
 }
 
-/* KPI card visuals — shared with AnalyticsDashboard which also enqueues
+/* KPI card visuals - shared with AnalyticsDashboard which also enqueues
    admin-analytics.css; rules kept here so the Settings dashboard tab
    renders correctly even without analytics.css loading. */
 .wb-gam-admin-kpi-card {
@@ -464,7 +464,7 @@ details.wbgam-settings-nav-group .wbgam-settings-nav-item {
 	color: var(--wbgam-primary, var(--wbgam-primary));
 }
 
-/* Setup-progress checklist — items auto-checked from live site state. */
+/* Setup-progress checklist - items auto-checked from live site state. */
 .wbgam-checklist {
 	list-style: none;
 	margin: 0;
@@ -536,7 +536,7 @@ details.wbgam-settings-nav-group .wbgam-settings-nav-item {
 	}
 }
 
-/* Dashboard fill — Top Members + Top Actions side-by-side, then
+/* Dashboard fill - Top Members + Top Actions side-by-side, then
    Recent Kudos full-width below. */
 .wbgam-dashboard-row {
 	display: grid;
@@ -653,7 +653,7 @@ details.wbgam-settings-nav-group .wbgam-settings-nav-item {
 	text-align: right;
 }
 
-/* Recent kudos feed — single line per kudo, scannable */
+/* Recent kudos feed - single line per kudo, scannable */
 .wbgam-kudos-feed {
 	list-style: none;
 	margin: 0;
@@ -730,7 +730,7 @@ details.wbgam-settings-nav-group .wbgam-settings-nav-item {
 }
 
 /* ==========================================================================
-   4. Points Tab — Action Overrides + Category Toggle
+   4. Points Tab - Action Overrides + Category Toggle
    ========================================================================== */
 
 .wb-gam-admin-action-overrides,
@@ -813,12 +813,12 @@ details.wbgam-settings-nav-group .wbgam-settings-nav-item {
 	margin-top: var(--wb-gam-space-xs, 4px);
 }
 
-/* Kudos field markers — values bound via JS to live settings state. */
+/* Kudos field markers - values bound via JS to live settings state. */
 .wb-gam-kudos-daily-limit,
 .wb-gam-kudos-giver-points,
 .wb-gam-kudos-receiver-points,
 .wb-gam-log-retention-months {
-	/* JS-bound numeric inputs — visuals come from .wbgam-input. */
+	/* JS-bound numeric inputs - visuals come from .wbgam-input. */
 }
 
 /* ==========================================================================
@@ -929,7 +929,7 @@ details.wbgam-settings-nav-group .wbgam-settings-nav-item {
 }
 
 /* ==========================================================================
-   9. API Keys (settings section reference — full UI lives in api-keys.css)
+   9. API Keys (settings section reference - full UI lives in api-keys.css)
    ========================================================================== */
 
 .wb-gam-api-keys {
@@ -1056,7 +1056,7 @@ details.wbgam-settings-nav-group .wbgam-settings-nav-item {
 	color: #fff;
 }
 
-/* Staff permissions matrix (Access tab — caps delegation, 1.6.2). */
+/* Staff permissions matrix (Access tab - caps delegation, 1.6.2). */
 .wb-gam-caps-matrix__scroll {
 	overflow-x: auto;
 	margin-bottom: var(--wb-gam-space-md, 16px);

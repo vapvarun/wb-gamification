@@ -6,7 +6,7 @@
  * can see and manage the points_multiplier rules that silently rescale every
  * award. The rules already existed and were enforced by
  * {@see \WBGam\Engine\RuleEngine::apply_multipliers()} but were reachable only
- * through the REST API (RulesController) — an owner had no way to see, add, or
+ * through the REST API (RulesController) - an owner had no way to see, add, or
  * turn off a multiplier that was doubling everyone's points.
  *
  * This page is a thin admin surface over the existing
@@ -238,7 +238,7 @@ final class MultipliersPage {
 											<?php if ( $has_condition ) : ?>
 												<code><?php echo esc_html( $condition_lbl ); ?></code>
 											<?php else : ?>
-												<span class="wbgam-text-muted">&mdash;</span>
+												<span class="wbgam-text-muted">-</span>
 											<?php endif; ?>
 										</td>
 										<td>

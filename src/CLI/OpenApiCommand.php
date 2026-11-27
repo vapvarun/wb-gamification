@@ -13,7 +13,7 @@
  * manifest.json, the other canonical inventory artefact). cut-release.sh
  * regenerates it on every release prep so the committed artefact
  * matches the controllers it describes. Chose audit/ over dist/ because
- * dist/ is gitignored — and the OpenAPI spec belongs in source control,
+ * dist/ is gitignored - and the OpenAPI spec belongs in source control,
  * not as a build output.
  *
  * @package WB_Gamification

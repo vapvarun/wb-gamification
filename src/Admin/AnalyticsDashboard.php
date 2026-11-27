@@ -11,7 +11,7 @@
  *   - Streak health (% of members with streak > 0)
  *
  * All queries are read-only aggregations with object-cache backing.
- * Dashboard renders server-side HTML — no JS build required.
+ * Dashboard renders server-side HTML - no JS build required.
  *
  * @package WB_Gamification
  * @since   0.1.0
@@ -632,22 +632,22 @@ final class AnalyticsDashboard {
 	}
 
 	/**
-	 * Render two intelligence panels — high churn-risk + anomaly flagged.
+	 * Render two intelligence panels - high churn-risk + anomaly flagged.
 	 *
 	 * Surfaces the wb_gam_user_intelligence projection that
 	 * IntelligenceProjector populates on the daily cron. Without these
-	 * panels the projection is invisible to admins — useful for
+	 * panels the projection is invisible to admins - useful for
 	 * scripts and the SDK, but hidden from the people who'd actually
 	 * use the data (community managers, growth team).
 	 *
 	 * Read-only listing. Sorts by churn_risk DESC for the risk panel,
 	 * by events_30d DESC for the anomaly panel. Caps at 25 rows per
-	 * panel — power users with a big install can build their own
+	 * panel - power users with a big install can build their own
 	 * reporting on top of the REST endpoint.
 	 */
 	private static function render_intelligence_panels(): void {
 		if ( ! get_option( 'wb_gam_feature_user_intelligence_v1' ) ) {
-			return; // Projection table not migrated yet — silent skip.
+			return; // Projection table not migrated yet - silent skip.
 		}
 
 		global $wpdb;
@@ -777,14 +777,14 @@ final class AnalyticsDashboard {
 	 * Render the "unknown action_ids" diagnostic panel.
 	 *
 	 * Surfaces events that called `Engine::process()` with an action_id
-	 * that is not in the Registry — the silent failure class Engine
+	 * that is not in the Registry - the silent failure class Engine
 	 * v1.5.0 started logging via `wb_gam_unknown_action`. The dashboard
 	 * is the production-facing surface; `debug.log` only works in dev.
 	 *
 	 * The buffer is a 24-hour transient (see {@see \WBGam\Engine\Engine}
 	 * UNKNOWN_ACTIONS_TRANSIENT), so it self-clears between runs and
-	 * doesn't grow unbounded. Empty buffer renders nothing — no panel,
-	 * no noise — so healthy installs see a clean dashboard.
+	 * doesn't grow unbounded. Empty buffer renders nothing - no panel,
+	 * no noise - so healthy installs see a clean dashboard.
 	 */
 	private static function render_unknown_actions_panel(): void {
 		$buffer = \WBGam\Engine\Engine::get_unknown_actions_recent();
@@ -933,7 +933,7 @@ final class AnalyticsDashboard {
 										__( '%s ago', 'wb-gamification' ),
 										human_time_diff( (int) strtotime( $last . ' UTC' ) )
 									)
-									: '—'
+									: '-'
 							);
 							?>
 							</td>
@@ -1001,7 +1001,7 @@ final class AnalyticsDashboard {
 		// A chart with no scale is a picture of some rectangles.
 		//
 		// It rendered as bare bars: no axis, no labels, no baseline. And because one busy day sets the
-		// maximum, every other day was drawn at ~1% of 80px — a row of 1px stubs that read as broken
+		// maximum, every other day was drawn at ~1% of 80px - a row of 1px stubs that read as broken
 		// rather than as "quiet days". The scale is now stated, so a tall bar next to flat ones is
 		// legible as what it is instead of looking like a rendering fault.
 		$summary = sprintf(

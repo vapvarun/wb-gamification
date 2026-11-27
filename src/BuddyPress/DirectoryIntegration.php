@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — BuddyPress Member Directory Integration
+ * WB Gamification - BuddyPress Member Directory Integration
  *
  * Shows rank title next to member name in the member directory.
  *
@@ -69,7 +69,7 @@ final class DirectoryIntegration {
 	 * Runs on the first row of a members loop (see render_rank_in_directory()),
 	 * after the loop is queried. Collects the page's member IDs and
 	 * warms points totals, earned-badge counts, level user_meta, and the
-	 * show_rank preference in a fixed handful of queries — turning
+	 * show_rank preference in a fixed handful of queries - turning
 	 * render_rank_in_directory()'s former O(rows) queries into O(1).
 	 *
 	 * @return void
@@ -98,7 +98,7 @@ final class DirectoryIntegration {
 			return;
 		}
 
-		// Engine cache primers — each subsequent per-row read becomes a hit.
+		// Engine cache primers - each subsequent per-row read becomes a hit.
 		\WBGam\Engine\PointsEngine::prime_totals( $ids );
 		\WBGam\Engine\BadgeEngine::prime_earned_badges( $ids );
 		// LevelEngine::get_level_for_user reads wb_gam_level_id / _name meta.

@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Jetonomy Pro Integration Manifest
+ * WB Gamification - Jetonomy Pro Integration Manifest
  *
  * Auto-loaded by ManifestLoader when Jetonomy Pro is active.
  * No dependency on WB Gamification at load time.
@@ -95,7 +95,7 @@ return array(
 			'label'             => static fn(): string => __( 'Send a reaction', 'wb-gamification' ),
 			'description'       => static fn(): string => __( 'Awarded when a member adds a reaction to a post or reply. Removing a reaction does not award.', 'wb-gamification' ),
 			// Pro fires: do_action( 'jetonomy_pro_reaction_toggled', $object_type, $object_id, $emoji, $user_id, $action ).
-			// $action is 'added' or 'removed' — only the 'added' branch earns points.
+			// $action is 'added' or 'removed' - only the 'added' branch earns points.
 			'hook'              => 'jetonomy_pro_reaction_toggled',
 			'user_callback'     => function ( string $object_type, int $object_id, string $emoji, int $user_id, string $action ): int {
 				return 'added' === $action ? $user_id : 0;

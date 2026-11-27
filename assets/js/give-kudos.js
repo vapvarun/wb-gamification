@@ -1,5 +1,5 @@
 /**
- * Give Kudos block — frontend submit handler.
+ * Give Kudos block - frontend submit handler.
  *
  * Intercepts `<form.wb-gam-give-kudos>` submits, POSTs to
  * `/wb-gamification/v1/kudos`, and shows status feedback.

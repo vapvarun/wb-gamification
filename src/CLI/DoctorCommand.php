@@ -1,6 +1,6 @@
 <?php
 /**
- * WP-CLI: Doctor — dry-run readiness check for WB Gamification.
+ * WP-CLI: Doctor - dry-run readiness check for WB Gamification.
  *
  * Validates database, actions, badges, levels, integrations, settings,
  * REST API, and pro/free split. Reports pass/warn/fail for each check.
@@ -108,9 +108,9 @@ class DoctorCommand {
 		// Short-circuit one-shot mode: --recompute-leaderboard rebuilds the
 		// snapshot + invalidates every cache key, then exits without running
 		// the full diagnostic suite. Designed for the "leaderboard wrong"
-		// support ticket — admin runs this, snapshot rebuilds in seconds.
+		// support ticket - admin runs this, snapshot rebuilds in seconds.
 		if ( WP_CLI\Utils\get_flag_value( $assoc_args, 'recompute-leaderboard', false ) ) {
-			WP_CLI::line( WP_CLI::colorize( '%BWB Gamification — leaderboard recompute%n' ) );
+			WP_CLI::line( WP_CLI::colorize( '%BWB Gamification - leaderboard recompute%n' ) );
 			\WBGam\Engine\LeaderboardEngine::write_snapshot();
 			\WBGam\Engine\LeaderboardEngine::invalidate_cache();
 			WP_CLI::success( 'Leaderboard snapshot rebuilt and cache invalidated.' );
@@ -163,7 +163,7 @@ class DoctorCommand {
 		if ( $this->counts['fail'] > 0 ) {
 			WP_CLI::error( 'Plugin has failures that must be fixed before release.', false );
 		} elseif ( $this->counts['warn'] > 0 ) {
-			WP_CLI::warning( 'Plugin has warnings — review before release.' );
+			WP_CLI::warning( 'Plugin has warnings - review before release.' );
 		} else {
 			WP_CLI::success( 'All checks passed. Plugin is release-ready.' );
 		}
@@ -245,9 +245,9 @@ class DoctorCommand {
 		if ( $count >= 5 ) {
 			$this->pass( $count . ' levels defined' );
 		} elseif ( $count > 0 ) {
-			$this->warn( 'Only ' . $count . ' levels — default is 5 (Newcomer→Champion)' );
+			$this->warn( 'Only ' . $count . ' levels - default is 5 (Newcomer→Champion)' );
 		} else {
-			$this->fail( 'No levels defined — members cannot progress' );
+			$this->fail( 'No levels defined - members cannot progress' );
 			if ( $this->fix ) {
 				WP_CLI::line( '  → Re-seeding default levels...' );
 				\WBGam\Engine\Installer::install();
@@ -261,7 +261,7 @@ class DoctorCommand {
 		if ( (int) $has_zero > 0 ) {
 			$this->pass( 'Starting level (0 points) exists' );
 		} else {
-			$this->fail( 'No starting level with min_points=0 — new members have no level' );
+			$this->fail( 'No starting level with min_points=0 - new members have no level' );
 		}
 	}
 
@@ -280,9 +280,9 @@ class DoctorCommand {
 		if ( $count >= 20 ) {
 			$this->pass( $count . ' badges defined' );
 		} elseif ( $count > 0 ) {
-			$this->warn( 'Only ' . $count . ' badges — default library has 30' );
+			$this->warn( 'Only ' . $count . ' badges - default library has 30' );
 		} else {
-			$this->fail( 'No badges defined — members cannot earn badges' );
+			$this->fail( 'No badges defined - members cannot earn badges' );
 		}
 
 		// Check badges with auto-award conditions have valid action_ids.
@@ -328,7 +328,7 @@ class DoctorCommand {
 		if ( $auto_count > 0 ) {
 			$this->pass( $auto_count . ' badges with auto-award conditions' );
 		} else {
-			$this->warn( 'No auto-award badge conditions — all badges are manual-only' );
+			$this->warn( 'No auto-award badge conditions - all badges are manual-only' );
 		}
 
 		if ( ! empty( $orphaned ) ) {
@@ -344,7 +344,7 @@ class DoctorCommand {
 	 * 1.5.0–1.5.3 stored `0000-00-00 00:00:00` instead of NULL for
 	 * never-expiring badges (Basecamp 9985131435). Such rows fail the
 	 * `expires_at IS NULL OR expires_at > now` visibility filter, so the
-	 * badges exist in wb_gam_user_badges but show as 0 on every surface —
+	 * badges exist in wb_gam_user_badges but show as 0 on every surface -
 	 * the exact "badges awarded but not displaying" support symptom.
 	 */
 	private function check_badge_expiry_integrity(): void {
@@ -363,7 +363,7 @@ class DoctorCommand {
 			return;
 		}
 
-		$this->fail( $broken . ' earned-badge rows have a zero-date expires_at — badges exist but display as 0 everywhere (profiles, Members page, blocks)' );
+		$this->fail( $broken . ' earned-badge rows have a zero-date expires_at - badges exist but display as 0 everywhere (profiles, Members page, blocks)' );
 		if ( $this->fix ) {
 			WP_CLI::line( '  → Repairing expires_at (NULL, or earned_at + validity_days where the badge defines a window)...' );
 			$repaired = \WBGam\Engine\BadgeEngine::repair_zero_date_expiry();
@@ -412,7 +412,7 @@ class DoctorCommand {
 		if ( $count > 0 ) {
 			$this->pass( $count . ' actions registered' );
 		} else {
-			$this->fail( 'No actions registered — gamification cannot award points' );
+			$this->fail( 'No actions registered - gamification cannot award points' );
 			return;
 		}
 
@@ -469,8 +469,8 @@ class DoctorCommand {
 	 * Publishing a blog post and commenting on a post are core WordPress
 	 * events with no BuddyPress equivalent. If they get re-flagged
 	 * `standalone_only` (so they vanish whenever BuddyPress is active), the
-	 * default badges that count them — first_post, prolific_writer,
-	 * content_creator, first_comment, engaged_reader — become permanently
+	 * default badges that count them - first_post, prolific_writer,
+	 * content_creator, first_comment, engaged_reader - become permanently
 	 * un-earnable on every BuddyPress site. This guard catches that
 	 * regression on a doctor run instead of in production.
 	 */
@@ -498,7 +498,7 @@ class DoctorCommand {
 			$this->fail(
 				'Core WP content triggers NOT registered: ' . implode( '; ', $missing )
 				. ( $bp_active
-					? ' — likely re-flagged standalone_only; those badges cannot be earned on this BuddyPress site.'
+					? ' - likely re-flagged standalone_only; those badges cannot be earned on this BuddyPress site.'
 					: '.' )
 			);
 		}
@@ -532,7 +532,7 @@ class DoctorCommand {
 
 		foreach ( $multi as $hook => $ids ) {
 			// Known intentional duplicates: first-time bonuses and give/receive patterns
-			// (different users awarded on same hook — giver vs receiver).
+			// (different users awarded on same hook - giver vs receiver).
 			$known_ok = [
 				'woocommerce_order_status_completed' => 'first-time bonus',
 				'mepr-event-signup-completed'        => 'first-time bonus',
@@ -548,7 +548,7 @@ class DoctorCommand {
 			if ( isset( $known_ok[ $hook ] ) ) {
 				$this->pass( $hook . ' → ' . implode( ', ', $ids ) . ' (' . $known_ok[ $hook ] . ')' );
 			} else {
-				$this->warn( $hook . ' → ' . implode( ', ', $ids ) . ' — verify no double-award' );
+				$this->warn( $hook . ' → ' . implode( ', ', $ids ) . ' - verify no double-award' );
 			}
 		}
 	}
@@ -568,7 +568,7 @@ class DoctorCommand {
 		if ( $wizard ) {
 			$this->pass( 'Setup wizard completed' );
 		} else {
-			$this->warn( 'Setup wizard not completed — admin will see wizard on first visit' );
+			$this->warn( 'Setup wizard not completed - admin will see wizard on first visit' );
 		}
 	}
 
@@ -680,7 +680,7 @@ class DoctorCommand {
 			if ( $found_manifest ) {
 				$this->pass( 'WPMediaVerse gamification manifest found' );
 			} else {
-				$this->warn( 'WPMediaVerse active but no gamification manifest — media actions not registered' );
+				$this->warn( 'WPMediaVerse active but no gamification manifest - media actions not registered' );
 			}
 		}
 
@@ -1179,7 +1179,7 @@ class DoctorCommand {
 		if ( file_exists( $pot_file ) ) {
 			$this->pass( 'Translation template (.pot) exists' );
 		} else {
-			$this->warn( 'No .pot file — run `grunt makepot` before release' );
+			$this->warn( 'No .pot file - run `grunt makepot` before release' );
 		}
 
 		// Uninstall hook.
@@ -1187,7 +1187,7 @@ class DoctorCommand {
 		if ( file_exists( $uninstall ) ) {
 			$this->pass( 'uninstall.php exists' );
 		} else {
-			$this->warn( 'No uninstall.php — plugin data will persist after deletion' );
+			$this->warn( 'No uninstall.php - plugin data will persist after deletion' );
 		}
 
 		// Readme.
@@ -1195,7 +1195,7 @@ class DoctorCommand {
 		if ( file_exists( $readme ) ) {
 			$this->pass( 'readme.txt exists' );
 		} else {
-			$this->warn( 'No readme.txt — required for WordPress.org submission' );
+			$this->warn( 'No readme.txt - required for WordPress.org submission' );
 		}
 
 		// The "minified assets" check used to live here, and every part of it was fiction. It looked
@@ -1213,7 +1213,7 @@ class DoctorCommand {
 			$blocks = glob( $blocks_dir . '*/block.json' ) ?: [];
 			$this->pass( count( $blocks ) . ' Gutenberg blocks registered' );
 		} else {
-			$this->warn( 'No build/Blocks/ directory — run `npm run build` to compile blocks' );
+			$this->warn( 'No build/Blocks/ directory - run `npm run build` to compile blocks' );
 		}
 
 		// Shortcodes check.
@@ -1225,7 +1225,7 @@ class DoctorCommand {
 		if ( ! empty( $gam_shortcodes ) ) {
 			$this->pass( count( $gam_shortcodes ) . ' shortcodes: ' . implode( ', ', $gam_shortcodes ) );
 		} else {
-			$this->warn( 'No shortcodes registered — classic editor users have no widgets' );
+			$this->warn( 'No shortcodes registered - classic editor users have no widgets' );
 		}
 
 		// Check for competing gamification plugins.
@@ -1241,7 +1241,7 @@ class DoctorCommand {
 			}
 		}
 		if ( ! empty( $conflicts ) ) {
-			$this->warn( 'Competing gamification plugins active: ' . implode( ', ', $conflicts ) . ' — may cause UX confusion' );
+			$this->warn( 'Competing gamification plugins active: ' . implode( ', ', $conflicts ) . ' - may cause UX confusion' );
 		} else {
 			$this->pass( 'No competing gamification plugins detected' );
 		}
@@ -1256,7 +1256,7 @@ class DoctorCommand {
 	 * state and switches to a 1-hour retention horizon) until either the
 	 * AS row count drops back under the runaway threshold or `$max_ticks`
 	 * is exhausted. Each tick respects the cleaner's own 50-second runtime
-	 * budget — this is a long-running command, expect ~5 minutes per 1M
+	 * budget - this is a long-running command, expect ~5 minutes per 1M
 	 * rows on a healthy local install.
 	 *
 	 * @param int $max_ticks Cap on cleanup() invocations. Defaults to 20.
@@ -1271,7 +1271,7 @@ class DoctorCommand {
 			WP_CLI::error( 'Action Scheduler tables not found. Nothing to drain.' );
 		}
 
-		WP_CLI::line( WP_CLI::colorize( '%BWB Gamification — Action Scheduler drain%n' ) );
+		WP_CLI::line( WP_CLI::colorize( '%BWB Gamification - Action Scheduler drain%n' ) );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$before = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
@@ -1305,13 +1305,13 @@ class DoctorCommand {
 				)
 			);
 
-			// All three statuses returned zero — no more candidates within the
+			// All three statuses returned zero - no more candidates within the
 			// current retention horizon; further ticks would be no-ops.
 			$tick_deleted = (int) ( $result['complete'] ?? 0 )
 				+ (int) ( $result['failed'] ?? 0 )
 				+ (int) ( $result['pending'] ?? 0 );
 			if ( 0 === $tick_deleted ) {
-				WP_CLI::line( 'Tick produced no deletions — drain complete.' );
+				WP_CLI::line( 'Tick produced no deletions - drain complete.' );
 				break;
 			}
 		}

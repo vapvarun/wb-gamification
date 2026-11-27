@@ -1,5 +1,5 @@
 /**
- * Admin REST utilities — shared by every Tier 0.C-migrated admin page.
+ * Admin REST utilities - shared by every Tier 0.C-migrated admin page.
  *
  * Exports a single global namespace `window.wbGamAdminRest` with:
  *   - apiFetch(method, path, body, settings) → { ok, status, data }
@@ -126,7 +126,7 @@
 	 * Replaces window.confirm() per admin-ux-rulebook Rule 10 (no native
 	 * dialogs in admin). Returns a Promise<boolean> that resolves true on
 	 * confirm, false on cancel/Esc/backdrop. Some legacy callers expect a
-	 * synchronous boolean — they can `await` the result inside an async
+	 * synchronous boolean - they can `await` the result inside an async
 	 * handler, which every Tier 0.C admin handler already is.
 	 *
 	 * @param {string|{title?: string, message: string, confirmText?: string, cancelText?: string, tone?: 'danger'|'primary'}} prompt
@@ -135,7 +135,7 @@
 	function confirmAction( prompt ) {
 		const opts   = typeof prompt === 'string' ? { message: prompt } : ( prompt || {} );
 		// PHP-localized fallback labels (window.wbGamAdminRestI18n), shared by
-		// every admin page that enqueues this script — see the wp_localize_script()
+		// every admin page that enqueues this script - see the wp_localize_script()
 		// call attached to the 'wb-gam-admin-rest-utils' handle. Falls back to the
 		// English literal only if a page hasn't localized it (or JS ran pre-DOM).
 		const g            = i18n();

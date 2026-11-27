@@ -18,7 +18,7 @@
  * warning. Wrong-priority bugs become noisy at activation time
  * instead of silent at first-use.
  *
- * The slot constants are also the only authorised values — a future
+ * The slot constants are also the only authorised values - a future
  * coding-rules-check.sh rule can grep for raw integer priorities in
  * `add_action('plugins_loaded', …)` calls and flag them.
  *
@@ -61,7 +61,7 @@ final class BootOrder {
 
 	/**
 	 * Hook the boot-time validator. Call once from the plugin's
-	 * register_hooks(). The validator fires at plugins_loaded@99 — after
+	 * register_hooks(). The validator fires at plugins_loaded@99 - after
 	 * every legitimate registration has had a chance to add itself.
 	 */
 	public static function bind_validator(): void {
@@ -97,7 +97,7 @@ final class BootOrder {
 	 *     before its dependency exists.
 	 *
 	 * Violations are logged at WARNING level. They never break the
-	 * page — silent boot was the bug we're fixing, not a new fatal
+	 * page - silent boot was the bug we're fixing, not a new fatal
 	 * surface. Logged warnings show up in monitoring + debug.log.
 	 */
 	public static function validate(): void {
@@ -116,7 +116,7 @@ final class BootOrder {
 				if ( self::$registrations[ $dep ]['slot'] > $entry['slot'] ) {
 					Log::warning(
 						sprintf(
-							'BootOrder: %s (slot %d) depends on %s (slot %d) which loads LATER — dependency fires after dependent. Move %s to a later slot OR move %s earlier.',
+							'BootOrder: %s (slot %d) depends on %s (slot %d) which loads LATER - dependency fires after dependent. Move %s to a later slot OR move %s earlier.',
 							$slug,
 							$entry['slot'],
 							$dep,

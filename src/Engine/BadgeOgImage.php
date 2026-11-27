@@ -1,11 +1,11 @@
 <?php
 /**
- * WB Gamification — Dynamic OG share image.
+ * WB Gamification - Dynamic OG share image.
  *
  * Renders a 1200x630 PNG "share card" per badge + earner so the badge share
  * page produces a rich social preview (Facebook, X, LinkedIn, Slack, WhatsApp).
  * The badge's own artwork is an SVG, which GD cannot composite and social
- * platforms will not render as an og:image — so this composes a branded card
+ * platforms will not render as an og:image - so this composes a branded card
  * (medallion + badge name + earner + date + site) with GD/FreeType instead.
  *
  * The result is cached to the uploads directory keyed by a content hash, so it

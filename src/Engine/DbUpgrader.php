@@ -19,15 +19,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -51,8 +51,8 @@ final class DbUpgrader {
 	 * Run any pending migrations on plugins_loaded.
 	 *
 	 * Two passes:
-	 *   1. Versioned migrations (0.1.0 → WB_GAM_VERSION) — the legacy upgrade pipeline.
-	 *   2. Feature migrations — option-flag-gated, idempotent, run independently of
+	 *   1. Versioned migrations (0.1.0 → WB_GAM_VERSION) - the legacy upgrade pipeline.
+	 *   2. Feature migrations - option-flag-gated, idempotent, run independently of
 	 *      WB_GAM_VERSION so v1.0 critical-gap schemas land on dev boxes whose
 	 *      `wb_gam_db_version` option is already higher than WB_GAM_VERSION.
 	 */
@@ -437,10 +437,10 @@ final class DbUpgrader {
 	}
 
 	/**
-	 * 1.6.2 — kudos moderation schema.
-	 *   - wb_gam_kudos.revoked_at DATETIME NULL — soft-revoke marker (row kept
+	 * 1.6.2 - kudos moderation schema.
+	 *   - wb_gam_kudos.revoked_at DATETIME NULL - soft-revoke marker (row kept
 	 *     for the audit trail; NULL = active).
-	 *   - KEY idx_receiver_date (receiver_id, created_at) — the moderation
+	 *   - KEY idx_receiver_date (receiver_id, created_at) - the moderation
 	 *     roster filters/sorts by receiver + time; the table only had a
 	 *     standalone receiver_id key, so receiver-scoped time queries filesort.
 	 * Idempotent + option-gated.
@@ -474,7 +474,7 @@ final class DbUpgrader {
 	}
 
 	/**
-	 * 1.6.2 — add sort indexes to wb_gam_streaks for the admin roster.
+	 * 1.6.2 - add sort indexes to wb_gam_streaks for the admin roster.
 	 *
 	 * The Streaks moderation page (src/Admin/StreaksPage.php) lets owners sort
 	 * a 100k-member table by current or longest streak. The table's only key
@@ -509,7 +509,7 @@ final class DbUpgrader {
 	}
 
 	/**
-	 * Scale indexes — every hot query below currently runs as a FULL TABLE SCAN
+	 * Scale indexes - every hot query below currently runs as a FULL TABLE SCAN
 	 * of an EVENT-scaled table (millions of rows on a large site).
 	 *
 	 * These were missed because the tables *look* indexed: `wb_gam_user_badges`
@@ -519,7 +519,7 @@ final class DbUpgrader {
 	 * Checking "does the table have indexes" says yes; checking "is this query's
 	 * WHERE column indexed" says no. Only the second question matters.
 	 *
-	 * 1. wb_gam_user_badges (badge_id) — the expensive one.
+	 * 1. wb_gam_user_badges (badge_id) - the expensive one.
 	 *      COUNT(*) WHERE badge_id = %s   (BadgeEngine max_earners guard)
 	 *        -> runs on the AWARD HOT PATH for any badge with a max_earners cap,
 	 *           and is deliberately uncached (a stale count over-awards).
@@ -546,7 +546,7 @@ final class DbUpgrader {
 	 *      100k-row scan to fetch one row.
 	 *
 	 * Adding an index to a large table takes a metadata lock. These run once,
-	 * flag-gated, on a normal admin request — acceptable for tables of this size
+	 * flag-gated, on a normal admin request - acceptable for tables of this size
 	 * (InnoDB builds secondary indexes online since 5.6). If a site is enormous
 	 * enough for that to bite, the flag lets an admin pre-apply them by hand.
 	 *
@@ -607,11 +607,11 @@ final class DbUpgrader {
 	 * Add the `source_key` idempotency column + UNIQUE index to wb_gam_events.
 	 *
 	 * Import-mode ingestion (competitor migrations, backfills) stamps each
-	 * imported event with a stable `source_key` — e.g. "gamipress:log:12345".
+	 * imported event with a stable `source_key` - e.g. "gamipress:log:12345".
 	 * The UNIQUE index makes re-running an import a no-op instead of doubling
 	 * every user's points: `Engine::process()` skips any event whose
 	 * source_key already exists. NULL source_keys (every organic event) are
-	 * exempt — MySQL treats multiple NULLs as distinct in a UNIQUE index, so
+	 * exempt - MySQL treats multiple NULLs as distinct in a UNIQUE index, so
 	 * the constraint only binds imported rows.
 	 *
 	 * @since 1.6.2
@@ -664,7 +664,7 @@ final class DbUpgrader {
 	 * `integrations/wordpress.php`; extend it here if a future trigger declares
 	 * a new supersession that also needs a back-fill on existing rows.
 	 *
-	 * Idempotent — feature-flag gated; decodes/re-encodes the JSON the same way
+	 * Idempotent - feature-flag gated; decodes/re-encodes the JSON the same way
 	 * the rest of the codebase reads `rule_config` rather than string-replacing.
 	 *
 	 * @since 1.5.4
@@ -729,14 +729,14 @@ final class DbUpgrader {
 	 * Read-side projection table for v2.5 + AI v1. Stores derived
 	 * per-user signals (engagement score, action diversity, churn
 	 * risk, last-activity timestamp) computed by IntelligenceProjector
-	 * from wb_gam_events on a daily cron. NOT a source of truth — the
+	 * from wb_gam_events on a daily cron. NOT a source of truth - the
 	 * row is recomputable from the event log at any time.
 	 *
 	 * Schema is denormalised on purpose: one row per user, all signals
 	 * inline so the read path is a single PK lookup. Anti-gaming +
 	 * cohort-membership signals can be added as columns later.
 	 *
-	 * Idempotent — feature-flag gated.
+	 * Idempotent - feature-flag gated.
 	 *
 	 * @since 1.5.0
 	 */
@@ -780,10 +780,10 @@ final class DbUpgrader {
 	 * new event ids past existing cursors; this table eliminates the
 	 * root cause by giving every event a globally-monotonic auto-increment id.
 	 *
-	 * Schema is deliberately small — text payload, indexed by (user_id, id)
+	 * Schema is deliberately small - text payload, indexed by (user_id, id)
 	 * for the per-consumer read query, and (created_at) for the daily prune.
 	 *
-	 * Idempotent — feature-flag gated.
+	 * Idempotent - feature-flag gated.
 	 *
 	 * @since 1.5.0
 	 */
@@ -860,7 +860,7 @@ final class DbUpgrader {
 	 *
 	 * 1.6.2 surfaced award-skips ("You've hit your daily limit for this action")
 	 * as member toasts and persisted every one to the durable queue. 1.6.3 fixed
-	 * the default so no NEW skip rows are written — but nothing removed the rows
+	 * the default so no NEW skip rows are written - but nothing removed the rows
 	 * already there, and the daily prune only ages them out IF WP-Cron fires,
 	 * which it silently never does on DISABLE_WP_CRON installs with no real
 	 * crontab. Those sites would keep nagging their members indefinitely after
@@ -905,7 +905,7 @@ final class DbUpgrader {
 			);
 
 			if ( ! is_int( $deleted ) ) {
-				return; // Query error — leave the flag unset and retry next request.
+				return; // Query error - leave the flag unset and retry next request.
 			}
 
 			if ( $deleted < $batch_size ) {
@@ -915,18 +915,18 @@ final class DbUpgrader {
 			}
 		}
 
-		// Hit the per-request cap with rows still to go — resume next request.
+		// Hit the per-request cap with rows still to go - resume next request.
 	}
 
 	/**
 	 * Create wb_gam_side_effect_failures on existing installs.
 	 *
-	 * Backing table for SideEffectDispatcher (v2.1 — decoupled side
+	 * Backing table for SideEffectDispatcher (v2.1 - decoupled side
 	 * effects). Holds failed level-up / streak / webhook handlers for
 	 * cron-driven reconciliation. See
 	 * plan/STABILITY-AND-ARCHITECTURE-V2.md §4.v2.1.
 	 *
-	 * Idempotent — feature-flag gated.
+	 * Idempotent - feature-flag gated.
 	 *
 	 * @since 1.5.0
 	 */
@@ -969,7 +969,7 @@ final class DbUpgrader {
 	 * Why: pre-1.1 stored full keys verbatim in `wb_gam_api_keys` option.
 	 * DB backups, `wp option get`, and any plugin with admin DB access could
 	 * read live credentials. Schema/storage redesign hashes the key with
-	 * SHA-256(wp_salt('auth') . $key) — the lookup is O(1) on the unique
+	 * SHA-256(wp_salt('auth') . $key) - the lookup is O(1) on the unique
 	 * index, the secret never lives in the DB.
 	 *
 	 * Migration policy: there is NO automatic re-hash of legacy keys, because
@@ -1010,8 +1010,8 @@ final class DbUpgrader {
 		) $charset;"
 		);
 
-		// Drop the legacy plaintext option. Existing pairings break — by
-		// design — admins regenerate keys via the API Keys admin page.
+		// Drop the legacy plaintext option. Existing pairings break - by
+		// design - admins regenerate keys via the API Keys admin page.
 		$had_legacy = (bool) get_option( 'wb_gam_api_keys' );
 		delete_option( 'wb_gam_api_keys' );
 
@@ -1096,7 +1096,7 @@ final class DbUpgrader {
 	 * Create + backfill `wb_gam_user_totals` so PointsEngine::get_total() can
 	 * read a single PK row instead of running SUM against the full ledger.
 	 *
-	 * Idempotent: feature-flag gated. Backfill is one-shot — uses
+	 * Idempotent: feature-flag gated. Backfill is one-shot - uses
 	 * `INSERT ... ON DUPLICATE KEY UPDATE` with a SUM subquery so subsequent
 	 * runs are no-ops on already-populated rows.
 	 *
@@ -1227,7 +1227,7 @@ final class DbUpgrader {
 	 * Add `point_type` column to `wb_gam_leaderboard_cache` so the snapshot
 	 * cron can pre-aggregate per-currency rankings (otherwise a multi-currency
 	 * site falls through to the live SUM query against `wb_gam_points` for
-	 * every non-primary leaderboard read — fatal at 100k users).
+	 * every non-primary leaderboard read - fatal at 100k users).
 	 *
 	 * Idempotent: column existence guard + INSERT IGNORE-style flag.
 	 *
@@ -1252,7 +1252,7 @@ final class DbUpgrader {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$wpdb->query( "ALTER TABLE $table DROP INDEX idx_period_rank, DROP INDEX idx_user_period, ADD KEY idx_type_period_rank (point_type, period, `rank`), ADD KEY idx_user_type_period (user_id, point_type, period)" );
 			// Existing rows were filled with DEFAULT 'points' but on a multi-
-			// currency site they were aggregated across all currencies — the
+			// currency site they were aggregated across all currencies - the
 			// data is misleading. TRUNCATE so the next snapshot cron rebuilds
 			// every (period × point_type) combination cleanly. Reads will
 			// fall through to the live SUM until the next 5-minute cron tick.
@@ -1267,7 +1267,7 @@ final class DbUpgrader {
 	 * Add the `prev_rank` column so the leaderboard can show real rank-change
 	 * trend arrows. The snapshot writer captures the previous tick's rank here on
 	 * every UPSERT; without the column every row would report a flat 0 delta.
-	 * Idempotent — guarded by a SHOW COLUMNS check and a one-time flag.
+	 * Idempotent - guarded by a SHOW COLUMNS check and a one-time flag.
 	 *
 	 * @since 1.0.0
 	 */
@@ -1293,7 +1293,7 @@ final class DbUpgrader {
 
 	/**
 	 * Create the `wb_gam_point_type_conversions` table on existing sites.
-	 * Idempotent — `dbDelta` is safe to re-run; flag stops the work after first
+	 * Idempotent - `dbDelta` is safe to re-run; flag stops the work after first
 	 * successful pass.
 	 *
 	 * @since 1.0.0
@@ -1333,7 +1333,7 @@ final class DbUpgrader {
 
 	/**
 	 * Add `point_type` column to `wb_gam_redemption_items` so each reward can
-	 * be priced in a specific currency. Idempotent — guards on column existence.
+	 * be priced in a specific currency. Idempotent - guards on column existence.
 	 *
 	 * @since 1.0.0
 	 */
@@ -1361,7 +1361,7 @@ final class DbUpgrader {
 	 * Ensure `wb_gam_point_types` table exists and `point_type` columns are present
 	 * on `wb_gam_points` and `wb_gam_events`.
 	 *
-	 * Idempotent — guards on column existence (information_schema lookup) and uses
+	 * Idempotent - guards on column existence (information_schema lookup) and uses
 	 * `INSERT IGNORE` for the default-type seed.
 	 *
 	 * @since 1.0.0
@@ -1506,7 +1506,7 @@ final class DbUpgrader {
 	}
 
 	/**
-	 * 1.6.8 — index the content-removal lookup, and redraw the activity-stream cards.
+	 * 1.6.8 - index the content-removal lookup, and redraw the activity-stream cards.
 	 *
 	 * Removing a post, comment, upload or topic takes its award back
 	 * ({@see PointsEngine::reverse_object_awards()}), which reads the ledger by (action_id, object_id)
@@ -1548,7 +1548,7 @@ final class DbUpgrader {
 	}
 
 	/**
-	 * 1.6.4 — index the kudos abuse-detection GROUP BY.
+	 * 1.6.4 - index the kudos abuse-detection GROUP BY.
 	 *
 	 * The moderation page groups live kudos by (giver_id, receiver_id) to surface pairs trading kudos
 	 * back and forth. No index led on `revoked_at`, so MySQL had to build a temp table and scan every
@@ -1609,12 +1609,12 @@ final class DbUpgrader {
 	}
 
 	/**
-	 * 1.5.5 — migrate legacy BuddyPress activity rows to the unified content
+	 * 1.5.5 - migrate legacy BuddyPress activity rows to the unified content
 	 * card.
 	 *
 	 * The 1.4.0 activity redesign introduced {@see \WBGam\BuddyPress\Stream\ActivityCard}
 	 * and a {@see \WBGam\BuddyPress\Stream\Backfiller} to convert pre-redesign
-	 * rows (a bare `<img>` + plain `<strong>` text) to the card markup — but the
+	 * rows (a bare `<img>` + plain `<strong>` text) to the card markup - but the
 	 * Backfiller was never wired into any boot/upgrade path, so on every existing
 	 * install the old rows stayed in the legacy format. The result was a mixed
 	 * activity stream: new events rendered as cards, historical ones as plain
@@ -1643,7 +1643,7 @@ final class DbUpgrader {
 	}
 
 	/**
-	 * 1.5.4 — force a rewrite-rule flush so the WooCommerce My Account
+	 * 1.5.4 - force a rewrite-rule flush so the WooCommerce My Account
 	 * "Achievements" endpoint (/my-account/achievements/) resolves on existing
 	 * installs.
 	 *
@@ -1677,7 +1677,7 @@ final class DbUpgrader {
 		// Deterministic upgrade-boundary flush. The achievements endpoint is
 		// registered on `init`; when WordPress rebuilds the rules after this
 		// flush the rewrite is present, so the next request resolves it. Soft
-		// flush (no .htaccess rewrite) — the endpoint lives in the pretty-
+		// flush (no .htaccess rewrite) - the endpoint lives in the pretty-
 		// permalink rewrite table, which a soft flush regenerates.
 		if ( function_exists( 'flush_rewrite_rules' ) ) {
 			flush_rewrite_rules( false );
@@ -1692,7 +1692,7 @@ final class DbUpgrader {
 	}
 
 	/**
-	 * 1.4.0 — resync user-meta level cache against the points ledger.
+	 * 1.4.0 - resync user-meta level cache against the points ledger.
 	 *
 	 * Reported in Basecamp card 9914892576 ("Member levels are not getting
 	 * updated"). On every install we've seen with seeded test data or a
@@ -1729,7 +1729,7 @@ final class DbUpgrader {
 			if ( ! $level ) {
 				continue;
 			}
-			// `get_level_for_user()` already self-heals — the explicit
+			// `get_level_for_user()` already self-heals - the explicit
 			// `update_user_meta` here is belt-and-braces so the migration
 			// remains correct if the self-heal is ever removed.
 			update_user_meta( $user_id, 'wb_gam_level_id', $level['id'] );
@@ -1740,9 +1740,9 @@ final class DbUpgrader {
 	// ── Migrations ───────────────────────────────────────────────────────────────
 
 	/**
-	 * 0.3.0 — add credential expiry columns.
-	 *   wb_gam_badge_defs.validity_days  — days a credential remains valid (NULL = forever)
-	 *   wb_gam_user_badges.expires_at    — computed on award from validity_days
+	 * 0.3.0 - add credential expiry columns.
+	 *   wb_gam_badge_defs.validity_days  - days a credential remains valid (NULL = forever)
+	 *   wb_gam_user_badges.expires_at    - computed on award from validity_days
 	 */
 	private static function upgrade_to_0_3_0(): void {
 		global $wpdb;
@@ -1764,7 +1764,7 @@ final class DbUpgrader {
 	}
 
 	/**
-	 * 0.2.0 — rename community_challenges columns to match CommunityChallengeEngine;
+	 * 0.2.0 - rename community_challenges columns to match CommunityChallengeEngine;
 	 *          add composite and auxiliary indexes.
 	 */
 	private static function upgrade_to_0_2_0(): void {
@@ -1818,9 +1818,9 @@ final class DbUpgrader {
 	}
 
 	/**
-	 * 0.5.0 — add badge eligibility limits.
-	 *   wb_gam_badge_defs.closes_at   — stop awarding after this datetime (NULL = no cutoff)
-	 *   wb_gam_badge_defs.max_earners — stop awarding after N members earn it (NULL = unlimited)
+	 * 0.5.0 - add badge eligibility limits.
+	 *   wb_gam_badge_defs.closes_at   - stop awarding after this datetime (NULL = no cutoff)
+	 *   wb_gam_badge_defs.max_earners - stop awarding after N members earn it (NULL = unlimited)
 	 */
 	private static function upgrade_to_0_5_0(): void {
 		global $wpdb;
@@ -1882,7 +1882,7 @@ final class DbUpgrader {
 
 		// Create the leaderboard snapshot cache table if it does not exist.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
-		// Note: `rank` is a MySQL 8.0 reserved word — must be backtick-escaped.
+		// Note: `rank` is a MySQL 8.0 reserved word - must be backtick-escaped.
 		$wpdb->query(
 			"CREATE TABLE IF NOT EXISTS `{$cache_table}` (
 				id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -1913,7 +1913,7 @@ final class DbUpgrader {
 	 * 1.1.0 → drop the cosmetics tables.
 	 *
 	 * Per plans/ARCHITECTURE-DRIVEN-PLAN.md, the CosmeticEngine had no
-	 * user-facing surface (no admin, no REST, no block) — a Tier-violation
+	 * user-facing surface (no admin, no REST, no block) - a Tier-violation
 	 * from the engine surface contract. The class is removed in v1.1.0;
 	 * this migration drops the two tables it used.
 	 *
@@ -1921,7 +1921,7 @@ final class DbUpgrader {
 	 * installs that never had the tables are a no-op.
 	 *
 	 * NOTE: PersonalRecordEngine is preserved as an Internal-only tier
-	 * engine — it computes derived state (wb_gam_pr_best_week/day/month
+	 * engine - it computes derived state (wb_gam_pr_best_week/day/month
 	 * user_meta) consumed by WeeklyEmailEngine's "Personal best!" badge.
 	 * Its lack of standalone surface is by-design, not a violation.
 	 */
@@ -1935,7 +1935,7 @@ final class DbUpgrader {
 	}
 
 	/**
-	 * 1.2.0 — Backfill `image_url` on the seeded badge defs.
+	 * 1.2.0 - Backfill `image_url` on the seeded badge defs.
 	 *
 	 * The plugin has shipped 37 ready-made badge SVGs in `assets/badges/`
 	 * since 0.4.0, but `Installer::seed_default_badges()` was inserting

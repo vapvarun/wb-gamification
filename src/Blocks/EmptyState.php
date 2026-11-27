@@ -6,12 +6,12 @@
  *
  *     <div {wrapper}><p class="wb-gam-{block}__empty">{message}</p></div>
  *
- * Thirteen copies is not a disaster on its own — they were all roughly right. It is a problem the day
+ * Thirteen copies is not a disaster on its own - they were all roughly right. It is a problem the day
  * someone wants an empty state to do anything MORE than say a sentence: add a call to action, an icon,
  * a link to the earning guide. Then it is thirteen edits, and the twelfth gets forgotten.
  *
  * This is a consolidation, not a redesign. **The markup is byte-identical to what each block emitted
- * before**, including its own BEM class — the CSS does not move, and neither does anything on screen.
+ * before**, including its own BEM class - the CSS does not move, and neither does anything on screen.
  * What changes is that there is now one place to change it, and one filter for a site owner who wants
  * their own words.
  *
@@ -131,7 +131,7 @@ final class EmptyState {
 		 */
 		$html = (string) apply_filters( "wb_gam_empty_state_{$block}", $html, $block, $message );
 
-		// The wrapper is get_block_wrapper_attributes() output — already escaped, and not ours to
+		// The wrapper is get_block_wrapper_attributes() output - already escaped, and not ours to
 		// escape again.
 		return '<div ' . $wrapper . '>' . $html . '</div>';
 	}

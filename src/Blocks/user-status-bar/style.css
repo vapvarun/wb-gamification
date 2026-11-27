@@ -1,5 +1,5 @@
 /**
- * User Status Bar — frontend stylesheet.
+ * User Status Bar - frontend stylesheet.
  *
  * Three layouts: floating (sticky pill in a corner), sticky-top (full-
  * width bar pinned below the WP admin bar), inline (renders where the
@@ -127,7 +127,7 @@ body.admin-bar .wb-gam-status-bar--sticky-top {
 	display: block;
 	/* Chevron drawn with inline SVG mask so it inherits currentColor and
 	   rotates cleanly when the bar is collapsed. Pre-1.4.1 this was a
-	   filled-circle "dot" with no semantic meaning — members had no
+	   filled-circle "dot" with no semantic meaning - members had no
 	   visual cue that the bar was collapsible (Basecamp #9933306809). */
 	background-color: currentColor;
 	mask-image: url( "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='15 18 9 12 15 6'/%3E%3C/svg%3E" );
@@ -195,7 +195,7 @@ body.admin-bar .wb-gam-status-bar--sticky-top {
 	font-size: 0.8125rem;
 }
 
-/* Bump animation on value change — gives the bar a "you earned something"
+/* Bump animation on value change - gives the bar a "you earned something"
  * feel without using a heavyweight toast. Triggered by view.js. */
 @keyframes wb-gam-status-bump {
 	0%   { transform: scale( 1 ); }

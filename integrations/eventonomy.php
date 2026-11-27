@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Eventonomy (Free) Integration Manifest
+ * WB Gamification - Eventonomy (Free) Integration Manifest
  *
  * Auto-loaded by ManifestLoader when Eventonomy (free) is active.
  * No dependency on WB Gamification at load time.

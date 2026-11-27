@@ -1,14 +1,14 @@
 <?php
 /**
- * WB Gamification — The Events Calendar Integration Manifest
+ * WB Gamification - The Events Calendar Integration Manifest
  *
  * Auto-loaded by ManifestLoader when this file exists in integrations/.
  * Fires only when The Events Calendar (tribe-common) is active.
  *
  * Actions covered:
- *   Event RSVP      — wb_gam_tec_rsvp (RSVP v1 attendee, or RSVP v2 Tickets Commerce order)
- *   Ticket purchase — wb_gam_tec_ticket_purchased (completed Tickets Commerce order)
- *   Event check-in  — wb_gam_tec_checked_in (ticket or RSVP attendee)
+ *   Event RSVP      - wb_gam_tec_rsvp (RSVP v1 attendee, or RSVP v2 Tickets Commerce order)
+ *   Ticket purchase - wb_gam_tec_ticket_purchased (completed Tickets Commerce order)
+ *   Event check-in  - wb_gam_tec_checked_in (ticket or RSVP attendee)
  *
  * Tickets sold through Event Tickets Plus (WooCommerce, EDD) are not covered.
  *
@@ -18,21 +18,21 @@
 defined( 'ABSPATH' ) || exit;
 
 /*
- * TIMING NOTE — why this guard uses class_exists(), not function_exists().
+ * TIMING NOTE - why this guard uses class_exists(), not function_exists().
  *
  * Manifest files are include()d by ManifestLoader::scan() at plugins_loaded
  * priority 5. Any detection you run in a manifest's TOP-LEVEL body (i.e. to
  * decide what array to return) must be answerable that early.
  *
  * `Tribe__Events__Main` is declared at file-parse time, so class_exists() is
- * true as soon as TEC's main file is loaded — safe to gate on here.
+ * true as soon as TEC's main file is loaded - safe to gate on here.
  *
  * Do NOT copy this shape with function_exists() for a plugin that defines its
  * API INSIDE its own plugins_loaded callback (FluentCRM's fluentCrmApi(),
  * for example, is defined at plugins_loaded priority 10). At priority 5 that
  * function does not exist yet, so the guard returns [] on every request with
  * no error and no warning. For those plugins, register late instead of via a
- * drop-in manifest — see examples/14-fluentcrm-hooked-api/.
+ * drop-in manifest - see examples/14-fluentcrm-hooked-api/.
  */
 if ( ! class_exists( 'Tribe__Events__Main' ) ) {
 	return [];

@@ -2,11 +2,11 @@
 /**
  * REST API: Point Type Conversions Controller
  *
- * GET    /point-type-conversions          Public — list active conversion rules
- * POST   /point-type-conversions          Admin — create rule
- * PUT    /point-type-conversions/{id}     Admin — update rule
- * DELETE /point-type-conversions/{id}     Admin — delete rule
- * POST   /point-types/{from}/convert      Authenticated — convert balance
+ * GET    /point-type-conversions          Public - list active conversion rules
+ * POST   /point-type-conversions          Admin - create rule
+ * PUT    /point-type-conversions/{id}     Admin - update rule
+ * DELETE /point-type-conversions/{id}     Admin - delete rule
+ * POST   /point-types/{from}/convert      Authenticated - convert balance
  *
  * @package WB_Gamification
  * @since   1.0.0
@@ -119,14 +119,14 @@ class PointTypeConversionsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Admin gate — manage_options.
+	 * Admin gate - manage_options.
 	 */
 	public function admin_permission_check(): bool {
 		return current_user_can( 'manage_options' );
 	}
 
 	/**
-	 * Member gate — must be logged in to convert their own balance.
+	 * Member gate - must be logged in to convert their own balance.
 	 */
 	public function authenticated_permission_check(): bool {
 		return is_user_logged_in();
@@ -247,7 +247,7 @@ class PointTypeConversionsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * POST /point-types/{from}/convert — member converts their own balance.
+	 * POST /point-types/{from}/convert - member converts their own balance.
 	 */
 	public function handle_convert( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$result = $this->service->convert(

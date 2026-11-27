@@ -39,7 +39,7 @@ class ToolsController {
 	 * Register the tools routes.
 	 */
 	public function register_routes(): void {
-		// GET /tools/export-settings — download the current configuration.
+		// GET /tools/export-settings - download the current configuration.
 		register_rest_route(
 			$this->namespace,
 			'/tools/export-settings',
@@ -52,7 +52,7 @@ class ToolsController {
 			)
 		);
 
-		// POST /tools/recompute-leaderboard — rebuild the snapshot + bust caches.
+		// POST /tools/recompute-leaderboard - rebuild the snapshot + bust caches.
 		register_rest_route(
 			$this->namespace,
 			'/tools/recompute-leaderboard',
@@ -65,7 +65,7 @@ class ToolsController {
 			)
 		);
 
-		// POST /tools/reset-progress — wipe member progress (keeps config).
+		// POST /tools/reset-progress - wipe member progress (keeps config).
 		register_rest_route(
 			$this->namespace,
 			'/tools/reset-progress',
@@ -84,7 +84,7 @@ class ToolsController {
 			)
 		);
 
-		// POST /tools/retry-side-effect/{id} — re-fire one dead-lettered side effect.
+		// POST /tools/retry-side-effect/{id} - re-fire one dead-lettered side effect.
 		register_rest_route(
 			$this->namespace,
 			'/tools/retry-side-effect/(?P<id>[\d]+)',
@@ -103,7 +103,7 @@ class ToolsController {
 			)
 		);
 
-		// POST /tools/import-settings — apply a previously exported document.
+		// POST /tools/import-settings - apply a previously exported document.
 		register_rest_route(
 			$this->namespace,
 			'/tools/import-settings',

@@ -7,13 +7,13 @@
  * need a first example to validate the pattern.
  *
  * Projection contract:
- *   1. Source: wb_gam_events (immutable log — the source of truth).
+ *   1. Source: wb_gam_events (immutable log - the source of truth).
  *   2. Output: wb_gam_user_intelligence (denormalised, recomputable).
  *   3. Trigger: daily cron `wb_gam_compute_intelligence`. Per-user
  *      compute is also exposed for on-demand recompute.
  *   4. No data loss: if the projection row is wrong or stale,
  *      recompute from the event log restores it. Don't write to
- *      this table from anywhere except the projector — anyone who
+ *      this table from anywhere except the projector - anyone who
  *      needs a derived signal can either query the row OR
  *      recompute(user_id) before reading.
  *
@@ -52,7 +52,7 @@ final class IntelligenceProjector {
 	public const COMPUTE_CRON = 'wb_gam_compute_intelligence';
 
 	/**
-	 * Batch size per cron tick. The query path is bounded — we don't
+	 * Batch size per cron tick. The query path is bounded - we don't
 	 * try to compute every user on a single cron run; we walk a slice.
 	 *
 	 * For a site with 100k users at the default daily schedule that
@@ -63,7 +63,7 @@ final class IntelligenceProjector {
 	public const BATCH_SIZE = 2000;
 
 	/**
-	 * Boot hook — registers the cron handler. Called once from
+	 * Boot hook - registers the cron handler. Called once from
 	 * wb-gamification.php's engine bootstrap.
 	 */
 	public static function boot(): void {
@@ -71,7 +71,7 @@ final class IntelligenceProjector {
 
 		// Arm the daily tick on init, never at plugins_loaded: wp_schedule_event
 		// resolves schedules via wp_get_schedules(), which fires the
-		// cron_schedules filter — that must not run before init on WP 6.7+.
+		// cron_schedules filter - that must not run before init on WP 6.7+.
 		if ( did_action( 'init' ) ) {
 			self::maybe_schedule();
 		} else {
@@ -81,7 +81,7 @@ final class IntelligenceProjector {
 
 	/**
 	 * Arm the daily intelligence-projection tick if not already scheduled.
-	 * Idempotent — safe to call on every init.
+	 * Idempotent - safe to call on every init.
 	 *
 	 * @return void
 	 */
@@ -97,7 +97,7 @@ final class IntelligenceProjector {
 	 *
 	 * @as-fire-once Daily cron tick. Bounded by BATCH_SIZE. The handler
 	 *               iterates over selected user_ids and calls compute_for_user
-	 *               in a loop — no recursion, no AS enqueue.
+	 *               in a loop - no recursion, no AS enqueue.
 	 */
 	public static function compute_batch(): void {
 		if ( ! get_option( 'wb_gam_feature_user_intelligence_v1' ) ) {
@@ -134,7 +134,7 @@ final class IntelligenceProjector {
 	 * projection row. Safe to call on demand (e.g. from admin "Refresh"
 	 * button or a debug CLI).
 	 *
-	 * Idempotent — same input always produces same output.
+	 * Idempotent - same input always produces same output.
 	 *
 	 * @param int $user_id Target user.
 	 */
@@ -190,7 +190,7 @@ final class IntelligenceProjector {
 		$normalised_engagement = min( 1.0, $engagement / 2.7 );
 		$churn_risk            = max( 0.0, 1.0 - $normalised_engagement );
 
-		// Anomaly flag — bot pattern: high volume + low diversity.
+		// Anomaly flag - bot pattern: high volume + low diversity.
 		$anomaly = ( $events_30d > 500 && $action_diversity < 3 ) ? 1 : 0;
 
 		// UPSERT. Single PK on user_id makes ON DUPLICATE KEY clean. computed_at is UTC.

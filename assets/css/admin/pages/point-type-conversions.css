@@ -1,5 +1,5 @@
 /**
- * WB Gamification — Point Type Conversions Admin Page CSS
+ * WB Gamification - Point Type Conversions Admin Page CSS
  * =====================================================================
  * Per-page styles for `WBGam\Admin\PointTypeConversionsPage` (menu
  * slug: `wb-gam-conversions`). Defines exchange-rate rules between
@@ -11,7 +11,7 @@
  * Token policy: `var(--wbgam-*)` only.
  *
  * Migration source: page-specific field markers (no dedicated section
- * existed in the old admin-pages.css — fields used generic .wbgam-input
+ * existed in the old admin-pages.css - fields used generic .wbgam-input
  * visuals).
  *
  * @package WB_Gamification
@@ -19,7 +19,7 @@
 
 /* Root wrapper marker. */
 .wb-gam-conversions {
-	/* Container — visuals from .wbgam-wrap + .wbgam-card. */
+	/* Container - visuals from .wbgam-wrap + .wbgam-card. */
 }
 
 /* Conversion form-field markers. */
@@ -30,5 +30,5 @@
 .wb-gam-conv-min,
 .wb-gam-conv-to,
 .wb-gam-conv-to-amount {
-	/* JS-bound conversion-rule inputs — visuals from .wbgam-input. */
+	/* JS-bound conversion-rule inputs - visuals from .wbgam-input. */
 }

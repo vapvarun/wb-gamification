@@ -8,7 +8,7 @@
  * any badge the user already qualifies for.
  *
  * Mechanics:
- *   - The badge engine is already idempotent — `BadgeEngine::award_badge`
+ *   - The badge engine is already idempotent - `BadgeEngine::award_badge`
  *     returns false if the user already holds the badge.
  *   - `BadgeEngine::evaluate_on_award` walks all active rules and
  *     awards every qualifying one. We invoke it once per (user_id,
@@ -51,7 +51,7 @@ class ReplayCommand {
 	/**
 	 * Re-evaluate active badge rules for ONE user.
 	 *
-	 * Idempotent — already-earned badges are skipped automatically.
+	 * Idempotent - already-earned badges are skipped automatically.
 	 *
 	 * ## OPTIONS
 	 *
@@ -99,7 +99,7 @@ class ReplayCommand {
 	/**
 	 * Re-evaluate active badge rules for EVERY user with stored events.
 	 *
-	 * Idempotent — already-earned badges are skipped per-user.
+	 * Idempotent - already-earned badges are skipped per-user.
 	 *
 	 * ## OPTIONS
 	 *
@@ -204,7 +204,7 @@ class ReplayCommand {
 		$action_ids[] = '__replay__';
 
 		if ( $dry_run ) {
-			// In dry-run we don't call the engine — we run our own copy of the
+			// In dry-run we don't call the engine - we run our own copy of the
 			// rule walk, but never call award_badge. Easier: clone the engine's
 			// behaviour by capturing what evaluate_on_award WOULD do via a
 			// short-circuit filter. Cleaner approach: hook should_award_badge
@@ -243,7 +243,7 @@ class ReplayCommand {
 			);
 		}
 
-		// 4. Real run — call evaluate_on_award per action_id.
+		// 4. Real run - call evaluate_on_award per action_id.
 		foreach ( $action_ids as $aid ) {
 			$event = new Event(
 				array(

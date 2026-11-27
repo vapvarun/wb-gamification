@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — BuddyPress level_changed stream poster.
+ * WB Gamification - BuddyPress level_changed stream poster.
  *
  * LevelEngine fires the canonical 1.0.0 signature:
  *   do_action( 'wb_gam_level_changed', $user_id, $new_level, $old_level )
@@ -55,7 +55,7 @@ final class LevelStream {
 			return;
 		}
 
-		// Prefer the array payload — fall back to ActivityCard lookup only if
+		// Prefer the array payload - fall back to ActivityCard lookup only if
 		// the caller passed a partial array (resilience against hook re-fires).
 		$level  = is_array( $new_level ) && isset( $new_level['name'] )
 			? $new_level

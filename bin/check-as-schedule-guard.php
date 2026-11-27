@@ -6,16 +6,16 @@
  * infinite-recursion runaway in 1.4.0 (3.5M-row queue on one production
  * install). The pattern was: a handler for hook H called
  * `as_enqueue_async_action()` for hook H itself, with no check for an
- * already-scheduled job — cron then re-fired the handler in a loop.
+ * already-scheduled job - cron then re-fired the handler in a loop.
  *
  * Invariant: every `as_schedule_*` / `as_enqueue_*` call must be either
  *
  *   1. preceded in the SAME METHOD BODY by an `as_has_scheduled_action()`
- *      call (the runtime guard — proves a deliberate "don't enqueue
+ *      call (the runtime guard - proves a deliberate "don't enqueue
  *      twice" choice), OR
  *
  *   2. annotated with `@as-fire-once` in the enclosing method's docblock
- *      (the static guarantee — the author has reasoned about it and
+ *      (the static guarantee - the author has reasoned about it and
  *      concluded the call site cannot re-enter itself; e.g. shutdown-time
  *      queue drain, one-shot per-event delivery, etc.).
  *
@@ -24,21 +24,21 @@
  * Why a token-walker instead of a PHPStan rule:
  *
  *   The PHPStan binary is silently non-functional in this Local-by-Flywheel
- *   PHP build (exits 0 with no output regardless of input — see
+ *   PHP build (exits 0 with no output regardless of input - see
  *   `audit/STABILITY-*` if added). Cache directory in $TMPDIR/phpstan
  *   returns stale results, and bootstrap files don't load. Token-walker
  *   matches the existing patterns (bin/check-boot-invariants.php,
  *   bin/check-badge-condition-contract.php) and runs in any PHP.
  *
  * Wired into bin/coding-rules-check.sh as a new rule function (no new
- * local-CI stage — the rule lives inside stage 2.1).
+ * local-CI stage - the rule lives inside stage 2.1).
  *
  * Usage:
  *     php bin/check-as-schedule-guard.php          Scan all src/ + integrations/
  *     php bin/check-as-schedule-guard.php --json   Machine-readable report
  *
  * Exit codes:
- *   0  ok — every AS-schedule call is either guarded or annotated
+ *   0  ok - every AS-schedule call is either guarded or annotated
  *   1  one or more unguarded, unannotated call sites found
  *   2  unexpected error
  */
@@ -93,7 +93,7 @@ foreach ( $violations as $v ) {
 	fwrite(
 		STDERR,
 		sprintf(
-			"  %s:%d — %s() inside %s::%s()\n",
+			"  %s:%d - %s() inside %s::%s()\n",
 			$v['file'],
 			$v['line'],
 			$v['func'],
@@ -105,11 +105,11 @@ foreach ( $violations as $v ) {
 fwrite( STDERR, "\nFix each by adding ONE of the following IN THE METHOD CONTAINING the call:\n\n" );
 fwrite(
 	STDERR,
-	"  (a) Runtime guard — for handlers that COULD re-enter themselves via cron:\n"
+	"  (a) Runtime guard - for handlers that COULD re-enter themselves via cron:\n"
 		. "        if ( ! as_has_scheduled_action( 'wb_gam_my_hook', \$args, 'wb_gamification' ) ) {\n"
 		. "            as_enqueue_async_action( 'wb_gam_my_hook', \$args, 'wb_gamification' );\n"
 		. "        }\n\n"
-		. "  (b) Fire-once annotation — for methods that cannot recurse into themselves\n"
+		. "  (b) Fire-once annotation - for methods that cannot recurse into themselves\n"
 		. "      (e.g. shutdown drain, per-event delivery already deduped upstream):\n"
 		. "        /**\n"
 		. "         * Whatever the method does.\n"
@@ -202,7 +202,7 @@ function scan_file(
 					break;
 				}
 				if ( ';' === $peek ) {
-					// Interface / abstract method — no body.
+					// Interface / abstract method - no body.
 					break;
 				}
 			}
@@ -216,7 +216,7 @@ function scan_file(
 			// are PHP's tokens for `{` inside double-quoted string interpolation
 			// (e.g. "...{$wpdb->prefix}..."). They look like structural braces
 			// but the tokenizer flags them separately. Their matching `}` is a
-			// plain `}` char — so we MUST count the opens, otherwise depth goes
+			// plain `}` char - so we MUST count the opens, otherwise depth goes
 			// negative on the close and we exit the method body too early.
 			$depth      = 1;
 			$end_brace  = $count;

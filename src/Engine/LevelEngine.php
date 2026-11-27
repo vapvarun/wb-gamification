@@ -21,15 +21,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -47,7 +47,7 @@ final class LevelEngine {
 	 * Object-cache group + key for the full level list. The key carries a
 	 * structure version (`_v2` added the `sort_order` field) so a post-deploy
 	 * site never serves a stale older array from a persistent object cache.
-	 * This is the ONLY place level rows are cached — kept as a constant so the
+	 * This is the ONLY place level rows are cached - kept as a constant so the
 	 * read, write, and invalidation paths can never drift to different keys.
 	 */
 	private const CACHE_GROUP = 'wb_gamification';
@@ -56,7 +56,7 @@ final class LevelEngine {
 	/**
 	 * Static cache of all level rows for the current request.
 	 * Avoids repeated object-cache lookups within a single page load. This is
-	 * the per-request tier of the same single cache as {@see CACHE_KEY} — not a
+	 * the per-request tier of the same single cache as {@see CACHE_KEY} - not a
 	 * second cache; {@see invalidate_cache()} clears both tiers together.
 	 *
 	 * @var array<int, array{id: int, name: string, min_points: int, sort_order: int, icon_url: string|null}>|null
@@ -68,7 +68,7 @@ final class LevelEngine {
 	 *
 	 * Levels are admin-only data that almost never changes, so a 1-hour TTL is safe.
 	 *
-	 * Rows are ordered by `sort_order ASC` — the admin-defined level hierarchy —
+	 * Rows are ordered by `sort_order ASC` - the admin-defined level hierarchy -
 	 * not by `min_points`. The two usually agree, but an admin can edit thresholds
 	 * such that a numerically lower level ends up with a higher `min_points` than
 	 * a level above it. `sort_order` is the single source of truth for "which level
@@ -119,8 +119,8 @@ final class LevelEngine {
 	 *
 	 * Clears BOTH tiers of the single level cache: the per-request static array
 	 * and the cross-request object-cache entry. Without this an admin editing a
-	 * level threshold would not see it reflected — in members' level displays,
-	 * nudges, or progress bars — until the 1-hour TTL expired (longer on sites
+	 * level threshold would not see it reflected - in members' level displays,
+	 * nudges, or progress bars - until the 1-hour TTL expired (longer on sites
 	 * with a persistent object cache). Call from every path that mutates the
 	 * `wb_gam_levels` table; reads always go through {@see get_all_levels()}, so
 	 * this is the only invalidation needed (no second cache exists).
@@ -253,7 +253,7 @@ final class LevelEngine {
 			 * int-only signature `(user_id, old_level_id, new_level_id)`.
 			 * That broke listeners typed for the array signature
 			 * (WebhookDispatcher::on_level_changed, TransactionalEmailEngine,
-			 * NotificationBridge) — every level-up triggered a
+			 * NotificationBridge) - every level-up triggered a
 			 * `TypeError: Argument #2 must be of type ?array, int given`
 			 * fatal that aborted the award request mid-pipeline. The
 			 * legacy fire was removed in 1.0.0; all listeners now receive
@@ -287,7 +287,7 @@ final class LevelEngine {
 			}
 		} else {
 			/**
-			 * Fires when a member is assigned their very first level — usually
+			 * Fires when a member is assigned their very first level - usually
 			 * Newcomer (or whatever level has min_points = 0). Pre-1.4.0
 			 * `wb_gam_level_changed` deliberately skipped this case, which
 			 * meant RankAutomation rules with a "trigger_level_id = Newcomer"
@@ -321,9 +321,9 @@ final class LevelEngine {
 		// Self-heal stale user_meta. Pre-1.4.0 the level_id / level_name cache
 		// in user_meta only updated when PointsEngine::award fired through the
 		// engine (which calls maybe_level_up at the end of the pipeline). Any
-		// points written via a non-engine code path — manual DB insert, an
+		// points written via a non-engine code path - manual DB insert, an
 		// older Privacy export round-trip, the QA seed CLI, a migration from
-		// a sister product — left the cache pointing at whatever level the
+		// a sister product - left the cache pointing at whatever level the
 		// user was at the last time the engine ran. Reading the level became
 		// stable (always derived from the points ledger) but the directory
 		// rank line + leaderboard rank meta + REST `members` response keep
@@ -331,7 +331,7 @@ final class LevelEngine {
 		// Detecting the mismatch here and patching the meta inline keeps the
 		// engine the single source of truth without forcing a points-replay
 		// migration; every getter call self-corrects on the way out.
-		// $heal = false skips the self-heal WRITE — used by read-heavy list surfaces
+		// $heal = false skips the self-heal WRITE - used by read-heavy list surfaces
 		// (the members roster) that must not fire an unbounded burst of
 		// update_user_meta() on a GET. The returned level is authoritative either
 		// way (derived from the points ledger); only the denormalised meta cache is
@@ -359,7 +359,7 @@ final class LevelEngine {
 		$match  = null;
 
 		// Levels are now ordered by sort_order (not min_points), so we cannot
-		// break early — the highest reachable threshold may sit anywhere in the
+		// break early - the highest reachable threshold may sit anywhere in the
 		// list. Walk every level and keep the one with the greatest min_points
 		// the user has actually reached. `>=` keeps the later (higher sort_order)
 		// level when two share a threshold.
@@ -381,7 +381,7 @@ final class LevelEngine {
 	 * exceeds the user's total. Those two only diverge when an admin edits
 	 * thresholds so they no longer line up with the level order, but when they do
 	 * the threshold-based answer is wrong: it would name a numerically-higher level
-	 * that actually sits below the user in the ladder (Basecamp 9995220498 — a
+	 * that actually sits below the user in the ladder (Basecamp 9995220498 - a
 	 * Contributor was told they were "15 points from Member").
 	 *
 	 * @param int $user_id User to look up.
@@ -394,7 +394,7 @@ final class LevelEngine {
 	/**
 	 * Return the next level above a given points total, or null if at the top.
 	 *
-	 * Pure counterpart to {@see get_next_level()} — takes a raw points total so
+	 * Pure counterpart to {@see get_next_level()} - takes a raw points total so
 	 * it can be reasoned about (and tested) without resolving a user's ledger.
 	 *
 	 * @param int $points Points total.

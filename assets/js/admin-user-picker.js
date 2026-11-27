@@ -1,9 +1,9 @@
 /**
- * Admin user picker — a searchable, REST-backed replacement for wp_dropdown_users().
+ * Admin user picker - a searchable, REST-backed replacement for wp_dropdown_users().
  *
  * wp_dropdown_users() has no `number` argument in its default form: it loads EVERY
  * user on the site and renders one <option> each. On a 100k-member community that is
- * a full scan of wp_users and a multi-megabyte <select> — the page simply does not
+ * a full scan of wp_users and a multi-megabyte <select> - the page simply does not
  * return. It is also unusable long before that: nobody finds a person by scrolling
  * 100,000 options.
  *
@@ -64,7 +64,7 @@
 		/**
 		 * Empty a node without innerHTML. Every option below is built with
 		 * createElement + textContent, so no user-supplied string is ever parsed
-		 * as markup — a display name containing "<script>" is inert text.
+		 * as markup - a display name containing "<script>" is inert text.
 		 *
 		 * @param {HTMLElement} node Node to empty.
 		 */

@@ -1,6 +1,6 @@
 <?php
 /**
- * QA pages — single source of truth for the canonical block ↔ shortcode
+ * QA pages - single source of truth for the canonical block ↔ shortcode
  * mapping consumed by the seed command, the dispatch unit test, and the
  * Playwright journey walker.
  *
@@ -42,10 +42,10 @@ final class QAPages {
 	 * `src/Blocks/<slug>/block.json#name` minus the `wb-gamification/`
 	 * namespace). Values describe how each unit renders on the QA page.
 	 *
-	 * - `shortcode`   — the registered `[wb_gam_*]` tag (without brackets).
-	 * - `title`       — human-readable heading on the QA page.
-	 * - `block_attrs` — JSON object literal injected into the block markup.
-	 * - `shortcode_attrs` — k=v string for the shortcode invocation.
+	 * - `shortcode`   - the registered `[wb_gam_*]` tag (without brackets).
+	 * - `title`       - human-readable heading on the QA page.
+	 * - `block_attrs` - JSON object literal injected into the block markup.
+	 * - `shortcode_attrs` - k=v string for the shortcode invocation.
 	 *
 	 * @var array<string, array{shortcode: string, title: string, block_attrs: string, shortcode_attrs: string}>
 	 */
@@ -181,7 +181,7 @@ final class QAPages {
 	 *
 	 * The page presents both renderings side-by-side under labelled
 	 * headings so QA can spot block-vs-shortcode divergence at a
-	 * glance — the parity check that would have caught the
+	 * glance - the parity check that would have caught the
 	 * earning-guide-shortcode-fatal bug.
 	 *
 	 * @param string               $block_slug Block slug from MAP.
@@ -195,7 +195,7 @@ final class QAPages {
 
 		$lines = array(
 			'<!-- wp:heading {"level":2} -->',
-			"<h2 class=\"wp-block-heading\">Block — <code>wp:{$block_name}</code></h2>",
+			"<h2 class=\"wp-block-heading\">Block - <code>wp:{$block_name}</code></h2>",
 			'<!-- /wp:heading -->',
 			'',
 			"<!-- wp:{$block_name} {$block_attrs} /-->",
@@ -222,7 +222,7 @@ final class QAPages {
 				$lines,
 				array(
 					'<!-- wp:heading {"level":2} -->',
-					"<h2 class=\"wp-block-heading\">Shortcode — <code>{$shortcode_caption}</code></h2>",
+					"<h2 class=\"wp-block-heading\">Shortcode - <code>{$shortcode_caption}</code></h2>",
 					'<!-- /wp:heading -->',
 					'',
 					'<!-- wp:shortcode -->',
@@ -242,7 +242,7 @@ final class QAPages {
 			// Block-only unit (no shortcode counterpart). Render the block
 			// once with a footer that says so, instead of an empty shortcode.
 			$lines[] = '<!-- wp:paragraph {"className":"wb-gam-qa-footer"} -->';
-			$lines[] = '<p class="wb-gam-qa-footer"><em>Block-only unit — no shortcode counterpart.</em></p>';
+			$lines[] = '<p class="wb-gam-qa-footer"><em>Block-only unit - no shortcode counterpart.</em></p>';
 			$lines[] = '<!-- /wp:paragraph -->';
 		}
 
@@ -267,11 +267,11 @@ final class QAPages {
 			// HTML-entity-encode the brackets so do_shortcode() can't
 			// match the literal `[wb_gam_*]` in this navigational text.
 			// Without the encoding, every list item renders its full
-			// shortcode inline — turning the index into a gallery
+			// shortcode inline - turning the index into a gallery
 			// instead of a navigation page.
 			if ( '' !== $unit['shortcode'] ) {
 				$rows .= sprintf(
-					'<li><a href="%s">%s</a> — <code>wp:wb-gamification/%s</code> + <code>&#91;%s&#93;</code></li>',
+					'<li><a href="%s">%s</a> - <code>wp:wb-gamification/%s</code> + <code>&#91;%s&#93;</code></li>',
 					esc_url( $url ),
 					esc_html( $unit['title'] ),
 					esc_html( $slug ),
@@ -279,7 +279,7 @@ final class QAPages {
 				);
 			} else {
 				$rows .= sprintf(
-					'<li><a href="%s">%s</a> — <code>wp:wb-gamification/%s</code> <em>(block-only)</em></li>',
+					'<li><a href="%s">%s</a> - <code>wp:wb-gamification/%s</code> <em>(block-only)</em></li>',
 					esc_url( $url ),
 					esc_html( $unit['title'] ),
 					esc_html( $slug )
@@ -291,7 +291,7 @@ final class QAPages {
 			"\n",
 			array(
 				'<!-- wp:paragraph -->',
-				'<p>QA test pages — one per Wbcom Block Quality Standard unit. Each page renders the Gutenberg block and its matching <code>[wb_gam_*]</code> shortcode side-by-side. They must look identical.</p>',
+				'<p>QA test pages - one per Wbcom Block Quality Standard unit. Each page renders the Gutenberg block and its matching <code>[wb_gam_*]</code> shortcode side-by-side. They must look identical.</p>',
 				'<!-- /wp:paragraph -->',
 				'',
 				'<!-- wp:list -->',

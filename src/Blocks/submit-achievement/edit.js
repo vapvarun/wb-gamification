@@ -1,5 +1,5 @@
 /**
- * Submit Achievement — editor surface.
+ * Submit Achievement - editor surface.
  */
 
 import { __ } from '@wordpress/i18n';

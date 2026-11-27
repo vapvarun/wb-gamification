@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Badge Share Page
+ * WB Gamification - Badge Share Page
  *
  * Registers a public-facing shareable credential page at:
  *   /gamification/badge/{badge_id}/{user_id}/share/
@@ -128,7 +128,7 @@ final class BadgeSharePage {
 			/**
 			 * Filter where a badge-share URL redirects when the badge cannot be
 			 * shown (un-earned or un-published). Defaults to wb-gamification's own
-			 * profile page; BuddyNext — the master community — fills this from its
+			 * profile page; BuddyNext - the master community - fills this from its
 			 * own bridge so the visitor lands on the BuddyNext profile instead of a
 			 * wb-gamification page. Return '' to fall back to the default.
 			 *

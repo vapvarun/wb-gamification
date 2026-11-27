@@ -16,8 +16,8 @@
  *   wp_options or the new table.
  *
  * Two deployment modes:
- *   1. Local mode — plugin on same site, uses WordPress cookie/nonce auth.
- *   2. Standalone center mode — dedicated site, remote clients authenticate
+ *   1. Local mode - plugin on same site, uses WordPress cookie/nonce auth.
+ *   2. Standalone center mode - dedicated site, remote clients authenticate
  *      via API keys sent in the X-WB-Gam-Key header or ?api_key query param.
  *
  * @package WB_Gamification
@@ -108,7 +108,7 @@ final class ApiKeyAuth {
 
 		$api_key = self::get_key_from_request();
 		if ( '' === $api_key ) {
-			return $result; // No key provided — let WP handle auth normally.
+			return $result; // No key provided - let WP handle auth normally.
 		}
 
 		$row = self::find_by_key( $api_key );
@@ -127,7 +127,7 @@ final class ApiKeyAuth {
 			$GLOBALS['wb_gam_remote_site_id'] = sanitize_text_field( (string) $row['site_id'] );
 		}
 
-		// Debounce last_used — write at most once per 60s per key. Without
+		// Debounce last_used - write at most once per 60s per key. Without
 		// this every authenticated REST hit writes to the keys table; mobile
 		// app polling could push thousands of writes/min on busy sites.
 		self::touch_last_used_if_stale( (int) $row['id'], (string) ( $row['last_used'] ?? '' ) );
@@ -182,7 +182,7 @@ final class ApiKeyAuth {
 	// ── Public CRUD (used by ApiKeysController + ApiKeysPage) ──────────────────
 
 	/**
-	 * List all keys (admin-facing). Returns metadata only — never the
+	 * List all keys (admin-facing). Returns metadata only - never the
 	 * hashed key or any value that could be reversed into the plaintext.
 	 *
 	 * @return array<int, array{id:int,label:string,user_id:int,site_id:string,key_prefix:string,key_suffix:string,is_active:int,created_at:string,last_used:?string}>
@@ -216,7 +216,7 @@ final class ApiKeyAuth {
 	}
 
 	/**
-	 * Generate + persist a new API key. Returns the FULL key — caller is
+	 * Generate + persist a new API key. Returns the FULL key - caller is
 	 * responsible for showing it to the admin exactly once. After this
 	 * returns, the key cannot be recovered from the database.
 	 *
@@ -225,7 +225,7 @@ final class ApiKeyAuth {
 	 * @param string $site_id Optional remote site identifier.
 	 * @return string|false The full plaintext key (display once, then forget),
 	 *                      or false when the row could not be persisted. The
-	 *                      caller MUST check for false — returning a key that
+	 *                      caller MUST check for false - returning a key that
 	 *                      was never stored hands the admin a credential that
 	 *                      can never authenticate.
 	 */
@@ -258,7 +258,7 @@ final class ApiKeyAuth {
 	}
 
 	/**
-	 * Revoke (deactivate) a key by its DB id — keeps the audit row but
+	 * Revoke (deactivate) a key by its DB id - keeps the audit row but
 	 * stops authentication. Use delete_key for full removal.
 	 *
 	 * @param int $key_id Row id from get_keys().
@@ -297,10 +297,10 @@ final class ApiKeyAuth {
 	/**
 	 * Hash an API key for storage / lookup.
 	 *
-	 * SHA-256 with the WP auth salt — deterministic so the same input maps
+	 * SHA-256 with the WP auth salt - deterministic so the same input maps
 	 * to the same hash, but unrecoverable without the plaintext. PBKDF2
 	 * isn't worth the cost here because the keyspace is 40 random alphanum
-	 * chars (~232 bits) — brute force is computationally infeasible.
+	 * chars (~232 bits) - brute force is computationally infeasible.
 	 *
 	 * @param string $key Full plaintext key.
 	 */
@@ -333,7 +333,7 @@ final class ApiKeyAuth {
 
 	/**
 	 * Update last_used at most once per 60 seconds per key. Without this
-	 * debounce every authenticated REST hit writes a row — for a mobile
+	 * debounce every authenticated REST hit writes a row - for a mobile
 	 * app polling every 10s on a busy site, that's thousands of writes/min.
 	 *
 	 * @param int    $key_id    Row id.

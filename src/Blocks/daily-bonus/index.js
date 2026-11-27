@@ -1,5 +1,5 @@
 /**
- * Daily Login Bonus — block registration entry.
+ * Daily Login Bonus - block registration entry.
  */
 
 import { registerBlockType } from '@wordpress/blocks';

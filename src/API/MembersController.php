@@ -7,7 +7,7 @@
  * GET /wb-gamification/v1/members/{id}          Full gamification profile
  * GET /wb-gamification/v1/members/{id}/points   Points total + paginated history
  * GET /wb-gamification/v1/members/{id}/level    Current level + progress to next
- * GET /wb-gamification/v1/members/{id}/badges   Earned badges (Phase 2 — returns empty until BadgeEngine ships)
+ * GET /wb-gamification/v1/members/{id}/badges   Earned badges (Phase 2 - returns empty until BadgeEngine ships)
  *
  * Authentication:
  *   - Any authenticated user can read their own profile.
@@ -79,7 +79,7 @@ class MembersController extends WP_REST_Controller {
 	 */
 	public function register_routes(): void {
 		// GET /members/{id}.
-		// T1 gate — response is shaped to drop T2 fields for non-self/non-admin.
+		// T1 gate - response is shaped to drop T2 fields for non-self/non-admin.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)',
@@ -95,7 +95,7 @@ class MembersController extends WP_REST_Controller {
 		);
 
 		// GET /members/{id}/points.
-		// T2 gate — full points history is behavioral data; self+admin only.
+		// T2 gate - full points history is behavioral data; self+admin only.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/points',
@@ -133,7 +133,7 @@ class MembersController extends WP_REST_Controller {
 		);
 
 		// GET /members/{id}/level.
-		// T1 gate — level name + progress is achievement-shaped.
+		// T1 gate - level name + progress is achievement-shaped.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/level',
@@ -148,7 +148,7 @@ class MembersController extends WP_REST_Controller {
 		);
 
 		// GET /members/{id}/badges.
-		// T1 gate — badge list is the canonical "show off what I earned" payload.
+		// T1 gate - badge list is the canonical "show off what I earned" payload.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/badges',
@@ -163,7 +163,7 @@ class MembersController extends WP_REST_Controller {
 		);
 
 		// GET /members/{id}/events.
-		// T2 gate — full event log w/ metadata is behavioral data; self+admin only.
+		// T2 gate - full event log w/ metadata is behavioral data; self+admin only.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)/events',
@@ -195,7 +195,7 @@ class MembersController extends WP_REST_Controller {
 		);
 
 		// GET /members/{id}/streak.
-		// T1 gate — entry allowed for public viewers; callback strips the T2
+		// T1 gate - entry allowed for public viewers; callback strips the T2
 		// fields (last_active, heatmap, grace_used) when viewer is not self/admin.
 		register_rest_route(
 			$this->namespace,
@@ -219,7 +219,7 @@ class MembersController extends WP_REST_Controller {
 						)
 					),
 				),
-				// POST /members/{id}/streak — admin adjust (support/moderation).
+				// POST /members/{id}/streak - admin adjust (support/moderation).
 				// Audited to wb_gam_events; never a silent mutation.
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -251,7 +251,7 @@ class MembersController extends WP_REST_Controller {
 						)
 					),
 				),
-				// DELETE /members/{id}/streak — admin reset current streak to 0
+				// DELETE /members/{id}/streak - admin reset current streak to 0
 				// (longest preserved). Audited to wb_gam_events.
 				array(
 					'methods'             => WP_REST_Server::DELETABLE,
@@ -272,7 +272,7 @@ class MembersController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /members/me/toasts — read and flush pending toast notifications.
+		// GET /members/me/toasts - read and flush pending toast notifications.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/me/toasts',
@@ -285,7 +285,7 @@ class MembersController extends WP_REST_Controller {
 			)
 		);
 
-		// GET/POST /members/{id}/preferences — the member's own choices in
+		// GET/POST /members/{id}/preferences - the member's own choices in
 		// wb_gam_member_prefs (hide rank, leave the leaderboards, reward emails).
 		// Read: self or admin (T2). Write: self, or staff who manage members.
 		$bool_arg = array( 'type' => 'boolean' );
@@ -314,7 +314,7 @@ class MembersController extends WP_REST_Controller {
 			)
 		);
 
-		// GET/POST /members/me/profile-visibility — the member's own
+		// GET/POST /members/me/profile-visibility - the member's own
 		// profile-privacy choice (writes wb_gam_profile_public). Self-only:
 		// always operates on the current user, never an arbitrary id, so the
 		// permission gate is simply "logged in". This is the member-facing
@@ -344,7 +344,7 @@ class MembersController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /members — searchable, paginated list of members. Lives under this
+		// GET /members - searchable, paginated list of members. Lives under this
 		// plugin's own namespace (wb-gamification/v1), so it never collides with
 		// WP core's /wp/v2/users or BuddyPress's /buddypress/v1/members.
 		//
@@ -390,7 +390,7 @@ class MembersController extends WP_REST_Controller {
 			)
 		);
 
-		// POST /members/{id}/exclude — toggle the per-user earning veto
+		// POST /members/{id}/exclude - toggle the per-user earning veto
 		// (wb_gam_sandboxed). Admin-only. Ties into Settings > Access.
 		register_rest_route(
 			$this->namespace,
@@ -413,7 +413,7 @@ class MembersController extends WP_REST_Controller {
 			)
 		);
 
-		// POST /members/{id}/reset-points — zero a member's balance via a
+		// POST /members/{id}/reset-points - zero a member's balance via a
 		// balancing debit (audit-preserving). Admin-only.
 		register_rest_route(
 			$this->namespace,
@@ -457,7 +457,7 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
-	 * GET /members — paginated, searchable roster with gamification stats.
+	 * GET /members - paginated, searchable roster with gamification stats.
 	 *
 	 * Uses WP_User_Query so it lists every member (search by name/login/email)
 	 * and primes points + badges for the page in a fixed number of queries
@@ -501,12 +501,12 @@ class MembersController extends WP_REST_Controller {
 		if ( ! empty( $ids ) ) {
 			PointsEngine::prime_totals( $ids );
 			// WP_User_Query selected only ID/display_name/user_login, so the usermeta
-			// cache is cold — prime it once for the whole page so the per-row meta
+			// cache is cold - prime it once for the whole page so the per-row meta
 			// reads below (sandboxed flag, exclusion) are cache hits, not ~2/user
 			// queries.
 			cache_users( $ids );
 			// One grouped COUNT for the whole page's badge tallies. The loop used to
-			// call count( get_user_badges( $uid ) ) per row — a 2-table JOIN that
+			// call count( get_user_badges( $uid ) ) per row - a 2-table JOIN that
 			// hydrates every earned-badge row just to count it, i.e. ~100 JOINs per
 			// roster page. (prime_earned_badges() primed a cache get_user_badges()
 			// does not read for the count, so it was pure overhead here.)
@@ -560,7 +560,7 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
-	 * GET /members?context=view — member lookup for logged-in members.
+	 * GET /members?context=view - member lookup for logged-in members.
 	 *
 	 * Backs the give-kudos recipient suggestions. Returns public fields only
 	 * (id, display name, nicename slug, avatar) and searches display name and
@@ -655,7 +655,7 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
-	 * POST /members/{id}/exclude — toggle the per-user earning veto.
+	 * POST /members/{id}/exclude - toggle the per-user earning veto.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return WP_REST_Response|WP_Error
@@ -683,7 +683,7 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
-	 * POST /members/{id}/reset-points — zero a member's balance via a balancing
+	 * POST /members/{id}/reset-points - zero a member's balance via a balancing
 	 * debit so the ledger keeps a full audit trail.
 	 *
 	 * @param WP_REST_Request $request Request.
@@ -721,7 +721,7 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
-	 * POST /members/{id}/streak — admin adjust a member's streak values.
+	 * POST /members/{id}/streak - admin adjust a member's streak values.
 	 *
 	 * Support/moderation surface for fixing a member's broken or wrong streak.
 	 * Delegates to StreakEngine::admin_set(), which audits the change to
@@ -756,7 +756,7 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
-	 * DELETE /members/{id}/streak — admin reset a member's current streak to 0.
+	 * DELETE /members/{id}/streak - admin reset a member's current streak to 0.
 	 *
 	 * The longest_streak is preserved (all-time record). Delegates to
 	 * StreakEngine::admin_reset(), which audits to wb_gam_events and fires
@@ -787,7 +787,7 @@ class MembersController extends WP_REST_Controller {
 	// ── Permission checks ──────────────────────────────────────────────────────
 
 	/**
-	 * T1 (achievements / showcase) gate — applies to /members/{id},
+	 * T1 (achievements / showcase) gate - applies to /members/{id},
 	 * /level, /badges, /streak (entry only; callback strips T2 fields).
 	 *
 	 * Allows the request through when EITHER:
@@ -795,7 +795,7 @@ class MembersController extends WP_REST_Controller {
 	 *   • OR the site kill-switch is ON AND the member's per-account toggle is ON
 	 *
 	 * Otherwise returns 403. The callback is responsible for shaping the
-	 * response — anonymous/peer viewers must NEVER receive T2 fields even
+	 * response - anonymous/peer viewers must NEVER receive T2 fields even
 	 * when the gate lets them in. See Privacy::can_view_public_profile().
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
@@ -820,7 +820,7 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
-	 * T2 (behavioral history) gate — applies to /points history and /events.
+	 * T2 (behavioral history) gate - applies to /points history and /events.
 	 *
 	 * Self + admin only, ALWAYS. Behavioral history reveals when/how a member
 	 * spends time and is never appropriate to share with peers or anonymous
@@ -868,7 +868,7 @@ class MembersController extends WP_REST_Controller {
 	 * Self-service gate: any logged-in member may read/write their OWN data.
 	 *
 	 * Used by the `/me/*` routes that act exclusively on the current user, so
-	 * there is no target id to authorise against — being logged in is the whole
+	 * there is no target id to authorise against - being logged in is the whole
 	 * check.
 	 *
 	 * @return true|WP_Error
@@ -912,7 +912,7 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
-	 * POST /members/{id}/preferences — save any of the three choices; omitted ones keep their value.
+	 * POST /members/{id}/preferences - save any of the three choices; omitted ones keep their value.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return WP_REST_Response The saved preferences.
@@ -923,7 +923,7 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
-	 * GET /members/me/profile-visibility — the current member's own choice.
+	 * GET /members/me/profile-visibility - the current member's own choice.
 	 *
 	 * `managed_by_host` is true when a community plugin decides profile privacy
 	 * (Privacy::host_decides()); the member changes it on their community profile instead.
@@ -943,7 +943,7 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
-	 * POST /members/me/profile-visibility — set the current member's choice.
+	 * POST /members/me/profile-visibility - set the current member's choice.
 	 *
 	 * @param WP_REST_Request $request Request carrying the boolean `public` flag.
 	 * Refused (409) when a community plugin decides profile privacy: the choice saved here
@@ -996,7 +996,7 @@ class MembersController extends WP_REST_Controller {
 		$level  = LevelEngine::get_level_for_user( $user_id );
 		$next   = LevelEngine::get_next_level( $user_id );
 
-		// T1 fields — always shown when the request is allowed by the gate.
+		// T1 fields - always shown when the request is allowed by the gate.
 		$data = array(
 			'id'           => $user_id,
 			'display_name' => $user->display_name,
@@ -1018,7 +1018,7 @@ class MembersController extends WP_REST_Controller {
 			'badges_count' => $this->get_badge_count( $user_id ),
 		);
 
-		// T2 fields — only when viewer is the owner or admin. Multi-currency
+		// T2 fields - only when viewer is the owner or admin. Multi-currency
 		// breakdown reveals what currencies the user holds + balances; the
 		// preferences object includes the user's privacy choices (leaking
 		// these defeats the choice itself). See plan/PRIVACY-MODEL.md.
@@ -1053,7 +1053,7 @@ class MembersController extends WP_REST_Controller {
 
 		global $wpdb;
 
-		// Optional ?type= query filter — scopes total + history to a specific currency.
+		// Optional ?type= query filter - scopes total + history to a specific currency.
 		$type_input = (string) $request->get_param( 'type' );
 		$pt_service = new \WBGam\Services\PointTypeService();
 		$type_scope = '' !== $type_input ? $pt_service->resolve( $type_input ) : null;
@@ -1288,7 +1288,7 @@ class MembersController extends WP_REST_Controller {
 		$streak  = StreakEngine::get_streak( $user_id );
 		$private = Privacy::can_view_private_history( $user_id );
 
-		// T1 fields — current + longest are achievement-shaped. Always returned
+		// T1 fields - current + longest are achievement-shaped. Always returned
 		// when the gate lets the request through.
 		$data = array(
 			'current_streak' => $streak['current_streak'],
@@ -1296,7 +1296,7 @@ class MembersController extends WP_REST_Controller {
 			'milestones'     => array( 7, 14, 30, 60, 100, 180, 365 ),
 		);
 
-		// T2 fields — last_active timestamp + heatmap reveal a daily activity
+		// T2 fields - last_active timestamp + heatmap reveal a daily activity
 		// pattern (when the member was online). Owner/admin only.
 		if ( $private ) {
 			$data['last_active'] = $streak['last_active'];

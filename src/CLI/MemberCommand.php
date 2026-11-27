@@ -86,10 +86,10 @@ class MemberCommand {
 			\WP_CLI::line( sprintf( '%-8s %d', $label . ':', $balance ) );
 		}
 
-		\WP_CLI::line( 'Level:   ' . ( $level ? $level['name'] : '—' ) );
+		\WP_CLI::line( 'Level:   ' . ( $level ? $level['name'] : '-' ) );
 
 		if ( $next ) {
-			\WP_CLI::line( "Next:    {$next['name']} ({$next['min_points']} pts) — {$progress}% there" );
+			\WP_CLI::line( "Next:    {$next['name']} ({$next['min_points']} pts) - {$progress}% there" );
 		} else {
 			\WP_CLI::line( 'Next:    Max level reached' );
 		}
@@ -158,7 +158,7 @@ class MemberCommand {
 		$orphans = MemberData::count_orphans();
 
 		if ( ! $orphans ) {
-			\WP_CLI::success( 'No orphaned rows — every gamification row belongs to a member who exists.' );
+			\WP_CLI::success( 'No orphaned rows - every gamification row belongs to a member who exists.' );
 			return;
 		}
 
@@ -171,7 +171,7 @@ class MemberCommand {
 		\WP_CLI::log( sprintf( '  %-46s %d', 'TOTAL', $total ) );
 
 		if ( $dry_run ) {
-			\WP_CLI::success( sprintf( 'Dry run — %d row(s) would be removed. Re-run without --dry-run to remove them.', $total ) );
+			\WP_CLI::success( sprintf( 'Dry run - %d row(s) would be removed. Re-run without --dry-run to remove them.', $total ) );
 			return;
 		}
 

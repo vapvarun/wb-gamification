@@ -1,5 +1,5 @@
 /**
- * WB Gamification — Analytics Dashboard Page CSS
+ * WB Gamification - Analytics Dashboard Page CSS
  * =====================================================================
  * Per-page styles for `WBGam\Admin\AnalyticsDashboard` (menu slug:
  * `wb-gamification-analytics`).
@@ -7,7 +7,7 @@
  * NOTE: The bulk of analytics styling lives in the dedicated
  * `assets/css/admin-analytics.css` sheet (enqueued by
  * `AnalyticsDashboard::enqueue`). This per-page sheet is intentionally
- * thin — it only adds the page wrapper marker so the JSON usage map
+ * thin - it only adds the page wrapper marker so the JSON usage map
  * accounts for the `wb-gam-admin-analytics` and `wb-gam-admin` root
  * classes.
  *
@@ -20,6 +20,6 @@
 
 .wb-gam-admin,
 .wb-gam-admin-analytics {
-	/* Wrapper markers — visuals from .wbgam-wrap +
+	/* Wrapper markers - visuals from .wbgam-wrap +
 	   admin-analytics.css for the period bar / KPI grid / panels. */
 }

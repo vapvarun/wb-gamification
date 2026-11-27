@@ -1,5 +1,5 @@
 /**
- * Year Recap block — frontend stylesheet.
+ * Year Recap block - frontend stylesheet.
  *
  * Phase F migration: extracted from assets/css/frontend.css so the
  * block ships its own CSS via block.json (`style` field).
@@ -55,7 +55,7 @@
 	opacity: 0.12;
 }
 
-/* Empty state — sits inside the dark hero, so text needs the inverse
+/* Empty state - sits inside the dark hero, so text needs the inverse
  * (white-ish) of normal muted. Padded for breathing room since the
  * block has no other content to fill it. */
 .wb-gam-year-recap__empty {

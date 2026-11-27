@@ -1,6 +1,6 @@
 <?php
 /**
- * REST API Rate Limiter — Token Bucket per User
+ * REST API Rate Limiter - Token Bucket per User
  *
  * Protects the WB Gamification REST API write endpoints against abuse.
  * Uses a token bucket algorithm implemented via WordPress transients.
@@ -11,8 +11,8 @@
  *   Scope     : per authenticated user_id (unauthenticated requests denied by route permissions)
  *
  * The bucket state is stored in a transient keyed by user_id, containing:
- *   tokens    : float  — current token count
- *   last_refill: int   — Unix timestamp of last refill calculation
+ *   tokens    : float  - current token count
+ *   last_refill: int   - Unix timestamp of last refill calculation
  *
  * Applied via:
  *   - EventsController::create_item() before processing external event triggers
@@ -47,7 +47,7 @@ final class RateLimiter {
 	/** Tokens added per second. */
 	private const REFILL_RATE = 0.2; // 1 token per 5 seconds.
 
-	/** Transient TTL — slightly longer than full-bucket drain time. */
+	/** Transient TTL - slightly longer than full-bucket drain time. */
 	private const TTL = 600; // 10 minutes.
 
 	/**
@@ -66,7 +66,7 @@ final class RateLimiter {
 		$now    = time();
 
 		if ( false === $bucket ) {
-			// First request — full bucket.
+			// First request - full bucket.
 			$bucket = array(
 				'tokens'      => (float) self::CAPACITY,
 				'last_refill' => $now,

@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Uninstall
+ * WB Gamification - Uninstall
  *
  * Runs when the plugin is deleted from the WordPress admin.
  * Removes all plugin data: custom tables, options, transients,
@@ -18,8 +18,8 @@ global $wpdb;
 // -------------------------------------------------------------------------
 // Ordering, not housekeeping. WordPress runs this file inside a web request
 // when an admin clicks Delete, so it is bounded by max_execution_time. This
-// uninstall is fast — measured at 333ms with 2,755 ledger rows, dropping all 26
-// tables — so it is not expected to be interrupted. But it CAN be: a dropped
+// uninstall is fast - measured at 333ms with 2,755 ledger rows, dropping all 26
+// tables - so it is not expected to be interrupted. But it CAN be: a dropped
 // connection, a DB error part-way, a host with an unusually tight limit and a
 // site far larger than anything measured here.
 //
@@ -27,7 +27,7 @@ global $wpdb;
 // schema that has been dropped. That combination is a trap: Installer::install()
 // rebuilds its own tables on the next activation, DbUpgrader reads the pointer,
 // concludes there is nothing to migrate, and any table only IT knows about is
-// gone for good. That exact state — pointer current, tables absent — cost three
+// gone for good. That exact state - pointer current, tables absent - cost three
 // tables and all member notifications during the 1.6.4 smoke, until the
 // installer was made to own the whole schema.
 //
@@ -41,12 +41,12 @@ delete_option( 'wb_gam_db_version' );
 //    phpcs:disable WordPress.DB.DirectDatabaseQuery.SchemaChange
 //    phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 // Reason: DROP TABLE is a schema operation required during uninstall.
-// Caching is not applicable here — tables are being permanently removed.
+// Caching is not applicable here - tables are being permanently removed.
 // -------------------------------------------------------------------------
 // Every table the Installer creates must be listed here. The 2026-05-27
-// data-flow audit (admin-rest G3) found 3 tables were missing —
+// data-flow audit (admin-rest G3) found 3 tables were missing -
 // `wb_gam_user_totals` (materialised totals), `wb_gam_submissions` (UGC
-// queue), `wb_gam_leaderboard_cache` (snapshot store) — all introduced
+// queue), `wb_gam_leaderboard_cache` (snapshot store) - all introduced
 // in 1.0.0. Crosscheck this list against `src/Engine/Installer.php` on
 // every schema-add commit. The CI manifest check counts CREATE TABLEs
 // against the `tables` section, but does not currently diff against this
@@ -77,7 +77,7 @@ foreach ( $tables as $table ) {
 // phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
 
 // -------------------------------------------------------------------------
-// 2. Delete options — the whole namespace.
+// 2. Delete options - the whole namespace.
 // -------------------------------------------------------------------------
 // This was a hand-list of about a hundred literal keys, plus five wildcard patterns for the families
 // whose names are only known at runtime. It was refreshed by an audit hours ago and it was STILL
@@ -111,17 +111,17 @@ $wpdb->query(
 // -------------------------------------------------------------------------
 // 3. Delete transients.
 // -------------------------------------------------------------------------
-// Note: wb_gam_do_redirect transient retired in 1.0.0 — wizard redirect
+// Note: wb_gam_do_redirect transient retired in 1.0.0 - wizard redirect
 // now driven by the persistent wb_gam_pending_setup_redirect option above.
 
 // Wildcard transients: every `set_transient()` call site in the plugin uses
 // a 'wb_gam_' key, most of them dynamic (per-user rate-limit buckets, per-user
-// nudge cache, per-badge/per-webhook logs are options not transients — see
-// above — but per-user/per-slug locks and caches ARE transients: e.g.
+// nudge cache, per-badge/per-webhook logs are options not transients - see
+// above - but per-user/per-slug locks and caches ARE transients: e.g.
 // RateLimiter's 'wb_gam_rl_<user_id>', NudgeEngine's 'wb_gam_nudge_<user_id>',
 // TransactionalEmailEngine's 'wb_gam_email_burst_<slug>_<user_id>'). Hand-
 // listing every dynamic suffix is exactly the fragile pattern that caused
-// the options gap this audit found, so one prefix wildcard is used instead —
+// the options gap this audit found, so one prefix wildcard is used instead -
 // SettingsIO::export()/import() independently confirms 'wb_gam_' is this
 // plugin's entire, exclusively-owned option/transient namespace, so this
 // can't catch anything not ours. Verified 2026-07-13 against every
@@ -163,7 +163,7 @@ foreach ( $cron_hooks as $hook ) {
 // -------------------------------------------------------------------------
 // 5. Cancel Action Scheduler jobs.
 // -------------------------------------------------------------------------
-// The plugin does NOT use one AS group — it uses 7. `as_unschedule_all_actions()`
+// The plugin does NOT use one AS group - it uses 7. `as_unschedule_all_actions()`
 // only clears the exact group it's given, so the previous single-group call
 // left the other 6 groups' pending/recurring actions running indefinitely
 // post-uninstall. Enumerated 2026-07-13 against every `as_schedule_recurring_action()`,
@@ -171,11 +171,11 @@ foreach ( $cron_hooks as $hook ) {
 // `src/` and resolved each 4th-arg group literal/constant. Note
 // 'wb_gamification' (underscore, AsyncEvaluator) and 'wb-gamification'
 // (hyphen, everything else) are two DIFFERENT groups, not a typo of one
-// group — both must be cleared. Crosscheck this list on every commit that
+// group - both must be cleared. Crosscheck this list on every commit that
 // adds a new `AS_GROUP` constant or a bare group-string literal.
 $as_groups = array(
-	'wb-gamification',        // BadgeEngine, CohortEngine, CommunityChallengeEngine, Engine, WebhookDispatcher — default group.
-	'wb_gamification',        // AsyncEvaluator — underscore variant, NOT the same group as above.
+	'wb-gamification',        // BadgeEngine, CohortEngine, CommunityChallengeEngine, Engine, WebhookDispatcher - default group.
+	'wb_gamification',        // AsyncEvaluator - underscore variant, NOT the same group as above.
 	'wb_gam_leaderboard',     // LeaderboardEngine::AS_GROUP.
 	'wb_gam_email',           // WeeklyEmailEngine::AS_GROUP.
 	'wb-gamification-emails', // TransactionalEmailEngine::AS_GROUP.
@@ -192,7 +192,7 @@ if ( function_exists( 'as_unschedule_all_actions' ) ) {
 // -------------------------------------------------------------------------
 // 6. Remove plugin custom capabilities from every role.
 // -------------------------------------------------------------------------
-// This list MUST match `WBGam\Engine\Capabilities::CAPS` exactly — caps that
+// This list MUST match `WBGam\Engine\Capabilities::CAPS` exactly - caps that
 // roll out via the plugin must also roll back on uninstall. Cross-checked
 // 2026-05-27 (WBG-011): the previous list had two dead entries
 // (wb_gam_manage_redemptions, wb_gam_manage_api_keys) that were never

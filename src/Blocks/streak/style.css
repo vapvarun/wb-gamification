@@ -1,5 +1,5 @@
 /**
- * Streak — frontend stylesheet.
+ * Streak - frontend stylesheet.
  *
  * Phase F migration: extracted from assets/css/frontend.css so the
  * block ships its own CSS via block.json (`style` field).
@@ -61,7 +61,7 @@
 	font-weight: 600;
 }
 
-/* Progress bar — Basecamp 9919406312. The plain "6 more days" sentence
+/* Progress bar - Basecamp 9919406312. The plain "6 more days" sentence
  * gave members no visual sense of how far they had come; replacing it
  * with a real bar lets the eye read the milestone at a glance. */
 .wb-gam-streak__progress {

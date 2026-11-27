@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Block extension hooks
+ * WB Gamification - Block extension hooks
  *
  * Provides a uniform extension API for the 12 server-rendered blocks.
  * Every block render fires:
@@ -15,7 +15,7 @@
  *
  * For data-shape mutation, a separate filter
  * wb_gam_block_data is fired by blocks whose render benefits from
- * a transformable payload. Not all blocks fire it — see each render.php.
+ * a transformable payload. Not all blocks fire it - see each render.php.
  *
  * @package WB_Gamification
  * @since   1.0.0
@@ -25,15 +25,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -45,7 +45,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * Each block render.php calls BlockHooks::before() / BlockHooks::after()
  * around its main output. Early-return empty-state paths intentionally
- * skip the hooks — extensions should not fire for non-rendered blocks.
+ * skip the hooks - extensions should not fire for non-rendered blocks.
  *
  * @package WB_Gamification
  */
@@ -56,7 +56,7 @@ final class BlockHooks {
 	 *
 	 * @param string $slug       Block slug (without the wb-gamification/ namespace prefix).
 	 * @param array  $attributes Block attributes resolved by the editor / shortcode.
-	 * @param array  $context    Per-block runtime state — user_id, target_id, etc.
+	 * @param array  $context    Per-block runtime state - user_id, target_id, etc.
 	 *                           Listeners receive this to avoid re-deriving state.
 	 */
 	public static function before( string $slug, array $attributes, array $context = array() ): void {
@@ -104,7 +104,7 @@ final class BlockHooks {
 	 * Run a value through the wb_gam_block_data filter for a block.
 	 *
 	 * Blocks call this to let extensions transform the data they're about
-	 * to render — leaderboard rows, badge cards, point-history entries,
+	 * to render - leaderboard rows, badge cards, point-history entries,
 	 * etc. Listeners inspect $slug and act only on the blocks they care
 	 * about.
 	 *
@@ -118,7 +118,7 @@ final class BlockHooks {
 		 * Filter the data a WB Gamification block is about to render.
 		 *
 		 * Use this to annotate, sort, slice, or replace block payloads.
-		 * The shape varies per block — see each block's render.php for
+		 * The shape varies per block - see each block's render.php for
 		 * the contract.
 		 *
 		 * @since 1.0.0

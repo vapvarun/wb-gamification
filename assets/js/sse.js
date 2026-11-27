@@ -1,5 +1,5 @@
 /**
- * WB Gamification — Server-Sent Events client adapter.
+ * WB Gamification - Server-Sent Events client adapter.
  *
  * Stage 1 scaffold (2026-05-28). Feature-flagged OFF on the server until
  * stages 2-3 ship the storage layer + streaming loop. This file probes
@@ -38,7 +38,7 @@
 		return;
 	}
 
-	// Transport gate. If the option says 'heartbeat', stop here — there's
+	// Transport gate. If the option says 'heartbeat', stop here - there's
 	// no SSE at all on this install.
 	if ( cfg.transport === 'heartbeat' ) {
 		return;
@@ -99,7 +99,7 @@
 		// Dispatch into the broker. Subscribers don't know SSE exists.
 		// SSE messages come from wb_gam_notifications_queue rows whose
 		// payload is the full event object (with `type`, `_id`, etc.).
-		// Heartbeat consumers receive arrays of these — match the shape
+		// Heartbeat consumers receive arrays of these - match the shape
 		// so subscribers don't need to special-case SSE.
 		if ( window.wbGamRealtime && typeof window.wbGamRealtime._dispatch === 'function' ) {
 			window.wbGamRealtime._dispatch( 'toasts', [ payload ] );
@@ -120,7 +120,7 @@
 	function handleError() {
 		// EventSource auto-reconnects on transient errors. We treat
 		// repeated errors as a signal to give up on SSE for this page
-		// load — in 'auto' mode the heartbeat broker is already running
+		// load - in 'auto' mode the heartbeat broker is already running
 		// in parallel and will pick up the slack.
 		if ( ! source ) {
 			return;

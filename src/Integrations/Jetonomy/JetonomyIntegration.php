@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Jetonomy integration.
+ * WB Gamification - Jetonomy integration.
  *
  * Forum events that are registered actions (topic, reply, votes, acceptance, penalties; see
  * integrations/jetonomy.php) are paid and taken back by the engine like every other action, under
@@ -29,15 +29,15 @@ use WBGam\Engine\PointsEngine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -243,13 +243,13 @@ final class JetonomyIntegration {
 	 * Mirror Jetonomy reputation deltas into the WB Gam points ledger.
 	 *
 	 * Positive deltas award; negative deltas debit (only if the user has
-	 * the balance — never tip a fresh ledger into the negatives). Action
+	 * the balance - never tip a fresh ledger into the negatives). Action
 	 * key in the WB Gam ledger is namespaced (`jetonomy_post_upvoted`,
 	 * `jetonomy_reply_accepted_revoked`, …) so forum-sourced points stay
 	 * distinct from native WB Gam awards in reports.
 	 *
 	 * Sandboxed users (truthy `wb_gam_sandboxed` user meta) are skipped at
-	 * the wb-gam mirror — used to neutralise trial / abusive / shadow-
+	 * the wb-gam mirror - used to neutralise trial / abusive / shadow-
 	 * banned accounts without removing them from Jetonomy's permission
 	 * system. The `wb_gam_award_skipped` action fires so adapters can
 	 * surface "no points this time" if needed.
@@ -276,7 +276,7 @@ final class JetonomyIntegration {
 
 		$reason = preg_replace( '/[^a-z0-9_]/i', '', (string) $action );
 		if ( '' === $reason ) {
-			return; // Malformed action key — refuse to ledger junk rows.
+			return; // Malformed action key - refuse to ledger junk rows.
 		}
 		$action_id = self::ACTION_PREFIX . $reason;
 
@@ -289,10 +289,10 @@ final class JetonomyIntegration {
 		}
 
 		// Sandboxed users get no wb-gam mirror in either direction.
-		// Jetonomy's own reputation row is unaffected — only the gamification
+		// Jetonomy's own reputation row is unaffected - only the gamification
 		// ledger ignores them.
 		if ( get_user_meta( $user_id, self::META_SANDBOXED, true ) ) {
-			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			/** This filter is documented in src/Engine/PointsEngine.php - see wb_gam_award_skipped. */
 			do_action(
 				'wb_gam_award_skipped',
 				$user_id,

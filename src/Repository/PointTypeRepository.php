@@ -4,7 +4,7 @@
  *
  * Custom-table SQL ONLY for `wb_gam_point_types`. Per the canonical
  * Wbcom 7-layer architecture (`plan/ARCHITECTURE.md`), Repository classes
- * own DB queries — no business logic, no HTTP, no rendering.
+ * own DB queries - no business logic, no HTTP, no rendering.
  *
  * @package WB_Gamification
  * @since   1.0.0
@@ -114,7 +114,7 @@ final class PointTypeRepository {
 	 * Return the default type slug.
 	 *
 	 * Falls back to the constant {@see PointTypeRepository::DEFAULT_SLUG} if no
-	 * row is flagged as default — guarantees callers always have a usable slug.
+	 * row is flagged as default - guarantees callers always have a usable slug.
 	 */
 	public function default_slug(): string {
 		if ( null !== self::$request_cache_default ) {
@@ -261,7 +261,7 @@ final class PointTypeRepository {
 	}
 
 	/**
-	 * Delete a point type. Refuses to delete the default type — that's a
+	 * Delete a point type. Refuses to delete the default type - that's a
 	 * service-level invariant; callers should set a different default first.
 	 *
 	 * @param string $slug Slug to delete.
@@ -291,7 +291,7 @@ final class PointTypeRepository {
 	 * Normalise + validate a slug for storage.
 	 *
 	 * Lowercase, alphanumeric + dash + underscore, max 60 chars. Empty string
-	 * means "invalid" — callers should treat as a validation failure.
+	 * means "invalid" - callers should treat as a validation failure.
 	 *
 	 * @param string $raw Untrusted input.
 	 */
@@ -305,7 +305,7 @@ final class PointTypeRepository {
 	 * Drop cached lookups. Called after every write.
 	 *
 	 * Invalidates BOTH the persistent wp_cache layer AND the in-process
-	 * static — otherwise an admin who creates a new currency would see
+	 * static - otherwise an admin who creates a new currency would see
 	 * stale list output for the rest of the request.
 	 */
 	private function flush_cache(): void {

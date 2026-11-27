@@ -5,7 +5,7 @@
 	"version": "2.0.0",
 	"title": "Earning Guide",
 	"category": "widgets",
-	"description": "Show members how to earn points — lists all enabled actions with their point values, grouped by category.",
+	"description": "Show members how to earn points - lists all enabled actions with their point values, grouped by category.",
 	"keywords": [ "points", "earn", "guide", "gamification", "actions", "how to" ],
 	"textdomain": "wb-gamification",
 	"attributes": {

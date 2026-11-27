@@ -3,10 +3,10 @@
  * WP-CLI: Scale-readiness commands for WB Gamification.
  *
  * Two commands:
- *   - `wp wb-gamification scale seed`      — populate a real-shape dataset
+ *   - `wp wb-gamification scale seed`      - populate a real-shape dataset
  *                                            so benchmarks measure against
  *                                            production-scale tables.
- *   - `wp wb-gamification scale benchmark` — run hot-path queries and
+ *   - `wp wb-gamification scale benchmark` - run hot-path queries and
  *                                            report per-query timings + a
  *                                            pass/fail against the budget.
  *
@@ -21,15 +21,15 @@ use WBGam\Engine\LeaderboardEngine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -39,7 +39,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Seed-and-measure scale benchmark.
  *
- * Required to claim 100k-readiness — every other tuning is theory until
+ * Required to claim 100k-readiness - every other tuning is theory until
  * the hot-path queries are timed against a production-shape table.
  *
  * @package WB_Gamification
@@ -100,18 +100,18 @@ final class ScaleCommand {
 
 		// ── Added 1.6.4 (S-03). The budgets above only ever covered the paths
 		// we already knew were fast. Everything below is a path the scale
-		// register flagged as unmeasured — which is precisely where a large
+		// register flagged as unmeasured - which is precisely where a large
 		// site breaks. A budget here is not a guess: it is the ceiling above
 		// which the surface is unusable at 100k members.
 		//
 		// TWO OF THESE ARE EXPECTED TO FAIL ON A SEEDED DATASET TODAY. That is
-		// the point — a gate that only measures what already passes proves
+		// the point - a gate that only measures what already passes proves
 		// nothing. They turn green when S-01 and the idx_badge_id ALTER land.
 
 		// S-01: badge rarity aggregation. COUNT(DISTINCT user_id) GROUP BY over
 		// wb_gam_user_badges + COUNT(*) over wp_users, uncached, on EVERY
 		// request that renders a badge. Big scan, small result: a LIMIT cannot
-		// help it — only caching or materialisation can.
+		// help it - only caching or materialisation can.
 		'badge_rarity_map'           => 50.0,
 
 		// max_earners guard. COUNT(*) ... WHERE badge_id = %s, on the AWARD hot
@@ -273,7 +273,7 @@ final class ScaleCommand {
 		// Until 1.6.4 the seed populated wb_gam_points (and user_totals) and nothing
 		// else. So every budget touching wb_gam_user_badges, wb_gam_streaks or
 		// wb_gam_notifications_queue was timed against a table holding a few hundred
-		// rows and passed in well under a millisecond — a green light that measured
+		// rows and passed in well under a millisecond - a green light that measured
 		// nothing. A benchmark that only seeds the tables it already knows are fast
 		// is not a gate, it is a formality.
 		//
@@ -372,7 +372,7 @@ final class ScaleCommand {
 		// Build the leaderboard snapshot over the seeded data.
 		//
 		// The benchmark has a `leaderboard_snapshot` budget, and on production the
-		// 5-minute cron keeps that snapshot fresh — so the read path being measured
+		// 5-minute cron keeps that snapshot fresh - so the read path being measured
 		// is the snapshot read. Without this, the seeded members are absent from the
 		// snapshot, read_from_snapshot() correctly declines to serve a stale board,
 		// and the benchmark silently measures the LIVE-AGGREGATE FALLBACK instead:
@@ -513,7 +513,7 @@ final class ScaleCommand {
 	 * Time the hot-path queries against the current dataset.
 	 *
 	 * Pass criteria: every query under its budget. Fails CI if any query
-	 * exceeds the budget — that's the gate for shipping to a 100k site.
+	 * exceeds the budget - that's the gate for shipping to a 100k site.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -529,7 +529,7 @@ final class ScaleCommand {
 		// Pick a representative seeded user (first uid with rows).
 		$uid = (int) $wpdb->get_var( "SELECT user_id FROM {$wpdb->prefix}wb_gam_points WHERE user_id >= 1000000 ORDER BY user_id ASC LIMIT 1" );
 		if ( $uid <= 0 ) {
-			\WP_CLI::warning( 'No seeded data — running benchmark against real users (less reliable). Run `wp wb-gamification scale seed` first.' );
+			\WP_CLI::warning( 'No seeded data - running benchmark against real users (less reliable). Run `wp wb-gamification scale seed` first.' );
 			$uid = (int) $wpdb->get_var( "SELECT user_id FROM {$wpdb->prefix}wb_gam_points ORDER BY id DESC LIMIT 1" );
 		}
 
@@ -540,7 +540,7 @@ final class ScaleCommand {
 
 		$results = array();
 
-		// 1. Materialised get_total — the most-called read in the plugin.
+		// 1. Materialised get_total - the most-called read in the plugin.
 		$results['get_total_pk'] = self::time_op(
 			function () use ( $uid ) {
 				wp_cache_flush();
@@ -564,7 +564,7 @@ final class ScaleCommand {
 			}
 		);
 
-		// 4. Points history pagination — 20 rows, latest first.
+		// 4. Points history pagination - 20 rows, latest first.
 		$results['points_history_user'] = self::time_op(
 			function () use ( $uid ) {
 				wp_cache_flush();
@@ -572,7 +572,7 @@ final class ScaleCommand {
 			}
 		);
 
-		// 5. Rate-limit today count — hot on every action that fires.
+		// 5. Rate-limit today count - hot on every action that fires.
 		$results['rate_limit_today_count'] = self::time_op(
 			function () use ( $uid, $wpdb ) {
 				// The site's midnight as a UTC instant, the same bound the product's rate limiter uses.
@@ -669,7 +669,7 @@ final class ScaleCommand {
 			}
 		);
 
-		// 1.6.4 notifications reader — every toast surface goes through this.
+		// 1.6.4 notifications reader - every toast surface goes through this.
 		$results['notifications_fetch_unseen'] = self::time_op(
 			function () use ( $uid ) {
 				wp_cache_flush();
@@ -812,14 +812,14 @@ final class ScaleCommand {
 		if ( 0 === $failures ) {
 			\WP_CLI::success( sprintf( 'All queries within budget against this dataset: %s ledger rows across %s members.', number_format( $ledger_rows ), number_format( $user_rows ) ) );
 		} else {
-			\WP_CLI::error( "{$failures} query(s) over budget (" . implode( ', ', $failed ) . ') — investigate before shipping to a large site.' );
+			\WP_CLI::error( "{$failures} query(s) over budget (" . implode( ', ', $failed ) . ') - investigate before shipping to a large site.' );
 		}
 	}
 
 	/**
 	 * Time a closure and return the MEDIAN of several runs, in milliseconds.
 	 *
-	 * A single-shot timing is not a measurement, it is a sample of one — and it made
+	 * A single-shot timing is not a measurement, it is a sample of one - and it made
 	 * this gate flaky. Benchmarking right after seeding 100k rows caught MySQL still
 	 * busy and reported `get_total_pk` at 9.06ms against a 5ms budget; the median of
 	 * seven runs of the same query was 0.08ms. A gate that fails on a cold outlier

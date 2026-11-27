@@ -1,5 +1,5 @@
 /**
- * Give Kudos — editor surface.
+ * Give Kudos - editor surface.
  *
  * Static block (no Interactivity-API runtime markup), so per the Wbcom Block
  * Quality Standard decision tree the editor uses ServerSideRender for a true

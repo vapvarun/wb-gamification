@@ -1,5 +1,5 @@
 /**
- * Earning Guide — frontend stylesheet.
+ * Earning Guide - frontend stylesheet.
  *
  * 1.4.0 UX refactor: container queries replace the inline-style
  * hardcoded column count so the grid adapts to the host width.
@@ -28,7 +28,7 @@
 .wb-gam-earning-guide__grid {
 	display: grid;
 	gap: 12px;
-	/* Sensible default — admin can override via data-cols=N in render,
+	/* Sensible default - admin can override via data-cols=N in render,
 	 * but auto-fill keeps the layout intact when the host is narrower
 	 * than the admin's preferred column count. */
 	grid-template-columns: repeat( auto-fill, minmax( 200px, 1fr ) );
@@ -41,7 +41,7 @@
 .wb-gam-earning-guide__grid[data-cols="3"] { grid-template-columns: repeat( auto-fill, minmax( 200px, 1fr ) ); }
 .wb-gam-earning-guide__grid[data-cols="4"] { grid-template-columns: repeat( auto-fill, minmax( 180px, 1fr ) ); }
 
-/* Narrow host (hub flyout ~465px) — drop to 2 cols regardless of the
+/* Narrow host (hub flyout ~465px) - drop to 2 cols regardless of the
  * admin's preferred count. The card needs ~200px to read the label
  * without wrapping awkwardly. */
 @container (max-width: 540px) {
@@ -60,7 +60,7 @@
 	/* Two-row card so the label has the FULL card width to lay out
 	 * naturally instead of fighting the icon + points pill for the
 	 * remaining middle column. Pre-1.4.1 used a single-row flex with
-	 * the label between icon and pts pill — in 3-4 column grids the
+	 * the label between icon and pts pill - in 3-4 column grids the
 	 * label collapsed into a single tall vertical word column on long
 	 * strings like "Win 1st place in a photo challenge". Basecamp
 	 * conversation 2026-05-28. */
@@ -73,7 +73,7 @@
 	border-radius: 10px;
 	transition: box-shadow 200ms ease, border-color 200ms ease;
 	min-width: 0;
-	/* Defensive — if a child miscalculates width (long pts pill, very
+	/* Defensive - if a child miscalculates width (long pts pill, very
 	 * long label without spaces), keep content inside the card chrome
 	 * rather than bleeding into the next grid cell. */
 	overflow: hidden;
@@ -128,7 +128,7 @@
 	color: var(--wb-gam-color-text);
 	line-height: 1.35;
 	/* Now that the label sits below the icon+pts head with the full card
-	 * width to lay out, wrapping happens at word boundaries — only fall
+	 * width to lay out, wrapping happens at word boundaries - only fall
 	 * back to mid-word splits if a single token actually overflows. */
 	overflow-wrap: break-word;
 	word-break: normal;

@@ -1,5 +1,5 @@
 /**
- * Wbcom Block Quality Standard — shared API surface.
+ * Wbcom Block Quality Standard - shared API surface.
  *
  * Re-exports the editor-side primitives every wb-gamification block
  * imports: responsive controls, spacing, typography, box-shadow, border

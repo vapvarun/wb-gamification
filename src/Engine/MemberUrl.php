@@ -1,13 +1,13 @@
 <?php
 /**
- * WB Gamification — Member profile URL resolution.
+ * WB Gamification - Member profile URL resolution.
  *
  * One question, asked in one place: "where does this member's name link to?"
  *
  * Before 1.6.4 there was no such place. Nine surfaces each called
- * {@see \WBGam\BuddyPress\UserUrl::resolve()} — which answers a narrower
+ * {@see \WBGam\BuddyPress\UserUrl::resolve()} - which answers a narrower
  * question, "what is this member's BuddyPress URL?", and correctly returns
- * the empty string when BuddyPress is not active — and then each invented
+ * the empty string when BuddyPress is not active - and then each invented
  * its own fallback. On a site without classic BuddyPress (a BuddyNext
  * install, or the plugin running standalone, which is most of them) that
  * produced three different behaviours for the same member:
@@ -28,15 +28,15 @@
  * The resolution order, and it is deliberately short:
  *
  *   1. BuddyPress profile, when BuddyPress is active. Community sites already
- *      have a member profile and it is not ours to override — a BP site sees
+ *      have a member profile and it is not ours to override - a BP site sees
  *      no change in behaviour from before 1.6.4.
- *   2. This plugin's public profile at `/u/{login}` — but only when
+ *   2. This plugin's public profile at `/u/{login}` - but only when
  *      {@see ProfilePage::is_publicly_visible()} says the page will actually
  *      render. Building that URL unconditionally is the trap: the member may
  *      have set their profile private, or the owner may have switched public
  *      profiles off site-wide, and then the link 404s. Trading a wrong link
  *      for a broken one is not a fix.
- *   3. Nothing. The empty string means "render no link" — a name with no
+ *   3. Nothing. The empty string means "render no link" - a name with no
  *      destination is text, not a dead anchor.
  *
  * @package WB_Gamification
@@ -49,7 +49,7 @@ use WBGam\BuddyPress\UserUrl;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing a convention-driven false positive so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header and
 // doesn't share the .phpcs.xml prefix list, so `wb_gam_member_url` reads as
@@ -162,7 +162,7 @@ final class MemberUrl {
 	 * per anchor across the blocks.
 	 *
 	 * With no link, the content still needs whatever CSS class the anchor was
-	 * carrying, so it falls back to a `<span>` with the same class — and the
+	 * carrying, so it falls back to a `<span>` with the same class - and the
 	 * stylesheet scopes the `:hover` underline to `a`, so a name that cannot be
 	 * clicked does not pretend it can be. When there is no class to carry there
 	 * is nothing for the span to do either, so the content is returned bare.

@@ -14,7 +14,7 @@
  *   4. New badges earned (earned in last 7 days)
  *   5. Active challenge with progress > 50%
  *   6. No challenges joined at all
- *   7. Fallback — points earned this week (or total)
+ *   7. Fallback - points earned this week (or total)
  *
  * @package WB_Gamification
  * @since   1.0.0
@@ -126,7 +126,7 @@ final class NudgeEngine {
 	 */
 	private static function check_unclaimed_reward( array $challenges ): ?array {
 		foreach ( $challenges as $ch ) {
-			// A completed challenge is worth celebrating — bonus points were auto-awarded.
+			// A completed challenge is worth celebrating - bonus points were auto-awarded.
 			if ( ! empty( $ch['completed'] ) ) {
 				$title = $ch['title'] ?? __( 'a challenge', 'wb-gamification' );
 				$bonus = (int) ( $ch['bonus_points'] ?? 0 );
@@ -197,7 +197,7 @@ final class NudgeEngine {
 			return null;
 		}
 
-		// Check if last_active is today — if so, streak is safe.
+		// Check if last_active is today - if so, streak is safe.
 		$last_active = $streak['last_active'] ?? null;
 		if ( null === $last_active ) {
 			return null;
@@ -206,7 +206,7 @@ final class NudgeEngine {
 		$today = Clock::site_date(); // last_active is a site-calendar DATE.
 
 		if ( $last_active === $today ) {
-			return null; // Already active today — streak is safe.
+			return null; // Already active today - streak is safe.
 		}
 
 		return array(
@@ -325,7 +325,7 @@ final class NudgeEngine {
 	}
 
 	/**
-	 * Priority 7: Fallback nudge — encouragement with total points.
+	 * Priority 7: Fallback nudge - encouragement with total points.
 	 *
 	 * @since 1.0.0
 	 *

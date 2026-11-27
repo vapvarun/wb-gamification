@@ -2,14 +2,14 @@
 /**
  * REST API: API Keys Controller
  *
- * GET    /wb-gamification/v1/api-keys              List all API keys (sensitive — admin only)
+ * GET    /wb-gamification/v1/api-keys              List all API keys (sensitive - admin only)
  * POST   /wb-gamification/v1/api-keys              Create a new key (returns full secret ONCE)
  * PATCH  /wb-gamification/v1/api-keys/{id}/revoke  Deactivate a key (keeps audit trail)
  * DELETE /wb-gamification/v1/api-keys/{id}         Permanently delete a key
  *
  * STORAGE MODEL (v1.1+):
  *   Keys are stored as SHA-256 hashes in a dedicated wb_gam_api_keys table.
- *   The full secret is returned ONLY in the create response — the database
+ *   The full secret is returned ONLY in the create response - the database
  *   has no way to reverse the hash, so subsequent reads return prefix +
  *   suffix only. revoke + delete operate on the row id, not the secret
  *   (admins don't have the secret after creation).
@@ -29,15 +29,15 @@ use WBGam\Engine\Capabilities;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -170,7 +170,7 @@ final class ApiKeysController extends WP_REST_Controller {
 	 * created/last_used timestamps, permissions) plus the truncated key
 	 * preview. The endpoint is admin-only (manage_options); for admin UI
 	 * convenience the full `key` is also included so the table can target
-	 * revoke/delete actions without a separate identifier — the value is
+	 * revoke/delete actions without a separate identifier - the value is
 	 * already accessible to admins via wp_options, so this changes no
 	 * security boundary, just the call shape.
 	 *
@@ -195,7 +195,7 @@ final class ApiKeysController extends WP_REST_Controller {
 	/**
 	 * Create a new API key.
 	 *
-	 * Returns the full secret in the response — clients must surface it
+	 * Returns the full secret in the response - clients must surface it
 	 * to the user and never re-fetch (subsequent reads return the
 	 * truncated preview only).
 	 *
@@ -215,7 +215,7 @@ final class ApiKeysController extends WP_REST_Controller {
 		}
 
 		/**
-		 * Filter — abort the create by returning WP_Error.
+		 * Filter - abort the create by returning WP_Error.
 		 *
 		 * @param array{label: string, site_id: string} $payload
 		 * @param WP_REST_Request                       $request
@@ -260,7 +260,7 @@ final class ApiKeysController extends WP_REST_Controller {
 
 		// The insert reported success but the row can't be read back. Do NOT
 		// fabricate a synthetic id:0 row and hand out a secret for a key the
-		// admin can never manage or revoke — surface the inconsistency instead.
+		// admin can never manage or revoke - surface the inconsistency instead.
 		if ( null === $row ) {
 			return new WP_Error(
 				'rest_api_key_unreadable',
@@ -271,7 +271,7 @@ final class ApiKeysController extends WP_REST_Controller {
 
 		do_action( 'wb_gam_after_create_api_key', (int) $row['id'], $row, $request );
 
-		// Full secret returned ONCE — clients must capture it now.
+		// Full secret returned ONCE - clients must capture it now.
 		return new WP_REST_Response(
 			array_merge(
 				$this->shape_row( $row ),
@@ -357,7 +357,7 @@ final class ApiKeysController extends WP_REST_Controller {
 	/**
 	 * Shape a single row from ApiKeyAuth::get_keys() for the REST response.
 	 *
-	 * The hash never leaves this controller — only metadata + display
+	 * The hash never leaves this controller - only metadata + display
 	 * markers (prefix, suffix) the admin can use to identify the key
 	 * without recovering it.
 	 *

@@ -1,9 +1,9 @@
 <?php
 /**
- * WB Gamification — Daily Login Bonus
+ * WB Gamification - Daily Login Bonus
  *
  * Tracks consecutive-day logins and awards a per-tier bonus on each
- * eligible day. Independent from the activity-based StreakEngine —
+ * eligible day. Independent from the activity-based StreakEngine -
  * two distinct concepts:
  *
  *   - StreakEngine   = consecutive days with at least one points-earning event.
@@ -28,15 +28,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -71,7 +71,7 @@ final class LoginBonusEngine {
 	);
 
 	/**
-	 * Boot — listen for login events.
+	 * Boot - listen for login events.
 	 */
 	public static function init(): void {
 		add_action( 'wp_login', array( __CLASS__, 'on_login' ), 10, 2 );
@@ -95,7 +95,7 @@ final class LoginBonusEngine {
 		$today = current_time( 'Y-m-d' );
 		$last  = (string) get_user_meta( $user_id, self::META_LAST, true );
 
-		// Already awarded today — nothing more to do.
+		// Already awarded today - nothing more to do.
 		if ( $last === $today ) {
 			return;
 		}

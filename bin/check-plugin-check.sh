@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# bin/check-plugin-check.sh — gate WordPress.org Plugin Check results.
+# bin/check-plugin-check.sh - gate WordPress.org Plugin Check results.
 #
 # Plugin Check is the official WP.org plugin checker. The plugin must
 # ship with zero ERROR-severity findings in shipped code (anything in
-# src/, integrations/, wb-gamification.php) — that's the submission bar.
+# src/, integrations/, wb-gamification.php) - that's the submission bar.
 # WARNINGs are tracked against a baseline so the count can't grow.
 #
 # Why a custom gate when `wp plugin check` exists? The raw command
 # returns ALL findings including those from examples/, dist/, build/,
-# marketing/, and sdk/ — none of which ship to wp.org. This wrapper:
+# marketing/, and sdk/ - none of which ship to wp.org. This wrapper:
 #   1. Filters to shipped paths only (the files the WP.org reviewer sees).
 #   2. Fails on any ERROR-severity finding in shipped code.
 #   3. Fails if WARNING count grows over the baseline at
@@ -34,14 +34,14 @@ trap "rm -f '$RAW_CSV'" EXIT
 
 PLUGIN_SLUG="$(basename "$PLUGIN_DIR")"
 
-# Locate wp-cli — prefer the binary on PATH; fall back to Local's bundled
+# Locate wp-cli - prefer the binary on PATH; fall back to Local's bundled
 # php since this script may run from contexts where PATH is minimal.
 if command -v wp > /dev/null 2>&1; then
   WP_CLI="wp"
 elif [ -x /Applications/Local.app/Contents/Resources/extraResources/bin/wp-cli/posix/wp ]; then
   WP_CLI="/Applications/Local.app/Contents/Resources/extraResources/bin/wp-cli/posix/wp"
 else
-  printf '%s\n' "${YELLOW}!${RESET}  wp-cli not found — Plugin Check gate skipped."
+  printf '%s\n' "${YELLOW}!${RESET}  wp-cli not found - Plugin Check gate skipped."
   exit 0
 fi
 
@@ -49,7 +49,7 @@ fi
 #
 # THIS GATE REPORTED GREEN FOR MONTHS WHILE PLUGIN CHECK REPORTED 184 ERRORS.
 #
-# WP_ROOT was computed as PLUGIN_DIR/../../.. — correct when the plugin sits inside
+# WP_ROOT was computed as PLUGIN_DIR/../../.. - correct when the plugin sits inside
 # wp-content/plugins, but this repo lives in ~/dev/repos and is SYMLINKED into the site. So the
 # path resolved to a directory that is not a WordPress install at all, `wp plugin check` failed,
 # its error text landed in the CSV (non-empty, so the guard below passed), the parser matched
@@ -83,7 +83,7 @@ for c in "${CANDIDATES[@]}"; do
 done
 
 if [ -z "$FOUND" ]; then
-  printf '%s\n' "${RED}✗${RESET}  Plugin Check gate cannot run — no WordPress install found running this code."
+  printf '%s\n' "${RED}✗${RESET}  Plugin Check gate cannot run - no WordPress install found running this code."
   for c in "${CANDIDATES[@]}"; do [ -n "$c" ] && printf '    %s\n' "tried: $c"; done
   printf '    %s\n' "Set WBGAM_WP_PATH=/path/to/wp to point it at a site."
   printf '    %s\n' "This gate FAILS rather than passing green: a check that did not run is not a check."
@@ -92,18 +92,18 @@ fi
 
 WP_ROOT="$FOUND"
 
-# Run Plugin Check from the WP root — wp-cli doesn't auto-discover from a nested plugin folder.
+# Run Plugin Check from the WP root - wp-cli doesn't auto-discover from a nested plugin folder.
 (cd "$WP_ROOT" && "$WP_CLI" plugin check "$PLUGIN_SLUG" --format=csv 2>/dev/null) > "$RAW_CSV" || true
 
 if [ ! -s "$RAW_CSV" ]; then
-  printf '%s\n' "${RED}✗${RESET}  Plugin Check produced no output — wp-cli or Plugin Check plugin may not be available."
+  printf '%s\n' "${RED}✗${RESET}  Plugin Check produced no output - wp-cli or Plugin Check plugin may not be available."
   exit 1
 fi
 
 # It ran, but did it INSPECT anything? No FILE: blocks means the output is not a findings report
-# (an error message, a warning banner, an empty run) — and parsing that yields a confident zero.
+# (an error message, a warning banner, an empty run) - and parsing that yields a confident zero.
 if ! grep -q '^FILE:' "$RAW_CSV"; then
-  printf '%s\n' "${RED}✗${RESET}  Plugin Check returned no FILE: blocks — it did not inspect the plugin."
+  printf '%s\n' "${RED}✗${RESET}  Plugin Check returned no FILE: blocks - it did not inspect the plugin."
   head -3 "$RAW_CSV" | sed 's/^/    /'
   exit 1
 fi
@@ -111,9 +111,9 @@ fi
 # Count findings by severity, scoped to shipped code only.
 # `src/`, `integrations/`, and `wb-gamification.php` are the WP.org-shipped paths.
 # Everything else (examples/, dist/, build/, marketing/, sdk/, tests/) is
-# excluded — those don't ship and would otherwise dominate the output.
+# excluded - those don't ship and would otherwise dominate the output.
 # Plugin Check emits ABSOLUTE paths (FILE: /Users/.../wb-gamification/src/Foo.php). The filter used
-# to anchor on `^src/`, which an absolute path can never match — so every finding in shipped code was
+# to anchor on `^src/`, which an absolute path can never match - so every finding in shipped code was
 # invisible and the gate counted zero. It also has to skip `dist/`, which contains a COPY of src/ and
 # would otherwise double-count (and drag in the bundled libs).
 #
@@ -136,7 +136,7 @@ warnings_shipped() { shipped WARNING; }
 # Accepted ERRORs, each with a written reason in audit/plugin-check-error-baseline.txt.
 #
 # An entry there is a CLAIM that the finding is wrong, or that every alternative is worse for site
-# owners — and the claim has to be argued in the file. It is not a place to bury findings: anything
+# owners - and the claim has to be argued in the file. It is not a place to bury findings: anything
 # not listed still fails the build, so the gate keeps its teeth.
 ERROR_BASELINE_FILE="audit/plugin-check-error-baseline.txt"
 
@@ -174,7 +174,7 @@ WARNING_COUNT=$(warnings_shipped | wc -l | tr -d ' ')
 if [ "${1:-}" = "--update-baseline" ]; then
   mkdir -p "$(dirname "$BASELINE_FILE")"
   {
-    echo "# bin/check-plugin-check.sh — WARNING baseline in shipped code."
+    echo "# bin/check-plugin-check.sh - WARNING baseline in shipped code."
     echo "# Each line is '<code>: <count>'. Plugin Check WARNINGs that the team"
     echo "# accepts as living debt (false positives, convention-driven globals"
     echo "# in block templates, custom-table direct queries). Gate fails if the"
@@ -186,16 +186,16 @@ if [ "${1:-}" = "--update-baseline" ]; then
     echo ""
     echo "# total: $WARNING_COUNT"
   } > "$BASELINE_FILE"
-  printf '%s\n' "${GREEN}✓${RESET}  Baseline updated — $WARNING_COUNT warnings recorded."
+  printf '%s\n' "${GREEN}✓${RESET}  Baseline updated - $WARNING_COUNT warnings recorded."
   exit 0
 fi
 
 # Hard fail on any shipped-code ERROR.
 if [ "$ERROR_COUNT" -gt 0 ]; then
-  printf '%s\n' "${RED}✗${RESET}  Plugin Check failed — $ERROR_COUNT ERROR(s) in shipped code:"
+  printf '%s\n' "${RED}✗${RESET}  Plugin Check failed - $ERROR_COUNT ERROR(s) in shipped code:"
   printf '%s\n' "$ERROR_LINES" | head -10 | sed 's/^/    /'
   if [ "$ERROR_COUNT" -gt 10 ]; then
-    printf '    %s\n' "... ($((ERROR_COUNT - 10)) more — see full output via 'wp plugin check $PLUGIN_SLUG')"
+    printf '    %s\n' "... ($((ERROR_COUNT - 10)) more - see full output via 'wp plugin check $PLUGIN_SLUG')"
   fi
   echo ""
   echo "    ERRORs in shipped code block wp.org submission."
@@ -224,11 +224,11 @@ if [ "$WARNING_COUNT" -gt "$BASELINE_TOTAL" ]; then
 fi
 
 if [ "$WARNING_COUNT" -lt "$BASELINE_TOTAL" ]; then
-  printf '%s\n' "${GREEN}✓${RESET}  Plugin Check green — 0 unbaselined ERRORs; $WARNING_COUNT WARNINGs (down from $BASELINE_TOTAL baseline)."
-  [ "$BASELINED_COUNT" -gt 0 ] && printf '    %s\n' "${YELLOW}$BASELINED_COUNT accepted ERROR(s)${RESET} — see $ERROR_BASELINE_FILE for the reason each one is accepted."
+  printf '%s\n' "${GREEN}✓${RESET}  Plugin Check green - 0 unbaselined ERRORs; $WARNING_COUNT WARNINGs (down from $BASELINE_TOTAL baseline)."
+  [ "$BASELINED_COUNT" -gt 0 ] && printf '    %s\n' "${YELLOW}$BASELINED_COUNT accepted ERROR(s)${RESET} - see $ERROR_BASELINE_FILE for the reason each one is accepted."
   printf '    %s\n' "${DIM}Refresh baseline to lock the gain: bin/check-plugin-check.sh --update-baseline${RESET}"
 else
-  printf '%s\n' "${GREEN}✓${RESET}  Plugin Check green — 0 unbaselined ERRORs; $WARNING_COUNT WARNINGs (= baseline)."
-  [ "$BASELINED_COUNT" -gt 0 ] && printf '    %s\n' "${YELLOW}$BASELINED_COUNT accepted ERROR(s)${RESET} — see $ERROR_BASELINE_FILE for the reason each one is accepted."
+  printf '%s\n' "${GREEN}✓${RESET}  Plugin Check green - 0 unbaselined ERRORs; $WARNING_COUNT WARNINGs (= baseline)."
+  [ "$BASELINED_COUNT" -gt 0 ] && printf '    %s\n' "${YELLOW}$BASELINED_COUNT accepted ERROR(s)${RESET} - see $ERROR_BASELINE_FILE for the reason each one is accepted."
 fi
 exit 0

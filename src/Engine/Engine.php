@@ -3,7 +3,7 @@
  * WB Gamification Engine
  *
  * Single entry point for all gamification events.
- * All award paths flow through Engine::process() — never directly
+ * All award paths flow through Engine::process() - never directly
  * to PointsEngine::award().
  *
  * Pipeline:
@@ -25,15 +25,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -66,7 +66,7 @@ final class Engine {
 	private static array $enabled_cache = [];
 
 	/**
-	 * Boot the engine — registers async event processing callback.
+	 * Boot the engine - registers async event processing callback.
 	 */
 	public static function init(): void {
 		if ( self::$initialized ) {
@@ -85,7 +85,7 @@ final class Engine {
 		// admin toggles a `wb_gam_enabled_<action>` option. Without this,
 		// long-running contexts (WP-CLI bulk imports, Action Scheduler
 		// workers, cron) keep awarding for an action the admin just
-		// disabled — the same request never re-reads the option.
+		// disabled - the same request never re-reads the option.
 		// See audit/DATA-FLOW-AWARD-2026-05-27.md §G15. `updated_option`
 		// fires once per real change so the work is bounded.
 		add_action( 'updated_option', array( __CLASS__, 'maybe_flush_enabled_cache' ), 10, 1 );
@@ -115,21 +115,21 @@ final class Engine {
 	 * failed handlers from the original Event payload up to MAX_RETRIES
 	 * times; a non-idempotent handler would double-apply on retry.
 	 *
-	 *   level_up — LevelEngine::maybe_level_up is idempotent because it
+	 *   level_up - LevelEngine::maybe_level_up is idempotent because it
 	 *              re-derives the current level from wb_gam_user_totals
 	 *              and only writes when level_id differs from the cached
 	 *              value in user_meta. Re-firing with the same state is
 	 *              a no-op.
 	 *
-	 *   streak   — StreakEngine::record_activity is idempotent because
+	 *   streak   - StreakEngine::record_activity is idempotent because
 	 *              it dedupes on (user_id, YYYY-MM-DD). Re-firing on the
 	 *              same day is a no-op.
 	 *
-	 *   webhook  — WebhookDispatcher::dispatch enqueues one AS job per
+	 *   webhook  - WebhookDispatcher::dispatch enqueues one AS job per
 	 *              webhook subscription per event. If a job is enqueued
 	 *              twice for the same (subscription, event_id), the
 	 *              second job's deliver() call hits the same URL with
-	 *              the same payload — at-least-once delivery semantics
+	 *              the same payload - at-least-once delivery semantics
 	 *              are documented on the public webhook contract.
 	 */
 	private static function register_default_side_effects(): void {
@@ -158,7 +158,7 @@ final class Engine {
 	 *
 	 * These are emitted directly by engine code (admin manual awards,
 	 * redemption debits, generic ledger writes) and have no manifest
-	 * entry — they must NOT trigger the `wb_gam_unknown_action` warning.
+	 * entry - they must NOT trigger the `wb_gam_unknown_action` warning.
 	 *
 	 * @var string[]
 	 */
@@ -208,7 +208,7 @@ final class Engine {
 	 *   2. `do_action( 'wb_gam_unknown_action', ... )` → custom listeners
 	 *      (admin notices, Slack, Sentry).
 	 *   3. A per-action_id rate limit so a hot loop calling the wrong ID
-	 *      doesn't flood the log — one warning per action_id per request.
+	 *      doesn't flood the log - one warning per action_id per request.
 	 *
 	 * @param Event $event The unprocessable event.
 	 */
@@ -246,7 +246,7 @@ final class Engine {
 		);
 
 		// Record the miss for the admin observability surface. Without this
-		// the warning only lands in debug.log — production site owners don't
+		// the warning only lands in debug.log - production site owners don't
 		// see it. The transient feeds an analytics-dashboard panel so the
 		// person actually running the site can spot integration drift
 		// (typo'd action_id, deactivated plugin, missing manifest).
@@ -257,7 +257,7 @@ final class Engine {
 		 * the Registry and carries no manual points payload.
 		 *
 		 * Use this to route the miss to your monitoring of choice. Default
-		 * behaviour (log + return false from process()) is unchanged — this
+		 * behaviour (log + return false from process()) is unchanged - this
 		 * is purely observational. Listener runs OUTSIDE any award
 		 * transaction (no DB writes that need to roll back).
 		 *
@@ -413,7 +413,7 @@ final class Engine {
 	 * @param Event $event The event to queue.
 	 * @as-fire-once One enqueue per inbound Event. PointsEngine::award is the
 	 *               caller; each award produces one event, each event one job.
-	 *               The async handler does not re-enter process_async — it
+	 *               The async handler does not re-enter process_async - it
 	 *               calls PointsEngine::award_batch directly.
 	 * @return bool True if queued (or synchronously processed as fallback).
 	 */
@@ -457,7 +457,7 @@ final class Engine {
 	}
 
 	/**
-	 * Action Scheduler callback — reconstructs Event and runs full pipeline.
+	 * Action Scheduler callback - reconstructs Event and runs full pipeline.
 	 *
 	 * @param array $event_data Serialised event data passed by process_async().
 	 */
@@ -483,7 +483,7 @@ final class Engine {
 		// Import mode: a bulk backfill / competitor migration. Historical events
 		// carry their own occurred-at (persisted verbatim), skip rate limits
 		// (the windows are meaningless for years-old rows), and skip per-event
-		// side-effects (badges/levels/emails/notifications/webhooks) — the
+		// side-effects (badges/levels/emails/notifications/webhooks) - the
 		// caller recomputes derived state ONCE at the end instead of firing
 		// 100k notifications. The raw ledger (events + points) is still written,
 		// because it is the source of truth everything else replays from.
@@ -517,12 +517,12 @@ final class Engine {
 		// notice / Slack / monitoring channel.
 		if ( null === $action && empty( $event->metadata['points'] ) && ! self::is_engine_internal_action( $event->action_id ) ) {
 			self::warn_unknown_action( $event );
-			// Continue execution — the existing $points <= 0 gate at line ~380
+			// Continue execution - the existing $points <= 0 gate at line ~380
 			// still rejects the event. The warning is observational, not a
 			// behaviour change.
 		}
 
-		// Resolve the currency ONCE — before any filter runs, before rate-limit
+		// Resolve the currency ONCE - before any filter runs, before rate-limit
 		// check, before persist. Both passes_rate_limits and insert_point_row
 		// must agree on which ledger this award lands in; otherwise a filter
 		// that mutates `point_type` in metadata can drop the award into a
@@ -536,7 +536,7 @@ final class Engine {
 		// Stamp the resolved type onto the Event so downstream listeners
 		// (BadgeEngine, NotificationBridge, LevelEngine) read the canonical
 		// currency directly instead of digging back through metadata or
-		// re-resolving via Registry — both fall back to the primary type
+		// re-resolving via Registry - both fall back to the primary type
 		// for internal-callsite events (challenge bonus, streak milestone,
 		// manual award, redemption) and silently produced wrong-currency
 		// reads. Closes audit/DATA-FLOW-AWARD-2026-05-27.md §G5/G6/G14.
@@ -567,7 +567,7 @@ final class Engine {
 		 *     for an action, set it in Settings > Points or declare `point_type` on the action.
 		 *
 		 *   - The filter fires OUTSIDE the award transaction. Listeners
-		 *     should perform read-only enrichment only — no DB writes,
+		 *     should perform read-only enrichment only - no DB writes,
 		 *     no `PointsEngine::award` calls, no side effects that need
 		 *     to roll back if the award itself rolls back.
 		 *
@@ -596,11 +596,11 @@ final class Engine {
 		 * circuit awards based on user role, time of day, A/B-test bucket,
 		 * fraud signals, etc.
 		 *
-		 * IMPORTANT — listeners run OUTSIDE the award transaction:
+		 * IMPORTANT - listeners run OUTSIDE the award transaction:
 		 *   - Don't perform DB writes from a listener; if the award itself
 		 *     rolls back later, your write isn't covered.
 		 *   - Don't call PointsEngine::award / debit / award_batch from
-		 *     a listener — recursion + non-atomic mutations.
+		 *     a listener - recursion + non-atomic mutations.
 		 *   - Read-only checks (cap evaluation, role checks) are safe.
 		 *
 		 * @param bool  $proceed Whether to proceed.
@@ -613,7 +613,7 @@ final class Engine {
 		// Determine base points BEFORE the transaction so the early return
 		// for $points <= 0 doesn't leave the transaction open.
 		if ( null !== $action ) {
-			// Import mode preserves the source's own point value verbatim — a
+			// Import mode preserves the source's own point value verbatim - a
 			// migrated "published a post = 25 pts" row must keep 25 even if
 			// this site now awards 10 for that action. No data gaps: the ledger
 			// mirrors history, not the current config.
@@ -623,7 +623,7 @@ final class Engine {
 				// Dynamic points (computed by the manifest's points_callback from
 				// the hook args at fire time) override the per-action admin option
 				// and the default. This is how rank-based winners + streak-day
-				// scaling pass varying point totals through the engine — the
+				// scaling pass varying point totals through the engine - the
 				// callback runs in Registry::register_action()'s listener BEFORE
 				// the event is queued, so the value survives the Action Scheduler
 				// round-trip via metadata. The admin's per-action option
@@ -691,26 +691,26 @@ final class Engine {
 
 		// Rate-limit re-check INSIDE the transaction. The earlier check
 		// happens before metadata filters fire and before the transaction
-		// opens — under concurrent bursts (rapid clicks, retried API
+		// opens - under concurrent bursts (rapid clicks, retried API
 		// calls), two requests can both pass the early check and both
 		// reach this point. Re-checking inside the transaction tightens
 		// the TOCTOU window dramatically; the residual race is the small
 		// window between this check and the insert. For absolute caps
 		// (e.g. anti-fraud) callers should add a UNIQUE constraint on
-		// the relevant key shape — see plan/v1.1-rate-limit-hardening.
+		// the relevant key shape - see plan/v1.1-rate-limit-hardening.
 		if ( null !== $action && ! $is_import && ! PointsEngine::passes_rate_limits( $event->user_id, $event->action_id, $action, $event->object_id ) ) {
 			$wpdb->query( 'ROLLBACK' );
 			return false;
 		}
 
-		// Replay protection — persist_event returns false when the event_id
+		// Replay protection - persist_event returns false when the event_id
 		// already exists (PK collision on wb_gam_events.id). Without this
 		// check the points insert proceeds against the FIRST events row's
 		// id and the caller has effectively double-awarded.
 		if ( ! self::persist_event( $event ) ) {
 			$wpdb->query( 'ROLLBACK' );
 			Log::error(
-				'Engine::process — duplicate event_id rejected; possible replay or retry storm.',
+				'Engine::process - duplicate event_id rejected; possible replay or retry storm.',
 				array(
 					'event_id'  => $event->event_id,
 					'user_id'   => $event->user_id,
@@ -751,14 +751,14 @@ final class Engine {
 		do_action( 'wb_gam_points_awarded', $event->user_id, $event, $points );
 
 		// NOTE: `wb_gam_after_points_award` (a 4-arg duplicate of the above
-		// hook) was removed on 2026-05-27 — no listener in the codebase
+		// hook) was removed on 2026-05-27 - no listener in the codebase
 		// subscribed to it, and listeners that need the same payload can
 		// use `wb_gam_points_awarded` instead. See audit/DATA-FLOW-AWARD-
 		// 2026-05-27.md §G8. If your code listened to the removed hook,
 		// switch to `wb_gam_points_awarded` and read fields off the Event
 		// object: $event->action_id, $event->object_id, $event->metadata.
 
-		// Side-effects — routed through SideEffectDispatcher so failures
+		// Side-effects - routed through SideEffectDispatcher so failures
 		// land in wb_gam_side_effect_failures for reconciliation rather
 		// than disappearing silently. See v2.1 in
 		// plan/STABILITY-AND-ARCHITECTURE-V2.md (Finding B + #2).
@@ -818,7 +818,7 @@ final class Engine {
 			array( '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%s' )
 		);
 
-		// Replay protection — if the same event_id is submitted twice (network
+		// Replay protection - if the same event_id is submitted twice (network
 		// retry, double-tap, malicious replay), the PRIMARY KEY constraint on
 		// wb_gam_events.id rejects the second insert. Caller must abort the
 		// transaction to prevent an orphan points row from being committed
@@ -870,7 +870,7 @@ final class Engine {
 	 * Rebuild derived badge state for users whose ledger changed under import
 	 * mode (which suppressed per-event evaluation).
 	 *
-	 * Levels need no rebuild — {@see LevelEngine::get_level_for_user()} derives
+	 * Levels need no rebuild - {@see LevelEngine::get_level_for_user()} derives
 	 * the level from the (now higher) points total on read. Only badges carry
 	 * persisted earned-state, so we re-run the badge evaluator once per user
 	 * across their distinct action_ids (plus a synthetic pass so

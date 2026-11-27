@@ -15,7 +15,7 @@
  *     for the docs-site navigation. A pure regenerator from H1s would
  *     trample that work.
  *
- *   - Ordering within a category is editorial too — first-time readers
+ *   - Ordering within a category is editorial too - first-time readers
  *     should hit installation.md before how-it-works.md regardless of
  *     alphabetical order.
  *
@@ -112,7 +112,7 @@ foreach ( $config['categories'] as &$category ) {
 	$max_order  = 0;
 	foreach ( $category['docs'] ?? array() as $doc ) {
 		if ( ! in_array( (string) $doc['file'], $on_disk, true ) ) {
-			// Skip dangling — reported above. Don't emit into output.
+			// Skip dangling - reported above. Don't emit into output.
 			continue;
 		}
 		$new_docs[] = $doc;

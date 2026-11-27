@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — BuddyPress challenge_completed stream poster.
+ * WB Gamification - BuddyPress challenge_completed stream poster.
  *
  * ChallengeEngine fires:
  *   do_action( 'wb_gam_challenge_completed', $user_id, $challenge_array )

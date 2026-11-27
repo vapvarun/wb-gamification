@@ -1,5 +1,5 @@
 /**
- * Redemption Store — frontend Interactivity API store.
+ * Redemption Store - frontend Interactivity API store.
  *
  * Phase C of the Wbcom Block Quality Standard migration replaces the
  * pre-existing inline `<script>` + raw `fetch` + `window.confirm`
@@ -56,7 +56,7 @@ function dialogFor( el ) {
 	// `.wb-gam-redemption__card` is the reward. The button and its confirmation dialog both live inside
 	// it, in `.wb-gam-redemption__action`. (An earlier version of this looked for a
 	// `.wb-gam-redemption__item` that does not exist, silently fell through to a page-wide fallback, and
-	// found the RIGHT dialog by luck while leaving the opener unresolvable — so focus return failed.)
+	// found the RIGHT dialog by luck while leaving the opener unresolvable - so focus return failed.)
 	const card = el.closest( '.wb-gam-redemption__card' );
 	return card ? card.querySelector( 'dialog[data-wb-gam-dialog]' ) : null;
 }
@@ -83,7 +83,7 @@ store( NS, {
 			//
 			// This used to toggle a hidden div and stop there. The member pressed "Redeem", a
 			// confirmation appeared somewhere below, and their focus stayed on the button they had just
-			// pressed — so to a keyboard or screen-reader user, nothing had happened. showModal() moves
+			// pressed - so to a keyboard or screen-reader user, nothing had happened. showModal() moves
 			// focus in, traps it, and gives ESC for free.
 			const card = getElement()?.ref?.closest( '.wb-gam-redemption__card' );
 			const dialog = dialogFor( getElement()?.ref );
@@ -113,7 +113,7 @@ store( NS, {
 			const ctx = getContext();
 			ctx.confirming = false;
 
-			// Closing returns focus to the button that opened it — the shared utility does that.
+			// Closing returns focus to the button that opened it - the shared utility does that.
 			const dialog = dialogFor( getElement()?.ref );
 			if ( dialog && window.wbGam?.dialog ) {
 				window.wbGam.dialog.close( dialog );

@@ -1,12 +1,12 @@
 <?php
 /**
- * ActivityPub federation — publishes gamification events as ActivityStreams
+ * ActivityPub federation - publishes gamification events as ActivityStreams
  * 2.0 activities to the user's outbox via the WP ActivityPub plugin
  * (https://wordpress.org/plugins/activitypub/).
  *
  * Activates only when:
  *   1. The WP ActivityPub plugin is loaded (function_exists check below)
- *   2. The wb_gam_activitypub_publish option is truthy (default OFF —
+ *   2. The wb_gam_activitypub_publish option is truthy (default OFF -
  *      federation is opt-in per site so the noise floor of gamification
  *      events doesn't auto-spam the fediverse)
  *   3. The user has opted in to federation via wb_gam_federate_events
@@ -19,7 +19,7 @@
  *   wb_gam_level_changed     → Update (Profile, custom property)
  *   wb_gam_challenge_completed → Create (Note describing the milestone)
  *
- * Note: points_awarded is deliberately NOT mapped — the average user
+ * Note: points_awarded is deliberately NOT mapped - the average user
  * awards points dozens of times per day; firing one AP activity per
  * award would saturate every follower's timeline. Aggregated weekly
  * digests are a future enhancement.
@@ -41,7 +41,7 @@ final class ActivityPub {
 	public const USER_OPT_IN    = 'wb_gam_federate_events';
 
 	public static function boot(): void {
-		// We hook UNCONDITIONALLY — handlers check is_enabled() before
+		// We hook UNCONDITIONALLY - handlers check is_enabled() before
 		// touching the AP plugin. This keeps the integration testable
 		// (handlers run; just no-op when AP isn't there).
 		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'on_badge_awarded' ), 30, 3 );
@@ -201,7 +201,7 @@ final class ActivityPub {
 	/**
 	 * Hand off an activity to the WP ActivityPub plugin's outbox.
 	 *
-	 * The integration is deliberately loose — we apply a filter
+	 * The integration is deliberately loose - we apply a filter
 	 * (`wb_gam_activitypub_activity`) so a site can rewrite or veto
 	 * activities before they're submitted to ActivityPub. Then we
 	 * call the AP plugin's add_to_outbox() helper if it exists.
@@ -246,7 +246,7 @@ final class ActivityPub {
 	/**
 	 * Derive the user's ActivityPub actor URL. AP plugin exposes
 	 * this via author archive URL with an `application/activity+json`
-	 * mime type. We don't need to fetch it — just construct the
+	 * mime type. We don't need to fetch it - just construct the
 	 * canonical form.
 	 */
 	private static function actor_url_for( \WP_User $user ): string {

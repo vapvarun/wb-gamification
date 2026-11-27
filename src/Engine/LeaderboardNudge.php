@@ -1,10 +1,10 @@
 <?php
 /**
- * WB Gamification — Weekly Leaderboard Nudge
+ * WB Gamification - Weekly Leaderboard Nudge
  *
  * Every Monday morning, sends each active member a private nudge showing
  * their rank for the week and how many points separate them from the next
- * position. The message is intentionally private and positive — never
+ * position. The message is intentionally private and positive - never
  * public shaming. Users in opt-out are skipped.
  *
  * Delivery (the run is skipped when none of these can reach anyone):
@@ -14,7 +14,7 @@
  *
  * Architecture:
  *   - Weekly cron schedules one AS job per active user to avoid request timeout.
- *   - Each AS job calls self::send_nudge($user_id) — isolated, retryable.
+ *   - Each AS job calls self::send_nudge($user_id) - isolated, retryable.
  *   - Only users who earned at least 1 point in the current week are processed.
  *
  * @package WB_Gamification
@@ -25,15 +25,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -69,7 +69,7 @@ final class LeaderboardNudge {
 
 		// Arm the recurring event on init, never at plugins_loaded: wp_schedule_event
 		// resolves schedules via wp_get_schedules(), which fires the
-		// cron_schedules filter — that must not run before init on WP 6.7+.
+		// cron_schedules filter - that must not run before init on WP 6.7+.
 		if ( did_action( 'init' ) ) {
 			self::maybe_schedule();
 		} else {
@@ -78,7 +78,7 @@ final class LeaderboardNudge {
 	}
 
 	/**
-	 * Arm the weekly nudge cron if not already scheduled. Idempotent — safe
+	 * Arm the weekly nudge cron if not already scheduled. Idempotent - safe
 	 * to call on every init.
 	 */
 	public static function maybe_schedule(): void {
@@ -121,7 +121,7 @@ final class LeaderboardNudge {
 
 	/**
 	 * Queue one AS job per active user (users with points this week).
-	 * Called by cron hook — runs quickly; actual nudges processed async.
+	 * Called by cron hook - runs quickly; actual nudges processed async.
 	 */
 	public static function dispatch_batch(): void {
 		global $wpdb;
@@ -132,7 +132,7 @@ final class LeaderboardNudge {
 		}
 
 		// Single-fire-per-hour gate. Two callers in the same hour are
-		// almost certainly a bug — the weekly nudge cron should fire once
+		// almost certainly a bug - the weekly nudge cron should fire once
 		// per week; anything more is a sign of hook collision or duplicate
 		// scheduling. A short transient is cheaper than re-running the
 		// (possibly large) SELECT below and enqueueing redundant AS jobs.
@@ -219,7 +219,7 @@ final class LeaderboardNudge {
 
 			// Skip if a nudge is already pending for this user. Without this
 			// guard, repeated cron runs (or the cron firing while a previous
-			// batch is still queued) compound into a runaway pending queue —
+			// batch is still queued) compound into a runaway pending queue -
 			// observed at 48k+ jobs/day on long-lived sites.
 			if (
 				function_exists( 'as_has_scheduled_action' )
@@ -280,7 +280,7 @@ final class LeaderboardNudge {
 
 	/**
 	 * Send a weekly rank nudge to one user.
-	 * Action Scheduler callback — isolated so one failure doesn't block others.
+	 * Action Scheduler callback - isolated so one failure doesn't block others.
 	 *
 	 * @param int $user_id User to nudge.
 	 */
@@ -394,7 +394,7 @@ final class LeaderboardNudge {
 		 *
 		 * Custom integrations (Slack, push, SMS) hook in here.
 		 *
-		 * Renamed from `wb_gam_weekly_nudge` in 1.4.1 — the old name
+		 * Renamed from `wb_gam_weekly_nudge` in 1.4.1 - the old name
 		 * collided with self::CRON_HOOK, which caused every completed
 		 * nudge to re-enter dispatch_batch and enqueue a fresh round of
 		 * Action Scheduler jobs (see audit/PERF-DIAG-2026-05-27.yaml
@@ -469,7 +469,7 @@ final class LeaderboardNudge {
 			$site_name
 		);
 
-		// Render the themed template — themes can drop a custom file at
+		// Render the themed template - themes can drop a custom file at
 		// {theme}/wb-gamification/emails/leaderboard-nudge.php to override.
 		$rank_data = LeaderboardEngine::get_user_rank( $user_id, 'week' );
 		$body      = Email::render(

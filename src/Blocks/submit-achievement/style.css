@@ -1,4 +1,4 @@
-/* Submit Achievement — block styles. */
+/* Submit Achievement - block styles. */
 
 .wb-gam-submit-achievement {
 	background: var(--wb-gam-color-white);
@@ -86,7 +86,7 @@
 	min-height: 18px;
 }
 
-/* Status-state colours — set by view.js via classList instead of inline
+/* Status-state colours - set by view.js via classList instead of inline
  * style.color, so themes / dark mode can override via token. */
 .wb-gam-submit-achievement__status--error {
 	color: var(--wb-gam-color-danger-strong);

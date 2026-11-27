@@ -8,12 +8,12 @@
  *
  * @var \WP_User $user                  Recipient user object.
  * @var string   $name                  Already-escaped display name.
- * @var string   $site_name             Site name (raw — escape on output).
+ * @var string   $site_name             Site name (raw - escape on output).
  * @var string   $site_url              Site home URL.
  * @var string   $hub_url           The member's Gamification Hub (panel when it fits); '' when no Hub page exists.
  * @var string   $challenge_title       Challenge title.
  * @var string   $challenge_description Challenge description.
- * @var string   $reward_label          Reward summary string (e.g. "100 Points") — empty if no reward.
+ * @var string   $reward_label          Reward summary string (e.g. "100 Points") - empty if no reward.
  *
  * @package WB_Gamification
  */

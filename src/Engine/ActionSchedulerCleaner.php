@@ -2,7 +2,7 @@
 /**
  * WB Gamification Action Scheduler Cleaner
  *
- * Action Scheduler is a task runner — long-term job history bloats the
+ * Action Scheduler is a task runner - long-term job history bloats the
  * `actionscheduler_actions` table and slows every page load that touches
  * it (every WP-Cron tick, every admin page that lists pending hooks,
  * every block render that schedules a follow-up). AS's own cleanup only
@@ -21,15 +21,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -57,7 +57,7 @@ final class ActionSchedulerCleaner {
 	 * grow the table past a few hundred thousand rows on a busy site.
 	 *
 	 * Applies to `complete` and `failed` only. Pending work is never aged out
-	 * as routine housekeeping — see cleanup() and self::HOOK_PREFIX.
+	 * as routine housekeeping - see cleanup() and self::HOOK_PREFIX.
 	 */
 	const DEFAULT_RETENTION_DAYS = 7;
 
@@ -68,7 +68,7 @@ final class ActionSchedulerCleaner {
 	 * 250k means something is recursively enqueueing and the daily
 	 * 7-day-retention pass can't catch up.
 	 *
-	 * See PERF-002 (audit/PERF-DIAG-2026-05-27.yaml) — the LeaderboardNudge
+	 * See PERF-002 (audit/PERF-DIAG-2026-05-27.yaml) - the LeaderboardNudge
 	 * recursion grew the AS table to 3.6M rows in 40 hours and the cleaner
 	 * was structurally unable to defend against it.
 	 */
@@ -107,7 +107,7 @@ final class ActionSchedulerCleaner {
 	 * Action Scheduler is SHARED INFRASTRUCTURE. Its tables hold WooCommerce
 	 * orders, Subscriptions renewals, Jetpack sync jobs, and every other
 	 * plugin's queued work alongside ours. Until 1.6.4 this class deleted by
-	 * `status` + `scheduled_date_gmt` with NO ownership filter at all — so a
+	 * `status` + `scheduled_date_gmt` with NO ownership filter at all - so a
 	 * plugin whose job is to award points was, every single day, deleting
 	 * WooCommerce's queue. On a busy store "pending and past-due by >7 days"
 	 * is exactly what a backed-up queue looks like, and our response to a
@@ -132,7 +132,7 @@ final class ActionSchedulerCleaner {
 
 		// Arm the recurring event on init, never at plugins_loaded: wp_schedule_event
 		// resolves schedules via wp_get_schedules(), which fires the
-		// cron_schedules filter — that must not run before init on WP 6.7+.
+		// cron_schedules filter - that must not run before init on WP 6.7+.
 		if ( did_action( 'init' ) ) {
 			self::maybe_schedule();
 		} else {
@@ -141,7 +141,7 @@ final class ActionSchedulerCleaner {
 	}
 
 	/**
-	 * Arm the recurring event if not already scheduled. Idempotent — safe to
+	 * Arm the recurring event if not already scheduled. Idempotent - safe to
 	 * call on every init.
 	 */
 	public static function maybe_schedule(): void {
@@ -187,14 +187,14 @@ final class ActionSchedulerCleaner {
 	 * budget is reached.
 	 *
 	 * Logs table rows referencing the deleted action_id are removed in
-	 * the same batch — otherwise the logs table grows unbounded.
+	 * the same batch - otherwise the logs table grows unbounded.
 	 *
 	 * @return array{complete:int, failed:int, pending:int} Per-status delete counts.
 	 */
 	public static function cleanup(): array {
 		global $wpdb;
 
-		// Sanity guard — AS may be deactivated on a site that once had it.
+		// Sanity guard - AS may be deactivated on a site that once had it.
 		$table = $wpdb->prefix . 'actionscheduler_actions';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
@@ -233,8 +233,8 @@ final class ActionSchedulerCleaner {
 		$started    = microtime( true );
 		$batch_size = $panic_mode ? self::PANIC_BATCH_SIZE : self::BATCH_SIZE;
 
-		// `complete` and `failed` are HISTORY — deleting them is housekeeping.
-		// `pending` is QUEUED WORK — deleting it is destroying it.
+		// `complete` and `failed` are HISTORY - deleting them is housekeeping.
+		// `pending` is QUEUED WORK - deleting it is destroying it.
 		//
 		// Until 1.6.4 we pruned `pending` unconditionally, every day. That is
 		// not retention, it is data loss: a job sitting pending is a weekly
@@ -246,7 +246,7 @@ final class ActionSchedulerCleaner {
 		// PERF-002 shape: one of OUR hooks recursively self-enqueueing until
 		// the table is unusable. Then dropping that backlog is the recovery,
 		// not the damage. So pending is pruned only when the circuit breaker
-		// has tripped AND the dominant runaway hook is ours — never as routine
+		// has tripped AND the dominant runaway hook is ours - never as routine
 		// housekeeping, and never for another plugin's work.
 		$results = array(
 			'complete' => self::prune_status( 'complete', $cutoff, $started, $batch_size ),
@@ -336,7 +336,7 @@ final class ActionSchedulerCleaner {
 	 * Is the hook currently flooding the AS table one of OURS?
 	 *
 	 * Gates the panic-mode `pending` prune. A runaway caused by another plugin
-	 * is that plugin's incident — we alert on it (the row-count threshold is a
+	 * is that plugin's incident - we alert on it (the row-count threshold is a
 	 * whole-table health signal, deliberately), but we do not get to delete
 	 * anyone else's queue to recover from it.
 	 *

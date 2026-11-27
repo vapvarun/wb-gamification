@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# bin/check-coverage-floor.sh — block coverage regression.
+# bin/check-coverage-floor.sh - block coverage regression.
 #
 # PHPUnit line coverage was unmeasured until the 2026-05-27 stability
 # audit. Baseline at that point: 3.79% lines / 5.60% methods. That's
-# thin — most of the engine is integration-flavoured logic and its
-# tests mock at the boundary — but the floor's job is not to hit a
+# thin - most of the engine is integration-flavoured logic and its
+# tests mock at the boundary - but the floor's job is not to hit a
 # target, it's to stop the number sliding the wrong way. Quarterly
 # review can raise the floor as the suite grows.
 #
@@ -24,7 +24,7 @@ cd "$PLUGIN_DIR"
 
 RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[0;33m'; DIM=$'\033[2m'; RESET=$'\033[0m'
 
-# Floor numbers — never lower these. To raise, ship the test-add commit
+# Floor numbers - never lower these. To raise, ship the test-add commit
 # that pushes the actual number up first, then bump the floor here.
 FLOOR_LINES="3.5"
 FLOOR_METHODS="5.0"
@@ -57,15 +57,15 @@ lines_ok=$(awk -v a="$LINES_PCT" -v b="$FLOOR_LINES" 'BEGIN{print (a+0 >= b+0) ?
 methods_ok=$(awk -v a="$METHODS_PCT" -v b="$FLOOR_METHODS" 'BEGIN{print (a+0 >= b+0) ? 1 : 0}')
 
 if [ "$lines_ok" = "1" ] && [ "$methods_ok" = "1" ]; then
-  printf '%s\n' "${GREEN}✓${RESET}  Coverage floor met — Lines: ${LINES_PCT}% (floor ${FLOOR_LINES}%) · Methods: ${METHODS_PCT}% (floor ${FLOOR_METHODS}%)"
+  printf '%s\n' "${GREEN}✓${RESET}  Coverage floor met - Lines: ${LINES_PCT}% (floor ${FLOOR_LINES}%) · Methods: ${METHODS_PCT}% (floor ${FLOOR_METHODS}%)"
   exit 0
 fi
 
 printf '%s\n' "${RED}✗${RESET}  Coverage regression detected:"
-[ "$lines_ok"   = "0" ] && printf '    Lines:   %s%% (floor %s%%) — DROPPED\n' "$LINES_PCT"   "$FLOOR_LINES"
-[ "$lines_ok"   = "1" ] && printf '    Lines:   %s%% (floor %s%%) — ok\n'      "$LINES_PCT"   "$FLOOR_LINES"
-[ "$methods_ok" = "0" ] && printf '    Methods: %s%% (floor %s%%) — DROPPED\n' "$METHODS_PCT" "$FLOOR_METHODS"
-[ "$methods_ok" = "1" ] && printf '    Methods: %s%% (floor %s%%) — ok\n'      "$METHODS_PCT" "$FLOOR_METHODS"
+[ "$lines_ok"   = "0" ] && printf '    Lines:   %s%% (floor %s%%) - DROPPED\n' "$LINES_PCT"   "$FLOOR_LINES"
+[ "$lines_ok"   = "1" ] && printf '    Lines:   %s%% (floor %s%%) - ok\n'      "$LINES_PCT"   "$FLOOR_LINES"
+[ "$methods_ok" = "0" ] && printf '    Methods: %s%% (floor %s%%) - DROPPED\n' "$METHODS_PCT" "$FLOOR_METHODS"
+[ "$methods_ok" = "1" ] && printf '    Methods: %s%% (floor %s%%) - ok\n'      "$METHODS_PCT" "$FLOOR_METHODS"
 echo ""
 echo "    Add tests to restore the floor, or update the floor in"
 echo "    bin/check-coverage-floor.sh if a refactor genuinely retired"

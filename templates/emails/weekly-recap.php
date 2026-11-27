@@ -3,13 +3,13 @@
  * Weekly recap email template.
  *
  * Override by copying this file to YOUR-THEME/wb-gamification/emails/weekly-recap.php
- * — see the Email::render() helper for resolution order.
+ * - see the Email::render() helper for resolution order.
  *
  * Available variables (extracted into local scope):
  *
  * @var \WP_User $user                  Recipient user object.
  * @var string   $name                  Escaped display name.
- * @var string   $site_name             Site name (raw — escape on output).
+ * @var string   $site_name             Site name (raw - escape on output).
  * @var string   $site_url              Site home URL.
  * @var string   $hub_url           The member's Gamification Hub (panel when it fits); '' when no Hub page exists.
  * @var string   $unsub_url             Already-escaped one-tap unsubscribe URL.
@@ -148,7 +148,7 @@ hr { border:none; border-top:1px solid #f3f4f6; margin:1rem 0; }
 			<p class="stat-label"><?php esc_html_e( 'Badges earned this week', 'wb-gamification' ); ?></p>
 			<ul class="badge-list">
 				<?php foreach ( $badges_this_week as $badge ) : ?>
-					<li><strong><?php echo esc_html( $badge['name'] ); ?></strong><?php echo $badge['description'] ? ' — ' . esc_html( $badge['description'] ) : ''; ?></li>
+					<li><strong><?php echo esc_html( $badge['name'] ); ?></strong><?php echo $badge['description'] ? ' - ' . esc_html( $badge['description'] ) : ''; ?></li>
 				<?php endforeach; ?>
 			</ul>
 		</div>

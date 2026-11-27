@@ -168,7 +168,7 @@ class EmailCommand {
 
 		$body = Email::render( $template, $vars );
 		if ( '' === $body ) {
-			\WP_CLI::error( "Template '{$template}' did not render — check the file exists at templates/emails/{$template}.php or theme override." );
+			\WP_CLI::error( "Template '{$template}' did not render - check the file exists at templates/emails/{$template}.php or theme override." );
 		}
 
 		$headers = array(

@@ -1,5 +1,5 @@
 /**
- * WB Gamification — Badge Share Page: copy-link action.
+ * WB Gamification - Badge Share Page: copy-link action.
  *
  * Copies the share URL to the clipboard and shows transient in-card feedback.
  * Never uses window.prompt/alert (no classic browser popups): falls back to a

@@ -1,6 +1,6 @@
-/*! share-page-rtl.css — auto-generated from share-page.css by bin/build-rtl.js. Do not edit by hand. */
+/*! share-page-rtl.css - auto-generated from share-page.css by bin/build-rtl.js. Do not edit by hand. */
 /**
- * WB Gamification — Badge Share Page
+ * WB Gamification - Badge Share Page
  *
  * Public, shareable credential card. Premium + uniform: consumes the shared
  * `--wb-gam-*` design tokens (with hex fallbacks) on the canonical card
@@ -195,7 +195,7 @@
 	font-weight: 600;
 	color: var( --wb-gam-color-white, #ffffff );
 	text-decoration: none;
-	background: #0a66c2; /* LinkedIn brand — intentional, not a token. */
+	background: #0a66c2; /* LinkedIn brand - intentional, not a token. */
 	border-radius: var( --wb-gam-radius-full, 999px );
 }
 

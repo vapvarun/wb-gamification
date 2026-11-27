@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * bin/build-min.js — minify every .css in assets/css/ (recursive —
+ * bin/build-min.js - minify every .css in assets/css/ (recursive -
  * descends into subdirectories like assets/css/admin/pages/) to a
  * .min.css sibling. The release zip ships both LTR and RTL sources
  * alongside their .min.css variants so plugin consumers can pick the
@@ -23,13 +23,13 @@ const ROOT = path.resolve(__dirname, '..');
 const CSS_DIR = path.join(ROOT, 'assets', 'css');
 
 if (!fs.existsSync(CSS_DIR)) {
-	process.stdout.write('build:min — assets/css/ does not exist; nothing to do.\n');
+	process.stdout.write('build:min - assets/css/ does not exist; nothing to do.\n');
 	process.exit(0);
 }
 
 /**
  * Walk a directory recursively, yielding absolute paths to every .css source
- * file (excludes *.min.css siblings — keeps both LTR and -rtl.css).
+ * file (excludes *.min.css siblings - keeps both LTR and -rtl.css).
  *
  * @param {string} dir Absolute directory path.
  * @returns {string[]} Array of absolute file paths.
@@ -60,7 +60,7 @@ function walkCss(dir) {
 const sources = walkCss(CSS_DIR);
 
 if (sources.length === 0) {
-	process.stdout.write('build:min — no source CSS files found.\n');
+	process.stdout.write('build:min - no source CSS files found.\n');
 	process.exit(0);
 }
 
@@ -79,7 +79,7 @@ for (const srcPath of sources) {
 	const css = fs.readFileSync(srcPath, 'utf8');
 	const result = minifier.minify(css);
 	if (result.errors && result.errors.length) {
-		process.stderr.write(`build:min — errors minifying ${filename}:\n  ${result.errors.join('\n  ')}\n`);
+		process.stderr.write(`build:min - errors minifying ${filename}:\n  ${result.errors.join('\n  ')}\n`);
 		process.exit(1);
 	}
 
@@ -89,4 +89,4 @@ for (const srcPath of sources) {
 	process.stdout.write(`  min  ${rel} → ${path.relative(CSS_DIR, minPath)} (${(result.styles.length / 1024).toFixed(1)} KB)\n`);
 }
 
-process.stdout.write(`build:min — ${generated} file${generated === 1 ? '' : 's'} minified.\n`);
+process.stdout.write(`build:min - ${generated} file${generated === 1 ? '' : 's'} minified.\n`);

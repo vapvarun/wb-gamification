@@ -7,7 +7,7 @@
  *
  * Before this class: Engine::process() ran level-up, streak, and webhook
  * side effects inline AFTER the points commit. If any failed (DB drop,
- * fatal in a listener, gateway timeout), the failure was silent — caught
+ * fatal in a listener, gateway timeout), the failure was silent - caught
  * by the global logger but with no retry, no audit, no compensation. A
  * user could earn points but never level up.
  *
@@ -26,7 +26,7 @@
  *     about retry state.
  *   - Handlers MUST NOT call PointsEngine::award (would recurse through
  *     Engine::process and trigger another dispatch cycle). Read-only or
- *     downstream-write only — same constraint as before, now formal.
+ *     downstream-write only - same constraint as before, now formal.
  *
  * @package WB_Gamification
  * @since   1.5.0
@@ -52,7 +52,7 @@ final class SideEffectDispatcher {
 	private static array $handlers = array();
 
 	/**
-	 * Boot hook — registers the reconciler cron handler. Called once
+	 * Boot hook - registers the reconciler cron handler. Called once
 	 * from wb-gamification.php's engine bootstrap.
 	 */
 	public static function boot(): void {
@@ -60,7 +60,7 @@ final class SideEffectDispatcher {
 
 		// Arm the recurring event on init, never at plugins_loaded: wp_schedule_event
 		// resolves schedules via wp_get_schedules(), which fires the
-		// cron_schedules filter — that must not run before init on WP 6.7+.
+		// cron_schedules filter - that must not run before init on WP 6.7+.
 		if ( did_action( 'init' ) ) {
 			self::maybe_schedule();
 		} else {
@@ -69,7 +69,7 @@ final class SideEffectDispatcher {
 	}
 
 	/**
-	 * Arm the reconciler cron if not already scheduled. Idempotent — safe to
+	 * Arm the reconciler cron if not already scheduled. Idempotent - safe to
 	 * call on every init.
 	 */
 	public static function maybe_schedule(): void {
@@ -147,7 +147,7 @@ final class SideEffectDispatcher {
 	}
 
 	/**
-	 * Cron handler — replays pending failures up to MAX_RETRIES times.
+	 * Cron handler - replays pending failures up to MAX_RETRIES times.
 	 *
 	 * Pulls a bounded batch (50 per run) of pending rows whose
 	 * last_attempt_at is older than 5 minutes (back-off window), bumps
@@ -202,7 +202,7 @@ final class SideEffectDispatcher {
 
 			try {
 				$handler( $event, (int) $row['points'] );
-				// Success — delete the row.
+				// Success - delete the row.
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->delete( $table, array( 'id' => (int) $row['id'] ), array( '%d' ) );
 			} catch ( Throwable $e ) {
@@ -241,7 +241,7 @@ final class SideEffectDispatcher {
 
 	/**
 	 * Mark a row exhausted with a specific reason (used when re-firing
-	 * is impossible — handler gone, payload corrupt).
+	 * is impossible - handler gone, payload corrupt).
 	 */
 	private static function mark_exhausted( int $id, string $reason ): void {
 		global $wpdb;
@@ -296,7 +296,7 @@ final class SideEffectDispatcher {
 	 * Manually re-fire one failed side-effect now (admin-triggered).
 	 *
 	 * Unlike {@see self::reconcile()}, this ignores the retry_count ceiling and
-	 * the back-off window — it exists to let an owner clear an 'exhausted' row
+	 * the back-off window - it exists to let an owner clear an 'exhausted' row
 	 * the cron will never touch again, once they have fixed the underlying
 	 * cause. Fires the handler immediately; deletes the row on success, updates
 	 * the error and marks it 'exhausted' on failure.

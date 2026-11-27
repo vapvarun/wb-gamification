@@ -1,12 +1,12 @@
 /**
- * Badge Showcase — frontend stylesheet.
+ * Badge Showcase - frontend stylesheet.
  *
  * 1.4.0 UX refactor (hub flyout / "My Badges" panel):
  *   - earned card: white surface, colored ring around image, green check
  *     pip top-right, earned date visible
  *   - locked card: muted surface, grayscale image, padlock pip, hint text
  *   - clear "N / M earned" header with progress bar + filter tabs
- *   - grid is responsive — auto-fills the available column width so the
+ *   - grid is responsive - auto-fills the available column width so the
  *     flyout panel doesn't waste space
  */
 
@@ -150,10 +150,10 @@
 }
 
 /* ── Grid ──────────────────────────────────────────────────────────── */
-/* Container queries — the showcase adapts to its host width.
+/* Container queries - the showcase adapts to its host width.
  * Hub flyout (~720px) gets 5 cols; standalone page (~1100px) gets
  * 7; a column inside a 3-col layout (~340px) gets 2. The badge
- * cards need ~120px of horizontal breathing room — anything tighter
+ * cards need ~120px of horizontal breathing room - anything tighter
  * crams the title and looks congested.
  */
 .wb-gam-badge-showcase {
@@ -175,7 +175,7 @@
  * title can render on 1–2 lines without ellipsis. */
 @container (max-width: 520px) {
 	.wb-gam-badge-showcase__list {
-		/* Hub flyout (~465px wide) — 3 cols of ~140px each. */
+		/* Hub flyout (~465px wide) - 3 cols of ~140px each. */
 		grid-template-columns: repeat( 3, minmax( 0, 1fr ) );
 		gap: 10px;
 	}
@@ -297,7 +297,7 @@
 	font-weight: 600;
 	line-height: 1.25;
 	color: var( --wb-gam-badge-text );
-	/* No line-clamp — badge names like "Five Hundred Strong" or
+	/* No line-clamp - badge names like "Five Hundred Strong" or
 	 * "1-Year Member" must render in full, not truncate with an
 	 * ellipsis. Cards in the grid grow vertically to fit the longest
 	 * name; align-items:stretch on the parent keeps them visually
@@ -324,7 +324,7 @@
 }
 
 .wb-gam-badge-showcase__hint {
-	/* Hint text describes what action unlocks the badge — never
+	/* Hint text describes what action unlocks the badge - never
 	 * truncate, the member needs to read it in full to know what to do.
 	 * Card height grows to fit the longest hint in the row. */
 	font-size: 0.75rem;
@@ -416,7 +416,7 @@
  * stroke="currentColor", which resolves to BLACK inside an <img> (the page's
  * colour context does not cross the <img> boundary), and custom-uploaded
  * badges keep their own colours. On the dark card that dark line-art became
- * invisible, so give the medallion a light plate in dark mode — any artwork
+ * invisible, so give the medallion a light plate in dark mode - any artwork
  * (mono line-art, colour SVG, uploaded image) stays legible against it.
  * Scoped to the same dark selectors BuddyX / BuddyX Pro use. */
 :root[data-bx-mode="dark"] .wb-gam-badge-showcase__badge--earned .wb-gam-badge-showcase__icon-wrap,

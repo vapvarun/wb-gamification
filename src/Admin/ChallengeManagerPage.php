@@ -16,15 +16,15 @@ use WBGam\Engine\Registry;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -46,7 +46,7 @@ final class ChallengeManagerPage {
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
-		// admin_post_wb_gam_{save,delete}_challenge removed in 1.0.0 — page now
+		// admin_post_wb_gam_{save,delete}_challenge removed in 1.0.0 - page now
 		// consumes /wb-gamification/v1/challenges (POST + DELETE) via the
 		// generic admin-rest-form driver. See Tier 0.C migration.
 	}
@@ -314,8 +314,8 @@ final class ChallengeManagerPage {
 									<td>
 										<?php
 										// Stored in UTC; show the owner's site date.
-										$start = ! empty( $c['starts_at'] ) ? get_date_from_gmt( $c['starts_at'], 'Y-m-d' ) : '—';
-										$end   = ! empty( $c['ends_at'] ) ? get_date_from_gmt( $c['ends_at'], 'Y-m-d' ) : '—';
+										$start = ! empty( $c['starts_at'] ) ? get_date_from_gmt( $c['starts_at'], 'Y-m-d' ) : '-';
+										$end   = ! empty( $c['ends_at'] ) ? get_date_from_gmt( $c['ends_at'], 'Y-m-d' ) : '-';
 										echo esc_html( $start . ' → ' . $end );
 										?>
 									</td>

@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — deactivation feedback.
+ * WB Gamification - deactivation feedback.
  *
  * On the Plugins screen, intercepts THIS plugin's Deactivate link and shows a
  * small optional survey (a native <dialog>, so Esc + focus-trap come free)
@@ -151,7 +151,7 @@ final class DeactivationFeedback {
 
 	/**
 	 * AJAX: store the submitted reason (or record a skip) and set the
-	 * 30-day re-prompt guard. Always returns success — feedback must never
+	 * 30-day re-prompt guard. Always returns success - feedback must never
 	 * block deactivation.
 	 */
 	public static function handle_ajax(): void {
@@ -184,7 +184,7 @@ final class DeactivationFeedback {
 			'wp'        => get_bloginfo( 'version' ),
 			'php'       => PHP_VERSION,
 			'locale'    => get_locale(),
-			// One-way site fingerprint — not reversible to a URL.
+			// One-way site fingerprint - not reversible to a URL.
 			'site_hash' => hash( 'sha256', home_url() ),
 			'at'        => gmdate( 'c' ),
 			// Only included with explicit consent.

@@ -1,5 +1,5 @@
 /**
- * WB Gamification — Cohort Settings Page CSS
+ * WB Gamification - Cohort Settings Page CSS
  * =====================================================================
  * Per-page styles for `WBGam\Admin\CohortSettingsPage` (menu slug:
  * `wb-gamification`, embedded as a sub-section in the Settings sidebar).
@@ -12,7 +12,7 @@
  * Token policy: `var(--wbgam-*)` only.
  *
  * Migration source: page-specific field markers (no dedicated section
- * existed in the old admin-pages.css — fields used generic .wbgam-input
+ * existed in the old admin-pages.css - fields used generic .wbgam-input
  * visuals).
  *
  * @package WB_Gamification
@@ -20,15 +20,15 @@
 
 /* Root wrapper marker. */
 .wb-gam-admin-cohort {
-	/* Container — visuals from .wbgam-settings-card. */
+	/* Container - visuals from .wbgam-settings-card. */
 }
 
-/* Tier name inputs — 4 fixed slots. */
+/* Tier name inputs - 4 fixed slots. */
 .wb-gam-tier-1,
 .wb-gam-tier-2,
 .wb-gam-tier-3,
 .wb-gam-tier-4 {
-	/* JS-bound tier name inputs — visuals from .wbgam-input. */
+	/* JS-bound tier name inputs - visuals from .wbgam-input. */
 }
 
 /* Threshold + cycle controls. */
@@ -41,7 +41,7 @@
 	/* JS-bound form controls. */
 }
 
-/* Narrow ordered list — used for the "how cohorts work" explainer steps. */
+/* Narrow ordered list - used for the "how cohorts work" explainer steps. */
 .wbgam-list-narrow {
 	margin: 0;
 	padding-inline-start: 1.25rem;

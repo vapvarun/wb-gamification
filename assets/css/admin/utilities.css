@@ -1,5 +1,5 @@
 /**
- * WB Gamification — Admin Utilities
+ * WB Gamification - Admin Utilities
  * =====================================================================
  * Atomic utility classes, skeleton placeholders, responsive grid
  * helpers, and print rules. Anything that's "set spacing X / hide Y /
@@ -17,7 +17,7 @@
  * Migration source:
  *   - admin-core.css §17 (Skeleton / Loading)
  *   - admin-core.css §20 (Utility Classes)
- *   - admin-core.css §21 (Responsive breakpoints — kpi/grid/modal/tabs)
+ *   - admin-core.css §21 (Responsive breakpoints - kpi/grid/modal/tabs)
  *   - admin-core.css §22 (Print)
  *   - admin-pages.css inline utility helpers (mt/ms, is-hidden,
  *     grid-2col, flex-row, text-meta, icon-xl, text-muted)
@@ -227,7 +227,7 @@
 	border: 0;
 }
 
-/* Icon helper — used by empty-states and feature illustrations. */
+/* Icon helper - used by empty-states and feature illustrations. */
 .wbgam-icon-xl {
 	font-size: var(--wbgam-fs-display);
 	width: 48px;
@@ -317,7 +317,7 @@
 	}
 }
 
-/* Vestibular safety — disable plugin keyframe motion under prefers-reduced-motion
+/* Vestibular safety - disable plugin keyframe motion under prefers-reduced-motion
  * (WCAG 2.3.3). Spinners/toasts/popovers still appear; only the motion stops. */
 @media (prefers-reduced-motion: reduce) {
 	[class*="wbgam-"],

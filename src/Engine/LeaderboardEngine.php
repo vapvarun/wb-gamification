@@ -9,7 +9,7 @@
  *
  * Scope: by default the leaderboard is site-wide. Pass scope_type + scope_id
  * to filter to a defined set of users. Scope resolution is extensible via the
- * `wb_gam_leaderboard_scope_user_ids` filter — BuddyPress integration
+ * `wb_gam_leaderboard_scope_user_ids` filter - BuddyPress integration
  * and third-party plugins hook in here to return the relevant user IDs.
  *
  * Opt-out: users with `leaderboard_opt_out = 1` in wb_gam_member_prefs are
@@ -30,15 +30,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -101,7 +101,7 @@ final class LeaderboardEngine {
 	 * @return void
 	 */
 	public static function init(): void {
-		// Cache invalidation — bump the wb_gamification group's last-changed
+		// Cache invalidation - bump the wb_gamification group's last-changed
 		// stamp on every points-awarded event so leaderboard cache keys (which
 		// embed the stamp) auto-orphan instead of serving stale data for up
 		// to 120 seconds. Per skill Part 2.7 (incrementor pattern).
@@ -127,7 +127,7 @@ final class LeaderboardEngine {
 	/**
 	 * Arm the recurring snapshot (every 5 minutes) on Action Scheduler and
 	 * remove any legacy WP-Cron event so the snapshot can't double-fire.
-	 * Idempotent — safe to call on every init.
+	 * Idempotent - safe to call on every init.
 	 *
 	 * @return void
 	 */
@@ -151,7 +151,7 @@ final class LeaderboardEngine {
 	}
 
 	/**
-	 * Activation hook — arm the leaderboard snapshot.
+	 * Activation hook - arm the leaderboard snapshot.
 	 *
 	 * @return void
 	 */
@@ -160,7 +160,7 @@ final class LeaderboardEngine {
 	}
 
 	/**
-	 * Deactivation hook — clear the leaderboard snapshot schedule.
+	 * Deactivation hook - clear the leaderboard snapshot schedule.
 	 *
 	 * @return void
 	 */
@@ -178,7 +178,7 @@ final class LeaderboardEngine {
 	 * Bumps the wb_gamification cache group's last-changed stamp. Every
 	 * cache key in get_leaderboard() and get_user_rank() embeds that
 	 * stamp, so a bump here orphans every key reachable via either path
-	 * — Redis / Memcached evict via LRU, in-memory cache resets next
+	 * - Redis / Memcached evict via LRU, in-memory cache resets next
 	 * request. No manual key tracking needed.
 	 *
 	 * Hooked to `wb_gam_points_awarded`, `wb_gam_points_awarded_batch` and `wb_gam_points_revoked`
@@ -192,7 +192,7 @@ final class LeaderboardEngine {
 		// Bump the object-cache last-changed stamp. Every cache key in
 		// get_leaderboard() / get_user_rank() embeds this stamp, so all prior
 		// keys become unreachable in one operation. This is an in-memory /
-		// Redis write — cheap enough for the award hot path.
+		// Redis write - cheap enough for the award hot path.
 		wp_cache_set_last_changed( 'wb_gamification' );
 
 		// NOTE: this deliberately no longer writes
@@ -203,7 +203,7 @@ final class LeaderboardEngine {
 		// 1. It disabled the snapshot. read_from_snapshot() refused to serve any
 		// snapshot older than the option, so the first award after each
 		// rebuild sent every subsequent read to a full-table SUM. See
-		// read_from_snapshot() — the materialised leaderboard was never
+		// read_from_snapshot() - the materialised leaderboard was never
 		// actually allowed to be read on a busy site.
 		//
 		// 2. It made ONE wp_options ROW a write-serialisation point across every
@@ -211,7 +211,7 @@ final class LeaderboardEngine {
 		// members, is a lock convoy on the hottest path in the plugin.
 		//
 		// A materialised leaderboard is eventually consistent BY DESIGN, bounded
-		// by the rebuild interval (5 min) — see the `wb_gam_leaderboard_max_snapshot_age`
+		// by the rebuild interval (5 min) - see the `wb_gam_leaderboard_max_snapshot_age`
 		// filter. Invalidating it on every write is a contradiction in terms.
 
 		/**
@@ -244,14 +244,14 @@ final class LeaderboardEngine {
 	): array {
 		$limit = max( 1, min( 100, $limit ) );
 
-		// Resolve the requested point type — empty string = primary, unknown
+		// Resolve the requested point type - empty string = primary, unknown
 		// slug also falls back to primary via PointTypeService.
 		$resolved_type = ( new \WBGam\Services\PointTypeService() )->resolve( $point_type ?: null );
 
 		// ── Object cache check ────────────────────────────────────────────────
 		// Cache key embeds the wb_gamification group's last-changed stamp so
 		// invalidate_cache() (called on wb_gam_points_awarded) auto-orphans
-		// every key when any award fires — no manual delete walk needed.
+		// every key when any award fires - no manual delete walk needed.
 		$scope_ids    = self::resolve_scope( $scope_type, $scope_id );
 		$last_changed = wp_cache_get_last_changed( 'wb_gamification' );
 		$cache_key    = sprintf(
@@ -605,7 +605,7 @@ final class LeaderboardEngine {
 		$period_start = self::get_period_start( $period );
 
 		// ── Try snapshot table for global scopes ──────────────────────────────
-		// Snapshot now covers EVERY active currency (Phase 3b) — only scoped
+		// Snapshot now covers EVERY active currency (Phase 3b) - only scoped
 		// requests (BP groups, cohorts) still fall through to the live query.
 		// A PAGED walk of the ALL-TIME board never uses it, on any page: the snapshot is only
 		// SNAPSHOT_DEPTH deep, and it ranks on the ledger sum while the totals table ranks on `earned`.
@@ -682,17 +682,17 @@ final class LeaderboardEngine {
 		// wb_gam_user_totals already holds every member's running total per
 		// currency. It is maintained transactionally on every award
 		// (PointsEngine::bump_user_total) and carries KEY idx_type_total
-		// (point_type, total) — an index that could not be more precisely shaped
+		// (point_type, total) - an index that could not be more precisely shaped
 		// for "top N by total for this currency".
 		//
-		// The leaderboard never read it. For the all-time board — the DEFAULT
-		// period, and by far the most-rendered — it instead ran SUM(points)
+		// The leaderboard never read it. For the all-time board - the DEFAULT
+		// period, and by far the most-rendered - it instead ran SUM(points)
 		// GROUP BY user_id over the entire ledger: a full-table aggregate, a temp
 		// table, and a filesort over every member, to produce the same numbers
 		// that were already sitting in an indexed table one row per member.
 		//
-		// Period boards (day/week/month) genuinely need the ledger — a total does
-		// not carry a date — so those keep the SUM, bounded by idx_created.
+		// Period boards (day/week/month) genuinely need the ledger - a total does
+		// not carry a date - so those keep the SUM, bounded by idx_created.
 		$cursor_binds = array();
 
 		if ( ! $period_start ) {
@@ -700,7 +700,7 @@ final class LeaderboardEngine {
 			// table, BEFORE the users join.
 			//
 			// Joining wp_users up front lets the optimiser drive from wp_users
-			// (eq_ref into totals) — which scans the whole user table and forces
+			// (eq_ref into totals) - which scans the whole user table and forces
 			// a temporary + filesort, because ORDER BY t.total cannot then use
 			// idx_type_total. Verified with EXPLAIN: the naive JOIN form gives
 			// `u: type=index ... Using temporary; Using filesort`. Correct result,
@@ -804,14 +804,14 @@ final class LeaderboardEngine {
 	/**
 	 * Get a user's private rank within a period.
 	 *
-	 * Returned even if the user has opted out of public leaderboard display —
+	 * Returned even if the user has opted out of public leaderboard display -
 	 * this is private data for the member themselves.
 	 *
 	 * @param int    $user_id    User to calculate rank for.
 	 * @param string $period     Period: 'all' | 'month' | 'week' | 'day'.
 	 * @param string $scope_type Optional scope type.
 	 * @param int    $scope_id   Optional scope ID.
-	 * @param string $point_type Optional currency slug — defaults to primary. Without
+	 * @param string $point_type Optional currency slug - defaults to primary. Without
 	 *                           this filter, multi-currency sites compute rank
 	 *                           against the SUM of all currencies, which inflates
 	 *                           rank vs the public leaderboard which DOES filter.
@@ -830,7 +830,7 @@ final class LeaderboardEngine {
 		$resolved_type = ( new \WBGam\Services\PointTypeService() )->resolve( $point_type ?: null );
 
 		// ── Object cache check ────────────────────────────────────────────────
-		// Cache key embeds the wb_gamification group's last-changed stamp —
+		// Cache key embeds the wb_gamification group's last-changed stamp -
 		// see get_leaderboard() for the rationale.
 		$scope_ids    = self::resolve_scope( $scope_type, $scope_id );
 		$last_changed = wp_cache_get_last_changed( 'wb_gamification' );
@@ -877,7 +877,7 @@ final class LeaderboardEngine {
 			return $result;
 		}
 
-		// Get user's own total for the period — scoped by currency so the
+		// Get user's own total for the period - scoped by currency so the
 		// rank computation matches what the public leaderboard sees.
 		$user_total_sql = $wpdb->prepare(
 			"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
@@ -979,10 +979,10 @@ final class LeaderboardEngine {
 		$cache_table  = $wpdb->prefix . 'wb_gam_leaderboard_cache';
 		$points_table = $wpdb->prefix . 'wb_gam_points';
 
-		// Snapshot start time — every row written this tick will have
+		// Snapshot start time - every row written this tick will have
 		// updated_at >= $started. After all (period × currency) inserts
 		// finish, anything older than $started is a straggler from the
-		// previous snapshot whose user dropped out of the top-500 — purge
+		// previous snapshot whose user dropped out of the top-500 - purge
 		// in one DELETE at the end. Reads during the rebuild always see
 		// SOME valid data (old or new), eliminating the read-through
 		// window that the legacy TRUNCATE pattern had on every cron tick.
@@ -1031,7 +1031,7 @@ final class LeaderboardEngine {
 					? $wpdb->prepare( $snap_excl_sql, $snap_excl_values ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 					: $snap_excl_sql;
 
-				// UPSERT — insert new rows, update existing rows in place.
+				// UPSERT - insert new rows, update existing rows in place.
 				// The UNIQUE KEY (user_id, period, point_type) on the cache
 				// table is what makes ON DUPLICATE KEY UPDATE work; it was
 				// added by DbUpgrader::ensure_leaderboard_cache_unique_key.
@@ -1083,7 +1083,7 @@ final class LeaderboardEngine {
 			}
 		}
 
-		// Purge stragglers — rows from the previous snapshot whose user
+		// Purge stragglers - rows from the previous snapshot whose user
 		// dropped out of the top-500 this tick. Their updated_at is older
 		// than the start of this rebuild, so a single bounded DELETE clears
 		// them without affecting any concurrent reads.
@@ -1189,7 +1189,7 @@ final class LeaderboardEngine {
 	 * The ONE freshness rule every snapshot reader shares: {@see read_from_snapshot()} (the walk) and
 	 * {@see count_from_snapshot()} (the total) would otherwise each judge staleness on their own, and
 	 * a board whose walk reads one generation while its total reads another is exactly the class of
-	 * bug this file keeps relearning (see exclusion_sql()) — two paths, each locally correct, free to
+	 * bug this file keeps relearning (see exclusion_sql()) - two paths, each locally correct, free to
 	 * disagree about how many members there are.
 	 *
 	 * @since 1.6.5
@@ -1215,7 +1215,7 @@ final class LeaderboardEngine {
 		//
 		// Until 1.6.4 there was a SECOND gate here: read_from_snapshot() also
 		// bailed whenever `wb_gam_leaderboard_invalidated_at` was newer than the
-		// snapshot — and that option was written on EVERY points award. So the
+		// snapshot - and that option was written on EVERY points award. So the
 		// first award after each rebuild disabled the snapshot, and on a busy site
 		// awards land many times per second. The snapshot was readable for
 		// milliseconds per five-minute cycle; ~100% of reads fell through to a
@@ -1224,7 +1224,7 @@ final class LeaderboardEngine {
 		//
 		// The old comment called the live fallback "correct (just slower)". At
 		// 100k members it is not slower, it is the difference between an indexed
-		// read of a 500-row table and a GROUP BY over millions of rows — on a
+		// read of a 500-row table and a GROUP BY over millions of rows - on a
 		// route (GET /leaderboard) whose permission_callback is __return_true, so
 		// any anonymous visitor could trigger it in a loop.
 		//
@@ -1235,7 +1235,7 @@ final class LeaderboardEngine {
 	}
 
 	/**
-	 * Member count for a global period board, read from the snapshot — the same generation of data
+	 * Member count for a global period board, read from the snapshot - the same generation of data
 	 * the walk's own first page would read.
 	 *
 	 * Returns null under the exact conditions {@see read_from_snapshot()} would send its caller to
@@ -1402,7 +1402,7 @@ final class LeaderboardEngine {
 	}
 
 	/**
-	 * The member's standing AS THE BOARD SEES IT — or null if the board is not serving the snapshot.
+	 * The member's standing AS THE BOARD SEES IT - or null if the board is not serving the snapshot.
 	 *
 	 * This is what keeps the two halves of the leaderboard block telling the same story. It answers
 	 * from the SAME snapshot row the board renders, so the "your standing" strip cannot contradict the
@@ -1439,7 +1439,7 @@ final class LeaderboardEngine {
 
 		$cache_table = $wpdb->prefix . 'wb_gam_leaderboard_cache';
 
-		// The one shared gate — see snapshot_freshness(). If the board would not serve the snapshot,
+		// The one shared gate - see snapshot_freshness(). If the board would not serve the snapshot,
 		// neither does this strip; a second copy of the same check is how the two came to disagree.
 		if ( null === self::snapshot_freshness() ) {
 			return null;
@@ -1468,7 +1468,7 @@ final class LeaderboardEngine {
 
 		$points = (int) $row['total_points'];
 
-		// The gap to the next member up, read from the same snapshot — so "points to next" cannot
+		// The gap to the next member up, read from the same snapshot - so "points to next" cannot
 		// disagree with the board either.
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$next = $wpdb->get_var(

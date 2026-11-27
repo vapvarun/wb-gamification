@@ -9,7 +9,7 @@
  *      pending events stored in a transient for the current user.
  *
  * Events are written to the transient by hooking the gamification action hooks
- * (badge awarded, level changed, etc.).  They are flushed once — reading the
+ * (badge awarded, level changed, etc.).  They are flushed once - reading the
  * transient deletes it.
  *
  * @package WB_Gamification
@@ -20,15 +20,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -45,7 +45,7 @@ final class NotificationBridge {
 	/**
 	 * Maximum events retained per member in the queue. Oldest evict on write.
 	 *
-	 * Enforced by trim(), which IS the bound on the table — see its docblock.
+	 * Enforced by trim(), which IS the bound on the table - see its docblock.
 	 * Until 1.6.4 this capped a parallel transient while the durable table (the
 	 * primary read path) appended forever.
 	 *
@@ -57,7 +57,7 @@ final class NotificationBridge {
 	 * Maximum toasts delivered to a member in one read.
 	 *
 	 * A toast is an ephemeral, realtime surface: it says "this just happened".
-	 * Replaying a backlog through it is never the right answer — a member
+	 * Replaying a backlog through it is never the right answer - a member
 	 * returning to 30,000 pending events wants the newest few, not 600 page loads
 	 * of catch-up. fetch_unseen() returns at most this many NEWEST events and
 	 * hands callers the head of the backlog to park their cursor on, so the
@@ -225,12 +225,12 @@ final class NotificationBridge {
 		// so a revoked kudos still congratulated the receiver.
 		add_action( 'wb_gam_kudos_revoked', array( __CLASS__, 'on_kudos_revoked' ), 10, 3 );
 
-		// v2.2 — daily prune of the durable queue table.
+		// v2.2 - daily prune of the durable queue table.
 		add_action( self::PRUNE_CRON, array( __CLASS__, 'prune_queue' ) );
 
 		// Arm the recurring event on init, never at plugins_loaded: wp_schedule_event
 		// resolves schedules via wp_get_schedules(), which fires the
-		// cron_schedules filter — that must not run before init on WP 6.7+.
+		// cron_schedules filter - that must not run before init on WP 6.7+.
 		if ( did_action( 'init' ) ) {
 			self::maybe_schedule();
 		} else {
@@ -266,7 +266,7 @@ final class NotificationBridge {
 	}
 
 	/**
-	 * Arm the daily queue-prune event if not already scheduled. Idempotent —
+	 * Arm the daily queue-prune event if not already scheduled. Idempotent -
 	 * safe to call on every init.
 	 */
 	public static function maybe_schedule(): void {
@@ -276,7 +276,7 @@ final class NotificationBridge {
 	}
 
 	/**
-	 * Surface an award-skip to the member as a toast — if, and only if, the owner asked for it.
+	 * Surface an award-skip to the member as a toast - if, and only if, the owner asked for it.
 	 *
 	 * @since 1.4.1
 	 * @since 1.6.3 Defaults to silence. No skip reason reaches a member unless an owner opts it in
@@ -380,7 +380,7 @@ final class NotificationBridge {
 		// them to the total (toast.js names the challenge or streak once, not the bonus line), so
 		// the toast agrees with the ledger.
 
-		// First-earn explainer — push a one-time welcome toast so the member
+		// First-earn explainer - push a one-time welcome toast so the member
 		// understands what just happened and where to see their progress.
 		// Gated by user_meta so it fires exactly once per user, the first time
 		// they earn any points. Hub URL is included in the detail line so they
@@ -499,7 +499,7 @@ final class NotificationBridge {
 		if ( is_array( $new_level ) && ! LevelEngine::is_climb( $new_level, is_array( $old_level ) ? $old_level : null ) ) {
 			return;
 		}
-		// Resilient to listeners receiving null — fall back to a fresh read.
+		// Resilient to listeners receiving null - fall back to a fresh read.
 		if ( null === $new_level || empty( $new_level['id'] ) ) {
 			global $wpdb;
 			$current_id = (int) get_user_meta( $user_id, 'wb_gam_level_id', true );
@@ -874,8 +874,8 @@ final class NotificationBridge {
 		// that isolates foreign assets on its own front-end routes (e.g. BuddyNext's
 		// AssetIsolation, which dequeues non-core/non-theme handles at
 		// wp_enqueue_scripts priority 9999) strips toast.js there, leaving the seeded
-		// earn with nothing to render it. render() runs on wp_footer — AFTER any such
-		// late dequeue — so re-enqueueing the registered handles here makes the on-earn
+		// earn with nothing to render it. render() runs on wp_footer - AFTER any such
+		// late dequeue - so re-enqueueing the registered handles here makes the on-earn
 		// toast appear wherever the notification surface does, on every host/theme.
 		// (No-ops when the handles were never registered, e.g. logged-out.)
 		if ( wp_script_is( 'wb-gamification-toast', 'registered' ) ) {
@@ -950,7 +950,7 @@ final class NotificationBridge {
 	// while the table appended forever; the transient's ids restarted at 1 on
 	// every cache flush while the table's auto-increment never resets. The read
 	// path had already moved to the table, so the transient was written on every
-	// award and read essentially never — and a block in push() existed purely to
+	// award and read essentially never - and a block in push() existed purely to
 	// walk the cursor metas and drag new transient ids past a stale high-water
 	// mark, a hack whose only reason to exist was the transient's resetting ids.
 	//
@@ -959,7 +959,7 @@ final class NotificationBridge {
 
 	/**
 	 * Is the durable queue available? Created by DbUpgrader's feature migration,
-	 * which runs at `plugins_loaded` (BootOrder::SCHEMA) — i.e. before any award
+	 * which runs at `plugins_loaded` (BootOrder::SCHEMA) - i.e. before any award
 	 * can fire on a normal request.
 	 *
 	 * The only window where this is false is a boot so early the migration has
@@ -976,7 +976,7 @@ final class NotificationBridge {
 	/**
 	 * Queue one notification event for a member.
 	 *
-	 * The table's AUTO_INCREMENT is the event id — nothing here computes one.
+	 * The table's AUTO_INCREMENT is the event id - nothing here computes one.
 	 * Readers stamp the authoritative row id onto the payload as `_id` (the key
 	 * the client dedupes on), so an id assigned at write time would only be
 	 * overwritten at read time. `_ts` is kept for toast.js's legacy fallback key.
@@ -1047,7 +1047,7 @@ final class NotificationBridge {
 	/**
 	 * Evict a member's queue rows beyond QUEUE_MAX_EVENTS, oldest first.
 	 *
-	 * THE bound on the table. Not a safety net over the prune cron — the bound
+	 * THE bound on the table. Not a safety net over the prune cron - the bound
 	 * itself. A queue that is capped on write cannot grow without limit on any
 	 * install, including the ones that need it most: `DISABLE_WP_CRON` hosts with
 	 * no real crontab, where the daily prune silently never runs. Before 1.6.4
@@ -1059,7 +1059,7 @@ final class NotificationBridge {
 	 *
 	 * The subquery is wrapped in a derived table because MySQL will not read from
 	 * the table it is deleting from. It resolves against `idx_user_id (user_id,
-	 * id)` — a ~51-row index scan that matches nothing on the common path where
+	 * id)` - a ~51-row index scan that matches nothing on the common path where
 	 * the member is under cap.
 	 *
 	 * @since 1.6.4
@@ -1093,13 +1093,13 @@ final class NotificationBridge {
 	/**
 	 * Daily cron: delete rows past the retention window.
 	 *
-	 * Retention, NOT the bound — trim() is the bound. That distinction matters:
+	 * Retention, NOT the bound - trim() is the bound. That distinction matters:
 	 * before 1.6.4 this cron WAS the table's only limit, it ran a single un-looped
 	 * `LIMIT 5000` DELETE per day, and so any site producing more than 5,000
 	 * prunable rows/day fell permanently behind and grew without limit. Worse, on
 	 * `DISABLE_WP_CRON` installs with no real crontab it never ran at all.
 	 *
-	 * Now it batches in a loop with a per-run cap, so a backlog actually drains —
+	 * Now it batches in a loop with a per-run cap, so a backlog actually drains -
 	 * and because the table is bounded on write, a site where this never fires is
 	 * still safe. Whatever the per-run cap leaves behind, the next tick collects.
 	 *
@@ -1127,7 +1127,7 @@ final class NotificationBridge {
 				)
 			);
 
-			// A short batch (or an error) means the backlog is drained — stop.
+			// A short batch (or an error) means the backlog is drained - stop.
 			if ( ! is_int( $deleted ) || $deleted < self::PRUNE_BATCH_SIZE ) {
 				break;
 			}
@@ -1135,13 +1135,13 @@ final class NotificationBridge {
 	}
 
 	/**
-	 * THE queue reader. Every surface goes through this — the footer seed, the
+	 * THE queue reader. Every surface goes through this - the footer seed, the
 	 * heartbeat tick, the REST poll (all via read_pending, cursor in user_meta)
 	 * and the SSE stream (WBGam\API\SSEController, cursor from the request).
 	 *
 	 * Returns the NEWEST unseen events, capped at $limit, ordered oldest-first
 	 * for display. The last element's id is therefore the head of the entire
-	 * backlog, not merely of the slice returned — so a caller that advances its
+	 * backlog, not merely of the slice returned - so a caller that advances its
 	 * cursor to it skips everything older instead of queueing it for next time.
 	 * That single property is what makes a backlog impossible to replay, and it
 	 * needs no special case for small queues: the newest-5-of-3 is all 3, and the
@@ -1151,7 +1151,7 @@ final class NotificationBridge {
 	 * pending events wants the newest few, not 600 page loads of catch-up.
 	 *
 	 * Rows whose payload will not decode are still returned (with an empty
-	 * payload) so their id can advance the caller's cursor — otherwise one corrupt
+	 * payload) so their id can advance the caller's cursor - otherwise one corrupt
 	 * row would wedge the queue forever. Callers skip empty payloads for display.
 	 *
 	 * @since 1.6.4
@@ -1230,7 +1230,7 @@ final class NotificationBridge {
 			if ( empty( $row['payload'] ) ) {
 				continue; // Undecodable row: skipped for display, still advances the cursor below.
 			}
-			// The table id is authoritative — it is the key toast.js dedupes on.
+			// The table id is authoritative - it is the key toast.js dedupes on.
 			$payload        = $row['payload'];
 			$payload['_id'] = $row['id'];
 			$events[]       = $payload;
@@ -1429,7 +1429,7 @@ final class NotificationBridge {
 	/**
 	 * Resolve the toast's "what you did" line for a points award.
 	 *
-	 * A points toast must ALWAYS say what the points were for — never a
+	 * A points toast must ALWAYS say what the points were for - never a
 	 * bare number or count. Resolution order:
 	 *   1. An explicit human reason in the event metadata. Admin/manual
 	 *      awards carry the reason the admin typed (PointsController sets
@@ -1451,18 +1451,18 @@ final class NotificationBridge {
 	}
 
 	/**
-	 * Human-readable label for an action_id — the toast's "what you did" line.
+	 * Human-readable label for an action_id - the toast's "what you did" line.
 	 *
 	 * Resolution order:
 	 *   1. The registered action's own manifest label (e.g. "Publish a blog
-	 *      post", "Leave a comment"). This is the canonical source — every
+	 *      post", "Leave a comment"). This is the canonical source - every
 	 *      manifest trigger declares a `label`, so this covers WordPress core,
 	 *      BuddyPress, WooCommerce, and every contrib integration without a
 	 *      per-id map to maintain.
 	 *   2. Everything else Registry::label_for() knows: engine-emitted ids (kudos, manual
 	 *      awards) and ids an integration names through `wb_gam_action_label` - the same
 	 *      label the points history shows, so a toast and its history row always agree.
-	 *   3. A generic "Points awarded" — NEVER empty, so the toast always
+	 *   3. A generic "Points awarded" - NEVER empty, so the toast always
 	 *      states a reason rather than showing a contextless "+N points"
 	 *      or a bare "xN" count.
 	 *

@@ -1,5 +1,5 @@
 /**
- * Leaderboard block — live updates via the wb-gamification realtime broker.
+ * Leaderboard block - live updates via the wb-gamification realtime broker.
  *
  * Reads the board signature from data attributes the server stamped on
  * the wrapper, registers the board with the broker, then on every tick
@@ -131,7 +131,7 @@
 
 			// Cache a template row (first existing child) so net-new
 			// members from the heartbeat payload inherit the same structure
-			// — icons, badge wrapper, avatar slot — without view.js having
+			// - icons, badge wrapper, avatar slot - without view.js having
 			// to rebuild that markup from scratch.
 			var templateRow = list.firstElementChild || null;
 
@@ -174,7 +174,7 @@
 				var clone = templateRow.cloneNode( true );
 				clone.setAttribute( 'data-user-id', String( row.user_id || 0 ) );
 				clone.className = 'wb-gam-leaderboard__entry';
-				// New row from heartbeat has no avatar context — server
+				// New row from heartbeat has no avatar context - server
 				// avatars are URL-specific; let the next full page render
 				// fill them. We just preserve the slot.
 				return clone;
@@ -182,7 +182,7 @@
 
 			// First-render fallback. The server always emits structured
 			// markup, so this path should be rare (only fires when a board
-			// is hydrated before its first server render — e.g. an SPA
+			// is hydrated before its first server render - e.g. an SPA
 			// route swap). Mirror the server structure so the IA store sees
 			// consistent classes; icons will fill in on the next full
 			// render of the host page.
@@ -223,7 +223,7 @@
 
 			var rankCell = li.querySelector( '.wb-gam-leaderboard__rank' );
 			if ( rankCell ) {
-				// Patch only the leading text node — preserves the
+				// Patch only the leading text node - preserves the
 				// server-emitted <span class="wb-gam-leaderboard__rank-ordinal">
 				// child for podium rows so "1st place" doesn't disappear on
 				// the first heartbeat tick.
@@ -258,7 +258,7 @@
 			var nameCell = li.querySelector( '.wb-gam-leaderboard__name' );
 			if ( nameCell ) {
 				// Only patch when the row carries a fresh display_name.
-				// Skip when payload omits it — preserves the server-rendered
+				// Skip when payload omits it - preserves the server-rendered
 				// <a> link to the member profile that the heartbeat payload
 				// doesn't ship.
 				if ( row.display_name ) {
@@ -278,7 +278,7 @@
 				}
 			}
 
-			// Badges — show/hide the wrapper based on count; patch the
+			// Badges - show/hide the wrapper based on count; patch the
 			// inner count span only. Leaves the medal SVG icon untouched
 			// (it lives in a sibling node inside the wrapper).
 			if ( typeof row.badge_count !== 'undefined' ) {

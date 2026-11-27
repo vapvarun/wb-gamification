@@ -1,13 +1,13 @@
 <?php
 /**
- * WB Gamification — WordPress Core Integration Manifest
+ * WB Gamification - WordPress Core Integration Manifest
  *
  * Auto-loaded by ManifestLoader. No dependency on WB Gamification at load time.
  *
  * Trigger flags:
- *   standalone_only: false — always active regardless of BuddyPress.
- *   standalone_only: true  — skipped when BuddyPress is active (BP covers the same event).
- *   supersedes: [id, ...]  — when this trigger is registered, the listed trigger
+ *   standalone_only: false - always active regardless of BuddyPress.
+ *   standalone_only: true  - skipped when BuddyPress is active (BP covers the same event).
+ *   supersedes: [id, ...]  - when this trigger is registered, the listed trigger
  *                            ids are dropped from the registry so the same
  *                            real-world event isn't awarded twice. Resolved by
  *                            ManifestLoader regardless of manifest load order.
@@ -116,7 +116,7 @@ return [
 				if ( ! $comment ) {
 					return 0;
 				}
-				// Skip product reviews — WooCommerce manifest handles those separately.
+				// Skip product reviews - WooCommerce manifest handles those separately.
 				$post = get_post( (int) $comment->comment_post_ID );
 				if ( ! $post ) {
 					return 0;
@@ -158,7 +158,7 @@ return [
 		//
 		// Core WordPress events with no BuddyPress equivalent (BP covers
 		// activity-stream updates/comments, not blog posts or post comments),
-		// so they register on BuddyPress sites too — otherwise the default
+		// so they register on BuddyPress sites too - otherwise the default
 		// badges that count them (first_post, prolific_writer, content_creator,
 		// first_comment, engaged_reader) are permanently dead on BP sites.
 
@@ -167,8 +167,8 @@ return [
 			'label'           => static fn(): string => __( 'Publish a blog post', 'wb-gamification' ),
 			'description'     => static fn(): string => __( 'Awarded when the author publishes a new post - once per transition into the published state. Editing an already-published post does NOT re-award.', 'wb-gamification' ),
 			// `transition_post_status` (not `publish_post`) because the
-			// latter fires on every save where status ends as `publish` —
-			// including edits — so authors re-earned 25pts on every
+			// latter fires on every save where status ends as `publish` -
+			// including edits - so authors re-earned 25pts on every
 			// Update click. The transition hook gives us $new + $old so
 			// we can scope to "left an unpublished state to become
 			// published". Caught by audit/manifest.json (the awarded-points pipeline) §G9.
@@ -206,7 +206,7 @@ return [
 			// Without this fix, the first-post check also re-ran on every
 			// update because `count_user_posts` returned 1 for a single
 			// post under repeated edits, so the engine would attempt to
-			// award again — `repeatable: false` would correctly veto
+			// award again - `repeatable: false` would correctly veto
 			// after the first, but every subsequent update wasted a
 			// rate-limit/manifest evaluation cycle. The transition gate
 			// stops the wasted work at the integration boundary.
@@ -245,7 +245,7 @@ return [
 				if ( ! $comment || empty( $comment->user_id ) ) {
 					return 0;
 				}
-				// Skip product reviews — WooCommerce manifest handles those separately.
+				// Skip product reviews - WooCommerce manifest handles those separately.
 				$post = get_post( (int) $comment->comment_post_ID );
 				if ( $post && 'product' === $post->post_type ) {
 					return 0;
@@ -275,7 +275,7 @@ return [
 				if ( 'approved' !== $new_status || in_array( $old_status, [ 'approved', 'trash', 'spam' ], true ) ) {
 					return 0;
 				}
-				// Skip product reviews — WooCommerce manifest handles those separately.
+				// Skip product reviews - WooCommerce manifest handles those separately.
 				$post = get_post( (int) $comment->comment_post_ID );
 				if ( $post && 'product' === $post->post_type ) {
 					return 0;

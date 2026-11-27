@@ -1,10 +1,10 @@
 <?php
 /**
- * WB Gamification — Personal Record Engine
+ * WB Gamification - Personal Record Engine
  *
  * Detects when a member sets a new personal milestone and fires a
  * private, positive notification. Strava-model: never public, never
- * comparative against other members — purely a celebration of personal growth.
+ * comparative against other members - purely a celebration of personal growth.
  *
  * Milestones tracked:
  *   - best_week  : highest weekly points total ever
@@ -31,15 +31,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -84,12 +84,12 @@ final class PersonalRecordEngine {
 	 * Check whether this award creates a new personal best.
 	 *
 	 * Accepts either an Event object (legacy sync path) or a plain array
-	 * (async batch path via AsyncEvaluator). The event data is unused — only
+	 * (async batch path via AsyncEvaluator). The event data is unused - only
 	 * the user_id matters for period-total lookups.
 	 *
 	 * @param int         $user_id    User who just earned points.
 	 * @param Event|array $event_data The event that triggered the award (Event or plain array).
-	 * @param int         $points     Points awarded (not the total — just this award).
+	 * @param int         $points     Points awarded (not the total - just this award).
 	 */
 	public static function check_personal_records( int $user_id, Event|array $event_data, int $points ): void {
 		$totals = self::period_totals( $user_id );

@@ -18,15 +18,15 @@ use WBGam\Engine\Registry;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -65,7 +65,7 @@ final class SetupWizard {
 	/**
 	 * Option set by the activation hook to request a one-time auto-redirect
 	 * to the wizard on the next admin page load. Persists indefinitely
-	 * until {@see maybe_redirect()} consumes it — survives any
+	 * until {@see maybe_redirect()} consumes it - survives any
 	 * activation-to-admin gap (WP-CLI flows, slow workflows, multisite
 	 * cascades).
 	 */
@@ -98,14 +98,14 @@ final class SetupWizard {
 	private static array $posted = array();
 
 	/**
-	 * Register hooks. Idempotent — every load registers the same set; gating
+	 * Register hooks. Idempotent - every load registers the same set; gating
 	 * happens inside each handler so admins can re-run the wizard at any
 	 * time via the URL.
 	 */
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
 		// Listed nowhere in the menu and highlighted as Dashboard: AdminNav::CHILD_OF.
-		// Auto-redirect on admin_init:1 — earlier than the default 10 so any
+		// Auto-redirect on admin_init:1 - earlier than the default 10 so any
 		// later admin_init callback that emits output doesn't block our redirect.
 		add_action( 'admin_init', array( __CLASS__, 'maybe_redirect' ), 1 );
 		add_action( 'admin_init', array( __CLASS__, 'handle_submission' ) );
@@ -173,7 +173,7 @@ final class SetupWizard {
 	 * to avoid clutter. Because the page never lands in the `$submenu`
 	 * lookup, `get_admin_page_title()` would return null and
 	 * admin-header.php would emit a `strip_tags(): Passing null`
-	 * deprecation on every visit — so the `load-{hook}` callback pre-sets
+	 * deprecation on every visit - so the `load-{hook}` callback pre-sets
 	 * the `$title` global, which `get_admin_page_title()` short-circuits
 	 * on. (Registering under the real parent and calling
 	 * `remove_submenu_page()` is NOT an option: WP then 403s the page via
@@ -238,7 +238,7 @@ final class SetupWizard {
 		// Two trigger paths into the wizard:
 		//
 		// 1. Activation hook explicitly set the pending flag. This is the
-		// authoritative signal — fires on every fresh activation, no
+		// authoritative signal - fires on every fresh activation, no
 		// matter where the admin then navigates next.
 		//
 		// 2. Wizard has never been completed AND the admin has just landed
@@ -320,12 +320,12 @@ final class SetupWizard {
 	}
 
 	/**
-	 * Show a "welcome — run setup" notice on plugin admin pages until done.
+	 * Show a "welcome - run setup" notice on plugin admin pages until done.
 	 *
 	 * Fallback for installs where the activation auto-redirect was suppressed
 	 * (must-use plugin redirects, hosting filters, or activation via a route
 	 * that didn't pass through admin_init). Notice is scoped to plugin pages
-	 * only — never spams the global dashboard.
+	 * only - never spams the global dashboard.
 	 */
 	public static function maybe_show_welcome_notice(): void {
 		if ( get_option( self::COMPLETED_OPTION ) ) {
@@ -360,7 +360,7 @@ final class SetupWizard {
 		$wizard_url = admin_url( 'admin.php?page=' . self::PAGE_SLUG );
 		// Class `wb-gam-notice` whitelists this notice past the body-scoped CSS
 		// filter declared in assets/css/admin.css (Welcome notice section).
-		// Class `wb-gam-notice__cta` styles the CTA button spacing — see
+		// Class `wb-gam-notice__cta` styles the CTA button spacing - see
 		// the same CSS file. No inline style attributes (coding-rule 3).
 		// A REAL dismiss link, not just the X.
 		//

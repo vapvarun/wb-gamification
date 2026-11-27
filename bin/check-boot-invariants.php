@@ -5,7 +5,7 @@
  * Catches the bug class where a file-scope `class_exists($name, false)`
  * guard preceding a top-level class declaration always triggers because
  * PHP hoists top-level class declarations into the symbol table at
- * compile time. The guard never sees `false` — execution returns before
+ * compile time. The guard never sees `false` - execution returns before
  * any add_action() / register_*() call past the guard ever runs.
  *
  * Background: 2026-05-27, commit 06d811c added a class_exists() guard
@@ -22,8 +22,8 @@
  * class hoisting makes the guard always trigger.
  *
  * Exit codes:
- *   0 — no violations
- *   1 — at least one violation found
+ *   0 - no violations
+ *   1 - at least one violation found
  *
  * @package WB_Gamification
  */
@@ -180,7 +180,7 @@ if ( $violations ) {
 		printf( "  %s:%d  class_exists(\"%s\", false) guard precedes own class declaration\n", $v['file'], $v['line'], $v['name'] );
 	}
 	echo "\nFix: remove the class_exists() guard. PHP class hoisting registers the\n";
-	echo "     class in the symbol table at compile phase — BEFORE any line of code\n";
+	echo "     class in the symbol table at compile phase - BEFORE any line of code\n";
 	echo "     in the file executes. The guard ALWAYS sees the class as declared,\n";
 	echo "     so the file ALWAYS returns early, and any add_action() / register_*\n";
 	echo "     calls placed AFTER the class declaration NEVER register.\n\n";

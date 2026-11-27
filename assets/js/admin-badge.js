@@ -1,5 +1,5 @@
 /**
- * WB Gamification — Badge Admin Page
+ * WB Gamification - Badge Admin Page
  *
  * Handles:
  *  - Condition-type toggle (show/hide points/action/count rows)

@@ -1,5 +1,5 @@
 /**
- * WB Gamification — deactivation feedback (Plugins screen only).
+ * WB Gamification - deactivation feedback (Plugins screen only).
  *
  * Intercepts THIS plugin's Deactivate link, opens the survey <dialog>, and
  * records the reason before following through. Optional and resilient: Skip
@@ -74,7 +74,7 @@
 				proceed();
 			}
 		};
-		// Deactivate no matter what — never block on the collector.
+		// Deactivate no matter what - never block on the collector.
 		var timer = window.setTimeout( finish, 3000 );
 		fetch( cfg.ajaxUrl, {
 			method: 'POST',
@@ -90,7 +90,7 @@
 
 	document.addEventListener( 'click', function ( e ) {
 		if ( proceeding ) {
-			return; // Second pass — let it navigate.
+			return; // Second pass - let it navigate.
 		}
 		var a = e.target && e.target.closest ? e.target.closest( 'a' ) : null;
 		if ( ! a || ! isOurDeactivateLink( a ) ) {

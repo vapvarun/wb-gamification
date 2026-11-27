@@ -1,13 +1,13 @@
 <?php
 /**
- * WB Gamification — Learnomy profile integration.
+ * WB Gamification - Learnomy profile integration.
  *
  * Adds a single "My Achievements" link to the member's Learnomy account page,
  * mirroring the LearnDash profile integration. Learnomy fires
  * `learnomy_account_fields` in three templates: the logged-in account-details
  * page (real user id) and the two registration forms (user id 0, logged out).
  * The `is_user_logged_in()` guard limits the render to a single fire on the
- * account page. One unobtrusive CTA — the full detail lives on the Hub. Loads
+ * account page. One unobtrusive CTA - the full detail lives on the Hub. Loads
  * only when Learnomy is active.
  *
  * @package WB_Gamification

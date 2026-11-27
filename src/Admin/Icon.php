@@ -2,13 +2,13 @@
 /**
  * Lucide icon helper.
  *
- * Per `wp-plugin-development/references/admin-ux-rulebook.md` "Icons — Lucide
+ * Per `wp-plugin-development/references/admin-ux-rulebook.md` "Icons - Lucide
  * Only", admin UI uses Lucide icons (https://lucide.dev/icons/). This class
  * emits inline SVGs so we have zero dependency on a Lucide font / external
  * asset and icons inherit `currentColor` for theming.
  *
  * The bundled set covers every spot the WB Gamification admin currently uses
- * an icon. Add new entries to `paths()` as new pages need them — keep the
+ * an icon. Add new entries to `paths()` as new pages need them - keep the
  * `viewBox` at `0 0 24 24` to match Lucide's canonical output, and copy the
  * paths verbatim from lucide.dev.
  *
@@ -64,7 +64,7 @@ final class Icon {
 	}
 
 	/**
-	 * Echo helper — preferred in templates over `echo` wrapping.
+	 * Echo helper - preferred in templates over `echo` wrapping.
 	 *
 	 * @param string $name Icon slug.
 	 * @param array  $args See {@see Icon::svg()}.
@@ -74,7 +74,7 @@ final class Icon {
 	}
 
 	/**
-	 * Path table — Lucide icon name → SVG path markup.
+	 * Path table - Lucide icon name → SVG path markup.
 	 *
 	 * Every entry comes verbatim from https://lucide.dev/icons/{slug}.
 	 *

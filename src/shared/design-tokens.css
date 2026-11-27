@@ -19,7 +19,7 @@
 	--wb-gam-radius-xl: 18px;
 	--wb-gam-radius-full: 9999px;
 
-	/* Shadow presets (sm/md tuned to match assets/css/hub.css — softer than Tailwind defaults) */
+	/* Shadow presets (sm/md tuned to match assets/css/hub.css - softer than Tailwind defaults) */
 	--wb-gam-shadow-none: none;
 	--wb-gam-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
 	--wb-gam-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
@@ -48,14 +48,14 @@
 	--wb-gam-leading-normal: 1.5;
 	--wb-gam-leading-relaxed: 1.75;
 
-	/* Colors — neutral palette. Mapped to the host theme's color tokens so
+	/* Colors - neutral palette. Mapped to the host theme's color tokens so
 	 * the plugin follows the theme's light/dark mode automatically. BuddyX
 	 * and BuddyX Pro expose `--bx-color-*` and flip them under
 	 * :root[data-bx-mode="dark"] (and prefers-color-scheme); consuming those
 	 * here means cards/text/borders go dark with the theme. Any theme that
 	 * doesn't define `--bx-color-*` falls back to the original light values,
 	 * so behaviour is unchanged off the BuddyX family. Only NEUTRALS map to
-	 * the theme — brand/semantic colors (accent, success, fire, medals) stay
+	 * the theme - brand/semantic colors (accent, success, fire, medals) stay
 	 * constant across modes. Muted/light text use color-mix so they keep a
 	 * readable contrast against whichever surface the theme provides. */
 	--wb-gam-color-white: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #ffffff));
@@ -71,18 +71,18 @@
 	--wb-gam-color-surface-hover: var(--bx-color-bg-muted, var(--reign-site-secondary-bg-color, #f7f7fb));
 	--wb-gam-color-surface-alt: var(--bx-color-bg-muted, var(--reign-site-secondary-bg-color, #f1f5f9));
 	--wb-gam-color-page: var(--bx-color-bg-page, var(--reign-site-secondary-bg-color, #f8fafc));
-	/* Accent — follows the HOST THEME's link/accent colour before the brand purple.
+	/* Accent - follows the HOST THEME's link/accent colour before the brand purple.
 	   Chain: site-owner override (--wbcom-link-color, from Settings > Appearance)
 	   -> BuddyX (--bx-color-accent) -> Reign (--reign-site-button-bg-color) -> brand.
 	   Until 1.6.4 the chain stopped at --wbcom-link-color, so on Reign every accent
 	   in the plugin (buttons, icon chips, links) rendered brand purple while the
-	   rest of the page used Reign's blue — the plugin looked bolted on rather than
+	   rest of the page used Reign's blue - the plugin looked bolted on rather than
 	   part of the theme. */
 	--wb-gam-color-accent: var(--wbcom-link-color, var(--bn-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, #5b4cdb))));
 	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bn-accent-600, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, #4338b2))));
 	/* Tint backgrounds (icon chips, accent pills) are mixed OVER the theme
 	 * surface so they're a faint light tint in light mode and a faint dark
-	 * tint in dark mode — no opaque light blob on a dark card. */
+	 * tint in dark mode - no opaque light blob on a dark card. */
 	--wb-gam-color-accent-light: color-mix(in srgb, var(--wb-gam-color-accent) 14%, var(--wb-gam-color-surface));
 	/* Accent text (point numbers, labels) is the accent blended half-way into an ink: the theme's
 	 * text darkened toward black in light mode, the theme's light text in dark mode (redefined
@@ -99,7 +99,7 @@
 	/* Follows the theme's accent, like every other accent tint (was a fixed brand-purple rgba). */
 	--wb-gam-color-accent-ring: color-mix(in srgb, var(--wb-gam-color-accent) 20%, transparent);
 
-	/* Colors — semantic. The solid hue stays constant; the `-bg` tint is
+	/* Colors - semantic. The solid hue stays constant; the `-bg` tint is
 	 * mixed over the theme surface so status chips / podium rows / pills
 	 * adapt to dark mode instead of showing an opaque light blob. (The
 	 * `-soft` rgba variants were already surface-agnostic.) */
@@ -135,7 +135,7 @@
 	--wb-gam-color-info-bg: color-mix(in srgb, var(--wb-gam-color-info) 12%, var(--wb-gam-color-surface));
 	--wb-gam-color-info-soft: rgba(37, 99, 235, 0.10);
 
-	/* Extra neutrals — surface-muted is the "card lifted off a panel"
+	/* Extra neutrals - surface-muted is the "card lifted off a panel"
 	 * shade. Border-strong is the focus / hover stroke. Theme-mapped (see
 	 * the neutral palette note above). */
 	/* Rows on a card: the card's own surface, a step toward the ink. A theme's muted shade can sit on
@@ -153,7 +153,7 @@
 	--wb-gam-color-fire-soft: rgba(245, 158, 11, 0.15);
 	--wb-gam-color-fire-gradient: linear-gradient(90deg, #f97316 0%, #f59e0b 100%);
 
-	/* Streak heatmap — 4 intensity steps of the primary accent (purple
+	/* Streak heatmap - 4 intensity steps of the primary accent (purple
 	 * family). Cell-0 is the empty state (border-strength), 1→4 ramps
 	 * from soft to deepest. Kept distinct from the regular primary
 	 * palette so heatmap legibility doesn't depend on theme accent. */
@@ -203,7 +203,7 @@
 	/* ── Shorthand aliases ──────────────────────────────────────────
 	 * Per-block stylesheets in src/Blocks/<slug>/style.css consume
 	 * these short names. Defined here (not frontend.css) so the
-	 * `wb-gam-tokens` handle is sufficient — blocks no longer depend
+	 * `wb-gam-tokens` handle is sufficient - blocks no longer depend
 	 * on the legacy `wb-gamification` (frontend.css) bundle being
 	 * enqueued. */
 	--wb-gam-primary: var(--wb-gam-color-accent);
@@ -325,7 +325,7 @@
  * dark surface the brand purple is lightened so glyphs, links, the level
  * progress bar and accent pills keep their punch and contrast.
  *
- * Until 1.6.4 this block set the lightened purple UNCONDITIONALLY — a per-mode
+ * Until 1.6.4 this block set the lightened purple UNCONDITIONALLY - a per-mode
  * internal literal that overrode the whole theme chain. The result: on any dark
  * theme, every accent in the plugin painted brand purple regardless of what the
  * theme's accent was. On Reign (accent #97c0ee, a blue) the plugin's buttons and
@@ -333,11 +333,11 @@
  * on rather than part of the theme. A theme-mapped token that a per-mode literal
  * later overwrites is not theme-mapped at all.
  *
- * Chain, unchanged from :root — only the tail differs:
+ * Chain, unchanged from :root - only the tail differs:
  *   --wbcom-link-color            site-owner override (Settings > Appearance)
  *   --bx-color-accent            BuddyX / BuddyX Pro
  *   --reign-site-button-bg-color Reign (its ACCENT; --reign-site-link-color is
- *                                #ffffff in dark — that is link TEXT, not a brand
+ *                                #ffffff in dark - that is link TEXT, not a brand
  *                                colour, and would give white-on-white buttons)
  *   lightened brand purple       themes exposing no accent token
  *

@@ -8,7 +8,7 @@
  *
  * @var \WP_User $user           Recipient user object.
  * @var string   $name           Already-escaped display name.
- * @var string   $site_name      Site name (raw — escape on output).
+ * @var string   $site_name      Site name (raw - escape on output).
  * @var string   $site_url       Site home URL.
  * @var string   $hub_url           The member's Gamification Hub (panel when it fits); '' when no Hub page exists.
  * @var string   $old_level_name Previous level name (may be empty).
@@ -44,7 +44,7 @@ defined( 'ABSPATH' ) || exit;
 						<?php
 						printf(
 							/* translators: %s: new level name */
-							esc_html__( 'You just reached %s — congratulations!', 'wb-gamification' ),
+							esc_html__( 'You just reached %s - congratulations!', 'wb-gamification' ),
 							'<strong>' . esc_html( $new_level_name ) . '</strong>'
 						);
 						?>

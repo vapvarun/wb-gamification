@@ -9,7 +9,7 @@
  * (.post .entry-content a:not(.read-more)), add matching context.
  *
  * All resets use `inherit` so block CSS just needs to set properties on
- * the wrapper — children inherit naturally.
+ * the wrapper - children inherit naturally.
  */
 
 /* ── Links ───────────────────────────────────────────────── */

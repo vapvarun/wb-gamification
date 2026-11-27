@@ -13,7 +13,7 @@
  * All endpoints require manage_options.
  *
  * Rule types:
- *   badge_condition  — conditions evaluated by BadgeEngine after point awards
+ *   badge_condition  - conditions evaluated by BadgeEngine after point awards
  *     A rule is a GROUP: a match mode over a list of conditions.
  *       { "match": "all", "conditions": [
  *           { "type": "action_count", "action_id": "wp_publish_post", "count": 10 },
@@ -23,7 +23,7 @@
  *     group on the way in, so integrators calling it keep working and the database keeps one shape:
  *       { "condition_type": "point_milestone", "points": 500 }
  *
- *   points_multiplier — temporary or permanent per-action point multipliers
+ *   points_multiplier - temporary or permanent per-action point multipliers
  *     Config examples:
  *       { "action_id": "bp_activity_update", "multiplier": 2.0 }
  *       { "multiplier": 1.5, "starts_at": "2026-10-03", "ends_at": "2026-10-04" }
@@ -46,15 +46,15 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -519,7 +519,7 @@ class RulesController extends WP_REST_Controller {
 	 * Check if the current user can manage gamification rules.
 	 *
 	 * Rules govern points-per-action, level thresholds, and challenge
-	 * gating — a strictly broader surface than badge CRUD. Tightened
+	 * gating - a strictly broader surface than badge CRUD. Tightened
 	 * to require its own dedicated cap (wb_gam_manage_rules) so granting
 	 * a community manager the badge cap does NOT also expose rules.
 	 * Administrators (manage_options) keep working unchanged.

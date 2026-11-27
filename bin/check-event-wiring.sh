@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# bin/check-event-wiring.sh — assert critical internal events are both
+# bin/check-event-wiring.sh - assert critical internal events are both
 # fired AND subscribed.
 #
 # The redemption-email bug (Basecamp #9927383947) had this root cause:
 # RedemptionEngine::redeem() fires `wb_gam_points_redeemed` correctly,
-# but TransactionalEmailEngine forgot to subscribe — so the engine's
+# but TransactionalEmailEngine forgot to subscribe - so the engine's
 # UI promised "Check your email" while no email ever sent. Fix shipped
 # in commit ab7e79e.
 #
-# This gate maintains a list of "critical internal events" — hooks that
+# This gate maintains a list of "critical internal events" - hooks that
 # MUST have at least one in-plugin listener for the feature to work.
 # For each entry, the gate verifies:
 #   1. The event is fired somewhere via `do_action('<event>', ...)`.
@@ -18,7 +18,7 @@
 # with no listener is the redemption-email bug.
 #
 # Extension-point hooks (filters / fired-for-third-parties events) are
-# NOT in scope here — the wb_gamification_* surface intentionally fires
+# NOT in scope here - the wb_gamification_* surface intentionally fires
 # many hooks for ecosystem consumers. This gate is about contracts
 # inside the plugin where both sides exist in this repo.
 #
@@ -36,7 +36,7 @@ cd "$PLUGIN_DIR"
 
 RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; DIM=$'\033[2m'; RESET=$'\033[0m'
 
-# Critical events — both sides MUST exist. Add a new entry when a new
+# Critical events - both sides MUST exist. Add a new entry when a new
 # internal event-driven contract lands. Comment column is for grep
 # friendliness, not parsed.
 CRITICAL_EVENTS=(
@@ -44,7 +44,7 @@ CRITICAL_EVENTS=(
   "wb_gam_level_changed"               # triggers level-up email + leaderboard cache bust
   "wb_gam_badge_awarded"               # triggers badge-earned email + OG share image
   "wb_gam_challenge_completed"         # triggers challenge-completed email
-  "wb_gam_points_redeemed"             # triggers redemption-confirmed email — was the bug
+  "wb_gam_points_redeemed"             # triggers redemption-confirmed email - was the bug
   "wb_gam_streak_milestone"            # triggers streak milestone notice
   "wb_gam_kudos_given"                 # cooldown enforcement + notification
   "wb_gam_points_awarded"              # triggers leaderboard cache invalidation
@@ -79,11 +79,11 @@ for event in "${CRITICAL_EVENTS[@]}"; do
 done
 
 if [ "$FAILED" -eq 0 ]; then
-  printf '%s\n' "${GREEN}✓${RESET}  Event-wiring gate green — ${#CRITICAL_EVENTS[@]} critical event(s) have firers + listeners."
+  printf '%s\n' "${GREEN}✓${RESET}  Event-wiring gate green - ${#CRITICAL_EVENTS[@]} critical event(s) have firers + listeners."
   exit 0
 fi
 
-printf '%s\n' "${RED}✗${RESET}  Event-wiring gate failed — critical contracts broken:"
+printf '%s\n' "${RED}✗${RESET}  Event-wiring gate failed - critical contracts broken:"
 
 if [ ${#MISSING_FIRER[@]} -gt 0 ]; then
   echo "    Events declared critical but never fired:"

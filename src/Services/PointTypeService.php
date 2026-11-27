@@ -2,13 +2,13 @@
 /**
  * PointTypeService
  *
- * Business logic for point types — validation, default-type invariants,
+ * Business logic for point types - validation, default-type invariants,
  * and the resolve() helper that callers use to coerce an arbitrary input
  * to a known slug (or fall back to the default).
  *
  * Per the canonical Wbcom 7-layer architecture (`plan/ARCHITECTURE.md`),
  * Service classes own business logic. They depend on Repository for SQL
- * and return structured arrays — never echo HTML, never run wp_die.
+ * and return structured arrays - never echo HTML, never run wp_die.
  *
  * @package WB_Gamification
  * @since   1.0.0
@@ -44,12 +44,12 @@ final class PointTypeService {
 	}
 
 	/**
-	 * Return the registered slug list — flat array of normalised
+	 * Return the registered slug list - flat array of normalised
 	 * `point_type` slugs. Use this for input validation when a caller
 	 * needs to reject unknown slugs explicitly (rather than relying
 	 * on {@see resolve()}'s silent fallback to the default slug).
 	 *
-	 * Added 1.4.1 — PointsController::award uses this to fail loudly
+	 * Added 1.4.1 - PointsController::award uses this to fail loudly
 	 * on unknown currency input instead of silently awarding the
 	 * primary currency. See audit/DATA-FLOW-ADMIN-REST-2026-05-27.md §G13.
 	 *
@@ -65,7 +65,7 @@ final class PointTypeService {
 	/**
 	 * Resolve an arbitrary input (slug string, null, '') to a known slug.
 	 *
-	 * Always returns a valid slug — callers can pass user input directly
+	 * Always returns a valid slug - callers can pass user input directly
 	 * and trust the result. Resolution order:
 	 *   1. Provided slug, if it exists in the catalogue
 	 *   2. Default slug (`is_default = 1`)

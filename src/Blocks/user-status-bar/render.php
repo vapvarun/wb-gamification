@@ -1,6 +1,6 @@
 <?php
 /**
- * User Status Bar block — server render.
+ * User Status Bar block - server render.
  *
  * Renders the markup; the heartbeat broker (assets/js/heartbeat.js) feeds
  * live data into the data-* hooks at runtime. Empty values are server-
@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Block render.php files are invoked from inside render_callback by the
 // WP block registrar, so every $wb_gam_* in this file is function-scoped,
-// not global. PrefixAllGlobals can't tell — its `phpcs:disable` here is
+// not global. PrefixAllGlobals can't tell - its `phpcs:disable` here is
 // the WP-standard way to silence the false positive. The plugin's own
 // .phpcs.xml already declares `wb_gam` as a valid prefix; this annotation
 // extends that signal to Plugin Check's internal phpcs invocation.
@@ -87,7 +87,7 @@ $wb_gam_wrapper = get_block_wrapper_attributes(
 wp_enqueue_style( 'wb-gam-tokens' );
 
 // The shared top-strip measurement. A floating bar has to be told what is already at the top of the
-// page — it used to hardcode `top: 48px` (the admin-bar height) and expose a CSS variable inviting
+// page - it used to hardcode `top: 48px` (the admin-bar height) and expose a CSS variable inviting
 // THEMES to fix our positioning for us. None do, including our own: on BuddyX the bar landed on top
 // of the site's nav. view.js now measures and sets that variable itself, and this is what it needs.
 wp_enqueue_script( 'wb-gamification-top-offset' );

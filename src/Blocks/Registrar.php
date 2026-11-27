@@ -9,7 +9,7 @@
  * blocks migrate; the Registrar takes ownership of every slug listed
  * under `build/Blocks/`.
  *
- * Capital `Blocks/` is intentional — it matches both the `WBGam\Blocks\`
+ * Capital `Blocks/` is intentional - it matches both the `WBGam\Blocks\`
  * PSR-4 namespace and works on case-sensitive Linux filesystems.
  *
  * @see plans/WBCOM-BLOCK-STANDARD-MIGRATION.md Phase B.6
@@ -21,15 +21,15 @@ namespace WBGam\Blocks;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+//   - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 //     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 //     Plugin Check auto-detects `wb_gamification` from the text-domain header
 //     and doesn't share the .phpcs.xml prefix list; hooks like
 //     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+//   - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 //     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 //   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 //     table work. Table names are interpolated from `{$wpdb->prefix}` plus
 //     literal constants (no user input); user-supplied values pass through
 //     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -60,7 +60,7 @@ final class Registrar {
 	 * Construct the registrar with the directory it should scan.
 	 *
 	 * The directory is `<build_dir>/Blocks/` to match the PSR-4 layout
-	 * — `src/Blocks/<slug>/block.json` compiles to
+	 * - `src/Blocks/<slug>/block.json` compiles to
 	 * `build/Blocks/<slug>/block.json`. The path is intentionally
 	 * case-sensitive (matters on Linux production filesystems).
 	 *

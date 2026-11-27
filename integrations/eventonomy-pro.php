@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Eventonomy Pro Integration Manifest
+ * WB Gamification - Eventonomy Pro Integration Manifest
  *
  * Auto-loaded by ManifestLoader when Eventonomy Pro is active.
  * No dependency on WB Gamification at load time.

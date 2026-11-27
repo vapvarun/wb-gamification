@@ -1,4 +1,4 @@
-/*! streaks-rtl.css — auto-generated from streaks.css by bin/build-rtl.js. Do not edit by hand. */
+/*! streaks-rtl.css - auto-generated from streaks.css by bin/build-rtl.js. Do not edit by hand. */
 /**
  * WB Gamification - Streaks moderation page.
  * Styles the server-rendered streak roster (src/Admin/StreaksPage.php) +
@@ -58,7 +58,7 @@
 	white-space: nowrap;
 }
 
-/* Inline editor (admin-streaks.js) — replaces the action buttons in-row so no
+/* Inline editor (admin-streaks.js) - replaces the action buttons in-row so no
  * native prompt/confirm is used. */
 .wb-gam-streak-editor {
 	display: flex;
@@ -76,7 +76,7 @@
 	color: var(--wb-gam-color-text-muted, #6b7280);
 }
 
-/* Warning-toned badge (grace used) — mirrors wbgam-badge--success shape. */
+/* Warning-toned badge (grace used) - mirrors wbgam-badge--success shape. */
 .wbgam-badge--warning {
 	background: var(--wb-gam-color-warning-bg, #fdf6ec);
 	color: var(--wb-gam-color-warning-strong, #b45309);

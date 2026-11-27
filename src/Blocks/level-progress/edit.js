@@ -1,5 +1,5 @@
 /**
- * Level Progress — editor surface.
+ * Level Progress - editor surface.
  */
 
 import { __ } from '@wordpress/i18n';

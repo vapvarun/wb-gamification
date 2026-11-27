@@ -21,15 +21,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -56,7 +56,7 @@ final class StatusRetentionEngine {
 
 	/**
 	 * Members processed per tick. Bounds the meta prime, the IN() list, and the
-	 * per-member loop — all three of which were previously sized by the member base.
+	 * per-member loop - all three of which were previously sized by the member base.
 	 *
 	 * @since 1.6.4
 	 * @var int
@@ -68,7 +68,7 @@ final class StatusRetentionEngine {
 	 */
 	public static function init(): void {
 		add_action( self::CRON_HOOK, array( __CLASS__, 'run' ) );
-		// Paged continuation — each page schedules the next until the keyset drains.
+		// Paged continuation - each page schedules the next until the keyset drains.
 		add_action( self::AS_PAGE_HOOK, array( __CLASS__, 'run' ) );
 	}
 
@@ -132,17 +132,17 @@ final class StatusRetentionEngine {
 		// Before 1.6.4 it did not, and each of these alone was fatal at 100k:
 		//
 		// 1. `SELECT DISTINCT user_id ... WHERE created_at >= week_start` with no
-		// LIMIT — every active member into one PHP array.
-		// 2. `update_meta_cache( 'user', $active_users )` on that whole array —
+		// LIMIT - every active member into one PHP array.
+		// 2. `update_meta_cache( 'user', $active_users )` on that whole array -
 		// SELECT * FROM wp_usermeta WHERE user_id IN (...tens of thousands...),
 		// loading EVERY meta row for EVERY active member (~25 each) into memory.
 		// 3. A `WHERE user_id IN ($placeholders)` aggregate built from one %d per
-		// member — a multi-hundred-KB prepared statement that breaks on
+		// member - a multi-hundred-KB prepared statement that breaks on
 		// max_allowed_packet rather than merely running slowly.
 		// 4. Then, per member: PointsEngine::get_total() (a query each, despite
 		// prime_totals() existing for exactly this) and
 		// LevelEngine::get_level_for_user(), which does up to TWO
-		// update_user_meta WRITES on a read path — turning a read loop over the
+		// update_user_meta WRITES on a read path - turning a read loop over the
 		// member base into a write loop.
 		//
 		// Now: PAGE_SIZE members per tick, meta primed for the page only, one
@@ -200,7 +200,7 @@ final class StatusRetentionEngine {
 				continue;
 			}
 
-			// Primed by prime_totals() — a cache hit, not a query each.
+			// Primed by prime_totals() - a cache hit, not a query each.
 			$total = PointsEngine::get_total( $user_id );
 
 			// PURE resolvers: they take the total we already have and, unlike
@@ -232,7 +232,7 @@ final class StatusRetentionEngine {
 			return;
 		}
 
-		// More members to go — hand the next page to Action Scheduler rather than
+		// More members to go - hand the next page to Action Scheduler rather than
 		// looping here, so no single tick carries the whole site.
 		//
 		// GUARDED, because AS_PAGE_HOOK routes straight back into run(): this method
@@ -256,7 +256,7 @@ final class StatusRetentionEngine {
 			return;
 		}
 
-		// No Action Scheduler — continue inline, still bounded per iteration.
+		// No Action Scheduler - continue inline, still bounded per iteration.
 		self::run( $last );
 	}
 

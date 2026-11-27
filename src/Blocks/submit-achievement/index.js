@@ -1,5 +1,5 @@
 /**
- * Submit Achievement — block registration entry.
+ * Submit Achievement - block registration entry.
  */
 
 import { registerBlockType } from '@wordpress/blocks';

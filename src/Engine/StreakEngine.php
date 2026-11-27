@@ -2,7 +2,7 @@
 /**
  * WB Gamification Streak Engine
  *
- * Tracks activity streaks per member — timezone-aware, with a configurable
+ * Tracks activity streaks per member - timezone-aware, with a configurable
  * grace period so life disruptions don't destroy weeks of progress.
  *
  * Rules:
@@ -30,15 +30,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -76,7 +76,7 @@ final class StreakEngine {
 		$tz    = self::get_timezone( $user_id, $data['timezone'] );
 		$today = self::today( $tz );
 
-		// Already recorded activity today — nothing to do.
+		// Already recorded activity today - nothing to do.
 		if ( $data['last_active'] === $today ) {
 			return;
 		}
@@ -87,15 +87,15 @@ final class StreakEngine {
 			: null;
 
 		if ( null === $gap ) {
-			// First ever activity — start streak at 1.
+			// First ever activity - start streak at 1.
 			$new_streak = 1;
 			$grace_used = 0;
 		} elseif ( 1 === $gap ) {
-			// Consecutive day — extend streak, reset grace availability.
+			// Consecutive day - extend streak, reset grace availability.
 			$new_streak = $data['current_streak'] + 1;
 			$grace_used = 0;
 		} elseif ( self::is_live( $gap, $data['grace_used'], $grace_days ) ) {
-			// Within grace window and grace not yet used — extend streak, burn grace.
+			// Within grace window and grace not yet used - extend streak, burn grace.
 			// $gap is the day difference from the last active day, so a SINGLE missed
 			// day is $gap === 2. grace_days counts MISSED days the member may skip, so
 			// the allowed gap is grace_days + 1 (grace_days = 1 forgives one missed
@@ -104,7 +104,7 @@ final class StreakEngine {
 			$new_streak = $data['current_streak'] + 1;
 			$grace_used = 1;
 		} else {
-			// Gap too large or grace exhausted — reset.
+			// Gap too large or grace exhausted - reset.
 			$old_streak = (int) $data['current_streak'];
 			$new_streak = 1;
 			$grace_used = 0;
@@ -130,7 +130,7 @@ final class StreakEngine {
 		wp_cache_delete( "wb_gam_streak_{$user_id}", self::CACHE_GROUP );
 
 		/**
-		 * Fires whenever a member's streak count changes — EVERY day, not only at a milestone.
+		 * Fires whenever a member's streak count changes - EVERY day, not only at a milestone.
 		 *
 		 * `wb_gam_streak_milestone` fires at 7, 14, 30, 60, 100, 180 and 365 only, because those
 		 * are the tiers that earn a celebration and a bonus. That is the right list for a
@@ -138,8 +138,8 @@ final class StreakEngine {
 		 * asks "has this member kept a 5-day streak?", the only event that could answer it fired
 		 * on day 7. The badge awarded two days late and looked broken.
 		 *
-		 * A streak changes at most once per member per day — record_activity() returns early when
-		 * today is already recorded — so this is a bounded signal, not a hot path.
+		 * A streak changes at most once per member per day - record_activity() returns early when
+		 * today is already recorded - so this is a bounded signal, not a hot path.
 		 *
 		 * @since 1.6.4
 		 * @param int $user_id    Member whose streak changed.
@@ -285,7 +285,7 @@ final class StreakEngine {
 	// ── Admin read API (roster) ──────────────────────────────────────────────────
 
 	/**
-	 * Columns the admin roster may sort by (whitelist — guards the ORDER BY).
+	 * Columns the admin roster may sort by (whitelist - guards the ORDER BY).
 	 *
 	 * @var array<int, string>
 	 */
@@ -324,7 +324,7 @@ final class StreakEngine {
 		$per_page = max( 1, min( 200, $per_page ) );
 		$offset   = max( 0, $offset );
 
-		// $orderby is whitelisted above; $order is a literal ASC|DESC — neither is
+		// $orderby is whitelisted above; $order is a literal ASC|DESC - neither is
 		// user input by the time it reaches the query. LIMIT/OFFSET are prepared, and
 		// live_sql() returns a fragment already run through $wpdb->prepare().
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
@@ -368,7 +368,7 @@ final class StreakEngine {
 	 * Administratively set a member's streak values (support/moderation).
 	 *
 	 * Unlike record_activity(), this bypasses the day-progression logic and
-	 * writes the given values verbatim — for fixing a member's broken streak
+	 * writes the given values verbatim - for fixing a member's broken streak
 	 * from wp-admin or the REST API. NEVER a silent mutation: it persists a
 	 * `streak_adjusted` row to the immutable wb_gam_events log (surfaced by
 	 * GET /members/{id}/events) carrying the before/after values, the reason,
@@ -388,7 +388,7 @@ final class StreakEngine {
 
 		$new_current = null !== $current ? max( 0, $current ) : $before['current_streak'];
 		$new_longest = null !== $longest ? max( 0, $longest ) : max( $before['longest_streak'], $new_current );
-		// Longest can never be below the current streak — keep the invariant.
+		// Longest can never be below the current streak - keep the invariant.
 		$new_longest = max( $new_longest, $new_current );
 
 		self::upsert_row(
@@ -423,7 +423,7 @@ final class StreakEngine {
 	 * Administratively reset a member's current streak to zero.
 	 *
 	 * Clears current_streak, last_active and the grace flag so the next
-	 * activity starts a fresh streak at 1. longest_streak is PRESERVED — it is
+	 * activity starts a fresh streak at 1. longest_streak is PRESERVED - it is
 	 * an all-time record, not part of the active run. Audited identically to
 	 * admin_set() via a `streak_reset` event + `wb_gam_streak_reset` action.
 	 *
@@ -512,7 +512,7 @@ final class StreakEngine {
 		 * BP integration posts to activity stream.
 		 *
 		 * NOTE: this hook used to fire TWICE (a second `do_action` followed
-		 * with the same args) — milestones produced duplicate toasts +
+		 * with the same args) - milestones produced duplicate toasts +
 		 * duplicate activity-stream posts. The duplicate was caught by the
 		 * 2026-05-27 data-flow audit and removed; the merged docblock here
 		 * preserves both `@since` tags from the original twin declarations.
@@ -649,12 +649,12 @@ final class StreakEngine {
 			$tz = get_option( 'timezone_string', 'UTC' );
 		}
 
-		// Validate — DateTimeZone constructor throws for invalid strings.
+		// Validate - DateTimeZone constructor throws for invalid strings.
 		try {
 			new \DateTimeZone( $tz );
 		} catch ( \Exception $e ) {
 			Log::error(
-				'StreakEngine — invalid timezone, falling back to UTC',
+				'StreakEngine - invalid timezone, falling back to UTC',
 				array(
 					'tz'    => $tz,
 					'error' => $e->getMessage(),
@@ -678,7 +678,7 @@ final class StreakEngine {
 			return $dt->format( 'Y-m-d' );
 		} catch ( \Exception $e ) {
 			Log::error(
-				'StreakEngine — date construction failed, falling back to UTC today',
+				'StreakEngine - date construction failed, falling back to UTC today',
 				array(
 					'tz'    => $tz,
 					'error' => $e->getMessage(),
@@ -707,7 +707,7 @@ final class StreakEngine {
 			return abs( $diff->days );
 		} catch ( \Exception $e ) {
 			Log::error(
-				'StreakEngine — day-diff failed, returning 999 to force streak reset (corrupt date stored?)',
+				'StreakEngine - day-diff failed, returning 999 to force streak reset (corrupt date stored?)',
 				array(
 					'from'  => $from,
 					'to'    => $to,

@@ -113,7 +113,7 @@ final class CohortSettingsPage {
 	 */
 	public static function register_page(): void {
 		// Cohort Leagues moved into the main Settings page as a tab in 1.0.0
-		// (admin-ux-rulebook Rule 1 — CONFIG-only pages are settings tabs,
+		// (admin-ux-rulebook Rule 1 - CONFIG-only pages are settings tabs,
 		// not separate submenus). Kept method as a no-op so any third-party
 		// plugin that hooks 'admin_menu' depending on this submenu doesn't
 		// 500 on the first request after upgrade.
@@ -158,7 +158,7 @@ final class CohortSettingsPage {
 	}
 
 	/**
-	 * Render only the body of the cohort settings page — the cards, no
+	 * Render only the body of the cohort settings page - the cards, no
 	 * outer `<div class="wrap">` and no page header. Designed for embedding
 	 * inside the main Settings sidebar shell as a tab section.
 	 *

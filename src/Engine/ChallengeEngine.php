@@ -3,12 +3,12 @@
  * WB Gamification Challenge Engine
  *
  * Tracks progress toward time-bound or open-ended challenges.
- * Integrated into the event pipeline — checks challenge progress after
+ * Integrated into the event pipeline - checks challenge progress after
  * every point award without N+1 queries.
  *
  * Challenge types:
- *   individual — one member achieves N completions of an action
- *   team       — a BP group collectively achieves N completions together
+ *   individual - one member achieves N completions of an action
+ *   team       - a BP group collectively achieves N completions together
  *
  * Progress flow:
  *   1. `wb_gam_points_awarded` fires after every award.
@@ -42,15 +42,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -222,7 +222,7 @@ final class ChallengeEngine {
 		// Increment this member's personal contribution.
 		$existing = self::get_log_row( $user_id, (int) $challenge['id'] );
 
-		// Already marked complete for this user — skip before upsert to preserve completed_at.
+		// Already marked complete for this user - skip before upsert to preserve completed_at.
 		if ( $existing && null !== $existing['completed_at'] ) {
 			return;
 		}
@@ -269,7 +269,7 @@ final class ChallengeEngine {
 			array( '%d', '%d' )
 		);
 
-		// Award bonus points — deferred via Engine::process_async so we
+		// Award bonus points - deferred via Engine::process_async so we
 		// don't recurse into our own listener.
 		//
 		// The original synchronous Engine::process() call ran inside the

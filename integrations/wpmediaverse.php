@@ -1,9 +1,9 @@
 <?php
 /**
- * WB Gamification — WPMediaVerse Integration Manifest
+ * WB Gamification - WPMediaVerse Integration Manifest
  *
  * Auto-loaded by ManifestLoader. Provides dedicated gamification support for
- * both WPMediaVerse (Free) and WPMediaVerse Pro from inside this plugin —
+ * both WPMediaVerse (Free) and WPMediaVerse Pro from inside this plugin -
  * neither MVS plugin needs to ship its own wb-gamification.php manifest.
  *
  * Gating:
@@ -11,10 +11,10 @@
  *   - Pro triggers load when MVS_PRO_VERSION is ALSO defined (Pro is active).
  *
  * Extension surface:
- *   - Filter `wb_gam_wpmediaverse_triggers` — final triggers array. Use to
+ *   - Filter `wb_gam_wpmediaverse_triggers` - final triggers array. Use to
  *     add, remove, or tune triggers from Free, Pro, or any third-party plugin.
- *   - Filter `wb_gam_wpmediaverse_free_triggers` — Free-only subset.
- *   - Filter `wb_gam_wpmediaverse_pro_triggers` — Pro-only subset (only
+ *   - Filter `wb_gam_wpmediaverse_free_triggers` - Free-only subset.
+ *   - Filter `wb_gam_wpmediaverse_pro_triggers` - Pro-only subset (only
  *     applied when Pro is active).
  *
  * @package WB_Gamification
@@ -22,15 +22,15 @@
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -49,7 +49,7 @@ if ( ! defined( 'MVS_VERSION' ) ) {
 // the in-tree manifest below uses the rank-based mvs_challenge_winner that
 // the same Pro plugin >= 1.2.3 fires through mvs_challenge_winner_named.
 // ManifestLoader silently skips duplicates from third-party files so the
-// in-tree definition always wins — bundled-Pro's 3 legacy ids still register
+// in-tree definition always wins - bundled-Pro's 3 legacy ids still register
 // (in-tree doesn't have them) so members on the older Pro release continue
 // to earn for top-3 finishes until they upgrade.
 $pro_active = defined( 'MVS_PRO_VERSION' );
@@ -60,7 +60,7 @@ if ( ! function_exists( 'wb_gam_mvs_media_author' ) ) {
 	 *
 	 * Used by reaction/comment/favorite triggers where the hook fires with the
 	 * *actor* user_id but the gamification award goes to the media *owner*.
-	 * The MediaRepository service is a non-static class on the container —
+	 * The MediaRepository service is a non-static class on the container -
 	 * resolving through the container is the documented Pro-boundary pattern.
 	 *
 	 * @param int $media_id Media post ID.
@@ -313,7 +313,7 @@ if ( $pro_active ) {
 
 		/*
 		 * ---------------------------------------------------------------
-		 * Competition (Pro — battles, challenges, tournaments)
+		 * Competition (Pro - battles, challenges, tournaments)
 		 * ---------------------------------------------------------------
 		 */
 
@@ -394,7 +394,7 @@ if ( $pro_active ) {
 			'category'          => 'competition',
 			'icon'              => 'icon-trophy',
 			'repeatable'        => true,
-			// Winners expect the award the moment the result is announced —
+			// Winners expect the award the moment the result is announced -
 			// low-frequency, finalization-driven: award in-request, not queued.
 			'async'             => false,
 		),
@@ -419,7 +419,7 @@ if ( $pro_active ) {
 			'category'          => 'competition',
 			'icon'              => 'icon-shield',
 			'repeatable'        => true,
-			// Winners expect the award the moment the result is announced —
+			// Winners expect the award the moment the result is announced -
 			// low-frequency, finalization-driven: award in-request, not queued.
 			'async'             => false,
 		),
@@ -444,7 +444,7 @@ if ( $pro_active ) {
 			'category'          => 'competition',
 			'icon'              => 'icon-star',
 			'repeatable'        => true,
-			// Winners expect the award the moment the result is announced —
+			// Winners expect the award the moment the result is announced -
 			// low-frequency, finalization-driven: award in-request, not queued.
 			'async'             => false,
 		),
@@ -494,7 +494,7 @@ $triggers = array_merge( $free_triggers, $pro_triggers );
 /**
  * Filters the full WPMediaVerse trigger set (Free + Pro, post-merge).
  *
- * Final extension point — use this to add, remove, or modify any trigger
+ * Final extension point - use this to add, remove, or modify any trigger
  * regardless of whether it came from the Free or Pro set.
  *
  * @since 1.0.0

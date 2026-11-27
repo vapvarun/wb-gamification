@@ -1,6 +1,6 @@
-/*! challenges-rtl.css — auto-generated from challenges.css by bin/build-rtl.js. Do not edit by hand. */
+/*! challenges-rtl.css - auto-generated from challenges.css by bin/build-rtl.js. Do not edit by hand. */
 /**
- * WB Gamification — Challenge Manager Admin Page CSS
+ * WB Gamification - Challenge Manager Admin Page CSS
  * =====================================================================
  * Per-page styles for `WBGam\Admin\ChallengeManagerPage` (menu slug:
  * `wb-gam-challenges`). Manages individual-user challenges (title /
@@ -14,7 +14,7 @@
  * Migration source: page-specific field markers + .wbgam-tabs (shared
  * with CommunityChallengesPage but kept here because both pages
  * enqueue their own per-page sheets and tabs are stylistic, not
- * structural — duplicating the rule is cheaper than promoting it).
+ * structural - duplicating the rule is cheaper than promoting it).
  *
  * @package WB_Gamification
  */
@@ -26,7 +26,7 @@
 .wb-gam-challenge-starts,
 .wb-gam-challenge-target,
 .wb-gam-challenge-title {
-	/* JS-bound challenge form inputs — visuals from .wbgam-input/.wbgam-select. */
+	/* JS-bound challenge form inputs - visuals from .wbgam-input/.wbgam-select. */
 }
 
 /* ==========================================================================

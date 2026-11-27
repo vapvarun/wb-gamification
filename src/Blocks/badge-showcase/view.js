@@ -1,10 +1,10 @@
 /**
- * Badge Showcase — filter tabs (All / Earned / Locked).
+ * Badge Showcase - filter tabs (All / Earned / Locked).
  *
  * Not a modal. The badge-showcase block renders a `role="tablist"`
  * navigation that switches between three filter views in-place; there
  * is no full-screen / overlay surface to dismiss. ESC / focus-trap
- * a11y handling is therefore not applicable — the tabs are native
+ * a11y handling is therefore not applicable - the tabs are native
  * <button role="tab"> elements with keyboard parity guaranteed by the
  * browser.
  *

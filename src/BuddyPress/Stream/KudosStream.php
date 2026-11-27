@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — BuddyPress kudos_given stream poster.
+ * WB Gamification - BuddyPress kudos_given stream poster.
  *
  * KudosEngine fires:
  *   do_action( 'wb_gam_kudos_given', $giver_id, $receiver_id, $message, $kudos_id )

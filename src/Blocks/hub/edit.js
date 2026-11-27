@@ -46,7 +46,7 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 					icon={ starFilled }
 					title={ __( 'Gamification Hub', 'wb-gamification' ) }
 					description={ __(
-						'Member dashboard — points, level, badges, challenges, leaderboard, and kudos in a connected card layout.',
+						'Member dashboard - points, level, badges, challenges, leaderboard, and kudos in a connected card layout.',
 						'wb-gamification'
 					) }
 					status={ __(

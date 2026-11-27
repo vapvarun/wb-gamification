@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — competitor import admin page.
+ * WB Gamification - competitor import admin page.
  *
  * Detects installed source plugins with data, lets a manager preview the
  * migration (dry-run reconciliation, no writes) and then run it. The heavy

@@ -3,13 +3,13 @@
  * Leaderboard nudge email template.
  *
  * Override by copying this file to YOUR-THEME/wb-gamification/emails/leaderboard-nudge.php
- * — see the Email::render() helper for resolution order.
+ * - see the Email::render() helper for resolution order.
  *
  * Available variables (extracted into local scope):
  *
  * @var \WP_User $user      Recipient user object.
  * @var string   $name      Escaped display name.
- * @var string   $site_name Site name (raw — escape on output).
+ * @var string   $site_name Site name (raw - escape on output).
  * @var string   $site_url  Site home URL.
  * @var string   $hub_url           The member's Gamification Hub (panel when it fits); '' when no Hub page exists.
  * @var string   $message   Pre-built nudge sentence (e.g. "You're #3 this week with 240 points.").

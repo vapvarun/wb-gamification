@@ -1,5 +1,5 @@
 /**
- * WB Gamification — API Keys Admin Page CSS
+ * WB Gamification - API Keys Admin Page CSS
  * =====================================================================
  * Per-page styles for `WBGam\Admin\ApiKeysPage` (menu slug:
  * `wb-gam-api-keys`). Lists/creates/revokes REST API keys.
@@ -18,7 +18,7 @@
 /* Root wrappers + JS hook markers. */
 .wb-gam-admin-api-keys,
 .wb-gam-api-keys-root {
-	/* Wrapper markers — visuals from .wbgam-wrap + .wbgam-card. */
+	/* Wrapper markers - visuals from .wbgam-wrap + .wbgam-card. */
 }
 
 .wb-gam-api-keys-card {
@@ -31,7 +31,7 @@
 }
 
 .wb-gam-api-keys-empty {
-	/* Empty-state marker — visuals from .wbgam-empty. */
+	/* Empty-state marker - visuals from .wbgam-empty. */
 }
 
 .wb-gam-api-keys-tbody {
@@ -39,7 +39,7 @@
 }
 
 .wb-gam-api-key-action {
-	/* Per-row action button marker — visuals from .wbgam-btn. */
+	/* Per-row action button marker - visuals from .wbgam-btn. */
 }
 
 /* ==========================================================================
@@ -70,7 +70,7 @@
 
 /* Banner dismiss button (page-specific instance). */
 .wb-gam-banner-dismiss {
-	/* JS hook — visuals from .wbgam-banner__dismiss. */
+	/* JS hook - visuals from .wbgam-banner__dismiss. */
 }
 
 /* ==========================================================================

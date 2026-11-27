@@ -5,7 +5,7 @@
  * Adds "Point Types" submenu under WB Gamification.
  * Manages the catalogue of point currencies (Points / XP / Coins / ...).
  *
- * REST-driven via the generic `assets/js/admin-rest-form.js` driver — no
+ * REST-driven via the generic `assets/js/admin-rest-form.js` driver - no
  * per-page JS. Form attributes route through `wbGamPointTypesSettings`
  * (localised below) to `/wb-gamification/v1/point-types`.
  *
@@ -92,7 +92,7 @@ final class PointTypesPage {
 	}
 
 	/**
-	 * Render the page — list of existing types + create form.
+	 * Render the page - list of existing types + create form.
 	 */
 	public static function render_page(): void {
 		$service = new PointTypeService();

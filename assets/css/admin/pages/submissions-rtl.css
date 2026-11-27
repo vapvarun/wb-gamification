@@ -1,6 +1,6 @@
-/*! submissions-rtl.css — auto-generated from submissions.css by bin/build-rtl.js. Do not edit by hand. */
+/*! submissions-rtl.css - auto-generated from submissions.css by bin/build-rtl.js. Do not edit by hand. */
 /**
- * WB Gamification — Submissions Admin Page CSS
+ * WB Gamification - Submissions Admin Page CSS
  * =====================================================================
  * Per-page styles for `WBGam\Admin\SubmissionsPage` (menu slug:
  * `wb-gam-submissions`). UGC moderation queue:
@@ -13,7 +13,7 @@
  *
  * Token policy: `var(--wbgam-*)` only.
  *
- * Migration source: admin-core.css §25 (Submissions admin — inline
+ * Migration source: admin-core.css §25 (Submissions admin - inline
  * error + reject-reason editor + thumbnail strip).
  *
  * @package WB_Gamification
@@ -22,13 +22,13 @@
 /* Wrapper markers. */
 .wb-gam-submissions,
 .wb-gam-submissions-admin {
-	/* Container — visuals from .wbgam-wrap + .wbgam-card. */
+	/* Container - visuals from .wbgam-wrap + .wbgam-card. */
 }
 
 /* Per-row action buttons. */
 .wb-gam-submission-approve,
 .wb-gam-submission-reject {
-	/* Button markers — visuals from .wbgam-btn. */
+	/* Button markers - visuals from .wbgam-btn. */
 }
 
 /* Inline error feedback under a submission row. */

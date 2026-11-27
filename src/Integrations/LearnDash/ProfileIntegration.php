@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — LearnDash profile integration.
+ * WB Gamification - LearnDash profile integration.
  *
  * LearnDash only exposes a "before template" hook on its profile, so rather
  * than stacking stat blocks or columns on the course profile, we add a single

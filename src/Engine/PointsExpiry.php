@@ -79,7 +79,7 @@ final class PointsExpiry {
 		);
 		// Arm the recurring event on init, never at plugins_loaded: wp_schedule_event
 		// resolves schedules via wp_get_schedules(), which fires the
-		// cron_schedules filter — that must not run before init on WP 6.7+.
+		// cron_schedules filter - that must not run before init on WP 6.7+.
 		if ( did_action( 'init' ) ) {
 			self::maybe_schedule();
 		} else {
@@ -88,7 +88,7 @@ final class PointsExpiry {
 	}
 
 	/**
-	 * Arm the recurring event if not already scheduled. Idempotent — safe to
+	 * Arm the recurring event if not already scheduled. Idempotent - safe to
 	 * call on every init.
 	 */
 	public static function maybe_schedule(): void {

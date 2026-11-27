@@ -84,7 +84,7 @@ class LeaderboardController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /leaderboard/group/{group_id} — scoped to a BuddyPress group.
+		// GET /leaderboard/group/{group_id} - scoped to a BuddyPress group.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/group/(?P<group_id>[\d]+)',
@@ -108,7 +108,7 @@ class LeaderboardController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /leaderboard/me — current user's private rank.
+		// GET /leaderboard/me - current user's private rank.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/me',

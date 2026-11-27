@@ -1,6 +1,6 @@
-/*! community-challenges-rtl.css — auto-generated from community-challenges.css by bin/build-rtl.js. Do not edit by hand. */
+/*! community-challenges-rtl.css - auto-generated from community-challenges.css by bin/build-rtl.js. Do not edit by hand. */
 /**
- * WB Gamification — Community Challenges Admin Page CSS
+ * WB Gamification - Community Challenges Admin Page CSS
  * =====================================================================
  * Per-page styles for `WBGam\Admin\CommunityChallengesPage` (menu slug:
  * `wb-gam-community-challenges`). Manages community-wide goals with a
@@ -56,7 +56,7 @@
 .wb-gam-cc-starts,
 .wb-gam-cc-target,
 .wb-gam-cc-title {
-	/* JS-bound community-challenge form inputs — visuals from .wbgam-input. */
+	/* JS-bound community-challenge form inputs - visuals from .wbgam-input. */
 }
 
 /* ==========================================================================

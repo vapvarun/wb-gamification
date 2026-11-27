@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Privacy / GDPR
+ * WB Gamification - Privacy / GDPR
  *
  * Registers personal data exporter and eraser with the WordPress privacy
  * framework (Tools > Export Personal Data / Erase Personal Data).
@@ -29,15 +29,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -76,7 +76,7 @@ final class Privacy {
 	//
 	// Every REST permission_callback, block render, shortcode, and profile-page
 	// renderer that exposes member data MUST consult one of these two methods.
-	// Local copies of the privacy logic are forbidden — see plan/PRIVACY-MODEL.md
+	// Local copies of the privacy logic are forbidden - see plan/PRIVACY-MODEL.md
 	// § Cross-cutting principles #2 ("No callback-deferred enforcement").
 
 	/**
@@ -101,7 +101,7 @@ final class Privacy {
 			return true;
 		}
 
-		// Site-level switch, then the member-level toggle — opt-OUT model (default ON, see
+		// Site-level switch, then the member-level toggle - opt-OUT model (default ON, see
 		// ProfilePage::is_publicly_visible). Only an explicit '0' is private.
 		$allowed = (bool) get_option( 'wb_gam_profile_public_enabled', true )
 			&& '0' !== (string) get_user_meta( $target_id, 'wb_gam_profile_public', true );
@@ -140,7 +140,7 @@ final class Privacy {
 	 *
 	 * T2 = points history rows, event log with metadata, streak heatmap,
 	 * last_active timestamp, preferences object, points_by_type breakdown.
-	 * Always private to self + admin only — never togglable. This is the
+	 * Always private to self + admin only - never togglable. This is the
 	 * trust line the plugin holds (see plan/PRIVACY-MODEL.md § The mental
 	 * model).
 	 *
@@ -212,7 +212,7 @@ final class Privacy {
 		$offset  = ( $page - 1 ) * self::EXPORT_PAGE_SIZE;
 		global $wpdb;
 
-		// The two unbounded sets — a member's points ledger and their event log —
+		// The two unbounded sets - a member's points ledger and their event log -
 		// are streamed across pages. Everything else (balances, badges, streak,
 		// preferences, submissions) is bounded per member and ships on page 1.
 		//
@@ -220,11 +220,11 @@ final class Privacy {
 		// call selected the member's ENTIRE history with no LIMIT and returned
 		// `done => true`. WordPress's privacy framework is built around ~500 items
 		// per page precisely so an exporter never has to hold a whole dataset in
-		// memory — this one opted out of that contract and then paid for it.
+		// memory - this one opted out of that contract and then paid for it.
 		//
 		// The rows are not the expensive part; the expansion is. Each ledger row
 		// becomes a data_group carrying four name/value pairs, and each event row
-		// six — including its metadata JSON blob. That is roughly 1.5-2 KB of PHP
+		// six - including its metadata JSON blob. That is roughly 1.5-2 KB of PHP
 		// heap per row, so a member with 50,000 ledger rows (and members typically
 		// have MORE event rows than ledger rows, since events are logged even when
 		// no points are awarded) exhausts a 256 MB limit and fatals. A GDPR request
@@ -238,7 +238,7 @@ final class Privacy {
 
 		$data_groups = array();
 
-		// Points summary — one row per currency on multi-currency sites.
+		// Points summary - one row per currency on multi-currency sites.
 		$balances     = PointsEngine::get_totals_by_type( $user_id );
 		$pt_service   = new \WBGam\Services\PointTypeService();
 		$summary_rows = array();
@@ -255,7 +255,7 @@ final class Privacy {
 				'value' => (string) $total,
 			);
 		}
-		// Page 1 only — like the other bounded groups. Its item_id is derived from
+		// Page 1 only - like the other bounded groups. Its item_id is derived from
 		// the user id, so emitting it on every page would collide with itself.
 		if ( 1 === $page ) {
 			$data_groups[] = array(
@@ -266,7 +266,7 @@ final class Privacy {
 			);
 		}
 
-		// Points history — the first of the two streamed sets.
+		// Points history - the first of the two streamed sets.
 		//
 		// Slice of the ledger for THIS page only. `$offset` walks the combined
 		// (ledger, then events) stream, so once the ledger is exhausted the
@@ -322,7 +322,7 @@ final class Privacy {
 			);
 		}
 
-		// Bounded per-member groups — badges, streak, preferences, meta,
+		// Bounded per-member groups - badges, streak, preferences, meta,
 		// submissions. These ship ONCE, on page 1. Emitting them on every page of
 		// a paginated export would repeat a member's badges on all 40 pages.
 		if ( 1 === $page ) {
@@ -438,12 +438,12 @@ final class Privacy {
 				'wb_gam_league_tier'             => __( 'Cohort league tier', 'wb-gamification' ),
 				// Erased since 1.4.1, never exported until now. The member's own personal record is
 				// their data; "we delete it but will not show it to you" is the wrong way round.
-				'wb_gam_pr_best_day'             => __( 'Personal record — best day', 'wb-gamification' ),
-				'wb_gam_pr_best_week'            => __( 'Personal record — best week', 'wb-gamification' ),
-				'wb_gam_pr_best_month'           => __( 'Personal record — best month', 'wb-gamification' ),
-				'wb_gam_pr_run_day'              => __( 'Personal record — points today', 'wb-gamification' ),
-				'wb_gam_pr_run_week'             => __( 'Personal record — points this week', 'wb-gamification' ),
-				'wb_gam_pr_run_month'            => __( 'Personal record — points this month', 'wb-gamification' ),
+				'wb_gam_pr_best_day'             => __( 'Personal record - best day', 'wb-gamification' ),
+				'wb_gam_pr_best_week'            => __( 'Personal record - best week', 'wb-gamification' ),
+				'wb_gam_pr_best_month'           => __( 'Personal record - best month', 'wb-gamification' ),
+				'wb_gam_pr_run_day'              => __( 'Personal record - points today', 'wb-gamification' ),
+				'wb_gam_pr_run_week'             => __( 'Personal record - points this week', 'wb-gamification' ),
+				'wb_gam_pr_run_month'            => __( 'Personal record - points this month', 'wb-gamification' ),
 				'wb_gam_sandboxed'               => __( 'Excluded from earning (sandboxed)', 'wb-gamification' ),
 				// Written as `self::SOME_CONST` at their call sites, which is why Rule 11's grep never
 				// saw them and this list went on looking complete. The award note is the one that
@@ -456,7 +456,7 @@ final class Privacy {
 				'wb_gam_dismissed_wizard_notice' => __( 'Dismissed the setup-wizard notice', 'wb-gamification' ),
 				'wb_gam_federate_events'         => __( 'Federate achievements to the fediverse (opt-in)', 'wb-gamification' ),
 			);
-			// Prefix families (`wb_gam_notif_cursor_<channel>`) are not knowable as literals — the
+			// Prefix families (`wb_gam_notif_cursor_<channel>`) are not knowable as literals - the
 			// channel is part of the key. Ask MemberData which ones this member actually has, so the
 			// export shows the same set the erase removes. Two different answers to "which keys are
 			// yours" is how a member gets told about less data than we delete.
@@ -544,12 +544,12 @@ final class Privacy {
 			}
 
 			// Full event log (immutable T2 record). Belongs in the export under
-			// data portability — it's the authoritative log of what the user did
+			// data portability - it's the authoritative log of what the user did
 			// on the site (with metadata context). Distinct from points-history,
 			// which is the derived ledger.
 		}
 
-		// Event log — the second streamed set. It picks up wherever the ledger
+		// Event log - the second streamed set. It picks up wherever the ledger
 		// stream ran out, so a page is always full until the export is done.
 		$consumed_by_history = count( $history );
 		$ev_room             = max( 0, self::EXPORT_PAGE_SIZE - $consumed_by_history );
@@ -673,7 +673,7 @@ final class Privacy {
 					'group_id'    => 'wb-gam-' . str_replace( '_', '-', $table ),
 					'group_label' => sprintf(
 						/* translators: %s: database table holding the member's data. */
-						__( 'Gamification — %s', 'wb-gamification' ),
+						__( 'Gamification - %s', 'wb-gamification' ),
 						str_replace( 'wb_gam_', '', $table )
 					),
 					// Keyed on the ROW, not on a counter.

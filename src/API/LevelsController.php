@@ -23,15 +23,15 @@ use WBGam\Engine\LevelEngine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -207,7 +207,7 @@ final class LevelsController extends WP_REST_Controller {
 		);
 
 		/**
-		 * Filter — abort the create by returning WP_Error.
+		 * Filter - abort the create by returning WP_Error.
 		 *
 		 * @param array           $payload  Sanitised level fields.
 		 * @param WP_REST_Request $request  Request.
@@ -245,7 +245,7 @@ final class LevelsController extends WP_REST_Controller {
 		}
 
 		$id = (int) $wpdb->insert_id;
-		LevelEngine::invalidate_cache(); // New level changes the ladder — drop the cached list.
+		LevelEngine::invalidate_cache(); // New level changes the ladder - drop the cached list.
 		$row = $this->fetch_one( $id );
 
 		do_action( 'wb_gam_after_create_level', $row, $request );
@@ -290,7 +290,7 @@ final class LevelsController extends WP_REST_Controller {
 		}
 
 		/**
-		 * Filter — abort the update by returning WP_Error.
+		 * Filter - abort the update by returning WP_Error.
 		 *
 		 * @param array           $updates  Sanitised changed fields.
 		 * @param array           $current  Pre-update level row.
@@ -315,7 +315,7 @@ final class LevelsController extends WP_REST_Controller {
 			return new WP_Error( 'rest_update_failed', __( 'Could not update level.', 'wb-gamification' ), array( 'status' => 500 ) );
 		}
 
-		LevelEngine::invalidate_cache(); // Threshold/name/icon changed — drop the cached list.
+		LevelEngine::invalidate_cache(); // Threshold/name/icon changed - drop the cached list.
 		$fresh = $this->fetch_one( $id );
 
 		do_action( 'wb_gam_after_update_level', $fresh, $current, $request );
@@ -326,7 +326,7 @@ final class LevelsController extends WP_REST_Controller {
 	/**
 	 * Delete a level.
 	 *
-	 * Refuses to delete the starting level (min_points = 0) — that row is
+	 * Refuses to delete the starting level (min_points = 0) - that row is
 	 * implicitly assigned to every member; deleting it would leave members
 	 * without a baseline tier.
 	 *
@@ -361,7 +361,7 @@ final class LevelsController extends WP_REST_Controller {
 			return new WP_Error( 'rest_delete_failed', __( 'Could not delete level.', 'wb-gamification' ), array( 'status' => 500 ) );
 		}
 
-		LevelEngine::invalidate_cache(); // Removed a level — drop the cached list.
+		LevelEngine::invalidate_cache(); // Removed a level - drop the cached list.
 
 		do_action( 'wb_gam_after_delete_level', $current, $request );
 

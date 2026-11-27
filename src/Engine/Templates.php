@@ -1,18 +1,18 @@
 <?php
 /**
- * WB Gamification — Generic template loader.
+ * WB Gamification - Generic template loader.
  *
  * Resolves any plugin-shipped template to a filesystem path with full
  * theme-override support, modelled on WooCommerce's `wc_get_template()`.
  *
  * Resolution order (first hit wins):
- *   1. `wb_gam_template_path` filter — full programmatic override.
+ *   1. `wb_gam_template_path` filter - full programmatic override.
  *   2. Theme override via `locate_template`:
  *        {child-theme}/wb-gamification/{relative}
  *        {parent-theme}/wb-gamification/{relative}
  *   3. Plugin default: `WB_GAM_PATH/templates/{relative}`
  *
- * Use this for any template a plugin extension might want to override —
+ * Use this for any template a plugin extension might want to override -
  * email bodies (already wired via Email::render), partial fragments
  * inside block render PHP, member-facing share pages, etc.
  *
@@ -29,15 +29,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -54,7 +54,7 @@ final class Templates {
 	/**
 	 * Resolve a relative template path to an absolute filesystem path.
 	 *
-	 * @param string $relative Relative path under templates/ — e.g.
+	 * @param string $relative Relative path under templates/ - e.g.
 	 *                         'emails/weekly-recap.php',
 	 *                         'partials/badge-share.php'.
 	 * @return string Absolute path, or empty string if not found.

@@ -99,7 +99,7 @@ final class KudosModerationPage {
 			true
 		);
 
-		// The SHARED searchable member picker — the same component Award Points uses.
+		// The SHARED searchable member picker - the same component Award Points uses.
 		//
 		// The obvious thing here was wp_dropdown_users(), and it is the wrong thing: it renders one
 		// <option> per member, which is precisely what took the Award Points page down on a large site
@@ -201,7 +201,7 @@ final class KudosModerationPage {
 		$offset = ( $paged - 1 ) * self::PER_PAGE;
 		$rows   = KudosEngine::admin_list( self::PER_PAGE, $offset, $status, $filters );
 
-		/** Abuse threshold — same giver->receiver pair N+ times. */
+		/** Abuse threshold - same giver->receiver pair N+ times. */
 		$threshold = (int) apply_filters( 'wb_gam_kudos_abuse_pair_threshold', 2 );
 
 		// Computed across the WHOLE table, not the current page. A pair trading kudos back and forth
@@ -358,7 +358,7 @@ final class KudosModerationPage {
 										<tr data-kudos-id="<?php echo esc_attr( (string) $row['id'] ); ?>"<?php echo $flagged ? ' class="wb-gam-kudos-table__flagged"' : ''; ?>>
 											<td><?php echo esc_html( $row['giver_name'] ? $row['giver_name'] : sprintf( /* translators: %d: user ID */ __( 'User #%d', 'wb-gamification' ), $row['giver_id'] ) ); ?></td>
 											<td><?php echo esc_html( $row['receiver_name'] ? $row['receiver_name'] : sprintf( /* translators: %d: user ID */ __( 'User #%d', 'wb-gamification' ), $row['receiver_id'] ) ); ?></td>
-											<td class="wb-gam-kudos-table__message"><?php echo esc_html( $row['message'] ? $row['message'] : '—' ); ?></td>
+											<td class="wb-gam-kudos-table__message"><?php echo esc_html( $row['message'] ? $row['message'] : '-' ); ?></td>
 											<td class="wb-gam-kudos-table__date"><?php echo esc_html( get_date_from_gmt( (string) $row['created_at'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></td>
 											<td class="wb-gam-kudos-table__status">
 												<?php if ( $row['revoked'] ) : ?>
@@ -374,7 +374,7 @@ final class KudosModerationPage {
 												<?php if ( ! $row['revoked'] ) : ?>
 													<button type="button" class="button button-small button-link-delete wb-gam-kudos-revoke"><?php esc_html_e( 'Revoke', 'wb-gamification' ); ?></button>
 												<?php else : ?>
-													<span class="wb-gam-kudos-table__muted">—</span>
+													<span class="wb-gam-kudos-table__muted">-</span>
 												<?php endif; ?>
 											</td>
 										</tr>

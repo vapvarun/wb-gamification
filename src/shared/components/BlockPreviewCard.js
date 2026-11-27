@@ -1,9 +1,9 @@
 /**
- * BlockPreviewCard — shared editor preview for Interactivity-API blocks.
+ * BlockPreviewCard - shared editor preview for Interactivity-API blocks.
  *
  * Wbcom Block Quality Standard: blocks whose runtime markup depends on the
  * Interactivity API store (`data-wp-interactive` / `data-wp-bind--*`) must
- * NOT use `<ServerSideRender>` in the editor — the store never runs in the
+ * NOT use `<ServerSideRender>` in the editor - the store never runs in the
  * editor iframe, so every conditional state renders stacked and unstyled.
  * Instead they render this static, styled, branded preview card so the
  * editor surface is "ready with options + a real preview", while the live

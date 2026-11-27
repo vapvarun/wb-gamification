@@ -1,6 +1,6 @@
-/*! hub-rtl.css — auto-generated from hub.css by bin/build-rtl.js. Do not edit by hand. */
+/*! hub-rtl.css - auto-generated from hub.css by bin/build-rtl.js. Do not edit by hand. */
 /**
- * WB Gamification — Hub Design System
+ * WB Gamification - Hub Design System
  *
  * Theme-independent stylesheet for the Gamification Hub page.
  * Uses --gam-* custom properties so no theme CSS leaks in.
@@ -34,7 +34,7 @@
   /* Accent bridges to the standard --wb-gam-color-accent token so the
    * site owner's Settings > Appearance accent (WBGam\Engine\Appearance)
    * re-tints the Hub too. Falls back to the brand purple when unset, which
-   * is the previous hardcoded value — so default behaviour is unchanged.
+   * is the previous hardcoded value - so default behaviour is unchanged.
    * accent-light / accent-text derive from --gam-accent below, so they
    * follow automatically. See BC card 10060536808. */
   --gam-accent: var(--wb-gam-color-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, #5b4cdb)));
@@ -456,7 +456,7 @@
  * narrow for 90 cells) stay here.
  *
  * Previous overrides forced 90px badge cards which crammed the title
- * into 2 ellipsed lines — removed in 1.4.0 in favour of the badge-
+ * into 2 ellipsed lines - removed in 1.4.0 in favour of the badge-
  * showcase's own container queries (`@container (max-width: 520px)`
  * yields 3 cols, `<= 360px` yields 2).
  */
@@ -497,7 +497,7 @@
 .gam-panel__body .wb-gam-kudos-feed__empty::before { content: "\e2d6"; /* heart-handshake */ }
 .gam-panel__body .wb-gam-points-history__empty::before { content: "\e1f4"; /* history */ }
 
-/* Badge grid inside panel — the slide-in panel is fixed-narrow even on
+/* Badge grid inside panel - the slide-in panel is fixed-narrow even on
  * desktop, so a 3-up grid crammed each badge (medal + 2-line title +
  * description). Two columns give the badge art and text room to breathe.
  * minmax(0,1fr) keeps it clean when the panel goes full-width on mobile. */
@@ -796,7 +796,7 @@
   .gam-nudge { padding: 12px 14px; }
 }
 
-/* CURRENCY CONVERT — per-tile button + shared modal. */
+/* CURRENCY CONVERT - per-tile button + shared modal. */
 .gam-stat__convert {
   margin-top: 8px;
   font-size: 12px;
@@ -860,7 +860,7 @@
 .wbgam-convert-form__preview:empty { display: none; }
 
 /* Dark-mode tokens. The :root defaults derive the neutrals from BuddyX's
- * --bx-color-* with LIGHT fallbacks — fine on BuddyX (those props flip under
+ * --bx-color-* with LIGHT fallbacks - fine on BuddyX (those props flip under
  * dark) but wrong on themes that signal dark WITHOUT defining --bx-color-*
  * (Reign, Twenty Twenty-Five, Astra), which left the Hub cards solid white in
  * dark mode. Re-declare the neutrals here with DARK fallbacks: BuddyX still

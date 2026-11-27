@@ -5,7 +5,7 @@
  *   POST /submissions/{id}/approve
  *   POST /submissions/{id}/reject
  *
- * Reload-on-success — keeps the queue snapshot fresh and shows the
+ * Reload-on-success - keeps the queue snapshot fresh and shows the
  * banner-style confirmation provided by SubmissionsPage::render_page.
  */
 ( function () {
@@ -68,7 +68,7 @@
 		if ( rejectBtn ) {
 			rejectBtn.addEventListener( 'click', function () {
 				// First click: render an inline reason input + Confirm button.
-				// Class-only styling — CSS rules live in admin.css.
+				// Class-only styling - CSS rules live in admin.css.
 				// Closes audit DATA-FLOW-ADMIN-REST-2026-05-27.md §G9.
 				if ( ! row.querySelector( '.wb-gam-submission-reject-input' ) ) {
 					const wrap = document.createElement( 'div' );

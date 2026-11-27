@@ -1,5 +1,5 @@
 /**
- * Hub block — currency conversion modal driver.
+ * Hub block - currency conversion modal driver.
  *
  * Wires every `[data-wb-gam-convert-open]` button on the hub to the shared
  * `<dialog data-wb-gam-convert-dialog>` modal: filters destination options
@@ -97,7 +97,7 @@
 			const credited = Math.floor( ( amount * toAmount ) / fromAmount );
 			previewEl.textContent = sprintf(
 				/* translators: 1: spent amount, 2: from-label, 3: credited amount, 4: to-label */
-				__( 'Spend %1$d %2$s — receive %3$d %4$s.', 'wb-gamification' ),
+				__( 'Spend %1$d %2$s - receive %3$d %4$s.', 'wb-gamification' ),
 				amount,
 				fromLabelEl.textContent || '',
 				credited,
@@ -105,7 +105,7 @@
 			);
 		};
 
-		// Open handlers — every Convert button on every currency tile.
+		// Open handlers - every Convert button on every currency tile.
 		// keyboard-accessible: target is a native <button> (hub/render.php:334).
 		document
 			.querySelectorAll( '[data-wb-gam-convert-open]' )
@@ -137,7 +137,7 @@
 				} );
 			} );
 
-		// Close handlers — × button + Cancel. Routed through the shared utility so focus goes back to
+		// Close handlers - × button + Cancel. Routed through the shared utility so focus goes back to
 		// the button that opened the dialog rather than to the top of the document.
 		dialog.querySelectorAll( '[data-wb-gam-convert-close]' ).forEach( ( el ) => {
 			el.addEventListener( 'click', ( ev ) => {
@@ -154,7 +154,7 @@
 		toSelect.addEventListener( 'change', updatePreview );
 		amountInput.addEventListener( 'input', updatePreview );
 
-		// Submit — POST and refresh the page so balance + tiles update.
+		// Submit - POST and refresh the page so balance + tiles update.
 		form.addEventListener( 'submit', ( ev ) => {
 			ev.preventDefault();
 			const opt = toSelect.options[ toSelect.selectedIndex ];

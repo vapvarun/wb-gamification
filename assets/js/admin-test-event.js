@@ -1,5 +1,5 @@
 /**
- * WB Gamification — first-run "Send a test event" button.
+ * WB Gamification - first-run "Send a test event" button.
  *
  * Wires the button rendered on the Dashboard's welcome card to
  * POST /wb-gamification/v1/points/award for the current admin so they
@@ -7,11 +7,11 @@
  * counter incrementing on this page) without needing a real member action.
  *
  * The button is rendered with data attrs:
- *   data-wb-gam-test-event           — the trigger
- *   data-points                      — point amount (number)
- *   data-wb-gam-test-event-status    — sibling span where we surface result text
+ *   data-wb-gam-test-event           - the trigger
+ *   data-points                      - point amount (number)
+ *   data-wb-gam-test-event-status    - sibling span where we surface result text
  *
- * All result rendering uses textContent + DOM nodes — no innerHTML — so
+ * All result rendering uses textContent + DOM nodes - no innerHTML - so
  * untrusted-string injection is impossible.
  *
  * @since 1.0.0
