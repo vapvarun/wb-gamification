@@ -173,7 +173,7 @@ Setup, the admin and the toasts rebuilt around the plugins on your site.
 * Fix      - Deleting a post now takes back the points its comments and reactions earned.
 * Fix      - A private space's leaderboard total, rows and rank could show another viewer's answer for a few minutes.
 * Fix      - A toast with a button now shows its whole title, with the button under the text.
-* Fix      - A credential badge that expired can be earned again, and the member is told.
+* Fix      - A credential badge that expired can be earned again.
 * Dev      - New filter wb_gam_leaderboard_exclusion_sql adds your own rule for who appears on every leaderboard and rank.
 * Dev      - New filter wb_gam_badge_showcase_page_size sets how many badges show before "Show all" (0 shows all).
 * Dev      - POST /actions/{id}/overrides now also takes points and point_type, accepts any registered action id, and DELETE restores the whole row.
