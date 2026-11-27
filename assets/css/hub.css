@@ -41,7 +41,7 @@
    * dark mode (faint dark tint) instead of staying opaque light. */
   --gam-accent-light: color-mix(in srgb, var(--gam-accent) 14%, var(--gam-surface));
   /* Same formula as --wb-gam-color-accent-text (design-tokens.css): AA on the card in either mode. */
-  --gam-accent-text: color-mix(in srgb, var(--gam-accent) 50%, var(--wb-gam-color-accent-ink));
+  --gam-accent-text: var(--wb-gam-color-accent-text); /* the one derivation (design-tokens.css, CSS.php): same value by default, the owner's card where one is set */
   --gam-success: #0d9f6e;
   --gam-success-bg: color-mix(in srgb, var(--gam-success) 12%, var(--gam-surface));
   --gam-warning: #c2770e;
@@ -419,7 +419,7 @@
 /* PANEL: the shell (native <dialog>, slide, scrim, close button) is .wb-gam-drawer in
  * assets/css/popups.css. Only the hub's own header and body live here. */
 .gam-card:focus-visible {
-  outline: 2px solid var(--gam-accent);
+  outline: 2px solid var( --wb-gam-focus-ring, var(--gam-accent) );
   outline-offset: 2px;
 }
 
@@ -815,7 +815,7 @@
   border-color: var(--wb-gam-pop-accent);
 }
 .gam-stat__convert:focus-visible {
-  outline: 2px solid var(--wb-gam-color-accent, #2563eb);
+  outline: 2px solid var(--wb-gam-focus-ring, var(--wb-gam-color-accent, #2563eb));
   outline-offset: 2px;
 }
 .gam-stat__convert:focus:not(:focus-visible) { outline: none; }
@@ -844,7 +844,7 @@
   border-color: var(--wb-gam-pop-accent);
   background: var(--wb-gam-pop-surface);
   color: var(--wb-gam-pop-text);
-  outline: 2px solid var(--wb-gam-pop-accent-200);
+  outline: 2px solid var( --wb-gam-focus-ring, var(--wb-gam-pop-accent-200) );
   outline-offset: 0;
 }
 .wbgam-convert-form__preview {

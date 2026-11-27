@@ -109,7 +109,7 @@ BlockHooks::before( 'user-status-bar', $wb_gam_attrs );
 	// pill, the bar's only frame. On the positioning wrapper it drew a second, shadowed band
 	// around the pill.
 	?>
-	<div class="wb-gam-status-bar__inner wb-gam-block-<?php echo esc_attr( $wb_gam_unique ); ?>">
+	<div class="<?php echo esc_attr( trim( 'wb-gam-status-bar__inner wb-gam-block-' . $wb_gam_unique . ' ' . WB_Gam_Block_CSS::scheme_class( $wb_gam_attrs ) ) ); ?>">
 		<?php if ( $wb_gam_collapsible ) : ?>
 			<button type="button"
 				class="wb-gam-status-bar__toggle"

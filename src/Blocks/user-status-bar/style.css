@@ -8,7 +8,10 @@
  * background / shadow without raw color values leaking into the markup.
  */
 
-.wb-gam-status-bar {
+/* The pill carries the owner's card colour and its tokens (CSS.php), so the bar's own tokens are read from the
+ * pill as well as from the wrapper: read from the wrapper alone they took the page's text colour. */
+.wb-gam-status-bar,
+.wb-gam-status-bar__inner {
 	--wb-gam-status-accent: var(--wb-gam-primary);
 	--wb-gam-status-bg:     var(--wb-gam-color-white);
 	--wb-gam-status-fg:     var(--wb-gam-color-text);
@@ -115,7 +118,7 @@ body.admin-bar .wb-gam-status-bar--sticky-top {
 	color: var( --wb-gam-status-fg );
 }
 .wb-gam-status-bar__toggle:focus-visible {
-	outline: 2px solid var( --wb-gam-status-accent );
+	outline: 2px solid var( --wb-gam-focus-ring, var(--wb-gam-status-accent) );
 	outline-offset: 2px;
 }
 .wb-gam-status-bar__toggle-icon {

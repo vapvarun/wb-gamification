@@ -145,7 +145,7 @@
 }
 
 .wb-gam-badge-showcase__filter:focus-visible {
-	outline: 2px solid var( --wb-gam-badge-accent );
+	outline: 2px solid var( --wb-gam-focus-ring, var(--wb-gam-badge-accent) );
 	outline-offset: 2px;
 }
 
@@ -508,7 +508,7 @@ body.buddyx-dark-theme .wb-gam-badge-showcase__badge--locked .wb-gam-badge-showc
 
 .wb-gam-badge-showcase__copy:focus-visible,
 .wb-gam-badge-showcase__share-link a:focus-visible {
-	outline: 2px solid var( --wb-gam-color-accent );
+	outline: 2px solid var( --wb-gam-focus-ring, var(--wb-gam-color-accent) );
 	outline-offset: 2px;
 }
 
@@ -544,4 +544,4 @@ body.buddyx-dark-theme .wb-gam-badge-showcase__badge--locked .wb-gam-badge-showc
 }
 .wb-gam-badge-showcase__more[hidden] { display: none; }
 .wb-gam-badge-showcase__more:hover { background: var(--wb-gam-color-surface-hover); }
-.wb-gam-badge-showcase__more:focus-visible { outline: 2px solid var(--wb-gam-color-accent); outline-offset: 2px; }
+.wb-gam-badge-showcase__more:focus-visible { outline: 2px solid var( --wb-gam-focus-ring, var(--wb-gam-color-accent) ); outline-offset: 2px; }

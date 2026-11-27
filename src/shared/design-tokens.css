@@ -1,5 +1,6 @@
 :root,
-.wb-gam-scheme-light {
+.wb-gam-scheme-light,
+.wb-gam-scheme-dark {
 	/* Spacing scale (used by SpacingControl) */
 	--wb-gam-space-0: 0;
 	--wb-gam-space-xs: 4px;
@@ -89,6 +90,11 @@
 	 * yellow under 4:1; with the ink every accent tried (red, orange, yellow, green, cyan, violet)
 	 * measures at least 4.5:1 on the card and on tinted rows, and keeps its hue. */
 	--wb-gam-color-accent-ink: color-mix(in srgb, var(--wb-gam-color-text) 40%, #000000);
+	/* An owner's own accent (block setting, no card colour) is held to this OKLCH lightness range when it is
+	 * used as text (CSS.php): at most 0.5 on a light surface (4.5:1 on white and on a tinted row), at least
+	 * 0.72 on a dark one. Hue and chroma stay the owner's. */
+	--wb-gam-accent-l-min: 0;
+	--wb-gam-accent-l-max: 0.5;
 	--wb-gam-color-accent-text: color-mix(in srgb, var(--wb-gam-color-accent) 50%, var(--wb-gam-color-accent-ink));
 	/* Follows the theme's accent, like every other accent tint (was a fixed brand-purple rgba). */
 	--wb-gam-color-accent-ring: color-mix(in srgb, var(--wb-gam-color-accent) 20%, transparent);
@@ -102,6 +108,8 @@
 	/* #047857 measured 4.27:1 on its own tint over a cream owner card; this holds 5:1 there, 5.6:1 on white. */
 	--wb-gam-color-success-strong: #046c4e;
 	--wb-gam-color-success-soft: rgba(13, 159, 110, 0.12);
+	/* Text on a solid success fill: white on #0d9f6e is 3.4:1, this near-black green is 5.7:1. */
+	--wb-gam-color-success-ink: #03130b;
 
 	/* League tier accents (cohort rank). These are deliberately literal -- bronze is
 	 * bronze -- but they belong here rather than hardcoded inside a block stylesheet.
@@ -344,6 +352,8 @@ body.buddyx-dark-theme,
 	/* An owner's own accent (block setting) is any colour at all: #cc0000 half-mixed into the ink read
 	 * 3.10:1 on Reign's dark surface. Pull it further toward the ink in dark; the theme accent keeps 50%. */
 	--wb-gam-owner-accent-mix: 35%;
+	--wb-gam-accent-l-min: 0.72;
+	--wb-gam-accent-l-max: 1;
 	--wb-gam-color-accent: var(--wbcom-link-color, var(--bn-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff)))));
 	--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bn-accent-600, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, color-mix(in srgb, #5b4cdb 45%, #ffffff)))));
 	--wb-gam-color-accent-ink: var(--wb-gam-color-text);
@@ -385,6 +395,8 @@ body.buddyx-dark-theme,
 @media (prefers-color-scheme: dark) {
 	:root[data-bx-mode="auto"] {
 		--wb-gam-owner-accent-mix: 35%;
+		--wb-gam-accent-l-min: 0.72;
+		--wb-gam-accent-l-max: 1;
 		--wb-gam-color-accent: var(--wbcom-link-color, var(--bn-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, color-mix(in srgb, #5b4cdb 60%, #ffffff)))));
 		--wb-gam-color-accent-hover: var(--wbcom-link-hover-color, var(--bn-accent-600, var(--bx-color-accent-hover, var(--reign-site-button-bg-hover-color, color-mix(in srgb, #5b4cdb 45%, #ffffff)))));
 		--wb-gam-color-accent-ink: var(--wb-gam-color-text);
@@ -451,6 +463,14 @@ body.buddyx-dark-theme,
  * the page's mode: a cream card on a dark page reads as a light card. The block's
  * own rule (CSS.php) then pins text and surfaces to that card.
  * Popups and headings here follow the card, not BuddyNext or the theme. */
+@supports (color: oklch(from red l c h)) {
+	/* The theme's accent (or the owner's) as text on an owner's card: its lightness held to the range the card
+	 * allows (--wb-gam-accent-l-min / -max, set per card by CSS.php card_tokens()). */
+	.wb-gam-scheme-light,
+	.wb-gam-scheme-dark {
+		--wb-gam-color-accent-text: oklch(from var(--wb-gam-color-accent) clamp(var(--wb-gam-accent-l-min), l, var(--wb-gam-accent-l-max)) min(c, 0.11) h);
+	}
+}
 .wb-gam-scheme-light {
 	color-scheme: light;
 }
@@ -465,6 +485,11 @@ body.buddyx-dark-theme,
 	--wb-gam-pop-text-3: var(--wb-gam-color-text-light);
 	--wb-gam-pop-subtle: var(--wb-gam-color-surface-alt);
 	--wb-gam-pop-inv-bg: var(--wb-gam-color-text);
+}
+/* A theme's own focus ring (white on a dark theme) is read against the page, not the owner's card. */
+.wb-gam-scheme-light :is(a, button, input, select, textarea, [tabindex]):focus-visible:not([class*="wb-gam-give-kudos__"]),
+.wb-gam-scheme-dark :is(a, button, input, select, textarea, [tabindex]):focus-visible:not([class*="wb-gam-give-kudos__"]) {
+	outline-color: var(--wb-gam-focus-ring, currentColor);
 }
 .wb-gam-scheme-light :is(h1, h2, h3, h4, h5, h6),
 .wb-gam-scheme-dark :is(h1, h2, h3, h4, h5, h6) {

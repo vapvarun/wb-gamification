@@ -194,6 +194,10 @@ export function StandardStylePanel( {
 			{ includeAccentHover && (
 				<ColorHoverControl
 					label={ accentLabel || __( 'Accent colour', 'wb-gamification' ) }
+					help={ __(
+						'Where the accent is used as text, it is lightened or darkened to stay readable on the card, in both the light and the dark scheme.',
+						'wb-gamification'
+					) }
 					color={ accentColor }
 					hoverColor={ accentHoverColor }
 					onChangeColor={ ( value ) => setAttributes( { accentColor: value } ) }
@@ -223,6 +227,10 @@ export function StandardStylePanel( {
 				<BaseControl
 					id={ `wb-gam-card-bg-${ uniqueId }` }
 					label={ __( 'Card background', 'wb-gamification' ) }
+					help={ __(
+						'Text, borders and accent colours adjust to stay readable on the colour you choose, in both the light and the dark scheme. Enter a hex colour, such as #ffeedd.',
+						'wb-gamification'
+					) }
 				>
 					<TextControl
 						value={ cardBackground || '' }

@@ -63,7 +63,7 @@
 .wb-gam-give-kudos__input:focus,
 .wb-gam-give-kudos__textarea:focus {
 	outline: 2px solid transparent; /* forced-colors repaints it; the ring below is dropped there */
-	border-color: var( --wb-gam-color-accent, #3b82f6 );
+	border-color: var( --wb-gam-focus-ring, var( --wb-gam-color-accent, #3b82f6 ) );
 	box-shadow: 0 0 0 3px var( --wb-gam-color-accent-ring, rgba( 59, 130, 246, 0.2 ) );
 }
 
@@ -100,7 +100,7 @@
 .wb-gam-give-kudos__submit:focus-visible {
 	/* Transparent, not none: forced-colors mode drops the ring and repaints this outline. */
 	outline: 2px solid transparent;
-	box-shadow: 0 0 0 3px var( --wb-gam-color-accent-ring, rgba( 59, 130, 246, 0.35 ) );
+	box-shadow: 0 0 0 3px var( --wb-gam-focus-ring, var( --wb-gam-color-accent-ring, rgba( 59, 130, 246, 0.35 ) ) );
 }
 
 .wb-gam-give-kudos__submit[disabled] {
@@ -201,7 +201,7 @@
 /* Guest: a way in. */
 .wb-gam-give-kudos__login {
 	font-weight: 600;
-	color: var( --wb-gam-color-accent, #3b82f6 );
+	color: var( --wb-gam-color-accent-text, var( --wb-gam-color-accent, #3b82f6 ) );
 	text-decoration: underline;
 	text-underline-offset: 2px;
 }

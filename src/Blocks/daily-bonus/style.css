@@ -59,8 +59,10 @@
 	font-weight: 600;
 }
 
+/* Own ink: --wb-gam-pop-accent-fg is the label for the ACCENT fill, and white on this green is 3.4:1. */
 .wb-gam-daily-bonus__chip--claimed {
 	background: var(--wb-gam-color-success);
+	color: var(--wb-gam-color-success-ink);
 }
 
 .wb-gam-daily-bonus__next {
