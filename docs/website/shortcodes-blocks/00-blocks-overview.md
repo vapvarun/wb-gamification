@@ -19,7 +19,7 @@ All WB Gamification blocks are grouped under the **Widgets** category in the ins
 
 ## Colours and dark mode
 
-Blocks follow your theme's light and dark mode and keep text and buttons readable in both. If you set a block's own **Card background** or **Accent** colour, the text and list rows on it stay readable in dark mode on Reign, BuddyX and BuddyX Pro. Leave a colour empty to use your theme's.
+Blocks follow your theme's light and dark mode and keep text and buttons readable in both. If you set a block's own **Card background** or **Accent** colour, the text, borders and list rows on it stay readable in both the light and the dark scheme, whatever your theme's mode: a light card keeps dark text on a dark theme, and a dark card keeps light text on a light theme. An accent used as text is lightened or darkened to read on the card. Enter colours as hex values (#fff, #ffeedd). Leave a colour empty to use your theme's.
 
 ## Languages
 
