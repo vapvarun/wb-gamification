@@ -78,6 +78,7 @@ EXPECTED_GATES=(
   bin/check-badge-condition-contract.sh
   bin/check-clock-contract.sh
   bin/check-motion-tokens.sh
+  bin/check-i18n.sh
   bin/run-journeys.sh
 )
 
@@ -342,6 +343,13 @@ fi
 # Baseline-driven; refresh with bin/check-motion-tokens.sh --update-baseline.
 if [ -x bin/check-motion-tokens.sh ]; then
   run_stage "2.16" "Motion tokens (no new raw durations/easings)" bash bin/check-motion-tokens.sh
+fi
+
+# 2.17 — Translations. Every msgid in the code is in the .pot, translated in every shipped locale
+# (no empty, no fuzzy, placeholders intact), and the .mo / .json / .l10n.php WordPress loads are the
+# ones built from those .po files. bin/test-check-i18n.sh proves each rule can fail.
+if [ -x bin/check-i18n.sh ]; then
+  run_stage "2.17" "Translations (every string translated, files in step)" bash bin/check-i18n.sh
 fi
 
 # ─── 3.x — Manifest freshness ────────────────────────────────────────────────
