@@ -53,6 +53,10 @@ def blank(m):
 s = re.sub(r'(^msgid "[^"\n]+"\nmsgstr )"[^"\n]*"', blank, s, flags=re.M)
 open(p, 'w', encoding='utf-8').write(s)
 EOF2
+# Rebuild the shipped files from the blanked .po so coverage is the ONLY thing wrong in this copy.
+WP_BIN="${WP_BIN:-$(command -v wp || echo /Applications/Local.app/Contents/Resources/extraResources/bin/wp-cli/posix/wp)}"
+rm -f "$work"/c1/*.mo "$work"/c1/*.json "$work"/c1/*.l10n.php
+"$WP_BIN" i18n make-mo "$work/c1" >/dev/null 2>&1; "$WP_BIN" i18n make-json "$work/c1" --no-purge >/dev/null 2>&1; "$WP_BIN" i18n make-php "$work/c1" >/dev/null 2>&1
 ENFORCE=1 expect_fail "coverage below 95% (enforced)" "$work/c1" "below the 95% aim"
 
 # 2. The same breakage without enforcement is a warning, not a stopped build: exit 0.
