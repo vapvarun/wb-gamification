@@ -1122,6 +1122,20 @@ final class BadgeEngine {
 		// every awarded badge invisible on all display surfaces (Basecamp
 		// 9985131435; shipped broken in 1.5.0–1.5.3 via ef8fb69).
 		$badges_table = $wpdb->prefix . 'wb_gam_user_badges';
+
+		// A lapsed credential keeps its row (UNIQUE(user_id, badge_id)), and has_badge() above does
+		// not count it, so a member who earns it again reached the INSERT IGNORE below, which did
+		// nothing: no renewal and no wb_gam_badge_awarded. Clear only the lapsed row so the award
+		// lands as a new one.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- write path.
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM `{$badges_table}` WHERE user_id = %d AND badge_id = %s AND expires_at IS NOT NULL AND expires_at <= %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+				$user_id,
+				$badge_id,
+				current_time( 'mysql', true )
+			)
+		);
 		if ( null === $expires_at ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix + literal.
 			$inserted = (int) $wpdb->query(

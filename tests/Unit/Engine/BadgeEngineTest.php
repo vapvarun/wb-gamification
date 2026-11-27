@@ -205,6 +205,8 @@ class BadgeEngineTest extends TestCase {
 		// instead of $wpdb->insert() so the duplicate-key race documented
 		// in PERF-004 is absorbed silently. Mock query() returning 1 to
 		// represent a successful insert (rows_affected = 1).
+		// A lapsed credential row is cleared first, so a re-earn can insert (1.7.0).
+		$wpdb->shouldReceive( 'query' )->once()->with( Mockery::on( static fn ( $sql ) => 0 === strpos( $sql, 'DELETE FROM `wp_wb_gam_user_badges`' ) ) )->andReturn( 0 );
 		$wpdb->shouldReceive( 'query' )
 			->once()
 			->with( Mockery::on( static fn ( $sql ) => false !== strpos( $sql, 'INSERT IGNORE INTO `wp_wb_gam_user_badges`' ) ) )
@@ -260,6 +262,8 @@ class BadgeEngineTest extends TestCase {
 		$wpdb->shouldReceive( 'get_row' )->andReturn(
 			array( 'name' => 'Test badge', 'description' => '', 'image_url' => '', 'is_credential' => 0, 'category' => 'general', 'id' => 'first_post', 'closes_at' => null, 'max_earners' => null, 'validity_days' => 0 )
 		);
+		// A lapsed credential row is cleared first, so a re-earn can insert (1.7.0).
+		$wpdb->shouldReceive( 'query' )->once()->with( Mockery::on( static fn ( $sql ) => 0 === strpos( $sql, 'DELETE FROM `wp_wb_gam_user_badges`' ) ) )->andReturn( 0 );
 		$wpdb->shouldReceive( 'query' )
 			->once()
 			->with(
@@ -286,6 +290,8 @@ class BadgeEngineTest extends TestCase {
 		$wpdb->shouldReceive( 'get_row' )->andReturn(
 			array( 'name' => 'Test badge', 'description' => '', 'image_url' => '', 'is_credential' => 0, 'category' => 'general', 'id' => 'cert_30d', 'closes_at' => null, 'max_earners' => null, 'validity_days' => 30 )
 		);
+		// A lapsed credential row is cleared first, so a re-earn can insert (1.7.0).
+		$wpdb->shouldReceive( 'query' )->once()->with( Mockery::on( static fn ( $sql ) => 0 === strpos( $sql, 'DELETE FROM `wp_wb_gam_user_badges`' ) ) )->andReturn( 0 );
 		$wpdb->shouldReceive( 'query' )
 			->once()
 			->with(
