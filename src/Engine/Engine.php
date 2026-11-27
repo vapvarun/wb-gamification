@@ -176,7 +176,7 @@ final class Engine {
 	 * Unregistered action ids that are not earnings, so the earning exclusion does not apply:
 	 * an admin's manual grant or deduction, a spend, a redemption.
 	 *
-	 * @since 1.7.1
+	 * @since 1.7.0
 	 */
 	private const EXEMPT_FROM_EXCLUSION = array(
 		'manual',

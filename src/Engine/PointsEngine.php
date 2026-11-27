@@ -1486,7 +1486,7 @@ final class PointsEngine {
 	 * post takes back the reactions its author was paid for, though the reactors are gone with the
 	 * reaction rows. Read from the member's own events (idx_user_action), then matched exactly.
 	 *
-	 * @since 1.7.1
+	 * @since 1.7.0
 	 *
 	 * @param int    $user_id    Member who was paid.
 	 * @param string $action_id  Action id.
