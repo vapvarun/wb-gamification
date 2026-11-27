@@ -57,9 +57,10 @@
 	 * @param {string}           method HTTP method.
 	 * @param {Object|undefined} body   Request payload, JSON-encoded here. Omit for a bodyless request.
 	 * @param {string}           nonce  X-WP-Nonce value.
+	 * @param {boolean}          [keepalive] fetch keepalive.
 	 * @return {Promise<{ok: boolean, status: number, data: *}>}
 	 */
-	function attempt( url, method, body, nonce ) {
+	function attempt( url, method, body, nonce, keepalive ) {
 		var headers = { 'X-WP-Nonce': nonce || '' };
 		var init = {
 			method: method,
@@ -67,6 +68,9 @@
 			signal: timeoutSignal(),
 			headers: headers,
 		};
+		if ( keepalive ) {
+			init.keepalive = true; // Survives the page unloading (a fire-and-forget acknowledgement).
+		}
 
 		// Only requests that actually carry a body declared Content-Type before -- toast.js's fallback
 		// GET never did, and adding it unconditionally would be a behavior change, not a consolidation.
@@ -142,6 +146,7 @@
 	 * @param {string} [options.method]  HTTP method. Defaults to 'GET'.
 	 * @param {Object} [options.body]    Request payload. JSON-encoded automatically when present.
 	 * @param {string} [options.nonce]   Current X-WP-Nonce value.
+	 * @param {boolean} [options.keepalive] Let the request outlive the page (fetch keepalive).
 	 * @return {Promise<{ok: boolean, status: number, data: *}>} Resolves even on a failed response --
 	 *         rejects only on a network-level failure (offline, timeout, abort), same as a bare fetch.
 	 */
@@ -150,7 +155,7 @@
 		var method = opts.method || 'GET';
 		var nonce = opts.nonce;
 
-		return attempt( url, method, opts.body, nonce ).then( function ( result ) {
+		return attempt( url, method, opts.body, nonce, opts.keepalive ).then( function ( result ) {
 			var staleNonce = 403 === result.status
 				&& result.data
 				&& 'rest_cookie_invalid_nonce' === result.data.code;
@@ -173,7 +178,7 @@
 					el.setAttribute( 'data-rest-nonce', freshNonce );
 				} );
 
-				return attempt( url, method, opts.body, freshNonce );
+				return attempt( url, method, opts.body, freshNonce, opts.keepalive );
 			} );
 		} );
 	}

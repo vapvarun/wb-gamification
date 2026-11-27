@@ -1206,16 +1206,23 @@ final class NotificationBridge {
 	}
 
 	/**
-	 * Read the events a given consumer has not yet delivered, and check its
-	 * cursor forward.
+	 * Read the member's undelivered events WITHOUT moving the delivery position.
 	 *
-	 * Non-destructive: each consumer (footer render, heartbeat tick, REST poll)
-	 * keeps its own user-meta cursor, so the same toast reaches each independent
-	 * surface once without a race.
+	 * Reading is not delivering. A page can be torn down (BuddyNext reloads after a post, a
+	 * member navigates) between the read and the toast being painted, and a cursor that
+	 * moved on read would lose the award for good. So this only reads: the position moves
+	 * when the page that displayed the toasts acknowledges them ({@see self::acknowledge()},
+	 * POST members/me/toasts/ack). Until then every read returns the same rows, so the next
+	 * page delivers what a vanished page never showed. Two tabs open at once both show the
+	 * same rows once each; the position still only moves forward.
+	 *
+	 * Each payload carries `_id` (its queue row, the key toast.js dedupes on) and `_ack`
+	 * (the last row id of the window read: acknowledging it also drops a backlog older
+	 * than the window, which is never shown).
 	 *
 	 * @param int    $user_id  Member id.
-	 * @param string $consumer Cursor namespace ('footer', 'heartbeat', 'rest').
-	 * @return array[] Unseen event payloads, oldest-first, each stamped with `_id`.
+	 * @param string $consumer Unused; every reader shares one position.
+	 * @return array[] Unseen event payloads, oldest-first, each stamped with `_id` and `_ack`.
 	 */
 	public static function read_pending( int $user_id, string $consumer = '' ): array { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- kept so existing callers stay valid; every reader now shares one position.
 		if ( $user_id <= 0 ) {
@@ -1227,10 +1234,11 @@ final class NotificationBridge {
 			return array();
 		}
 
+		$head   = (int) $rows[ array_key_last( $rows ) ]['id'];
 		$events = array();
 		foreach ( $rows as $row ) {
 			if ( empty( $row['payload'] ) ) {
-				continue; // Undecodable row: skipped for display, still advances the cursor below.
+				continue; // Undecodable row: nothing to display.
 			}
 			// The table id is authoritative - it is the key toast.js dedupes on.
 			$payload        = $row['payload'];
@@ -1238,11 +1246,53 @@ final class NotificationBridge {
 			$events[]       = $payload;
 		}
 
-		// Park the cursor at the head of the backlog, not at the last event shown.
-		// This is what drops the un-shown remainder rather than replaying it.
-		self::advance_cursor( $user_id, (int) $rows[ array_key_last( $rows ) ]['id'] );
+		if ( empty( $events ) ) {
+			// Only undecodable rows: nothing will be shown, so nothing can be lost. Move past
+			// them here, or they would be re-read on every page.
+			self::advance_cursor( $user_id, $head );
+			return array();
+		}
 
-		return self::summarize( $user_id, $events, count( $rows ) >= self::SUMMARY_WINDOW );
+		$out = self::summarize( $user_id, $events, count( $rows ) >= self::SUMMARY_WINDOW );
+		foreach ( $out as $i => $event ) {
+			$out[ $i ]['_ack'] = $head;
+		}
+		return $out;
+	}
+
+	/**
+	 * A page has displayed (or queued for display) the toasts up to $id: move the position.
+	 *
+	 * Forward only, and never past what the member has: an id above their newest queue row
+	 * is refused, so a client cannot skip toasts it never received, and another member's id
+	 * (ids are global) cannot move this member's position beyond their own rows.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param int $user_id Member id.
+	 * @param int $id      Highest queue row id the page received (`_ack`).
+	 * @return bool True when $id is acceptable (the position is at or past it).
+	 */
+	public static function acknowledge( int $user_id, int $id ): bool {
+		if ( $user_id <= 0 || $id <= 0 || ! self::queue_ready() ) {
+			return false;
+		}
+
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$newest = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT MAX(id) FROM {$wpdb->prefix}wb_gam_notifications_queue WHERE user_id = %d",
+				$user_id
+			)
+		);
+		if ( $id > $newest ) {
+			return false;
+		}
+
+		self::advance_cursor( $user_id, $id );
+		return true;
 	}
 
 	/**

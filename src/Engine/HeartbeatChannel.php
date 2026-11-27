@@ -262,11 +262,10 @@ final class HeartbeatChannel {
 	/**
 	 * Read pending toast notifications for the current user via heartbeat.
 	 *
-	 * Delegates to NotificationBridge::read_pending() with a dedicated
-	 * 'heartbeat' cursor. Non-destructive: the footer renderer and REST
-	 * poller maintain their own cursors and stay in sync with the same
-	 * source queue, eliminating the historical race where whichever reader
-	 * fired first drained the queue and the others saw nothing.
+	 * Delegates to NotificationBridge::read_pending(), which moves nothing: the page
+	 * acknowledges what it displayed (assets/js/toast.js), so a tick that reaches a
+	 * page about to unload loses no toast. The same rows can ride several ticks until
+	 * the acknowledgement lands; the page dedupes by `_id`.
 	 *
 	 * @param int $user_id Member id.
 	 * @return array

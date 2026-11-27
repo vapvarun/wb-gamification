@@ -285,6 +285,28 @@ class MembersController extends WP_REST_Controller {
 			)
 		);
 
+		// POST /members/me/toasts/ack - the page displayed the toasts up to `id`: move the member's
+		// delivery position (until then every reader re-delivers, so a reload loses nothing).
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/me/toasts/ack',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'ack_toasts' ),
+					'permission_callback' => array( $this, 'get_toasts_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'type'              => 'integer',
+							'required'          => true,
+							'minimum'           => 1,
+							'sanitize_callback' => 'absint',
+						),
+					),
+				),
+			)
+		);
+
 		// GET/POST /members/{id}/preferences - the member's own choices in
 		// wb_gam_member_prefs (hide rank, leave the leaderboards, reward emails).
 		// Read: self or admin (T2). Write: self, or staff who manage members.
@@ -1310,12 +1332,28 @@ class MembersController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Acknowledge toasts a page has displayed, moving the member's delivery position.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param WP_REST_Request $request Full details about the request.
+	 * @return WP_REST_Response|\WP_Error
+	 */
+	public function ack_toasts( $request ) {
+		$user_id = get_current_user_id();
+		if ( ! NotificationBridge::acknowledge( $user_id, (int) $request->get_param( 'id' ) ) ) {
+			return new \WP_Error( 'wb_gam_bad_ack', __( 'That notification position is not yours to acknowledge.', 'wb-gamification' ), array( 'status' => 400 ) );
+		}
+		return rest_ensure_response( array( 'cursor' => NotificationBridge::cursor( $user_id ) ) );
+	}
+
+	/**
 	 * Retrieve pending toast notifications for the current user.
 	 *
-	 * Delegates to {@see NotificationBridge::read_pending()}, which reads and
-	 * advances the member's one shared delivery position (since 1.6.6): the
-	 * page seed, heartbeat, SSE and this route all move the same cursor, so a
-	 * notice shows exactly once whichever reader delivers it first.
+	 * Delegates to {@see NotificationBridge::read_pending()}, which reads without
+	 * moving the member's shared delivery position: the page acknowledges what it
+	 * displayed ({@see self::ack_toasts()}), so a page that vanishes first loses
+	 * nothing and the next page shows the notice once.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response Toast notifications array.
@@ -1339,14 +1377,8 @@ class MembersController extends WP_REST_Controller {
 						// Use the primary currency label so "+5 XP" still
 						// reads correctly on multi-currency sites.
 						if ( empty( $toast['message'] ) ) {
-							$pt_service   = new \WBGam\Services\PointTypeService();
-							$label_plural = $pt_service->name_for( 2 );
-							$message      = sprintf(
-								/* translators: 1: signed point delta, 2: currency label. */
-								__( '+%1$d %2$s', 'wb-gamification' ),
-								$toast['points'] ?? 0,
-								$label_plural
-							);
+							// The single signed formatter: "+5 Points", "-2 Points" (no plus on a take-back).
+							$message = ( new \WBGam\Services\PointTypeService() )->format( (int) ( $toast['points'] ?? 0 ), null, true );
 						} else {
 							$message = $toast['message'];
 						}
@@ -1387,6 +1419,9 @@ class MembersController extends WP_REST_Controller {
 					'message' => $message,
 					'icon'    => $toast['icon'] ?? null,
 					'detail'  => $toast['detail'] ?? null,
+					// The queue row id (dedupe key) and the position to acknowledge once shown.
+					'_id'     => $toast['_id'] ?? null,
+					'_ack'    => $toast['_ack'] ?? null,
 				);
 			},
 			$result

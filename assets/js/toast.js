@@ -255,6 +255,45 @@
 	}
 
 	/**
+	 * Tell the server the toasts up to the highest `_ack` in this batch reached the page, so its
+	 * delivery position moves. Until then every reader re-delivers, so a page that vanishes first
+	 * (a reload right after a post) loses nothing; the next page shows the batch, once.
+	 *
+	 * Sent once rendered or queued (not after the display hold), after the Moment-card store has
+	 * run (DOMContentLoaded) and a frame, with keepalive so it survives the page unloading.
+	 *
+	 * @param {Array<object>} toasts One delivered batch.
+	 */
+	var ackSent = 0;
+	function acknowledge( toasts ) {
+		var ack = 0;
+		toasts.forEach( function ( t ) {
+			ack = Math.max( ack, t && parseInt( t._ack, 10 ) || 0 );
+		} );
+		if ( ack <= ackSent ) {
+			return;
+		}
+		var prev = ackSent;
+		ackSent  = ack;
+		var send = function () {
+			window.wbGam.rest( wbGamToast.restUrl + 'members/me/toasts/ack', {
+				method: 'POST',
+				body: { id: ack },
+				nonce: wbGamToast.nonce,
+				keepalive: true,
+			} ).catch( function () {
+				ackSent = Math.min( ackSent, prev ); // Network failure: the next batch asks again.
+			} );
+		};
+		var queue = window.requestAnimationFrame || function ( fn ) { return setTimeout( fn, 0 ); };
+		if ( 'loading' === document.readyState ) {
+			document.addEventListener( 'DOMContentLoaded', function () { queue( send ); }, { once: true } );
+		} else {
+			queue( send );
+		}
+	}
+
+	/**
 	 * Render a queued payload, deduping by `_id` so the same event never paints twice.
 	 *
 	 * @param {Array<object>|undefined} toasts From the heartbeat / REST poll / seed.
@@ -280,6 +319,7 @@
 			seenIds.add( key );
 			showOne( toast );
 		} );
+		acknowledge( toasts );
 	}
 
 	/**

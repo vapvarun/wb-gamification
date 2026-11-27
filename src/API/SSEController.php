@@ -348,7 +348,10 @@ final class SSEController {
 				$payload = $row['payload'];
 				if ( ! empty( $payload ) ) {
 					$payload['_id'] = $last_id;
-					$data           = (string) wp_json_encode( $payload );
+					// Reading is not delivering: the page acknowledges what it showed (toast.js
+					// posts `_ack` to members/me/toasts/ack), so the stream moves no cursor.
+					$payload['_ack'] = $last_id;
+					$data            = (string) wp_json_encode( $payload );
 				} else {
 					// Undecodable row: emit an empty object rather than nothing, so
 					// the id still advances the client's cursor past it.
@@ -378,7 +381,6 @@ final class SSEController {
 					$data
 				);
 
-				NotificationBridge::advance_cursor( $user_id, $last_id );
 				echo $record; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SSE stream, not HTML: esc_html() would corrupt the protocol and the JSON. $last_id is %d, $event_name is CRLF-stripped, $data is wp_json_encode output. See note above.
 			}
 
