@@ -106,6 +106,10 @@
 			sum.handle = window.wbGam.toast( opts );
 		}
 		sum.shown = sum.total;
+		if ( ackHeld ) {
+			acknowledge( ackHeld );
+			ackHeld = 0;
+		}
 	}
 
 	function label( text ) {
@@ -259,17 +263,15 @@
 	 * delivery position moves. Until then every reader re-delivers, so a page that vanishes first
 	 * (a reload right after a post) loses nothing; the next page shows the batch, once.
 	 *
-	 * Sent once rendered or queued (not after the display hold), after the Moment-card store has
+	 * Sent once handed to the renderer (drawn, or queued behind another toast; not after the display
+	 * hold) and never while a reward is only waiting in the collect window, after the Moment-card store has
 	 * run (DOMContentLoaded) and a frame, with keepalive so it survives the page unloading.
 	 *
 	 * @param {Array<object>} toasts One delivered batch.
 	 */
 	var ackSent = 0;
-	function acknowledge( toasts ) {
-		var ack = 0;
-		toasts.forEach( function ( t ) {
-			ack = Math.max( ack, t && parseInt( t._ack, 10 ) || 0 );
-		} );
+	var ackHeld = 0; // Highest position of rewards still in the 1.5s collect window (not handed to the renderer yet).
+	function acknowledge( ack ) {
 		if ( ack <= ackSent ) {
 			return;
 		}
@@ -319,7 +321,15 @@
 			seenIds.add( key );
 			showOne( toast );
 		} );
-		acknowledge( toasts );
+		var ack = 0;
+		toasts.forEach( function ( t ) {
+			ack = Math.max( ack, t && parseInt( t._ack, 10 ) || 0 );
+		} );
+		if ( collectTimer ) {
+			ackHeld = Math.max( ackHeld, ack ); // Sent by flush() once the summary is handed to the renderer.
+		} else {
+			acknowledge( ack );
+		}
 	}
 
 	/**

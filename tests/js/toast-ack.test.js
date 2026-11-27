@@ -22,10 +22,15 @@ function page( { seed, restFails, holdLoading } = {} ) {
 	w.clearTimeout = ( id ) => timers.delete( id );
 	const tick = ( ms ) => {
 		now += ms;
-		for ( const [ id, t ] of [ ...timers ] ) {
-			if ( t.at <= now ) {
-				timers.delete( id );
-				t.fn();
+		let ran = true;
+		while ( ran ) { // timers set by a firing timer (the ack after the flush) run in the same tick
+			ran = false;
+			for ( const [ id, t ] of [ ...timers ] ) {
+				if ( t.at <= now ) {
+					timers.delete( id );
+					t.fn();
+					ran = true;
+				}
 			}
 		}
 	};
@@ -69,9 +74,12 @@ const pts = ( id, ack, n = 5 ) => ( { _id: id, _ack: ack, type: 'points', points
 test( 'the page acknowledges the head of what it was handed, after rendering', () => {
 	const p = page();
 	p.send( [ pts( 1, 3 ), pts( 3, 3 ) ] );
+	p.tick( 1400 );
 	assert.strictEqual( p.drawn.length, 0, 'the 1.5s collect window has not closed: nothing is on screen yet' );
-	p.tick( 1 );
-	assert.strictEqual( p.acks.length, 1, 'acknowledged as soon as queued, not after the display hold' );
+	assert.strictEqual( p.acks.length, 0, 'still only collected: a reload now must re-deliver' );
+	p.tick( 200 );
+	assert.strictEqual( p.drawn.length, 1 );
+	assert.strictEqual( p.acks.length, 1, 'acknowledged once handed to the renderer, not after the display hold' );
 	assert.deepStrictEqual( JSON.parse( JSON.stringify( p.acks[ 0 ].opts.body ) ), { id: 3 } );
 	assert.strictEqual( p.acks[ 0 ].opts.method, 'POST' );
 	assert.strictEqual( p.acks[ 0 ].opts.keepalive, true, 'must survive the page unloading' );
@@ -80,7 +88,7 @@ test( 'the page acknowledges the head of what it was handed, after rendering', (
 
 test( 'the seed is acknowledged only once the page has finished loading (the Moment store has shown its cards)', () => {
 	const p = page( { seed: [ pts( 4, 4 ) ], holdLoading: true } );
-	p.tick( 1000 );
+	p.tick( 2000 );
 	assert.strictEqual( p.acks.length, 0, 'still loading: a reload now must re-deliver' );
 	p.ready();
 	p.tick( 1 );
@@ -89,7 +97,7 @@ test( 'the seed is acknowledged only once the page has finished loading (the Mom
 
 test( 'the seed is acknowledged too', () => {
 	const p = page( { seed: [ pts( 4, 4 ) ] } );
-	p.tick( 1 );
+	p.tick( 1600 );
 	assert.strictEqual( p.acks.length, 1 );
 	assert.strictEqual( p.acks[ 0 ].opts.body.id, 4 );
 } );
@@ -97,7 +105,7 @@ test( 'the seed is acknowledged too', () => {
 test( 'the same row from the seed and the heartbeat paints once and is acknowledged once', () => {
 	const p = page( { seed: [ pts( 4, 4 ) ] } );
 	p.send( [ pts( 4, 4 ) ] );
-	p.tick( 1500 );
+	p.tick( 1600 );
 	assert.strictEqual( p.drawn.length, 1, 'one toast' );
 	assert.strictEqual( p.drawn[ 0 ].updates.length, 0, 'the duplicate was not added to the summary' );
 	assert.strictEqual( p.drawn[ 0 ].o.title, '+5 Points', 'counted once' );
@@ -107,14 +115,22 @@ test( 'the same row from the seed and the heartbeat paints once and is acknowled
 test( 'a newer batch is acknowledged again; a repeat of an acknowledged one is not', () => {
 	const p = page();
 	p.send( [ pts( 1, 2 ), pts( 2, 2 ) ] );
-	p.tick( 1 );
+	p.tick( 1600 );
 	p.send( [ pts( 2, 2 ) ] );
-	p.tick( 1 );
+	p.tick( 1600 );
 	assert.strictEqual( p.acks.length, 1 );
 	p.send( [ pts( 5, 5 ) ] );
-	p.tick( 1 );
+	p.tick( 1600 );
 	assert.strictEqual( p.acks.length, 2 );
 	assert.strictEqual( p.acks[ 1 ].opts.body.id, 5 );
+} );
+
+test( 'a skip or submission toast (drawn at once) is acknowledged at once', () => {
+	const p = page();
+	p.send( [ { _id: 7, _ack: 7, type: 'skip', message: 'Daily cap reached' } ] );
+	p.tick( 1 );
+	assert.strictEqual( p.drawn.length, 1 );
+	assert.strictEqual( p.acks.length, 1 );
 } );
 
 test( 'an empty read sends no acknowledgement', () => {
@@ -135,9 +151,9 @@ test( 'payloads without a position (an older server) send none', () => {
 test( 'a network failure lets the next delivery ask again', async () => {
 	const p = page( { restFails: true } );
 	p.send( [ pts( 1, 1 ) ] );
-	p.tick( 1 );
+	p.tick( 1600 );
 	await new Promise( ( r ) => setImmediate( r ) );
 	p.send( [ pts( 1, 1 ) ] );
-	p.tick( 1 );
+	p.tick( 1600 );
 	assert.strictEqual( p.acks.length, 2 );
 } );
