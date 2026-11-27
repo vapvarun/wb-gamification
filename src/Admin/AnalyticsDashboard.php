@@ -40,6 +40,9 @@ final class AnalyticsDashboard {
 	private const CACHE_GROUP = 'wb_gamification';
 	private const CACHE_TTL   = 600; // 10 minutes
 
+	/** Windows (days) the dashboard and Overview ask for; each has its own cache entry. */
+	private const PERIODS = array( 7, 30, 90 );
+
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
 	/**
@@ -50,6 +53,23 @@ final class AnalyticsDashboard {
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
+	}
+
+	/**
+	 * Drop the cached stats so the next read sees the points that just moved.
+	 *
+	 * Hooked (always, not only in wp-admin) to `wb_gam_leaderboard_cache_invalidated`, which
+	 * LeaderboardEngine::invalidate_cache() fires on every award, batch award, debit, bulk debit,
+	 * revoke, import undo and progress reset: one place for every ledger change. A delete, never
+	 * a rebuild; the next dashboard view recomputes once.
+	 *
+	 * @return void
+	 */
+	public static function flush_stats(): void {
+		foreach ( self::PERIODS as $period ) {
+			wp_cache_delete( "wb_gam_analytics_{$period}", self::CACHE_GROUP );
+			delete_transient( "wb_gam_analytics_{$period}" );
+		}
 	}
 
 	/**
@@ -361,7 +381,7 @@ final class AnalyticsDashboard {
 		// wp_cache is per-request only, so every dashboard load re-ran three
 		// full-window GROUP BY scans over wb_gam_points. The transient lands in
 		// the options table on such installs and holds for CACHE_TTL. The data is
-		// time-windowed and tolerates that staleness (no invalidation on award).
+		// time-windowed; flush_stats() drops it whenever points move, so a hand award shows at once.
 		$cached = wp_cache_get( $cache_key, self::CACHE_GROUP );
 		if ( false !== $cached ) {
 			return (array) $cached;
@@ -484,6 +504,19 @@ final class AnalyticsDashboard {
 			)
 		);
 
+		// Points given by hand, over the same window and filter as $points_total. Its own query, not a
+		// sum over the top-ten list below: a small hand award never makes that list, so summing it
+		// there under-reports (and a big one inflates the share). Uses KEY idx_action.
+		$manual_in     = implode( ', ', array_fill( 0, count( ManualAwardPage::ACTION_IDS ), '%s' ) );
+		$manual_points = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $manual_in is one %s per id, bound below.
+				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
+				  WHERE action_id IN ( {$manual_in} ) AND created_at >= %s AND is_spend = 0",
+				array_merge( ManualAwardPage::ACTION_IDS, array( $since ) )
+			)
+		);
+
 		// Top 10 actions by total points.
 		$top_actions = $wpdb->get_results(
 			$wpdb->prepare(
@@ -535,6 +568,7 @@ final class AnalyticsDashboard {
 
 		$data = compact(
 			'points_total',
+			'manual_points',
 			'active_members',
 			'total_members',
 			'badges_earned',

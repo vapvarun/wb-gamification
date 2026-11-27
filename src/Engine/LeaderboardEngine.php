@@ -107,6 +107,8 @@ final class LeaderboardEngine {
 		// to 120 seconds. Per skill Part 2.7 (incrementor pattern).
 		add_action( 'wb_gam_points_awarded', array( __CLASS__, 'invalidate_cache' ), 5, 0 );
 		add_action( 'wb_gam_points_awarded_batch', array( __CLASS__, 'invalidate_cache' ), 5, 0 );
+		// A revoke removes ledger rows, so it moves the same derived data (ranks, KPIs).
+		add_action( 'wb_gam_points_revoked', array( __CLASS__, 'invalidate_cache' ), 5, 0 );
 
 		// Hook the snapshot writer to the recurring event.
 		add_action( 'wb_gam_leaderboard_snapshot', array( __CLASS__, 'write_snapshot' ) );
@@ -179,7 +181,7 @@ final class LeaderboardEngine {
 	 * — Redis / Memcached evict via LRU, in-memory cache resets next
 	 * request. No manual key tracking needed.
 	 *
-	 * Hooked to `wb_gam_points_awarded` and `wb_gam_points_awarded_batch`
+	 * Hooked to `wb_gam_points_awarded`, `wb_gam_points_awarded_batch` and `wb_gam_points_revoked`
 	 * in init() at priority 5 so it runs before badge / challenge / streak
 	 * listeners that might re-read the leaderboard.
 	 *
@@ -1443,14 +1445,19 @@ final class LeaderboardEngine {
 			return null;
 		}
 
+		// The same eligibility the board's own snapshot read applies (see read_from_snapshot()): a row
+		// written before the member opted out, was excluded or was suspended must not be served, or
+		// the strip shows a private rank the board no longer lists. true = existence is enforced by
+		// the JOIN to wp_users below.
+		[ $excl_sql, $excl_values ] = self::exclusion_sql( 'c', true );
+
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT total_points, `rank` FROM {$cache_table}
-				  WHERE user_id = %d AND period = %s AND point_type = %s",
-				$user_id,
-				$period,
-				$point_type
+				"SELECT c.total_points, c.`rank` FROM {$cache_table} c
+				   JOIN {$wpdb->users} u ON u.ID = c.user_id
+				  WHERE c.user_id = %d AND c.period = %s AND c.point_type = %s {$excl_sql}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				array_merge( array( $user_id, $period, $point_type ), $excl_values )
 			),
 			ARRAY_A
 		);
@@ -1466,11 +1473,10 @@ final class LeaderboardEngine {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$next = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT MIN(total_points) FROM {$cache_table}
-				  WHERE period = %s AND point_type = %s AND total_points > %d",
-				$period,
-				$point_type,
-				$points
+				"SELECT MIN(c.total_points) FROM {$cache_table} c
+				   JOIN {$wpdb->users} u ON u.ID = c.user_id
+				  WHERE c.period = %s AND c.point_type = %s AND c.total_points > %d {$excl_sql}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				array_merge( array( $period, $point_type, $points ), $excl_values )
 			)
 		);
 

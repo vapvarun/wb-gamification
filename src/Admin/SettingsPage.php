@@ -1652,15 +1652,12 @@ final class SettingsPage {
 		<?php
 		// Hand awards are shown apart from what members earned by taking part, and a gentle note
 		// appears when they are an unusual share of the month (a migration, or points used as a
-		// manual prize). top_actions holds the ten biggest actions by points, so a hand-award
-		// total outside it is small by definition.
-		$all_actions  = (array) $stats['top_actions'];
-		$manual_pts   = 0;
+		// manual prize). The hand total is its own uncapped aggregate (get_stats()), not a sum over
+		// top_actions, which holds only the ten biggest actions and so drops small hand awards.
+		$manual_pts   = (int) ( $stats['manual_points'] ?? 0 );
 		$earn_actions = array();
-		foreach ( $all_actions as $row ) {
-			if ( in_array( $row['action_id'] ?? '', ManualAwardPage::ACTION_IDS, true ) ) {
-				$manual_pts += (int) ( $row['pts'] ?? 0 );
-			} else {
+		foreach ( (array) $stats['top_actions'] as $row ) {
+			if ( ! in_array( $row['action_id'] ?? '', ManualAwardPage::ACTION_IDS, true ) ) {
 				$earn_actions[] = $row;
 			}
 		}

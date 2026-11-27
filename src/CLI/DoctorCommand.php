@@ -1099,8 +1099,8 @@ class DoctorCommand {
 	 * that many would pass on every board it has ever got wrong.
 	 *
 	 * So this counts them the long way, from the ledger, applying the same three predicates the
-	 * product applies -- the member EXISTS, has not OPTED OUT, and is not owner-EXCLUDED -- in SQL
-	 * written here, on purpose.
+	 * product applies -- the member EXISTS, has not OPTED OUT, is not owner-EXCLUDED, and passes the host
+	 * plugin's `wb_gam_leaderboard_exclusion_sql` rule -- in SQL written here, on purpose.
 	 *
 	 * @param string $period 'all' | 'month' | 'week' | 'day'.
 	 * @return int Members eligible for that board.
@@ -1135,6 +1135,17 @@ class DoctorCommand {
 			$excl   .= " AND NOT EXISTS ( SELECT 1 FROM {$wpdb->usermeta} rm WHERE rm.user_id = p.user_id"
 				. " AND rm.meta_key = '{$wpdb->get_blog_prefix()}capabilities' AND rm.meta_value LIKE %s )";
 			$binds[] = '%' . $wpdb->esc_like( '"' . $role . '"' ) . '%';
+		}
+
+		// The host plugin's own rule (BuddyNext: suspended members), as the engine applies it. Read
+		// straight from the public filter and validated here against the documented contract, not via
+		// the engine's private composer, so the oracle still shares no code with what it checks. A
+		// fragment that breaks the contract is dropped, exactly as the engine drops it.
+		$host = (array) apply_filters( 'wb_gam_leaderboard_exclusion_sql', array( '', array() ), 'p' ) + array( '', array() );
+		if ( is_string( $host[0] ) && '' !== $host[0] && 0 === strpos( $host[0], ' AND ' ) && is_array( $host[1] )
+			&& count( $host[1] ) === preg_match_all( '/%[ds]/', str_replace( '%%', '', $host[0] ) ) ) {
+			$excl .= $host[0];
+			$binds = array_merge( $binds, array_values( $host[1] ) );
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
