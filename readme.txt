@@ -168,6 +168,12 @@ Setup, the admin and the toasts rebuilt around the plugins on your site.
 * Fix      - Streak and challenge bonus points now appear in the toast, so it agrees with the points history.
 * Fix      - Spacing was missing on several admin screens.
 * Fix      - The release zip compresses every file, so upload firewalls no longer reject it.
+* Fix      - A suspended or excluded member no longer earns points from kudos, streak bonuses or challenge bonuses.
+* Fix      - Sharing a post or voting in a poll over and over no longer pays again each time: each pays once, and unsharing or removing the vote takes it back.
+* Fix      - Deleting a post now takes back the points its comments and reactions earned.
+* Fix      - A private space's leaderboard total, rows and rank could show another viewer's answer for a few minutes.
+* Fix      - A toast with a button now shows its whole title, with the button under the text.
+* Fix      - A credential badge that expired can be earned again, and the member is told.
 * Dev      - New filter wb_gam_leaderboard_exclusion_sql adds your own rule for who appears on every leaderboard and rank.
 * Dev      - New filter wb_gam_badge_showcase_page_size sets how many badges show before "Show all" (0 shows all).
 * Dev      - POST /actions/{id}/overrides now also takes points and point_type, accepts any registered action id, and DELETE restores the whole row.

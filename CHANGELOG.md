@@ -30,6 +30,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Fixed
 
+- A suspended or excluded member no longer earns points from kudos, streak bonuses or challenge bonuses (the earning exclusion now covers every automatic award).
+- Sharing a post or voting in a poll repeatedly no longer pays each time: each pays once per post, and unsharing or removing the vote takes it back.
+- Deleting a BuddyNext post takes back the points its comments and reactions earned.
+- A private space's leaderboard total, rows and rank are cached per viewer audience, so one viewer's answer is no longer served to another. A private space's scope lookup now also runs on a cache hit.
+- A toast with a button shows its whole title; the button sits under the text and a title may wrap to two lines.
+- A credential badge that expired can be earned again: the lapsed row is cleared so the award inserts and fires the awarded event.
 - Saving the Points settings could switch every earning action off: any save that did not carry each action's checkbox (a script, another plugin, or a host that cuts long forms) wrote "off" for all of them. Each action now saves on its own, and the settings form no longer touches them.
 - A fresh install with several plugins activated at once could log "Duplicate column" or "Duplicate key name" database errors; the install now runs once, and upgrades wait for it.
 - Accent buttons inside BuddyNext (Send Kudos, the daily bonus, "Let's go") met text contrast only on the default theme; they now use the accent their text colour was made for. The gold #1 badge is readable in dark mode.
