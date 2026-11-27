@@ -317,6 +317,9 @@ final class CSS {
 	/** Contrast an accent used as text is held to: AA plus room for the tinted pills, podium rows and chips drawn under it. */
 	private const MIN_ACCENT = 5.3;
 
+	/** Non-text contrast (WCAG 1.4.11) the icon disc and its art are held to. */
+	private const MIN_NON_TEXT_PLATE = 3.2;
+
 	/**
 	 * Medal colours before they are made readable on an owner card: [light card, dark card].
 	 * The light values are the design-tokens.css defaults, the dark ones its lifted dark-mode mixes.
@@ -594,6 +597,9 @@ final class CSS {
 			$tint      = self::mix( self::parse_color( $set[2] ), 0.12, $bg );
 			$tokens[ $token ] = self::to_hex( self::text_safe( $ink_color, array_merge( $rows, array( $tint ) ), $ink, self::MIN_TEXT ) );
 		}
+		// Badge art is drawn black (an <img> does not inherit currentColor), so on a card dark enough for a pale
+		// disc to stand out 3:1 from it, the icon disc becomes that pale plate with dark art; see plate_tokens().
+		$tokens = array_merge( $tokens, self::plate_tokens( $bg ) );
 		// The theme's own accent, used as text on this card, is held to a lightness that reads on it (see
 		// design-tokens.css): at most this on a light card, at least this on a dark one. Judged on the card
 		// and its rows with a 10% margin; OKLCH lightness is close to the cube root of relative luminance.
@@ -614,6 +620,42 @@ final class CSS {
 		}
 		$tokens['--wb-gam-focus-ring'] = self::to_hex( $ring );
 		return $tokens;
+	}
+
+	/**
+	 * Icon-disc tokens for a card that a pale plate stands out from (WCAG 1.4.11: disc against card, art
+	 * against disc, 3:1 each). Badge art is black line-art or the owner's own colours, so the disc is the
+	 * pale plate and the glyph ink is near-black. Earned is the plate with a hint of green, locked a hint of
+	 * grey (the art there is also faded to half, which a pale plate still keeps above 3:1). A card too light
+	 * for a pale plate to stand out keeps the tint, where black art already reads. Pure.
+	 *
+	 * @param array<int, float> $bg Card channels.
+	 * @return array<string, string> Token => value; empty when the card is too light for a plate.
+	 */
+	private static function plate_tokens( array $bg ): array {
+		$white = array( 255.0, 255.0, 255.0 );
+		$art   = array( 17.0, 24.0, 39.0 );
+		$min   = self::MIN_NON_TEXT_PLATE;
+		if ( self::contrast( $white, $bg ) < $min ) {
+			return array();
+		}
+		$plate = static function ( array $hint, float $share ) use ( $white, $bg, $min, $art ): array {
+			// Start from the tinted plate and lighten toward white until it stands out from the card, and the
+			// art at half strength (locked) still reads on it.
+			for ( $keep = $share; $keep > 0; $keep -= 0.02 ) {
+				$c     = self::mix( $hint, $keep, $white );
+				$faded = self::mix( $art, 0.5, $c );
+				if ( self::contrast( $c, $bg ) >= $min && self::contrast( $faded, $c ) >= $min ) {
+					return $c;
+				}
+			}
+			return $white;
+		};
+		return array(
+			'--wb-gam-badge-plate'        => self::to_hex( $plate( array( 13.0, 159.0, 110.0 ), 0.16 ) ),
+			'--wb-gam-badge-plate-locked' => self::to_hex( $plate( array( 107.0, 114.0, 128.0 ), 0.14 ) ),
+			'--wb-gam-badge-art-ink'      => self::to_hex( $art ),
+		);
 	}
 
 	/**

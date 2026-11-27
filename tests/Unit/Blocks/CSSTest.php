@@ -263,6 +263,35 @@ class CSSTest extends TestCase {
 		}
 	}
 
+	/**
+	 * WCAG 1.4.11: on a card a pale plate stands out from, the badge disc stands out from the card and the
+	 * art (black line-art, or the glyph ink; locked art is faded to half) stands out from the disc, 3:1.
+	 */
+	public function test_badge_icon_disc_reads_on_dark_and_mid_cards(): void {
+		$cards   = array( '#14213d', '#000000', '#101418', '#223344', '#00695c', '#7b1fa2', '#2e7d32', '#808080', '#666666', '#333333' );
+		$accents = array( '', '#cc0000', '#fca311', '#0000ff', '#00ff00' );
+		foreach ( $cards as $card ) {
+			$bg = $this->channels( $card );
+			foreach ( $accents as $accent ) {
+				$t    = CSS::card_tokens( $card, $accent );
+				$name = $card . ' + ' . $accent;
+				$this->assertArrayHasKey( '--wb-gam-badge-plate', $t, $name );
+				$art = $this->channels( $t['--wb-gam-badge-art-ink'] );
+				foreach ( array( '--wb-gam-badge-plate', '--wb-gam-badge-plate-locked' ) as $token ) {
+					$plate = $this->channels( $t[ $token ] );
+					$this->assertGreaterThanOrEqual( 3.0, CSS::contrast( $plate, $bg ), $name . ' ' . $token . ' against the card' );
+					$this->assertGreaterThanOrEqual( 3.0, CSS::contrast( $art, $plate ), $name . ' ink against ' . $token );
+					$faded = array( ( $art[0] + $plate[0] ) / 2, ( $art[1] + $plate[1] ) / 2, ( $art[2] + $plate[2] ) / 2 );
+					$this->assertGreaterThanOrEqual( 3.0, CSS::contrast( $faded, $plate ), $name . ' faded art against ' . $token );
+				}
+				$this->assertNotSame( $t['--wb-gam-badge-plate'], $t['--wb-gam-badge-plate-locked'], $name . ' earned and locked stay distinct' );
+			}
+		}
+		// A card too light for a pale plate to stand out keeps the tint (black art already reads on it).
+		$this->assertArrayNotHasKey( '--wb-gam-badge-plate', CSS::card_tokens( '#ffeedd', '#cc0000' ) );
+		$this->assertArrayNotHasKey( '--wb-gam-badge-plate', CSS::card_tokens( '#ffffff' ) );
+	}
+
 	public function test_card_tokens_are_scheme_independent_and_pure(): void {
 		$this->assertSame( CSS::card_tokens( '#ffeedd', '#cc0000' ), CSS::card_tokens( '#ffeedd', '#cc0000' ) );
 		// Short hex and rgb() read the same card.

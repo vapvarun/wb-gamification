@@ -141,3 +141,19 @@ test( 'Year Recap keeps no white ink or fixed gradient over an owner card', () =
 	assert.doesNotMatch( css, /rgba\(\s*255,\s*255,\s*255/ );
 	assert.match( css, /\.wb-gam-year-recap\.wb-gam-scheme-light,\n\.wb-gam-year-recap\.wb-gam-scheme-dark \{[^}]*background-image: none;/ );
 } );
+
+test( 'the badge icon disc takes the card-derived plate and art ink, and falls back unchanged without them', () => {
+	const css = read( 'src/Blocks/badge-showcase/style.css' );
+	assert.match( css, /__badge--earned \.wb-gam-badge-showcase__icon-wrap \{[^}]*background: var\( --wb-gam-badge-plate, var\( --wb-gam-badge-success-soft \) \);/ );
+	assert.match( css, /__badge--locked \.wb-gam-badge-showcase__icon-wrap \{\s*background: var\( --wb-gam-badge-plate-locked, var\( --wb-gam-badge-locked-soft \) \);/ );
+	assert.match( css, /__placeholder \{\s*color: var\( --wb-gam-badge-art-ink, var\( --wb-gam-color-gold-text \) \);/ );
+} );
+
+test( 'hub icon discs draw their glyph in the card-derived accent text, not the raw accent', () => {
+	const css = read( 'assets/css/hub.css' );
+	for ( const cls of [ 'gam-nudge__icon', 'gam-stat__icon', 'gam-card__icon', 'gam-kudos__avatar', 'gam-list-item__icon' ] ) {
+		const m = css.match( new RegExp( '\\n\\.' + cls + ' \\{([^}]*)\\}' ) );
+		assert.ok( m, cls );
+		assert.match( m[ 1 ], /color: var\(--gam-accent-text\);/, cls );
+	}
+} );

@@ -90,7 +90,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--gam-accent);
+  color: var(--gam-accent-text);
 }
 
 .gam-nudge__icon i {
@@ -252,7 +252,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--gam-accent);
+  color: var(--gam-accent-text);
 }
 
 .gam-stat__icon i {
@@ -342,7 +342,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--gam-accent);
+  color: var(--gam-accent-text);
 }
 
 .gam-card__icon i {
@@ -574,7 +574,7 @@
 
 .gam-list-item__icon {
   font-size: 16px;
-  color: var(--gam-accent);
+  color: var(--gam-accent-text);
   flex-shrink: 0;
 }
 
@@ -744,7 +744,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--gam-accent);
+  color: var(--gam-accent-text);
   flex-shrink: 0;
 }
 

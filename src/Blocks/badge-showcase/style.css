@@ -214,7 +214,8 @@
 }
 
 .wb-gam-badge-showcase__badge--earned .wb-gam-badge-showcase__icon-wrap {
-	background: var( --wb-gam-badge-success-soft );
+	/* --wb-gam-badge-plate: set from an owner's dark card (CSS.php plate_tokens()), a pale disc the art reads on. */
+	background: var( --wb-gam-badge-plate, var( --wb-gam-badge-success-soft ) );
 }
 
 /* ── Locked card ──────────────────────────────────────────────────── */
@@ -224,7 +225,7 @@
 }
 
 .wb-gam-badge-showcase__badge--locked .wb-gam-badge-showcase__icon-wrap {
-	background: var( --wb-gam-badge-locked-soft );
+	background: var( --wb-gam-badge-plate-locked, var( --wb-gam-badge-locked-soft ) );
 }
 
 .wb-gam-badge-showcase__badge--locked .wb-gam-badge-showcase__image,
@@ -256,7 +257,7 @@
 }
 
 .wb-gam-badge-showcase__placeholder {
-	color: var( --wb-gam-color-gold-text );
+	color: var( --wb-gam-badge-art-ink, var( --wb-gam-color-gold-text ) );
 	line-height: 1;
 	display: flex;
 	align-items: center;
