@@ -198,6 +198,7 @@ Setup, the admin and the toasts rebuilt around the plugins on your site.
 * Fix      - A negative or single point amount in the toasts REST fallback reads "-2 Points" or "+1 Point" instead of "+-2 Points" or "+1 Points".
 * Fix      - A reward toast held behind a level-up card is no longer lost if the page reloads before it shows, the acknowledgement refuses another member's row, and the count-up reads "+1 Point".
 * Fix      - Keyboard focus rings and the accent buttons (Send Kudos and the others) keep their own colours on BuddyX and BuddyX Pro, where the theme forces its own outline and button styles.
+* Fix      - Text fields, message boxes and dropdowns in the blocks keep the card's own text, fill and border colours on BuddyX and BuddyX Pro, so typed text stays readable on dark cards.
 * Dev      - bin/check-i18n.sh stops the build on a string missing from the .pot, a broken placeholder or a stale translation file, and warns when a language is under 95% translated.
 * Dev      - New POST /members/me/toasts/ack route; queued toast payloads carry _ack beside _id.
 * Dev      - bin/build-i18n-json.sh builds the script translation files keyed to the shipped script paths (run it after any .po or JS change), and bin/check-no-emdash.sh stops the build on an em-dash in shipped source.

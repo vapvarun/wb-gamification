@@ -63,6 +63,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - A negative or single point amount in the toasts REST fallback reads "-2 Points" or "+1 Point" instead of "+-2 Points" or "+1 Points".
 - A reward toast held behind a level-up card is no longer lost if the page reloads before it shows, the acknowledgement refuses another member's row, and the count-up reads "+1 Point".
 - Keyboard focus rings and the accent buttons (Send Kudos and the others) keep their own colours on BuddyX and BuddyX Pro, where the theme forces its own outline and button styles.
+- Text fields, message boxes and dropdowns in the blocks keep the card's own text, fill and border colours on BuddyX and BuddyX Pro, so typed text stays readable on dark cards.
 - Saving the Points settings could switch every earning action off: any save that did not carry each action's checkbox (a script, another plugin, or a host that cuts long forms) wrote "off" for all of them. Each action now saves on its own, and the settings form no longer touches them.
 - A fresh install with several plugins activated at once could log "Duplicate column" or "Duplicate key name" database errors; the install now runs once, and upgrades wait for it.
 - Accent buttons inside BuddyNext (Send Kudos, the daily bonus, "Let's go") met text contrast only on the default theme; they now use the accent their text colour was made for. The gold #1 badge is readable in dark mode.
