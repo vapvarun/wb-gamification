@@ -23,7 +23,7 @@ Blocks follow your theme's light and dark mode and keep text and buttons readabl
 
 ## Languages
 
-The plugin ships with German, French, Spanish, Italian and Brazilian Portuguese translations, including each block's settings in the editor. Set your site language under **Settings > General > Site Language**. Every Gamification admin screen works in a translated admin, and messages from the server show in the language of the admin who is signed in.
+The plugin ships with German, French, Spanish, Italian and Brazilian Portuguese translations, including each block's settings in the editor. Set your site language under **Settings > General > Site Language**. Toasts, notifications, emails and activity posts are written in each member's own language, not the language of whoever triggered them. Every Gamification admin screen works in a translated admin, and messages from the server show in the language of the admin who is signed in.
 
 ## The 19 blocks
 

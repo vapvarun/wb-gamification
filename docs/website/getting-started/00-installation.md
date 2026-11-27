@@ -44,7 +44,7 @@ If you click **Skip setup, I'll configure it myself**, nothing is saved and memb
 
 ## Languages
 
-WB Gamification includes German, French, Spanish, Italian and Brazilian Portuguese translations. Set **Settings > General > Site Language** to one of them and the admin screens and blocks follow.
+WB Gamification includes German, French, Spanish, Italian and Brazilian Portuguese translations. Set **Settings > General > Site Language** to one of them and the admin screens and blocks follow. Toasts, notifications and emails are written in each member's own language.
 
 ## Updates and Licence
 

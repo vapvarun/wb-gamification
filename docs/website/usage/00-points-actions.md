@@ -4,7 +4,7 @@ Go to **Gamification > Earning > Actions and points** in your admin sidebar.
 
 This screen lists every action that earns (or takes) points on your site, grouped by the plugin it comes from. Actions are detected automatically from the plugins you run, so a plugin's group appears as soon as that plugin is active.
 
-Every change saves on its own. There is no Save button for actions: change an amount, a limit or a switch, and the screen says **Saved.** with an **Undo** button for 10 seconds. If a save fails, the previous value comes back and the screen says so, so what you see is always what is stored.
+Every change saves on its own. There is no Save button for actions: change an amount, a limit or a switch, and the screen says **Saved.** with an **Undo** button for 10 seconds. Each change keeps its own 10 seconds: the button shows how many are waiting, for example **Undo (2)**, and each click undoes the newest. If a save fails, the previous value comes back and the screen says so, so what you see is always what is stored.
 
 ## Find an action
 

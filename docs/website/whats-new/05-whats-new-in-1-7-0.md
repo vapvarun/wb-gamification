@@ -64,6 +64,14 @@ Awards that land together become one summary toast that counts up, with the badg
 - A fresh install with several plugins activated together could log database errors.
 - Accent buttons inside BuddyNext now meet text contrast, and the gold #1 badge is readable in dark mode.
 - Streak and challenge bonus points now appear in the toast, so it agrees with the points history.
+- A suspended or excluded member no longer earns points from kudos, streak bonuses or challenge bonuses, and your own rank follows the same exclusions as the board.
+- Sharing a post or voting in a poll over and over pays once, and deleting a post takes back the points its comments and reactions earned.
+- Owner Card background and Accent colours stay readable on every block in the light and the dark theme.
+- The Overview totals update as soon as points change, and small hand awards are counted.
+- Filtered Earning rows hide, and every Earning change keeps its own 10 second Undo.
+- Finishing Setup no longer sends you back to the first step, and a blank or out of range amount is reported next to the field.
+- Toasts, notifications, emails and activity posts read in each member's own language.
+- Badge Showcase counts a badge returned twice once and keeps its tabs when nothing is earned yet.
 
 ## For developers
 

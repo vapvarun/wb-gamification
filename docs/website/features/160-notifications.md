@@ -62,4 +62,4 @@ Members choose whether they get reward emails with **Email me about my rewards**
 
 ## Admin-Side Notifications
 
-Admins do not receive individual member-event notifications. Instead, the **Analytics dashboard** gives an overview of community-wide activity. The dashboard refreshes every 10 minutes and shows trends in points, badges, and active members.
+Admins do not receive individual member-event notifications. Instead, the **Analytics dashboard** gives an overview of community-wide activity. The dashboard refreshes whenever points change and shows trends in points, badges, and active members.

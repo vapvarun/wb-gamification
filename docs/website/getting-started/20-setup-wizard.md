@@ -62,7 +62,7 @@ Choose your emails:
 
 **Send me a test toast** gives your own account 10 points, so you can see the toast on the front of your site.
 
-Click **Launch gamification** to save. Members start earning from their next action. Nothing is awarded for past activity.
+A blank amount, or one outside 0 to 9,999, stops **Continue** and **Launch** and shows a message beside the field. Use 0 for no points. Click **Launch gamification** to save. Members start earning from their next action. Nothing is awarded for past activity.
 
 You land on **Overview > Dashboard**, with a **Finish setting up** checklist. See [Admin Dashboard](../usage/150-admin-dashboard.md).
 

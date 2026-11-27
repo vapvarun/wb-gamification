@@ -161,6 +161,8 @@ Setup, the admin and the toasts rebuilt around the plugins on your site.
 * Improve  - Every toast closes by itself (4 seconds, or 8 with a button), closes on Escape and waits while a popup is open or you are typing.
 * Improve  - A big badge collection shows 12 badges per tab with "Show all"; the header counts the whole collection.
 * Improve  - Limits read in words ("20 a day, 30s apart") and an empty limit means no limit.
+* Improve  - German, Spanish, French, Italian and Brazilian Portuguese are fully translated, and the script translation files are rebuilt so every translated script loads them.
+* Improve  - Date formats in the streak heatmap and the redemption log follow the site's language and date settings.
 * Fix      - Saving the Points settings could switch every earning action off when a save did not carry each action's checkbox.
 * Fix      - With Jetonomy and no BuddyNext, points toasts on forum pages showed "[object Object]".
 * Fix      - A fresh install with several plugins activated together could log "Duplicate column" or "Duplicate key name" database errors.
@@ -174,6 +176,17 @@ Setup, the admin and the toasts rebuilt around the plugins on your site.
 * Fix      - A private space's leaderboard total, rows and rank could show another viewer's answer for a few minutes.
 * Fix      - A toast with a button now shows its whole title, with the button under the text.
 * Fix      - A credential badge that expired can be earned again.
+* Fix      - Your own leaderboard rank and the doctor check now follow the same exclusions as the board (opt-outs, excluded roles, suspended members).
+* Fix      - The Overview points total and Awarded by hand update as soon as points are awarded, revoked or spent, and small hand awards are counted.
+* Fix      - Filtered Earning rows and the Undo button after a failed save now hide as they should, and every Earning change keeps its own 10 second Undo.
+* Fix      - Finishing Setup no longer sends you back to the first step, and a blank or out of range amount is reported next to the field instead of Launch doing nothing.
+* Fix      - The Wbcom Family heading and its subtitle have the standard gap.
+* Fix      - Badge Showcase no longer emits notices for a badge without an id, counts a badge returned twice once, and keeps the All, Earned and Locked tabs when nothing is earned yet.
+* Fix      - Hover and press text on Send Kudos, Share Your Year and the other accent buttons stays at least 4.5:1, for any accent colour.
+* Fix      - Owner Card background and Accent colours stay readable on every block in the light and the dark theme, including a dark card on a light theme, Year Recap, the Leaderboard medals, the User Status Bar and keyboard focus rings.
+* Fix      - Toasts, notifications, emails and activity posts read in the recipient's language, not the language of the admin or cron that triggered them.
+* Fix      - Hub nudges, cohort tier names, the starter badge and level library and the API key placeholders are now translatable.
+* Dev      - bin/check-i18n.sh stops the build on a string missing from the .pot, a broken placeholder or a stale translation file, and warns when a language is under 95% translated.
 * Dev      - New filter wb_gam_leaderboard_exclusion_sql adds your own rule for who appears on every leaderboard and rank.
 * Dev      - New filter wb_gam_badge_showcase_page_size sets how many badges show before "Show all" (0 shows all).
 * Dev      - POST /actions/{id}/overrides now also takes points and point_type, accepts any registered action id, and DELETE restores the whole row.

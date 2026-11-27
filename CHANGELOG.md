@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ### Changed
 
+- German, Spanish, French, Italian and Brazilian Portuguese are fully translated, and the script translation files are rebuilt so every translated script loads them.
+- Date formats in the streak heatmap and the redemption log follow the site's language and date settings.
+- bin/check-i18n.sh stops the build on a string missing from the .pot, a broken placeholder or a stale translation file, and warns when a language is under 95% translated.
 - One admin menu in six groups (Overview, Earning, Rewards, Members, Experience, Tools), the same in the WordPress menu and on every plugin screen. Old page addresses still open.
 - Earning: every action grouped by plugin, with search and filters. Every change saves on its own, shows "Saved" and can be undone for 10 seconds; limits read in words and an empty limit means no limit.
 - Setup starts from the plugins on the site: choose which to reward, how generous (Relaxed, Balanced, Competitive), see the levels, badges and leaderboard, then launch. Nothing is saved before Launch, Skip changes nothing, and running it again starts from your current values. The six starter templates are gone.
@@ -36,6 +39,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - A private space's leaderboard total, rows and rank are cached per viewer audience, so one viewer's answer is no longer served to another. A private space's scope lookup now also runs on a cache hit.
 - A toast with a button shows its whole title; the button sits under the text and a title may wrap to two lines.
 - A credential badge that expired can be earned again: the lapsed row is cleared so the award inserts and fires the awarded event.
+- Your own leaderboard rank and the doctor check now follow the same exclusions as the board (opt-outs, excluded roles, suspended members).
+- The Overview points total and Awarded by hand update as soon as points are awarded, revoked or spent, and small hand awards are counted.
+- Filtered Earning rows and the Undo button after a failed save now hide as they should, and every Earning change keeps its own 10 second Undo.
+- Finishing Setup no longer sends you back to the first step, and a blank or out of range amount is reported next to the field instead of Launch doing nothing.
+- The Wbcom Family heading and its subtitle have the standard gap.
+- Badge Showcase no longer emits notices for a badge without an id, counts a badge returned twice once, and keeps the All, Earned and Locked tabs when nothing is earned yet.
+- Hover and press text on Send Kudos, Share Your Year and the other accent buttons stays at least 4.5:1, for any accent colour.
+- Owner Card background and Accent colours stay readable on every block in the light and the dark theme, including a dark card on a light theme, Year Recap, the Leaderboard medals, the User Status Bar and keyboard focus rings.
+- Toasts, notifications, emails and activity posts read in the recipient's language, not the language of the admin or cron that triggered them.
+- Hub nudges, cohort tier names, the starter badge and level library and the API key placeholders are now translatable.
 - Saving the Points settings could switch every earning action off: any save that did not carry each action's checkbox (a script, another plugin, or a host that cuts long forms) wrote "off" for all of them. Each action now saves on its own, and the settings form no longer touches them.
 - A fresh install with several plugins activated at once could log "Duplicate column" or "Duplicate key name" database errors; the install now runs once, and upgrades wait for it.
 - Accent buttons inside BuddyNext (Send Kudos, the daily bonus, "Let's go") met text contrast only on the default theme; they now use the accent their text colour was made for. The gold #1 badge is readable in dark mode.
