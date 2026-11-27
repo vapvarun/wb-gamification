@@ -719,9 +719,9 @@ final class ScaleCommand {
 		// The cost of an award does not depend on whether this site's owner rewards blog posts. A site
 		// with "Publish a blog post" switched off refused the award and failed the gate with nothing
 		// measured, so the action is on for this measurement only; the stored setting is untouched.
-		$force_on      = static fn() => '1';
+		$force_on = static fn() => '1';
 		add_filter( 'pre_option_wb_gam_enabled_wp_publish_post', $force_on );
-		$rows_for      = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d", $uid ) );
+		$rows_for = static fn(): int => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_points WHERE user_id = %d", $uid ) );
 		PointsEngine::award( $uid, 'wp_publish_post', 5, 0, null, true ); // Warm caches; the first award of a request pays for everyone.
 		// Measure a steady-state award: the test member's total grows on every run, so an award can
 		// cross a badge threshold and pay for writing that badge too (26-43 queries instead of 9,
