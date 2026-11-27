@@ -13,6 +13,7 @@ cd "$(dirname "$0")/.."
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
+BASE="${I18N_TEST_BASE:-languages}"   # the languages dir to break copies of
 run_gate() { I18N_LANG_DIR="$1" I18N_ENFORCE_COVERAGE="${ENFORCE:-0}" bash bin/check-i18n.sh 2>&1; }
 
 failures=0
@@ -27,12 +28,12 @@ expect_fail() {
     failures=$((failures + 1))
   fi
 }
-fresh_copy() { rm -rf "$work/$1"; cp -R languages "$work/$1"; }
+fresh_copy() { rm -rf "$work/$1"; cp -R "$BASE" "$work/$1"; }
 
 echo "i18n gate self-test"
 
 # Precondition: the real tree passes, or no case below proves anything.
-if ! out="$(run_gate languages)"; then
+if ! out="$(run_gate "$BASE")"; then
   printf '  \033[31mFAIL\033[0m the unbroken languages dir does not pass the gate, so the cases below prove nothing\n'
   printf '%s\n' "$out" | tail -8 | sed 's/^/       /'
   exit 1
@@ -56,7 +57,7 @@ EOF2
 # Rebuild the shipped files from the blanked .po so coverage is the ONLY thing wrong in this copy.
 WP_BIN="${WP_BIN:-$(command -v wp || echo /Applications/Local.app/Contents/Resources/extraResources/bin/wp-cli/posix/wp)}"
 rm -f "$work"/c1/*.mo "$work"/c1/*.json "$work"/c1/*.l10n.php
-"$WP_BIN" i18n make-mo "$work/c1" >/dev/null 2>&1; "$WP_BIN" i18n make-json "$work/c1" --no-purge >/dev/null 2>&1; "$WP_BIN" i18n make-php "$work/c1" >/dev/null 2>&1
+"$WP_BIN" i18n make-mo "$work/c1" >/dev/null 2>&1; I18N_PO_DIR="$work/c1" bash bin/build-i18n-json.sh "$work/c1" >/dev/null 2>&1; "$WP_BIN" i18n make-php "$work/c1" >/dev/null 2>&1
 ENFORCE=1 expect_fail "coverage below 95% (enforced)" "$work/c1" "below the 95% aim"
 
 # 2. The same breakage without enforcement is a warning, not a stopped build: exit 0.
@@ -115,7 +116,22 @@ expect_fail "stale .l10n.php" "$work/c8" "differ from the .po build"
 # 9. A .json that belongs to no script.
 fresh_copy c9
 cp "$(ls "$work"/c9/wb-gamification-de_DE-*.json | head -1)" "$work/c9/wb-gamification-de_DE-00000000000000000000000000000000.json"
-expect_fail "orphan .json" "$work/c9" "belong to no script"
+expect_fail "orphan .json" "$work/c9" "belong to no shipped script"
+
+md5p() { if command -v md5sum >/dev/null; then printf '%s' "$1" | md5sum | cut -d' ' -f1; else printf '%s' "$1" | md5 -q; fi; }
+
+# 10. The block editor script has no translation file (the shipped-path md5 is what WordPress looks up).
+fresh_copy c10
+rm -f "$work/c10/wb-gamification-de_DE-$(md5p build/Blocks/leaderboard/index.js).json"
+expect_fail "missing editor-script .json" "$work/c10" "not shipped"
+
+# 11. The translations exist but are keyed to a src/ path, which WordPress never asks for.
+fresh_copy c11
+mv "$work/c11/wb-gamification-de_DE-$(md5p build/Blocks/leaderboard/index.js).json" \
+   "$work/c11/wb-gamification-de_DE-$(md5p src/Blocks/leaderboard/edit.js).json"
+expect_fail "json keyed to a src path" "$work/c11" "not shipped"
+out="$(run_gate "$work/c11")"
+grep -q "belong to no shipped script" <<<"$out" && printf '  \033[32mok\033[0m   ...and the src-keyed file is reported as an orphan\n' || { printf '  \033[31mFAIL\033[0m src-keyed file not reported as orphan\n'; failures=$((failures + 1)); }
 
 echo
 if [ "$failures" -gt 0 ]; then

@@ -17,6 +17,11 @@
 #                    untranslated, because both ship as English). I18N_ENFORCE_COVERAGE=1 makes it fail.
 #   5. Placeholders  msgfmt -c: a translation whose %s / %d / %1$s do not match the msgid.
 #   6. Artifacts     the shipped .mo / .json / .l10n.php differ from what the .po builds today.
+#   7. Script JSON   for every SHIPPED script that has translatable strings (build/Blocks/*/index.js,
+#                    assets/js/*.js), a JSON keyed to md5 of that shipped path exists in every locale,
+#                    and no JSON is left that belongs to no shipped script (for example one keyed to a
+#                    src/ path, which WordPress never loads). The expected set comes from the same
+#                    generator that writes them: bin/build-i18n-json.sh.
 #
 # Shipped locales are the .po files in the languages dir. Nothing is skipped: a missing tool is a
 # failure, because a gate that quietly checks less is the bug this exists to stop.
@@ -150,11 +155,14 @@ for po in "${pos[@]}"; do
   fi
 done
 
-# .json (one per script) and .l10n.php, rebuilt from copies of the .po files.
-mkdir -p "$work/build"
+# .l10n.php from the .po copies; the script .json set from the generator that keys it to the shipped scripts.
+mkdir -p "$work/build" "$work/json"
 cp "${LANG_DIR}"/${DOMAIN}-*.po "$work/build/"
-"$WP_BIN" i18n make-json "$work/build" --no-purge >"$work/makejson.log" 2>&1 || fail "make-json failed" "$(tail -3 "$work/makejson.log")"
 "$WP_BIN" i18n make-php "$work/build" >"$work/makephp.log" 2>&1 || fail "make-php failed" "$(tail -3 "$work/makephp.log")"
+if ! WP_BIN="$WP_BIN" I18N_PO_DIR="$LANG_DIR" bash bin/build-i18n-json.sh "$work/json" >"$work/makejson.log" 2>&1; then
+  fail "bin/build-i18n-json.sh failed" "$(tail -3 "$work/makejson.log")"
+fi
+cp "$work"/json/${DOMAIN}-*.json "$work/build/" 2>/dev/null || true
 
 missing_files=(); stale_files=(); orphan_files=()
 for f in "$work"/build/*.json "$work"/build/*.l10n.php; do
@@ -172,13 +180,13 @@ for shipped in "${LANG_DIR}"/${DOMAIN}-*.json "${LANG_DIR}"/${DOMAIN}-*.l10n.php
   [ -f "$work/build/$(basename "$shipped")" ] || orphan_files+=("$(basename "$shipped")")
 done
 if [ ${#missing_files[@]} -gt 0 ]; then
-  fail "${#missing_files[@]} .json/.l10n.php file(s) the .po files build are not shipped (those scripts show English)" "e.g. ${missing_files[0]}" "Run: wp i18n make-json ${LANG_DIR} --no-purge && wp i18n make-php ${LANG_DIR}"
+  fail "${#missing_files[@]} .json/.l10n.php file(s) the .po files build are not shipped (those scripts show English)" "e.g. ${missing_files[0]}" "Run: bash bin/build-i18n-json.sh && wp i18n make-php ${LANG_DIR}"
 fi
 if [ ${#stale_files[@]} -gt 0 ]; then
-  fail "${#stale_files[@]} shipped .json/.l10n.php file(s) differ from the .po build" "e.g. ${stale_files[0]}" "Run: wp i18n make-json ${LANG_DIR} --no-purge && wp i18n make-php ${LANG_DIR}"
+  fail "${#stale_files[@]} shipped .json/.l10n.php file(s) differ from the .po build" "e.g. ${stale_files[0]}" "Run: bash bin/build-i18n-json.sh && wp i18n make-php ${LANG_DIR}"
 fi
 if [ ${#orphan_files[@]} -gt 0 ]; then
-  fail "${#orphan_files[@]} shipped .json file(s) belong to no script in the .po files" "e.g. ${orphan_files[0]}"
+  fail "${#orphan_files[@]} shipped .json file(s) belong to no shipped script (keyed to a source path?)" "e.g. ${orphan_files[0]}"
 fi
 if [ ${#missing_files[@]} -eq 0 ] && [ ${#stale_files[@]} -eq 0 ] && [ ${#orphan_files[@]} -eq 0 ]; then
   pass "Shipped .json and .l10n.php match the .po files"
