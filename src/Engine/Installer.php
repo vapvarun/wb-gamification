@@ -631,27 +631,42 @@ final class Installer {
 		) $charset;"
 		);
 
-		// The starter library is the SITE's data, stored once: seed it in the site language, not in
-		// whichever language the administrator who activated the plugin happens to read.
+		update_option( 'wb_gam_db_version', WB_GAM_VERSION );
+
+		// The starter library and the hub page carry translated text. WordPress may not load a
+		// translation before init (a __() earlier logs "_load_textdomain_just_in_time was called
+		// incorrectly" on WP 6.7+), and this method runs at plugins_loaded when the first request
+		// after a copy-in install triggers it. So seed now when init has fired (activation), else
+		// at the start of init, in the same request.
+		if ( did_action( 'init' ) ) {
+			self::seed_translated_defaults();
+		} else {
+			add_action( 'init', array( __CLASS__, 'seed_translated_defaults' ), 1 );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Seed the starter levels, badges, point type and the hub page.
+	 *
+	 * The starter library is the SITE's data, stored once: it is seeded in the site language, not in
+	 * whichever language the administrator who activated the plugin happens to read. Needs a loaded
+	 * translation, so call it at or after init.
+	 *
+	 * @return void
+	 */
+	public static function seed_translated_defaults(): void {
 		RecipientLocale::run_in_site(
 			static function (): void {
-				// Seed default levels.
 				self::seed_default_levels();
-
-				// Seed default badge library (37 badges).
-				self::seed_default_badges();
-
-				// Seed default point type — 'points' as the primary currency.
-				self::seed_default_point_types();
+				self::seed_default_badges(); // 37 badges.
+				self::seed_default_point_types(); // 'points', the primary currency.
 			}
 		);
 
-		update_option( 'wb_gam_db_version', WB_GAM_VERSION );
-
-		// Auto-create Gamification hub page if it doesn't exist.
+		// Auto-create the Gamification hub page if it does not exist.
 		self::maybe_create_hub_page();
-
-		return true;
 	}
 
 	/**

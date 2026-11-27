@@ -1400,14 +1400,24 @@ final class DbUpgrader {
 		self::add_point_type_column( $wpdb->prefix . 'wb_gam_events', 'AFTER metadata' );
 
 		// 4. Seed the default 'points' type. INSERT IGNORE = no duplicate on re-run.
+		//
+		// This runs on plugins_loaded, before WordPress may load a translation (a call to __() here logs
+		// "_load_textdomain_just_in_time was called incorrectly" on WP 6.7+). Only the activation
+		// request, which runs after init, seeds translated names; this path seeds the English names.
+		$after_init = (bool) did_action( 'init' );
+		$label      = $after_init ? __( 'Points', 'wb-gamification' ) : 'Points';
+		$singular   = $after_init ? __( 'Point', 'wb-gamification' ) : 'Point';
+		$desc       = $after_init
+			? __( 'Primary points currency. Renamable; the slug stays as `points` for back-compat.', 'wb-gamification' )
+			: 'Primary points currency. Renamable; the slug stays as `points` for back-compat.';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- bootstrapped table name; INSERT IGNORE on PK.
 		$wpdb->query(
 			$wpdb->prepare(
 				"INSERT IGNORE INTO {$wpdb->prefix}wb_gam_point_types (slug, label, label_singular, description, icon, is_default, position) VALUES (%s, %s, %s, %s, %s, %d, %d)",
 				'points',
-				__( 'Points', 'wb-gamification' ),
-				__( 'Point', 'wb-gamification' ),
-				__( 'Primary points currency. Renamable; the slug stays as `points` for back-compat.', 'wb-gamification' ),
+				$label,
+				$singular,
+				$desc,
 				'star',
 				1,
 				0
