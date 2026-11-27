@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-27T13:07:02+00:00\n"
+"POT-Creation-Date: 2026-11-27T13:55:23+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wb-gamification\n"
@@ -1151,8 +1151,8 @@ msgid "Dashboard"
 msgstr ""
 
 #: src/Admin/AdminNav.php:75
-#: src/Admin/AnalyticsDashboard.php:83
-#: src/Admin/AnalyticsDashboard.php:84
+#: src/Admin/AnalyticsDashboard.php:97
+#: src/Admin/AnalyticsDashboard.php:98
 msgid "Analytics"
 msgstr ""
 
@@ -1332,15 +1332,15 @@ msgstr ""
 #: src/Admin/AdminNav.php:518
 #: src/Admin/SettingsPage.php:99
 #: src/API/AbilitiesRegistration.php:78
-#: src/Engine/Installer.php:732
+#: src/Engine/Installer.php:747
 msgid "Gamification"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:137
+#: src/Admin/AnalyticsDashboard.php:151
 msgid "Done."
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:138
+#: src/Admin/AnalyticsDashboard.php:152
 #: src/Admin/KudosModerationPage.php:142
 #: src/Admin/MembersPage.php:115
 #: src/Admin/SettingsPage.php:87
@@ -1348,95 +1348,95 @@ msgstr ""
 msgid "Action failed."
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:159
+#: src/Admin/AnalyticsDashboard.php:173
 msgid "You are not allowed to view analytics."
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:160
+#: src/Admin/AnalyticsDashboard.php:174
 msgid "Forbidden"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:177
+#: src/Admin/AnalyticsDashboard.php:191
 msgid "Gamification Analytics"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:178
+#: src/Admin/AnalyticsDashboard.php:192
 msgid "Engagement at a glance - points awarded, badges earned, streaks, kudos and challenge completion across your community."
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:186
+#: src/Admin/AnalyticsDashboard.php:200
 msgid "7 days"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:187
+#: src/Admin/AnalyticsDashboard.php:201
 msgid "30 days"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:188
+#: src/Admin/AnalyticsDashboard.php:202
 msgid "90 days"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:202
+#: src/Admin/AnalyticsDashboard.php:216
 msgid "Points Awarded"
 msgstr ""
 
 #. translators: %d = number of days
-#: src/Admin/AnalyticsDashboard.php:206
-#: src/Admin/AnalyticsDashboard.php:256
+#: src/Admin/AnalyticsDashboard.php:220
+#: src/Admin/AnalyticsDashboard.php:270
 #, php-format
 msgid "Last %d days"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:212
+#: src/Admin/AnalyticsDashboard.php:226
 msgid "Active Members"
 msgstr ""
 
 #. translators: %d = total member count
-#: src/Admin/AnalyticsDashboard.php:216
+#: src/Admin/AnalyticsDashboard.php:230
 #, php-format
 msgid "%d total members"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:222
+#: src/Admin/AnalyticsDashboard.php:236
 #: src/Blocks/hub/render.php:466
 msgid "Badges Earned"
 msgstr ""
 
 #. translators: %s: percentage of active members.
-#: src/Admin/AnalyticsDashboard.php:226
+#: src/Admin/AnalyticsDashboard.php:240
 #, php-format
 msgid "%s%% of active members"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:232
+#: src/Admin/AnalyticsDashboard.php:246
 msgid "Challenges Completed"
 msgstr ""
 
 #. translators: %s: completion rate percentage.
-#: src/Admin/AnalyticsDashboard.php:236
+#: src/Admin/AnalyticsDashboard.php:250
 #, php-format
 msgid "%s%% completion rate"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:242
+#: src/Admin/AnalyticsDashboard.php:256
 msgid "Active Streaks"
 msgstr ""
 
 #. translators: %s: streak health percentage.
-#: src/Admin/AnalyticsDashboard.php:246
+#: src/Admin/AnalyticsDashboard.php:260
 #, php-format
 msgid "%s%% streak health"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:252
+#: src/Admin/AnalyticsDashboard.php:266
 msgid "Kudos Given"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:268
+#: src/Admin/AnalyticsDashboard.php:282
 msgid "Top Actions by Points"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:275
+#: src/Admin/AnalyticsDashboard.php:289
 #: src/Admin/ChallengeManagerPage.php:213
 #: src/Admin/ChallengeManagerPage.php:290
 #: src/Admin/CommunityChallengesPage.php:262
@@ -1452,25 +1452,25 @@ msgstr ""
 msgid "Action"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:276
-#: src/Admin/AnalyticsDashboard.php:793
+#: src/Admin/AnalyticsDashboard.php:290
+#: src/Admin/AnalyticsDashboard.php:807
 #: src/Admin/WebhooksAdminPage.php:225
 #: src/Admin/WebhooksAdminPage.php:264
 #: src/Engine/Registry.php:503
 msgid "Events"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:277
+#: src/Admin/AnalyticsDashboard.php:291
 msgid "Total pts"
 msgstr ""
 
 #. translators: %d = number of days
-#: src/Admin/AnalyticsDashboard.php:303
+#: src/Admin/AnalyticsDashboard.php:317
 #, php-format
 msgid "Top Earners - Last %d Days"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:317
+#: src/Admin/AnalyticsDashboard.php:331
 #: src/Admin/BadgeAdminPage.php:492
 #: src/Admin/ImportPage.php:147
 #: src/Admin/MembersPage.php:92
@@ -1480,7 +1480,7 @@ msgstr ""
 #: src/CLI/EmailCommand.php:64
 #: src/CLI/MemberCommand.php:67
 #: src/Engine/DbUpgrader.php:1408
-#: src/Engine/Installer.php:1175
+#: src/Engine/Installer.php:1190
 #: src/Engine/Privacy.php:310
 #: src/Engine/ProfilePage.php:205
 #: src/Engine/ProfilePage.php:403
@@ -1491,102 +1491,102 @@ msgstr ""
 msgid "Points"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:322
-#: src/Admin/AnalyticsDashboard.php:682
-#: src/Admin/AnalyticsDashboard.php:729
-#: src/Admin/AnalyticsDashboard.php:886
+#: src/Admin/AnalyticsDashboard.php:336
+#: src/Admin/AnalyticsDashboard.php:696
+#: src/Admin/AnalyticsDashboard.php:743
+#: src/Admin/AnalyticsDashboard.php:900
 #: src/Admin/MembersPage.php:91
 #: src/Admin/RedemptionStorePage.php:536
 #: src/Admin/StreaksPage.php:167
 #: src/Admin/SubmissionsPage.php:148
 #: src/CLI/EmailCommand.php:85
-#: src/Engine/Installer.php:1130
+#: src/Engine/Installer.php:1145
 msgid "Member"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:351
+#: src/Admin/AnalyticsDashboard.php:365
 msgid "Daily Points Trend"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:671
+#: src/Admin/AnalyticsDashboard.php:685
 msgid "Members at churn risk"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:674
+#: src/Admin/AnalyticsDashboard.php:688
 msgid "Members whose engagement score has fallen far enough that they're likely to drift away. Re-engage with a personalised nudge."
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:677
+#: src/Admin/AnalyticsDashboard.php:691
 msgid "No members above the high-risk threshold (0.7). Either your community is exceptionally engaged or the projection cron hasn't finished its first pass - check back tomorrow."
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:683
+#: src/Admin/AnalyticsDashboard.php:697
 msgid "Risk"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:684
-#: src/Admin/AnalyticsDashboard.php:794
+#: src/Admin/AnalyticsDashboard.php:698
+#: src/Admin/AnalyticsDashboard.php:808
 msgid "Last seen"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:685
-#: src/Admin/AnalyticsDashboard.php:730
+#: src/Admin/AnalyticsDashboard.php:699
+#: src/Admin/AnalyticsDashboard.php:744
 msgid "30d events"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:698
+#: src/Admin/AnalyticsDashboard.php:712
 msgid "never"
 msgstr ""
 
 #. translators: %d: days
-#: src/Admin/AnalyticsDashboard.php:701
+#: src/Admin/AnalyticsDashboard.php:715
 #, php-format
 msgid "%d day ago"
 msgid_plural "%d days ago"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/AnalyticsDashboard.php:718
+#: src/Admin/AnalyticsDashboard.php:732
 msgid "Possible gaming activity"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:721
+#: src/Admin/AnalyticsDashboard.php:735
 msgid "High event volume with very low action diversity - the \"bot grinding one action\" pattern. Review before assuming abuse: some legitimate members really do only do one thing."
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:724
+#: src/Admin/AnalyticsDashboard.php:738
 msgid "No members flagged. Anomaly detection requires >500 events in 30 days AND <3 distinct actions; communities below those volumes simply won't trip the heuristic."
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:731
+#: src/Admin/AnalyticsDashboard.php:745
 msgid "Actions used"
 msgstr ""
 
 #. translators: %s: timestamp
-#: src/Admin/AnalyticsDashboard.php:753
+#: src/Admin/AnalyticsDashboard.php:767
 #, php-format
 msgid "Intelligence signals last computed: %s. Cron runs daily; force a refresh per-user via the REST endpoint or `wp eval` if you need fresher data."
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:784
+#: src/Admin/AnalyticsDashboard.php:798
 msgid "Unknown action IDs fired (last 24h)"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:787
+#: src/Admin/AnalyticsDashboard.php:801
 msgid "These events were rejected because the action_id was not registered with the engine. Usually means a typo in custom code, a deactivated integration plugin, or a manifest that did not load. Each row aggregates all firings of that ID."
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:792
+#: src/Admin/AnalyticsDashboard.php:806
 msgid "Action ID"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:795
+#: src/Admin/AnalyticsDashboard.php:809
 msgid "Did you mean?"
 msgstr ""
 
 #. translators: %s: human-readable time difference.
-#: src/Admin/AnalyticsDashboard.php:810
-#: src/Admin/AnalyticsDashboard.php:919
+#: src/Admin/AnalyticsDashboard.php:824
+#: src/Admin/AnalyticsDashboard.php:933
 #: src/Blocks/badge-showcase/render.php:212
 #: src/Blocks/kudos-feed/render.php:152
 #: src/Blocks/points-history/render.php:229
@@ -1595,42 +1595,42 @@ msgstr ""
 msgid "%s ago"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:813
+#: src/Admin/AnalyticsDashboard.php:827
 msgid "unknown"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:823
+#: src/Admin/AnalyticsDashboard.php:837
 msgid "No close match in registered actions."
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:838
+#: src/Admin/AnalyticsDashboard.php:852
 msgid "Rows auto-expire after 24 hours. If a suggestion looks right, update the calling code to use that exact ID. If there is no suggestion, the owning integration plugin is probably not active or its manifest did not load."
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:868
+#: src/Admin/AnalyticsDashboard.php:882
 msgid "Side effects that failed to run"
 msgstr ""
 
 #. translators: 1: count still retrying, 2: count exhausted.
-#: src/Admin/AnalyticsDashboard.php:875
+#: src/Admin/AnalyticsDashboard.php:889
 #, php-format
 msgid "A badge award, notification, or webhook could not be delivered. Still retrying automatically: %1$d. Given up and need attention: %2$d. Fix the cause, then Retry."
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:885
+#: src/Admin/AnalyticsDashboard.php:899
 msgid "Side effect"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:887
+#: src/Admin/AnalyticsDashboard.php:901
 #: src/Admin/IntegrationsTab.php:41
 msgid "Error"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:888
+#: src/Admin/AnalyticsDashboard.php:902
 msgid "Tries"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:889
+#: src/Admin/AnalyticsDashboard.php:903
 #: src/Admin/ApiKeysPage.php:223
 #: src/Admin/ChallengeManagerPage.php:293
 #: src/Admin/CommunityChallengesPage.php:337
@@ -1645,11 +1645,11 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:890
+#: src/Admin/AnalyticsDashboard.php:904
 msgid "Last attempt"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:891
+#: src/Admin/AnalyticsDashboard.php:905
 #: src/Admin/ApiKeysPage.php:224
 #: src/Admin/ChallengeManagerPage.php:295
 #: src/Admin/CommunityChallengesPage.php:339
@@ -1666,54 +1666,54 @@ msgstr ""
 msgid "Actions"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:910
+#: src/Admin/AnalyticsDashboard.php:924
 msgid "Needs attention"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:910
+#: src/Admin/AnalyticsDashboard.php:924
 msgid "Retrying"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:934
+#: src/Admin/AnalyticsDashboard.php:948
 msgid "Side effect re-ran successfully."
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:935
+#: src/Admin/AnalyticsDashboard.php:949
 msgid "Still failing. Check the cause and try again."
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:936
+#: src/Admin/AnalyticsDashboard.php:950
 msgid "Retry"
 msgstr ""
 
 #. translators: 1: link to the Points settings, 2: link to the Award Points page
-#: src/Admin/AnalyticsDashboard.php:956
+#: src/Admin/AnalyticsDashboard.php:970
 #, php-format
 msgid "Nothing earned in this period yet. Members earn points from the actions switched on under %1$s, or you can %2$s by hand."
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:957
+#: src/Admin/AnalyticsDashboard.php:971
 msgid "Points settings"
 msgstr ""
 
-#: src/Admin/AnalyticsDashboard.php:958
+#: src/Admin/AnalyticsDashboard.php:972
 msgid "award points"
 msgstr ""
 
 #. translators: 1: number of points on the busiest day, 2: total points, 3: start date, 4: end date.
-#: src/Admin/AnalyticsDashboard.php:995
+#: src/Admin/AnalyticsDashboard.php:1009
 #, php-format
 msgid "Daily points. Busiest day: %1$s points. Total: %2$s points, %3$s to %4$s."
 msgstr ""
 
 #. translators: 1: date, 2: points earned that day (a number).
-#: src/Admin/AnalyticsDashboard.php:1018
+#: src/Admin/AnalyticsDashboard.php:1032
 #, php-format
 msgid "%1$s: %2$s pts"
 msgstr ""
 
 #. translators: %s: highest daily points total.
-#: src/Admin/AnalyticsDashboard.php:1033
+#: src/Admin/AnalyticsDashboard.php:1047
 #, php-format
 msgid "peak %s"
 msgstr ""
@@ -7233,7 +7233,7 @@ msgstr ""
 #: src/Blocks/user-status-bar/render.php:134
 #: src/BuddyPress/ProfileIntegration.php:166
 #: src/CLI/EmailCommand.php:84
-#: src/Engine/Installer.php:1125
+#: src/Engine/Installer.php:1140
 #: src/Engine/ProfilePage.php:230
 #: src/Engine/ProfilePage.php:431
 msgid "Newcomer"
@@ -8304,15 +8304,15 @@ msgid "A submission of yours was reviewed."
 msgstr ""
 
 #: src/Engine/DbUpgrader.php:1409
-#: src/Engine/Installer.php:1176
+#: src/Engine/Installer.php:1191
 #: src/Services/PointTypeService.php:116
 msgid "Point"
 msgid_plural "Points"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Engine/DbUpgrader.php:1410
-#: src/Engine/Installer.php:1177
+#: src/Engine/DbUpgrader.php:1411
+#: src/Engine/Installer.php:1192
 msgid "Primary points currency. Renamable; the slug stays as `points` for back-compat."
 msgstr ""
 
@@ -8378,312 +8378,312 @@ msgstr ""
 msgid "Removing a page of imported events was rolled back."
 msgstr ""
 
-#: src/Engine/Installer.php:781
+#: src/Engine/Installer.php:796
 msgid "Century Club"
 msgstr ""
 
-#: src/Engine/Installer.php:781
+#: src/Engine/Installer.php:796
 msgid "Earned your first 100 points."
 msgstr ""
 
-#: src/Engine/Installer.php:782
+#: src/Engine/Installer.php:797
 msgid "Five Hundred Strong"
 msgstr ""
 
-#: src/Engine/Installer.php:782
+#: src/Engine/Installer.php:797
 msgid "Reached 500 total points."
 msgstr ""
 
-#: src/Engine/Installer.php:783
+#: src/Engine/Installer.php:798
 msgid "Thousand Points Club"
 msgstr ""
 
-#: src/Engine/Installer.php:783
+#: src/Engine/Installer.php:798
 msgid "Earned 1,000 total points."
 msgstr ""
 
-#: src/Engine/Installer.php:784
+#: src/Engine/Installer.php:799
 msgid "Five Thousand Strong"
 msgstr ""
 
-#: src/Engine/Installer.php:784
+#: src/Engine/Installer.php:799
 msgid "Reached 5,000 total points."
 msgstr ""
 
-#: src/Engine/Installer.php:785
+#: src/Engine/Installer.php:800
 msgid "Ten Thousand Club"
 msgstr ""
 
-#: src/Engine/Installer.php:785
+#: src/Engine/Installer.php:800
 msgid "Earned 10,000 total points."
 msgstr ""
 
-#: src/Engine/Installer.php:788
+#: src/Engine/Installer.php:803
 msgid "Welcome Aboard"
 msgstr ""
 
-#: src/Engine/Installer.php:788
+#: src/Engine/Installer.php:803
 msgid "Joined the community."
 msgstr ""
 
-#: src/Engine/Installer.php:789
+#: src/Engine/Installer.php:804
 msgid "First Post"
 msgstr ""
 
-#: src/Engine/Installer.php:789
+#: src/Engine/Installer.php:804
 msgid "Published your very first post."
 msgstr ""
 
-#: src/Engine/Installer.php:790
+#: src/Engine/Installer.php:805
 msgid "Prolific Writer"
 msgstr ""
 
-#: src/Engine/Installer.php:790
+#: src/Engine/Installer.php:805
 msgid "Published 10 posts."
 msgstr ""
 
-#: src/Engine/Installer.php:791
+#: src/Engine/Installer.php:806
 msgid "Content Creator"
 msgstr ""
 
-#: src/Engine/Installer.php:791
+#: src/Engine/Installer.php:806
 msgid "Published 25 posts — a committed contributor."
 msgstr ""
 
-#: src/Engine/Installer.php:792
+#: src/Engine/Installer.php:807
 msgid "First Comment"
 msgstr ""
 
-#: src/Engine/Installer.php:792
+#: src/Engine/Installer.php:807
 msgid "Left your first comment."
 msgstr ""
 
-#: src/Engine/Installer.php:793
+#: src/Engine/Installer.php:808
 msgid "Engaged Reader"
 msgstr ""
 
-#: src/Engine/Installer.php:793
+#: src/Engine/Installer.php:808
 msgid "Left 10 comments — always adding to the conversation."
 msgstr ""
 
-#: src/Engine/Installer.php:796
+#: src/Engine/Installer.php:811
 msgid "First Update"
 msgstr ""
 
-#: src/Engine/Installer.php:796
+#: src/Engine/Installer.php:811
 msgid "Posted your first activity update."
 msgstr ""
 
-#: src/Engine/Installer.php:797
+#: src/Engine/Installer.php:812
 msgid "Active Member"
 msgstr ""
 
-#: src/Engine/Installer.php:797
+#: src/Engine/Installer.php:812
 msgid "Posted 10 activity updates."
 msgstr ""
 
-#: src/Engine/Installer.php:798
+#: src/Engine/Installer.php:813
 msgid "Community Voice"
 msgstr ""
 
-#: src/Engine/Installer.php:798
+#: src/Engine/Installer.php:813
 msgid "Posted 50 activity updates — your voice shapes this community."
 msgstr ""
 
-#: src/Engine/Installer.php:799
+#: src/Engine/Installer.php:814
 msgid "First Connection"
 msgstr ""
 
-#: src/Engine/Installer.php:799
+#: src/Engine/Installer.php:814
 msgid "Made your first friend."
 msgstr ""
 
-#: src/Engine/Installer.php:800
+#: src/Engine/Installer.php:815
 msgid "Social Connector"
 msgstr ""
 
-#: src/Engine/Installer.php:800
+#: src/Engine/Installer.php:815
 msgid "Made 10 connections — growing the community network."
 msgstr ""
 
-#: src/Engine/Installer.php:801
+#: src/Engine/Installer.php:816
 msgid "Group Creator"
 msgstr ""
 
-#: src/Engine/Installer.php:801
+#: src/Engine/Installer.php:816
 msgid "Created your first group."
 msgstr ""
 
-#: src/Engine/Installer.php:802
+#: src/Engine/Installer.php:817
 msgid "Team Player"
 msgstr ""
 
-#: src/Engine/Installer.php:802
+#: src/Engine/Installer.php:817
 msgid "Joined 3 or more groups."
 msgstr ""
 
-#: src/Engine/Installer.php:803
+#: src/Engine/Installer.php:818
 msgid "Profile Pro"
 msgstr ""
 
-#: src/Engine/Installer.php:803
+#: src/Engine/Installer.php:818
 msgid "Completed your extended profile."
 msgstr ""
 
-#: src/Engine/Installer.php:804
+#: src/Engine/Installer.php:819
 msgid "Reaction Magnet"
 msgstr ""
 
-#: src/Engine/Installer.php:804
+#: src/Engine/Installer.php:819
 msgid "Received 10 reactions on your activity."
 msgstr ""
 
-#: src/Engine/Installer.php:805
+#: src/Engine/Installer.php:820
 msgid "Comment Champion"
 msgstr ""
 
-#: src/Engine/Installer.php:805
+#: src/Engine/Installer.php:820
 msgid "Commented on 20 activity updates."
 msgstr ""
 
-#: src/Engine/Installer.php:806
+#: src/Engine/Installer.php:821
 msgid "Poll Pioneer"
 msgstr ""
 
-#: src/Engine/Installer.php:806
+#: src/Engine/Installer.php:821
 msgid "Created your first poll."
 msgstr ""
 
-#: src/Engine/Installer.php:807
+#: src/Engine/Installer.php:822
 msgid "Blog Publisher"
 msgstr ""
 
-#: src/Engine/Installer.php:807
+#: src/Engine/Installer.php:822
 msgid "Published your first member blog post."
 msgstr ""
 
-#: src/Engine/Installer.php:810
+#: src/Engine/Installer.php:825
 msgid "Early Adopter"
 msgstr ""
 
-#: src/Engine/Installer.php:810
+#: src/Engine/Installer.php:825
 msgid "One of the first members of this community."
 msgstr ""
 
-#: src/Engine/Installer.php:811
+#: src/Engine/Installer.php:826
 msgid "Founding Member"
 msgstr ""
 
-#: src/Engine/Installer.php:811
+#: src/Engine/Installer.php:826
 msgid "A founding member — here from the very beginning."
 msgstr ""
 
-#: src/Engine/Installer.php:812
+#: src/Engine/Installer.php:827
 msgid "Top Contributor"
 msgstr ""
 
-#: src/Engine/Installer.php:812
+#: src/Engine/Installer.php:827
 msgid "Recognized as a top community contributor."
 msgstr ""
 
-#: src/Engine/Installer.php:813
+#: src/Engine/Installer.php:828
 msgid "Mentor"
 msgstr ""
 
-#: src/Engine/Installer.php:813
+#: src/Engine/Installer.php:828
 msgid "Helped guide and support other community members."
 msgstr ""
 
-#: src/Engine/Installer.php:814
+#: src/Engine/Installer.php:829
 msgid "Kudos Champion"
 msgstr ""
 
-#: src/Engine/Installer.php:814
+#: src/Engine/Installer.php:829
 msgid "Recognized for spreading positivity across the community."
 msgstr ""
 
-#: src/Engine/Installer.php:815
+#: src/Engine/Installer.php:830
 msgid "Event Host"
 msgstr ""
 
-#: src/Engine/Installer.php:815
+#: src/Engine/Installer.php:830
 msgid "Hosted a community event."
 msgstr ""
 
-#: src/Engine/Installer.php:816
+#: src/Engine/Installer.php:831
 msgid "Community Veteran"
 msgstr ""
 
-#: src/Engine/Installer.php:816
+#: src/Engine/Installer.php:831
 msgid "A long-standing, valued member of this community."
 msgstr ""
 
-#: src/Engine/Installer.php:819
+#: src/Engine/Installer.php:834
 msgid "1-Year Member"
 msgstr ""
 
-#: src/Engine/Installer.php:819
+#: src/Engine/Installer.php:834
 msgid "Has been part of this community for one year."
 msgstr ""
 
-#: src/Engine/Installer.php:820
+#: src/Engine/Installer.php:835
 msgid "2-Year Member"
 msgstr ""
 
-#: src/Engine/Installer.php:820
+#: src/Engine/Installer.php:835
 msgid "A two-year member - a valued, long-standing contributor."
 msgstr ""
 
-#: src/Engine/Installer.php:821
+#: src/Engine/Installer.php:836
 msgid "5-Year Member"
 msgstr ""
 
-#: src/Engine/Installer.php:821
+#: src/Engine/Installer.php:836
 msgid "Five years and counting - a true community pillar."
 msgstr ""
 
-#: src/Engine/Installer.php:822
+#: src/Engine/Installer.php:837
 msgid "10-Year Member"
 msgstr ""
 
-#: src/Engine/Installer.php:822
+#: src/Engine/Installer.php:837
 msgid "A decade of community membership - legendary status."
 msgstr ""
 
-#: src/Engine/Installer.php:825
+#: src/Engine/Installer.php:840
 msgid "First Champion"
 msgstr ""
 
-#: src/Engine/Installer.php:825
+#: src/Engine/Installer.php:840
 msgid "The first member of this community to reach Champion rank."
 msgstr ""
 
-#: src/Engine/Installer.php:826
+#: src/Engine/Installer.php:841
 msgid "First to 10,000"
 msgstr ""
 
-#: src/Engine/Installer.php:826
+#: src/Engine/Installer.php:841
 msgid "The first member to earn 10,000 total points in this community."
 msgstr ""
 
-#: src/Engine/Installer.php:827
+#: src/Engine/Installer.php:842
 msgid "Century Streak Pioneer"
 msgstr ""
 
-#: src/Engine/Installer.php:827
+#: src/Engine/Installer.php:842
 msgid "The first member to reach a 100-day activity streak."
 msgstr ""
 
-#: src/Engine/Installer.php:1135
+#: src/Engine/Installer.php:1150
 #: src/Blocks/user-status-bar/edit.js:122
 msgid "Contributor"
 msgstr ""
 
-#: src/Engine/Installer.php:1140
+#: src/Engine/Installer.php:1155
 msgid "Regular"
 msgstr ""
 
-#: src/Engine/Installer.php:1145
+#: src/Engine/Installer.php:1160
 msgid "Champion"
 msgstr ""
 
