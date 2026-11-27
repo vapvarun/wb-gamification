@@ -250,14 +250,16 @@ final class LeaderboardEngine {
 		// Cache key embeds the wb_gamification group's last-changed stamp so
 		// invalidate_cache() (called on wb_gam_points_awarded) auto-orphans
 		// every key when any award fires — no manual delete walk needed.
+		$scope_ids    = self::resolve_scope( $scope_type, $scope_id );
 		$last_changed = wp_cache_get_last_changed( 'wb_gamification' );
 		$cache_key    = sprintf(
-			'wb_gam_lb_%s_%d_%s_%d_%s_%s',
+			'wb_gam_lb_%s_%d_%s_%d_%s_%s_%s',
 			$period,
 			$limit,
 			$scope_type ? $scope_type : 'global',
 			$scope_id,
 			$resolved_type,
+			self::eligibility_hash( $scope_ids ),
 			$last_changed
 		);
 		$cached       = wp_cache_get( $cache_key, 'wb_gamification' );
@@ -265,7 +267,7 @@ final class LeaderboardEngine {
 			return (array) $cached;
 		}
 
-		$rows   = self::fetch_raw( $period, $limit, $scope_type, $scope_id, $resolved_type, null );
+		$rows   = self::fetch_raw( $period, $limit, $scope_type, $scope_id, $resolved_type, null, false, $scope_ids );
 		$result = $rows ? self::hydrate_rows( $rows ) : array();
 
 		// Store in object cache with 2-minute TTL.
@@ -382,13 +384,13 @@ final class LeaderboardEngine {
 		global $wpdb;
 
 		$type      = ( new \WBGam\Services\PointTypeService() )->resolve( $point_type ?: null );
-		$cache_key = sprintf( 'wb_gam_lbt_%s', self::board_hash( $period, $scope_type, $scope_id, $type ) );
+		$scope_ids = self::resolve_scope( $scope_type, $scope_id );
+		$cache_key = sprintf( 'wb_gam_lbt_%s_%s', self::board_hash( $period, $scope_type, $scope_id, $type ), self::eligibility_hash( $scope_ids ) );
 		$cached    = wp_cache_get( $cache_key, 'wb_gamification' );
 		if ( false !== $cached ) {
 			return (int) $cached;
 		}
 
-		$scope_ids = self::resolve_scope( $scope_type, $scope_id );
 		if ( '' !== $scope_type && $scope_id > 0 && empty( $scope_ids ) ) {
 			$total = 0; // A scope that resolves to nobody holds nobody.
 		} else {
@@ -433,6 +435,22 @@ final class LeaderboardEngine {
 		// ever matters, keep the count in a transient or a maintained counter row instead.
 		wp_cache_set( $cache_key, $total, 'wb_gamification', 300 ); // Aggregate, TTL-only by design.
 		return $total;
+	}
+
+	/**
+	 * What can make two calls with the same board arguments get different answers: the members the
+	 * scope resolved to and the eligibility rules. Both come from filters a host may answer per viewer
+	 * (BuddyNext resolves a private space to nobody for a viewer who may not see its roster), so every
+	 * cached board answer (rows, total, rank) carries this in its key. Without it, the first viewer's
+	 * answer was served to everyone after them for the cache's lifetime (card 10549329578).
+	 *
+	 * @param int[] $scope_ids Members the scope resolved to, empty = site-wide.
+	 * @return string Short stable hash.
+	 */
+	private static function eligibility_hash( array $scope_ids ): string {
+		// ponytail: the scope filter now runs on a cache hit too (it already ran on every miss). Fine
+		// for scopes in the thousands; a host whose scope lookup is costly caches it on its own side.
+		return substr( md5( (string) wp_json_encode( array( $scope_ids, self::exclusion_sql( 'e' ) ) ) ), 0, 12 );
 	}
 
 	/**
@@ -567,6 +585,7 @@ final class LeaderboardEngine {
 	 * @param string                                     $resolved_type Resolved currency slug.
 	 * @param array{p: int, u: int, n: int, r: int}|null $cursor        Decoded cursor, or null for the first page.
 	 * @param bool                                       $paged         True when the rows are one page of a paged walk.
+	 * @param int[]|null                                 $scope_ids     Members the scope already resolved to, null = resolve here.
 	 * @return array<int, array<string, mixed>> Raw rows: user_id, total_points, display_name (and snapshot ranks).
 	 */
 	private static function fetch_raw(
@@ -576,7 +595,8 @@ final class LeaderboardEngine {
 		int $scope_id,
 		string $resolved_type,
 		?array $cursor,
-		bool $paged = false
+		bool $paged = false,
+		?array $scope_ids = null
 	): array {
 		global $wpdb;
 
@@ -605,7 +625,7 @@ final class LeaderboardEngine {
 
 		// The FOURTH predicate. Every path that ranks members must ask it, and ask it the same way.
 		$balance_sum = self::positive_balance_sql( 'SUM(p.points)' );
-		$scope_ids   = self::resolve_scope( $scope_type, $scope_id );
+		$scope_ids   = $scope_ids ?? self::resolve_scope( $scope_type, $scope_id );
 
 		// A scope that resolves to NOBODY means nobody -- it does not mean everybody.
 		//
@@ -810,14 +830,16 @@ final class LeaderboardEngine {
 		// ── Object cache check ────────────────────────────────────────────────
 		// Cache key embeds the wb_gamification group's last-changed stamp —
 		// see get_leaderboard() for the rationale.
+		$scope_ids    = self::resolve_scope( $scope_type, $scope_id );
 		$last_changed = wp_cache_get_last_changed( 'wb_gamification' );
 		$cache_key    = sprintf(
-			'wb_gam_rank_%d_%s_%s_%d_%s_%s',
+			'wb_gam_rank_%d_%s_%s_%d_%s_%s_%s',
 			$user_id,
 			$period,
 			$scope_type ? $scope_type : 'global',
 			$scope_id,
 			$resolved_type,
+			self::eligibility_hash( $scope_ids ),
 			$last_changed
 		);
 		$cached       = wp_cache_get( $cache_key, 'wb_gamification' );
@@ -831,7 +853,6 @@ final class LeaderboardEngine {
 		// opt-out list so we can count them too" filter could never change an answer. Dropped
 		// rather than ported.
 		[ $excl_sql, $excl_values ] = self::exclusion_sql( 'p' );
-		$scope_ids                  = self::resolve_scope( $scope_type, $scope_id );
 
 		// Same conflation as the board above, and the same answer. A rank WITHIN a scope that has no
 		// members is not "1st on the whole site" -- it is no rank at all. Falling through here would
