@@ -1399,7 +1399,7 @@ final class SettingsPage {
 
 				<div class="wbgam-earn-status" role="status" aria-live="polite" data-wb-gam-earn-status hidden>
 					<span data-wb-gam-earn-status-text></span>
-					<button type="button" class="wbgam-btn wbgam-btn--secondary wbgam-btn--sm" data-wb-gam-earn-undo><?php esc_html_e( 'Undo', 'wb-gamification' ); ?></button>
+					<button type="button" class="wbgam-btn wbgam-btn--secondary wbgam-btn--sm" data-wb-gam-earn-undo><?php esc_html_e( 'Undo', 'wb-gamification' ); ?> <span data-wb-gam-earn-undo-count></span></button>
 				</div>
 
 				<?php self::enqueue_action_overrides_script(); ?>
