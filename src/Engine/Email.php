@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Email template renderer
+ * WB Gamification - Email template renderer
  *
  * Thin convenience wrapper around `Templates::locate()` / `Templates::render()`
  * with email-specific defaults (HTML content-type header, From header
@@ -20,15 +20,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -45,7 +45,7 @@ final class Email {
 	/**
 	 * Render an email template to an HTML string.
 	 *
-	 * @param string $template Template slug — looks for templates/emails/{slug}.php
+	 * @param string $template Template slug - looks for templates/emails/{slug}.php
 	 *                         in the plugin and YOUR-THEME/wb-gamification/emails/{slug}.php
 	 *                         in the active theme.
 	 * @param array  $vars     Variables to extract into the template scope.
@@ -83,7 +83,7 @@ final class Email {
 	public static function locate( string $template ): string {
 		$slug = sanitize_key( $template );
 
-		// Single resolver — Templates::locate handles theme override, child→parent
+		// Single resolver - Templates::locate handles theme override, child→parent
 		// fallback, and the wb_gam_template_path filter for programmatic override.
 		return Templates::locate( "emails/{$slug}.php" );
 	}

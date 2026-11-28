@@ -1,6 +1,6 @@
 <?php
 /**
- * query-inventory — how many rows can each query return, and what does that cost?
+ * query-inventory - how many rows can each query return, and what does that cost?
  *
  * "Is it bounded?" is the wrong question on its own. The right ones are:
  *
@@ -34,7 +34,7 @@ const MEMBERS = 100000;
  */
 function growth_model(): array {
 	return array(
-		// CONFIG — bounded by what an ADMIN types. Tens of rows, forever.
+		// CONFIG - bounded by what an ADMIN types. Tens of rows, forever.
 		// An unbounded SELECT here is CORRECT. Paginating it is over-engineering.
 		'badge_defs'                        => array( 'class' => 'CONFIG', 'ceiling' => 200,   'note' => 'admin-defined badges (42 today)' ),
 		'levels'                            => array( 'class' => 'CONFIG', 'ceiling' => 50,    'note' => 'admin-defined levels (5 today)' ),
@@ -47,7 +47,7 @@ function growth_model(): array {
 		'api_keys'                          => array( 'class' => 'CONFIG', 'ceiling' => 100,   'note' => 'admin-issued' ),
 		'webhooks'                          => array( 'class' => 'CONFIG', 'ceiling' => 100,   'note' => 'admin-configured' ),
 
-		// MEMBER — one row per member. 100k. An unbounded SELECT here is a 100k-row array.
+		// MEMBER - one row per member. 100k. An unbounded SELECT here is a 100k-row array.
 		'user_totals'                       => array( 'class' => 'MEMBER', 'ceiling' => MEMBERS * 3,  'note' => 'one per member PER POINT TYPE' ),
 		'streaks'                           => array( 'class' => 'MEMBER', 'ceiling' => MEMBERS,      'note' => 'one per member' ),
 		'member_prefs'                      => array( 'class' => 'MEMBER', 'ceiling' => MEMBERS,      'note' => 'one per member' ),
@@ -55,10 +55,10 @@ function growth_model(): array {
 		'leaderboard_cache'                 => array( 'class' => 'MEMBER', 'ceiling' => MEMBERS,      'note' => 'the snapshot itself' ),
 		'user_intelligence'                 => array( 'class' => 'MEMBER', 'ceiling' => MEMBERS,      'note' => 'one per member' ),
 
-		// MEMBER x N — the sneaky one. Looks member-scaled, multiplies by a config count.
+		// MEMBER x N - the sneaky one. Looks member-scaled, multiplies by a config count.
 		'user_badges'                       => array( 'class' => 'EVENT',  'ceiling' => MEMBERS * 40, 'note' => '100k members x up to 40 badges = 4M' ),
 
-		// EVENT — grows with ACTIVITY. Millions. Unbounded here is an OOM.
+		// EVENT - grows with ACTIVITY. Millions. Unbounded here is an OOM.
 		'points'                            => array( 'class' => 'EVENT',  'ceiling' => MEMBERS * 200, 'note' => 'the ledger. 20M at 200 awards/member' ),
 		'events'                            => array( 'class' => 'EVENT',  'ceiling' => MEMBERS * 200, 'note' => 'audit trail, 1:1 with points' ),
 		'kudos'                             => array( 'class' => 'EVENT',  'ceiling' => MEMBERS * 50,  'note' => 'member-to-member' ),
@@ -239,7 +239,7 @@ foreach ( $rows as $r ) {
 	}
 }
 
-echo "\n=== MEMORY RISK — full-table reads of tables that GROW ===\n";
+echo "\n=== MEMORY RISK - full-table reads of tables that GROW ===\n";
 echo "    (row ceiling at 100k members; ~" . BYTES_PER_ROW . " bytes/row once in PHP)\n\n";
 if ( ! $danger ) {
 	echo "    none\n";
@@ -255,7 +255,7 @@ foreach ( $danger as $r ) {
 	);
 }
 
-echo "\n=== OVER-ENGINEERED — pagination/LIMIT on a table with tens of rows ===\n";
+echo "\n=== OVER-ENGINEERED - pagination/LIMIT on a table with tens of rows ===\n";
 echo "    (complexity and a staleness bug, bought for nothing)\n\n";
 if ( ! $waste ) {
 	echo "    none\n";

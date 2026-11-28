@@ -1,9 +1,9 @@
 <?php
 /**
- * WB Gamification — Rank Automation
+ * WB Gamification - Rank Automation
  *
  * Executes configurable automation rules when a member levels up.
- * No UI builder required — rules are defined via the
+ * No UI builder required - rules are defined via the
  * `wb_gam_rank_automation_rules` filter or the
  * `wb_gam_rank_automation_rules` option (JSON array).
  *
@@ -49,15 +49,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -79,7 +79,7 @@ final class RankAutomation {
 		// A WP role is data the member keeps, not a message they receive, so an import has to assign it
 		// too -- a migrated member must land on the site with the role their level entitles them to.
 		add_action( 'wb_gam_level_imported', array( __CLASS__, 'on_level_changed' ), 20, 3 );
-		// Also handle the very first level assignment (Newcomer / 0 pts) —
+		// Also handle the very first level assignment (Newcomer / 0 pts) -
 		// the canonical "level changed" hook deliberately skips that case so
 		// brand-new users don't get a level-up toast. But rank-automation
 		// rules with `trigger_level_id = Newcomer` need to run, so listen
@@ -136,8 +136,8 @@ final class RankAutomation {
 	 * Return the active automation rules.
 	 *
 	 * Rules come from two sources (merged):
-	 *   1. `wb_gam_rank_automation_rules` option — JSON array (admin-configurable)
-	 *   2. `wb_gam_rank_automation_rules` filter — code-level rules
+	 *   1. `wb_gam_rank_automation_rules` option - JSON array (admin-configurable)
+	 *   2. `wb_gam_rank_automation_rules` filter - code-level rules
 	 *
 	 * @return array[]
 	 */
@@ -216,7 +216,7 @@ final class RankAutomation {
 			return;
 		}
 
-		// Already a member — skip.
+		// Already a member - skip.
 		if ( function_exists( 'groups_is_user_member' ) && groups_is_user_member( $user_id, $group_id ) ) {
 			return;
 		}

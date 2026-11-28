@@ -57,7 +57,7 @@ class ActionsCommand {
 
 			$enabled     = (bool) get_option( 'wb_gam_enabled_' . $id, true );
 			$pts_option  = get_option( 'wb_gam_points_' . $id, null );
-			$pts_display = null !== $pts_option ? (int) $pts_option : ( $action['default_points'] ?? '—' );
+			$pts_display = null !== $pts_option ? (int) $pts_option : ( $action['default_points'] ?? '-' );
 
 			$rows[] = array(
 				'id'        => $id,
@@ -65,7 +65,7 @@ class ActionsCommand {
 				'category'  => $action['category'] ?? 'general',
 				'points'    => $pts_display,
 				'daily_cap' => $action['daily_cap'] > 0 ? $action['daily_cap'] : '∞',
-				'cooldown'  => $action['cooldown'] > 0 ? $action['cooldown'] . 's' : '—',
+				'cooldown'  => $action['cooldown'] > 0 ? $action['cooldown'] . 's' : '-',
 				'enabled'   => $enabled ? 'yes' : 'no',
 			);
 		}

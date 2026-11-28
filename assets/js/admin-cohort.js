@@ -1,5 +1,5 @@
 /**
- * Admin: Cohort Leagues — REST-driven (replaces admin-post.php form-post handler).
+ * Admin: Cohort Leagues - REST-driven (replaces admin-post.php form-post handler).
  *
  * Tier 0.C (REST migration) wired the Cohort Settings page to the canonical
  * /wb-gamification/v1/cohort-settings endpoint. Save sends a single POST.

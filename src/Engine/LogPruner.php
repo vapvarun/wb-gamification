@@ -3,7 +3,7 @@
  * WB Gamification Log Pruner
  *
  * Auto-prunes wb_gam_points rows older than the configured retention period.
- * Scheduled via WP-Cron — never unbounded.
+ * Scheduled via WP-Cron - never unbounded.
  *
  * @package WB_Gamification
  */
@@ -12,15 +12,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -53,7 +53,7 @@ final class LogPruner {
 
 		// Arm the recurring event on init, never at plugins_loaded: wp_schedule_event
 		// resolves schedules via wp_get_schedules(), which fires the
-		// cron_schedules filter — that must not run before init on WP 6.7+.
+		// cron_schedules filter - that must not run before init on WP 6.7+.
 		if ( did_action( 'init' ) ) {
 			self::maybe_schedule();
 		} else {
@@ -62,7 +62,7 @@ final class LogPruner {
 	}
 
 	/**
-	 * Arm the recurring event if not already scheduled. Idempotent — safe to
+	 * Arm the recurring event if not already scheduled. Idempotent - safe to
 	 * call on every init.
 	 */
 	public static function maybe_schedule(): void {
@@ -112,7 +112,7 @@ final class LogPruner {
 	 * Each statement deletes BATCH_SIZE rows; the loop continues until
 	 * either no more rows match or MAX_RUNTIME_SECONDS elapses.
 	 *
-	 * IMPORTANT — balance semantics under retention:
+	 * IMPORTANT - balance semantics under retention:
 	 *   The pruner deliberately does NOT decrement `wb_gam_user_totals`.
 	 *   The materialised user-total represents the lifetime accumulated
 	 *   balance and is the source of truth for `PointsEngine::get_total()`.

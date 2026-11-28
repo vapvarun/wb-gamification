@@ -161,12 +161,13 @@ class NotificationQueueBoundsTest extends TestCase {
 	}
 
 	#[Test]
-	public function cursor_fast_forwards_past_the_entire_backlog(): void {
+	public function a_read_moves_no_cursor_and_offers_the_head_to_acknowledge(): void {
 		$this->stub_wpdb( 30197 );
 
-		NotificationBridge::read_pending( 7, 'footer' );
+		$events = NotificationBridge::read_pending( 7, 'footer' );
 
-		$this->assertSame( 30197, $this->written_cursor, 'Cursor must park at the head so the backlog is skipped, not replayed.' );
+		$this->assertSame( 0, $this->written_cursor, 'Reading is not delivering: only the page acknowledging moves the cursor.' );
+		$this->assertSame( 30197, $events[0]['_ack'], 'Acknowledging the head skips the backlog the page never shows, once.' );
 	}
 
 	/**
@@ -195,7 +196,8 @@ class NotificationQueueBoundsTest extends TestCase {
 		$ids    = array_map( static fn( $e ) => (int) $e['_id'], $events );
 
 		$this->assertSame( array( 1, 2, 3 ), $ids, 'Every event in an under-cap queue is still delivered.' );
-		$this->assertSame( 3, $this->written_cursor );
+		$this->assertSame( array( 3, 3, 3 ), array_column( $events, '_ack' ) );
+		$this->assertSame( 0, $this->written_cursor );
 	}
 
 	/**

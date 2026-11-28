@@ -64,7 +64,7 @@ class ExportCommand {
 			'email'          => $user->user_email,
 			'exported_at'    => gmdate( 'c' ),
 			'points_total'   => PointsEngine::get_total( $uid ),
-			// Multi-currency breakdown — empty on single-currency sites.
+			// Multi-currency breakdown - empty on single-currency sites.
 			'points_by_type' => PointsEngine::get_totals_by_type( $uid ),
 			'points_history' => PointsEngine::get_history( $uid, 100 ),
 			'badges'         => BadgeEngine::get_user_badges( $uid ),

@@ -1,12 +1,12 @@
 /**
- * Badge Showcase — frontend stylesheet.
+ * Badge Showcase - frontend stylesheet.
  *
  * 1.4.0 UX refactor (hub flyout / "My Badges" panel):
  *   - earned card: white surface, colored ring around image, green check
  *     pip top-right, earned date visible
  *   - locked card: muted surface, grayscale image, padlock pip, hint text
  *   - clear "N / M earned" header with progress bar + filter tabs
- *   - grid is responsive — auto-fills the available column width so the
+ *   - grid is responsive - auto-fills the available column width so the
  *     flyout panel doesn't waste space
  */
 
@@ -103,8 +103,13 @@
 	transition: background 160ms ease, color 160ms ease;
 }
 
-.wb-gam-badge-showcase__filter:hover {
+.wb-gam-badge-showcase__filter:hover:not(:disabled) {
 	color: var( --wb-gam-badge-text );
+}
+
+/* An empty tab (no earned badges yet): present and readable, not clickable. No opacity: the label keeps its contrast. */
+.wb-gam-badge-showcase__filter:disabled {
+	cursor: default;
 }
 
 .wb-gam-badge-showcase__filter.is-active {
@@ -140,15 +145,15 @@
 }
 
 .wb-gam-badge-showcase__filter:focus-visible {
-	outline: 2px solid var( --wb-gam-badge-accent );
+	outline: 2px solid var( --wb-gam-focus-ring, var(--wb-gam-badge-accent) );
 	outline-offset: 2px;
 }
 
 /* ── Grid ──────────────────────────────────────────────────────────── */
-/* Container queries — the showcase adapts to its host width.
+/* Container queries - the showcase adapts to its host width.
  * Hub flyout (~720px) gets 5 cols; standalone page (~1100px) gets
  * 7; a column inside a 3-col layout (~340px) gets 2. The badge
- * cards need ~120px of horizontal breathing room — anything tighter
+ * cards need ~120px of horizontal breathing room - anything tighter
  * crams the title and looks congested.
  */
 .wb-gam-badge-showcase {
@@ -170,7 +175,7 @@
  * title can render on 1–2 lines without ellipsis. */
 @container (max-width: 520px) {
 	.wb-gam-badge-showcase__list {
-		/* Hub flyout (~465px wide) — 3 cols of ~140px each. */
+		/* Hub flyout (~465px wide) - 3 cols of ~140px each. */
 		grid-template-columns: repeat( 3, minmax( 0, 1fr ) );
 		gap: 10px;
 	}
@@ -209,7 +214,8 @@
 }
 
 .wb-gam-badge-showcase__badge--earned .wb-gam-badge-showcase__icon-wrap {
-	background: var( --wb-gam-badge-success-soft );
+	/* --wb-gam-badge-plate: set from an owner's dark card (CSS.php plate_tokens()), a pale disc the art reads on. */
+	background: var( --wb-gam-badge-plate, var( --wb-gam-badge-success-soft ) );
 }
 
 /* ── Locked card ──────────────────────────────────────────────────── */
@@ -219,7 +225,7 @@
 }
 
 .wb-gam-badge-showcase__badge--locked .wb-gam-badge-showcase__icon-wrap {
-	background: var( --wb-gam-badge-locked-soft );
+	background: var( --wb-gam-badge-plate-locked, var( --wb-gam-badge-locked-soft ) );
 }
 
 .wb-gam-badge-showcase__badge--locked .wb-gam-badge-showcase__image,
@@ -251,7 +257,7 @@
 }
 
 .wb-gam-badge-showcase__placeholder {
-	color: var( --wb-gam-color-gold-text );
+	color: var( --wb-gam-badge-art-ink, var( --wb-gam-color-gold-text ) );
 	line-height: 1;
 	display: flex;
 	align-items: center;
@@ -291,7 +297,7 @@
 	font-weight: 600;
 	line-height: 1.25;
 	color: var( --wb-gam-badge-text );
-	/* No line-clamp — badge names like "Five Hundred Strong" or
+	/* No line-clamp - badge names like "Five Hundred Strong" or
 	 * "1-Year Member" must render in full, not truncate with an
 	 * ellipsis. Cards in the grid grow vertically to fit the longest
 	 * name; align-items:stretch on the parent keeps them visually
@@ -318,7 +324,7 @@
 }
 
 .wb-gam-badge-showcase__hint {
-	/* Hint text describes what action unlocks the badge — never
+	/* Hint text describes what action unlocks the badge - never
 	 * truncate, the member needs to read it in full to know what to do.
 	 * Card height grows to fit the longest hint in the row. */
 	font-size: 0.75rem;
@@ -410,7 +416,7 @@
  * stroke="currentColor", which resolves to BLACK inside an <img> (the page's
  * colour context does not cross the <img> boundary), and custom-uploaded
  * badges keep their own colours. On the dark card that dark line-art became
- * invisible, so give the medallion a light plate in dark mode — any artwork
+ * invisible, so give the medallion a light plate in dark mode - any artwork
  * (mono line-art, colour SVG, uploaded image) stays legible against it.
  * Scoped to the same dark selectors BuddyX / BuddyX Pro use. */
 :root[data-bx-mode="dark"] .wb-gam-badge-showcase__badge--earned .wb-gam-badge-showcase__icon-wrap,
@@ -503,7 +509,7 @@ body.buddyx-dark-theme .wb-gam-badge-showcase__badge--locked .wb-gam-badge-showc
 
 .wb-gam-badge-showcase__copy:focus-visible,
 .wb-gam-badge-showcase__share-link a:focus-visible {
-	outline: 2px solid var( --wb-gam-color-accent );
+	outline: 2px solid var( --wb-gam-focus-ring, var(--wb-gam-color-accent) );
 	outline-offset: 2px;
 }
 
@@ -539,4 +545,4 @@ body.buddyx-dark-theme .wb-gam-badge-showcase__badge--locked .wb-gam-badge-showc
 }
 .wb-gam-badge-showcase__more[hidden] { display: none; }
 .wb-gam-badge-showcase__more:hover { background: var(--wb-gam-color-surface-hover); }
-.wb-gam-badge-showcase__more:focus-visible { outline: 2px solid var(--wb-gam-color-accent); outline-offset: 2px; }
+.wb-gam-badge-showcase__more:focus-visible { outline: 2px solid var( --wb-gam-focus-ring, var(--wb-gam-color-accent) ); outline-offset: 2px; }

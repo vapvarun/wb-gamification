@@ -584,7 +584,11 @@ final class ImportRunner {
 
 		// A phase this build does not know (a state written by a newer version): stop, do not loop.
 		$state['status'] = 'failed';
-		$state['error']  = sprintf( 'Unknown import phase "%s".', $phase );
+		$state['error']  = sprintf(
+			/* translators: %s: internal import phase name. */
+			__( 'Unknown import phase "%s".', 'wb-gamification' ),
+			$phase
+		);
 	}
 
 	/**

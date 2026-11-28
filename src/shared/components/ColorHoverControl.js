@@ -9,6 +9,7 @@ import {
 
 export default function ColorHoverControl( {
 	label,
+	help,
 	color,
 	hoverColor,
 	onChangeColor,
@@ -17,7 +18,11 @@ export default function ColorHoverControl( {
 	const [ tab, setTab ] = useState( 'normal' );
 
 	return (
-		<BaseControl label={ label } className="wb-gam-color-hover-control">
+		<BaseControl
+			label={ label }
+			help={ help }
+			className="wb-gam-color-hover-control"
+		>
 			<ButtonGroup className="wb-gam-color-hover-control__tabs">
 				<Button
 					isPressed={ tab === 'normal' }

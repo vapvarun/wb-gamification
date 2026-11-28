@@ -260,12 +260,12 @@ final class ShortcodeHandler {
 	}
 
 	/**
-	 * Render [wb_gam_give_kudos] — thin wrapper around `wb-gamification/give-kudos` block.
+	 * Render [wb_gam_give_kudos] - thin wrapper around `wb-gamification/give-kudos` block.
 	 *
 	 * Attributes:
-	 *   to    — recipient user_login OR user_id (optional; locks the form to
+	 *   to    - recipient user_login OR user_id (optional; locks the form to
 	 *           one recipient instead of showing the username field).
-	 *   label — submit button label.
+	 *   label - submit button label.
 	 *
 	 * @param array|string $atts Shortcode attributes.
 	 * @return string HTML output.
@@ -284,7 +284,7 @@ final class ShortcodeHandler {
 
 	/**
 	 * Shared render for the give-kudos UI. Used by both the shortcode and the
-	 * block's render.php. REST-only — no direct DB queries.
+	 * block's render.php. REST-only - no direct DB queries.
 	 *
 	 * @param array $atts Block / shortcode attributes (`to`, `label`).
 	 * @return string HTML.
@@ -408,7 +408,7 @@ final class ShortcodeHandler {
 	 * Enqueue the give-kudos block's CSS + JS bundle (logged-in form).
 	 *
 	 * Called by `give_kudos_html()` on render so the assets are only loaded
-	 * on pages that actually use the block / shortcode. Idempotent —
+	 * on pages that actually use the block / shortcode. Idempotent -
 	 * wp_enqueue_script bails if the handle is already registered.
 	 *
 	 * @return void
@@ -609,7 +609,7 @@ final class ShortcodeHandler {
 	}
 
 	/**
-	 * Render [wb_gam_my_rewards] — member-facing redemption history.
+	 * Render [wb_gam_my_rewards] - member-facing redemption history.
 	 *
 	 * Closes Basecamp #9927388714 / #9925383280 issue 3. The data path
 	 * already existed via {@see \WBGam\Engine\RedemptionEngine::get_user_redemptions()};

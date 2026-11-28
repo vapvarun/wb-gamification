@@ -3,7 +3,7 @@
  * WB Gamification Points Engine
  *
  * Data-access layer for the points ledger.
- * The main award pipeline now lives in Engine::process() — this class
+ * The main award pipeline now lives in Engine::process() - this class
  * provides the rate-limit checks and DB write methods that Engine calls.
  *
  * External callers should use Engine::process(Event) or the helper
@@ -17,19 +17,19 @@ namespace WBGam\Engine;
 use WBGam\Services\PointTypeService;
 
 // Registry lives in the same namespace; no `use` needed but referencing
-// here for readers — see WBGam\Engine\Registry::resolve_action_point_type().
+// here for readers - see WBGam\Engine\Registry::resolve_action_point_type().
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -37,7 +37,7 @@ defined( 'ABSPATH' ) || exit;
 // phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 /**
- * Data-access layer for the points ledger — rate-limit checks and DB write methods.
+ * Data-access layer for the points ledger - rate-limit checks and DB write methods.
  *
  * Multi-currency support (since 1.0.0): every read/write method accepts an
  * optional `point_type` parameter that scopes the operation to one currency.
@@ -314,12 +314,12 @@ final class PointsEngine {
 		// (Engine::process_async) paths pass through, so excluded users never
 		// earn regardless of how the event arrived.
 		if ( ! self::user_can_earn( $user_id ) ) {
-			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			/** This filter is documented in src/Engine/PointsEngine.php - see wb_gam_award_skipped. */
 			do_action( 'wb_gam_award_skipped', $user_id, $action_id, 'excluded', array() );
 			return false;
 		}
 
-		// Resolve the currency this action awards — must match the resolution
+		// Resolve the currency this action awards - must match the resolution
 		// used by the award path (Registry::register_action closure) so the
 		// daily/weekly cap counts the SAME ledger the action will actually
 		// write to. Reads admin-override first, then manifest, then primary.
@@ -328,7 +328,7 @@ final class PointsEngine {
 		// Cooldown check.
 		$cooldown = (int) ( $action['cooldown'] ?? 0 );
 		if ( $cooldown > 0 && self::is_on_cooldown( $user_id, $action_id, $cooldown, $type ) ) {
-			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			/** This filter is documented in src/Engine/PointsEngine.php - see wb_gam_award_skipped. */
 			do_action(
 				'wb_gam_award_skipped',
 				$user_id,
@@ -346,7 +346,7 @@ final class PointsEngine {
 		// taken back can pay again (an avatar deleted and uploaded again), but never twice at once
 		// (a second order can't be a "first purchase" while the first still stands).
 		if ( ! ( $action['repeatable'] ?? true ) && ( isset( $action['once_per_object'] ) ? self::has_net_award( $user_id, $action_id ) : self::get_action_count( $user_id, $action_id, $type ) > 0 ) ) {
-			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			/** This filter is documented in src/Engine/PointsEngine.php - see wb_gam_award_skipped. */
 			do_action(
 				'wb_gam_award_skipped',
 				$user_id,
@@ -359,7 +359,7 @@ final class PointsEngine {
 
 		// One award per member per object (a retaken quiz, a replayed lesson).
 		if ( $object_id > 0 && isset( $action['once_per_object'] ) && ( self::has_object_award( $user_id, $action_id, $object_id ) || self::is_legacy_object( $action, $object_id ) ) ) {
-			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			/** This filter is documented in src/Engine/PointsEngine.php - see wb_gam_award_skipped. */
 			do_action(
 				'wb_gam_award_skipped',
 				$user_id,
@@ -378,7 +378,7 @@ final class PointsEngine {
 		if ( $daily_cap > 0 ) {
 			$daily_used = self::get_today_count( $user_id, $action_id, $type );
 			if ( $daily_used >= $daily_cap ) {
-				/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+				/** This filter is documented in src/Engine/PointsEngine.php - see wb_gam_award_skipped. */
 				do_action(
 					'wb_gam_award_skipped',
 					$user_id,
@@ -402,30 +402,30 @@ final class PointsEngine {
 				/**
 				 * Fires when the engine intentionally skips an award.
 				 *
-				 * Listeners can surface a contextual hint to the user — a toast
+				 * Listeners can surface a contextual hint to the user - a toast
 				 * ("you've already racked up your daily 50 reactions"), a
-				 * leaderboard banner, an admin diagnostics row — instead of
+				 * leaderboard banner, an admin diagnostics row - instead of
 				 * leaving the member to wonder why nothing happened.
 				 *
 				 * Reasons emitted by the engine itself:
-				 *   - cooldown        — within action.cooldown window
-				 *   - non_repeatable  — already-claimed action.repeatable=false trigger
-				 *   - daily_cap       — action.daily_cap reached
-				 *   - weekly_cap      — action.weekly_cap reached
-				 *   - not_eligible    — the action's own user_callback returned 0: the
+				 *   - cooldown        - within action.cooldown window
+				 *   - non_repeatable  - already-claimed action.repeatable=false trigger
+				 *   - daily_cap       - action.daily_cap reached
+				 *   - weekly_cap      - action.weekly_cap reached
+				 *   - not_eligible    - the action's own user_callback returned 0: the
 				 *                       event pays nobody (your own content, a share, a
 				 *                       waitlisted RSVP, a free plan, a copy already paid).
 				 *                       user_id is 0. Was `self_action` before 1.6.8.
-				 *   - own_content     — the action's owner_callback says the content is the
+				 *   - own_content     - the action's owner_callback says the content is the
 				 *                       member's own (reacting to your own post).
 				 *
 				 * Reasons emitted by adapters (e.g. Jetonomy):
-				 *   - sandboxed        — wb_gam_sandboxed user meta veto
-				 *   - pre_change_veto  — adapter filter returned 0 for any
+				 *   - sandboxed        - wb_gam_sandboxed user meta veto
+				 *   - pre_change_veto  - adapter filter returned 0 for any
 				 *                        non-sandbox reason
-				 *   - insufficient_balance — debit refused due to balance
+				 *   - insufficient_balance - debit refused due to balance
 				 *
-				 * Zero performance cost when nothing is listening — WP's
+				 * Zero performance cost when nothing is listening - WP's
 				 * default do_action behaviour.
 				 *
 				 * @since 1.0.1
@@ -511,7 +511,7 @@ final class PointsEngine {
 
 		if ( ! $inserted ) {
 			Log::error(
-				'PointsEngine::insert_point_row — ledger insert failed',
+				'PointsEngine::insert_point_row - ledger insert failed',
 				array(
 					'user_id'    => $event->user_id,
 					'action_id'  => $event->action_id,
@@ -527,14 +527,14 @@ final class PointsEngine {
 		// Propagate the materialised-total UPSERT result back up. When this
 		// returns false, the caller (PointsEngine::debit, Engine::process)
 		// is inside a Transaction::run frame and the rollback signal makes
-		// the ledger insert above unwind too — without this, the ledger
+		// the ledger insert above unwind too - without this, the ledger
 		// would commit but `wb_gam_user_totals` would stay stale forever.
 		// Closes audit §G12.
 		if ( ! self::bump_user_total( $event->user_id, $type, $points, ! empty( $event->metadata['_spend'] ) ) ) {
 			return false;
 		}
 
-		// Cache-bust before COMMIT — safe today because there is NO step
+		// Cache-bust before COMMIT - safe today because there is NO step
 		// between this point and the outer COMMIT that can fail or
 		// rollback (Engine::process line ~388, Transaction::run closure
 		// returns truthy → COMMIT). Audit/DATA-FLOW-AWARD-2026-05-27.md §G19
@@ -550,7 +550,7 @@ final class PointsEngine {
 	}
 
 	/**
-	 * Debit points from a user's balance — atomic + audited.
+	 * Debit points from a user's balance - atomic + audited.
 	 *
 	 * Goes through the same unified write path as {@see award()}: every
 	 * debit produces a `wb_gam_events` row (the audit-log invariant) and
@@ -593,7 +593,7 @@ final class PointsEngine {
 		$amount        = abs( $amount );
 
 		// Promote legacy `$event_id` string to a synthetic Event so the
-		// audit-log invariant ALWAYS holds — every wb_gam_points row gets
+		// audit-log invariant ALWAYS holds - every wb_gam_points row gets
 		// a matching wb_gam_events row regardless of how the caller invoked.
 		if ( ! ( $event instanceof Event ) ) {
 			$caller_event_id = (string) $event;
@@ -602,7 +602,7 @@ final class PointsEngine {
 					// Honour caller-supplied event_id when present
 					// (RedemptionEngine passes its own UUID so the
 					// redemption row's event_id matches the audit row).
-					// Pass at construction time — Event::event_id is
+					// Pass at construction time - Event::event_id is
 					// readonly and can't be overwritten afterwards.
 					'event_id'   => '' !== $caller_event_id ? $caller_event_id : null,
 					'action_id'  => $action_id,
@@ -626,7 +626,7 @@ final class PointsEngine {
 			function () use ( $user_id, $amount, $event, $resolved_type, $spend ) {
 				global $wpdb;
 
-				// Atomic balance check with row lock — prevents the TOCTOU
+				// Atomic balance check with row lock - prevents the TOCTOU
 				// race where two concurrent debits both read balance=N,
 				// both subtract, and the balance lands at N - 2*amount.
 				$balance = (int) $wpdb->get_var(
@@ -643,7 +643,7 @@ final class PointsEngine {
 					// deduction) that cannot be covered is worth a warning in the log.
 					if ( ! $spend ) {
 						Log::warning(
-							'PointsEngine::debit — insufficient balance',
+							'PointsEngine::debit - insufficient balance',
 							array(
 								'user_id'    => $user_id,
 								'action_id'  => $event->action_id,
@@ -664,7 +664,7 @@ final class PointsEngine {
 				// FK target exists.
 				if ( ! Engine::persist_event( $event ) ) {
 					Log::error(
-						'PointsEngine::debit — event persist failed',
+						'PointsEngine::debit - event persist failed',
 						array(
 							'user_id'  => $user_id,
 							'event_id' => $event->event_id,
@@ -699,7 +699,7 @@ final class PointsEngine {
 			LevelEngine::maybe_level_up( $user_id );
 		}
 
-		// A debit never fires `wb_gam_points_awarded` — BadgeEngine, ChallengeEngine and
+		// A debit never fires `wb_gam_points_awarded` - BadgeEngine, ChallengeEngine and
 		// NotificationBridge all listen for it, and firing it here would evaluate badges and
 		// challenges against a removal and toast the member "points awarded" for points taken
 		// away. But the leaderboard rank cache (LeaderboardEngine::get_user_rank()) is keyed on
@@ -717,14 +717,14 @@ final class PointsEngine {
 	/**
 	 * Apply a delta to the materialised user-totals row.
 	 *
-	 * Atomic UPSERT — `INSERT ... ON DUPLICATE KEY UPDATE` so the row is
+	 * Atomic UPSERT - `INSERT ... ON DUPLICATE KEY UPDATE` so the row is
 	 * created on first award and incremented on every subsequent write.
 	 * Read path (get_total) does a single PK lookup against this table
 	 * instead of SUM-aggregating the ledger.
 	 *
 	 * PUBLIC because surfaces that perform direct ledger inserts
 	 * (PointTypeConversionService's atomic credit path) must explicitly
-	 * keep the materialised total in lockstep — failing to call this after
+	 * keep the materialised total in lockstep - failing to call this after
 	 * a direct INSERT would silently drift the cached balance from truth.
 	 *
 	 * Returns true on success, false when the UPSERT failed (the parent
@@ -733,7 +733,7 @@ final class PointsEngine {
 	 * whose materialised total never reflected the change). Pre-1.4.1
 	 * this method returned void and the failure was logged-and-forgotten,
 	 * leaving stale balances visible for the user's lifetime until a
-	 * manual backfill ran — audit/DATA-FLOW-AWARD-2026-05-27.md §G12.
+	 * manual backfill ran - audit/DATA-FLOW-AWARD-2026-05-27.md §G12.
 	 *
 	 * @param int    $user_id User affected.
 	 * @param string $type    Resolved point-type slug.
@@ -761,7 +761,7 @@ final class PointsEngine {
 
 		if ( false === $ok ) {
 			Log::error(
-				'PointsEngine::bump_user_total — UPSERT failed',
+				'PointsEngine::bump_user_total - UPSERT failed',
 				array(
 					'user_id'    => $user_id,
 					'point_type' => $type,
@@ -850,7 +850,7 @@ final class PointsEngine {
 	// ── Legacy / public API ────────────────────────────────────────────────────
 
 	/**
-	 * Process a registered action — legacy entry point.
+	 * Process a registered action - legacy entry point.
 	 *
 	 * Creates an Event and routes through Engine::process() so all award
 	 * paths share the same pipeline.
@@ -900,7 +900,7 @@ final class PointsEngine {
 		// exclusion is enforced here too. Deliberate admin/CLI grants pass
 		// $force = true to override.
 		if ( ! $force && ! self::user_can_earn( $user_id ) ) {
-			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			/** This filter is documented in src/Engine/PointsEngine.php - see wb_gam_award_skipped. */
 			do_action( 'wb_gam_award_skipped', $user_id, $action_id, 'excluded', array() );
 			return false;
 		}
@@ -935,7 +935,7 @@ final class PointsEngine {
 	 * BP group sync, CSV import). Inserts both event-log and points-ledger
 	 * rows via batched multi-VALUES INSERT instead of N round-trips.
 	 *
-	 * Bypasses rate-limit / cooldown checks — caller is admin-controlled.
+	 * Bypasses rate-limit / cooldown checks - caller is admin-controlled.
 	 * Does NOT fire `wb_gam_points_awarded` per row (to avoid
 	 * stampeding badge / streak / level evaluations); fires the bulk hook
 	 * `wb_gam_points_awarded_batch` once with the user-id list.
@@ -1041,7 +1041,7 @@ final class PointsEngine {
 			if ( false === $events_ok ) {
 				$wpdb->query( 'ROLLBACK' );
 				Log::error(
-					'PointsEngine::award_batch — events INSERT failed',
+					'PointsEngine::award_batch - events INSERT failed',
 					array(
 						'chunk_size' => count( $chunk ),
 						'db_error'   => $wpdb->last_error,
@@ -1061,7 +1061,7 @@ final class PointsEngine {
 			if ( false === $inserted ) {
 				$wpdb->query( 'ROLLBACK' );
 				Log::error(
-					'PointsEngine::award_batch — points INSERT failed',
+					'PointsEngine::award_batch - points INSERT failed',
 					array(
 						'chunk_size' => count( $chunk ),
 						'db_error'   => $wpdb->last_error,
@@ -1070,7 +1070,7 @@ final class PointsEngine {
 				continue;
 			}
 
-			// Bulk-update materialised user-totals — group duplicate UIDs first
+			// Bulk-update materialised user-totals - group duplicate UIDs first
 			// (chunk may contain the same uid N times for an N-point award).
 			$counts      = array_count_values( array_map( 'intval', $chunk ) );
 			$totals_ph   = array();
@@ -1094,7 +1094,7 @@ final class PointsEngine {
 			if ( false === $totals_ok ) {
 				$wpdb->query( 'ROLLBACK' );
 				Log::error(
-					'PointsEngine::award_batch — user_totals UPSERT failed',
+					'PointsEngine::award_batch - user_totals UPSERT failed',
 					array(
 						'chunk_size' => count( $chunk ),
 						'db_error'   => $wpdb->last_error,
@@ -1155,7 +1155,7 @@ final class PointsEngine {
 		$type = self::resolve_type( $event->point_type );
 		$take = min( $amount, self::get_total( $event->user_id, $type ) );
 		if ( $take <= 0 ) {
-			/** This filter is documented in src/Engine/PointsEngine.php — see wb_gam_award_skipped. */
+			/** This filter is documented in src/Engine/PointsEngine.php - see wb_gam_award_skipped. */
 			do_action( 'wb_gam_award_skipped', $event->user_id, $event->action_id, 'no_balance', array( 'requested' => $amount ) );
 			return false;
 		}
@@ -1185,7 +1185,7 @@ final class PointsEngine {
 		}
 
 		global $wpdb;
-		// Read from the materialised user-totals table — single-row PK lookup,
+		// Read from the materialised user-totals table - single-row PK lookup,
 		// O(log n) instead of full-aggregation O(rows-per-user). Falls back to
 		// SUM only when the row is missing (covers the brief window between a
 		// fresh install and the user's first award, plus any backfill drift).
@@ -1226,7 +1226,7 @@ final class PointsEngine {
 	 * this once with the page's user IDs collapses that to at most TWO
 	 * queries (materialised totals + a single SUM fallback for users whose
 	 * row hasn't materialised yet) and seeds the exact per-user cache key
-	 * get_total() reads — so every subsequent get_total() in the request is
+	 * get_total() reads - so every subsequent get_total() in the request is
 	 * a cache hit. Safe to call repeatedly; missing users are primed to 0.
 	 *
 	 * @param int[]       $user_ids Users to prime.
@@ -1243,7 +1243,7 @@ final class PointsEngine {
 		global $wpdb;
 		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 
-		// Materialised totals — single PK-range read.
+		// Materialised totals - single PK-range read.
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $placeholders is built from an int count; all values pass through prepare().
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
@@ -1264,7 +1264,7 @@ final class PointsEngine {
 			}
 		}
 
-		// SUM fallback for users without a materialised row — one query for
+		// SUM fallback for users without a materialised row - one query for
 		// the whole missing set, mirroring get_total()'s own fallback.
 		if ( ! empty( $missing ) ) {
 			$mp = implode( ',', array_fill( 0, count( $missing ), '%d' ) );
@@ -1288,7 +1288,7 @@ final class PointsEngine {
 	/**
 	 * Get every per-type balance for a user as a slug => total map.
 	 *
-	 * Single SQL aggregation across all types — used by Hub block, member
+	 * Single SQL aggregation across all types - used by Hub block, member
 	 * profile, and the GET /members/{id}/points multi-currency response.
 	 *
 	 * @param int $user_id User ID.
@@ -1297,7 +1297,7 @@ final class PointsEngine {
 	public static function get_totals_by_type( int $user_id ): array {
 		global $wpdb;
 
-		// Read from the materialised user_totals table — same source of truth
+		// Read from the materialised user_totals table - same source of truth
 		// as get_total(). Without this, after LogPruner runs the multi-currency
 		// breakdown returns lower numbers than the single-type read, causing
 		// inconsistent UI between the hub tile (uses materialised) and the
@@ -1477,6 +1477,47 @@ final class PointsEngine {
 	 */
 	public static function skip_reversals_for( int $user_id ): void {
 		self::$deleting_users[ $user_id ] = true;
+	}
+
+	/**
+	 * Object ids of a member's awards for one action whose event recorded a metadata value.
+	 *
+	 * For a `reverse_on` whose partner hook names the parent, not the awarded objects: a deleted
+	 * post takes back the reactions its author was paid for, though the reactors are gone with the
+	 * reaction rows. Read from the member's own events (idx_user_action), then matched exactly.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param int    $user_id    Member who was paid.
+	 * @param string $action_id  Action id.
+	 * @param string $meta_key   Metadata key the action's metadata_callback writes.
+	 * @param int    $meta_value Value to match.
+	 * @return int[] Object ids to hand to {@see reverse_object_awards()}.
+	 */
+	public static function object_ids_by_meta( int $user_id, string $action_id, string $meta_key, int $meta_value ): array {
+		global $wpdb;
+		if ( $user_id <= 0 || $meta_value <= 0 ) {
+			return array();
+		}
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- write path (a reversal), must read the live ledger.
+		$rows = (array) $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT object_id, metadata FROM {$wpdb->prefix}wb_gam_events WHERE user_id = %d AND action_id = %s AND object_id IS NOT NULL AND metadata LIKE %s",
+				$user_id,
+				$action_id,
+				'%' . $wpdb->esc_like( '"' . $meta_key . '":' . $meta_value ) . '%'
+			),
+			ARRAY_A
+		);
+		$ids  = array();
+		foreach ( $rows as $row ) {
+			$meta = json_decode( (string) ( $row['metadata'] ?? '' ), true );
+			// LIKE also matches 12 inside 123: keep exact matches only.
+			if ( is_array( $meta ) && (int) ( $meta[ $meta_key ] ?? 0 ) === $meta_value ) {
+				$ids[ (int) $row['object_id'] ] = true;
+			}
+		}
+		return array_keys( $ids );
 	}
 
 	/**
@@ -1777,7 +1818,7 @@ final class PointsEngine {
 	/**
 	 * Count how many times a user has performed an action today (site timezone).
 	 *
-	 * Scoped by point_type — daily caps don't cross currencies.
+	 * Scoped by point_type - daily caps don't cross currencies.
 	 *
 	 * @param int    $user_id   User to check.
 	 * @param string $action_id Action to count.
@@ -1807,7 +1848,7 @@ final class PointsEngine {
 	/**
 	 * Count how many times a user has performed an action this ISO week.
 	 *
-	 * Scoped by point_type — weekly caps don't cross currencies.
+	 * Scoped by point_type - weekly caps don't cross currencies.
 	 *
 	 * @param int    $user_id   User to check.
 	 * @param string $action_id Action to count.

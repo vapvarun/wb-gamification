@@ -21,8 +21,10 @@
 	const UNDO_MS = 10000;
 	const LIMITS  = [ 'cooldown', 'daily_cap', 'weekly_cap' ];
 	const timers  = new WeakMap();
-	let undoTimer = 0;
-	let undoFn    = null;
+	// Every saved change keeps its own Undo for UNDO_MS. Key = action id + field (or the rows
+	// of a bulk change), value = { fn, timer }. Map order is oldest first, so Undo pops the newest.
+	const pending = new Map();
+	let statusTimer = 0;
 
 	const fmt  = ( str, ...args ) => args.reduce( ( out, a, i ) => out.replace( '%' + ( i + 1 ) + '$d', a ).replace( '%d', a ).replace( '%s', a ), str );
 	const rows = () => Array.from( document.querySelectorAll( '[data-wb-gam-earn-row]' ) );
@@ -105,17 +107,44 @@
 		} ).then( ( r ) => ( r.ok ? r.json() : Promise.reject( r ) ) );
 	}
 
-	function status( text, undo ) {
+	function paintUndo() {
+		const btn = document.querySelector( '[data-wb-gam-earn-undo]' );
+		btn.hidden = ! pending.size;
+		btn.querySelector( '[data-wb-gam-earn-undo-count]' ).textContent = pending.size > 1 ? '(' + pending.size + ')' : '';
+	}
+
+	/**
+	 * Offer Undo for one change. Changing the same field again keeps the first Undo, so it
+	 * still returns the value from before the series, and restarts its window.
+	 */
+	function offerUndo( key, fn ) {
+		const prior = pending.get( key );
+		if ( prior ) {
+			clearTimeout( prior.timer );
+			pending.delete( key );
+		}
+		pending.set( key, {
+			fn: prior ? prior.fn : fn,
+			timer: setTimeout( () => {
+				pending.delete( key );
+				paintUndo();
+			}, UNDO_MS ),
+		} );
+	}
+
+	function status( text, undoKey, undo ) {
 		const box = document.querySelector( '[data-wb-gam-earn-status]' );
-		clearTimeout( undoTimer );
+		clearTimeout( statusTimer );
 		box.querySelector( '[data-wb-gam-earn-status-text]' ).textContent = text;
-		box.querySelector( '[data-wb-gam-earn-undo]' ).hidden = ! undo;
 		box.toggleAttribute( 'data-error', ! undo && text === s.notSaved );
-		box.hidden = false;
-		undoFn     = undo || null;
-		undoTimer  = setTimeout( () => {
+		if ( undo ) {
+			offerUndo( undoKey, undo );
+		}
+		paintUndo();
+		box.hidden  = false;
+		// Started after the newest Undo window opens, so the box outlives every pending Undo.
+		statusTimer = setTimeout( () => {
 			box.hidden = true;
-			undoFn     = null;
 		}, UNDO_MS );
 	}
 
@@ -131,11 +160,15 @@
 		return Promise.all(
 			jobs.map( ( j ) => request( j.row.dataset.wbGamEarnRow, j.body ? 'POST' : 'DELETE', j.body ).then( ( data ) => apply( j.row, data ) ) )
 		).then(
-			() => status( label, isUndo ? null : () => commit( before, s.undone, true ) ),
+			() => status(
+				label,
+				'bulk:' + before.map( ( b ) => b.row.dataset.wbGamEarnRow ).join( ',' ) + ':' + label,
+				isUndo ? null : () => commit( before, s.undone, true )
+			),
 			() => {
 				// Put back what the server still holds for the rows that failed.
 				before.forEach( ( b ) => apply( b.row, b.body ) );
-				status( s.notSaved, null );
+				status( s.notSaved );
 			}
 		);
 	}
@@ -159,13 +192,13 @@
 			( data ) => {
 				apply( row, data );
 				input.classList.remove( 'wbgam-input--error' );
-				status( s.saved, () => commit( [ { row, body: before } ], s.undone, true ) );
+				status( s.saved, row.dataset.wbGamEarnRow + ':' + name, () => commit( [ { row, body: before } ], s.undone, true ) );
 			},
 			() => {
 				write( input, prev );
 				summarise( row );
 				input.classList.add( 'wbgam-input--error' );
-				status( s.notSaved, null );
+				status( s.notSaved );
 			}
 		);
 	}
@@ -207,11 +240,15 @@
 	} );
 
 	document.querySelector( '[data-wb-gam-earn-undo]' ).addEventListener( 'click', () => {
-		const fn = undoFn;
-		undoFn   = null;
-		if ( fn ) {
-			fn();
+		const newest = Array.from( pending.keys() ).pop();
+		if ( undefined === newest ) {
+			return;
 		}
+		const entry = pending.get( newest );
+		clearTimeout( entry.timer );
+		pending.delete( newest );
+		paintUndo();
+		entry.fn();
 	} );
 
 	// Toolbar: search + one chip + plugin, over the fixed server-rendered list.

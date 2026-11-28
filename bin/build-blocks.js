@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * Wbcom Block Standard — block build orchestrator.
+ * Wbcom Block Standard - block build orchestrator.
  *
  * Runs `@wordpress/scripts build` when at least one block exists at
  * `src/Blocks/<slug>/block.json`. Before any blocks have been migrated
  * (Phase A bootstrap) it emits an empty `build/` directory so downstream
- * tooling — the PHP block registrar, CI artefact gates — sees a
+ * tooling - the PHP block registrar, CI artefact gates - sees a
  * well-formed output even when there is nothing to compile yet.
  *
  * Invocation: `npm run build` (declared in package.json).
@@ -35,10 +35,10 @@ if ( ! hasMigratedBlocks() ) {
 	mkdirSync( BUILD_DIR, { recursive: true } );
 	writeFileSync(
 		path.join( BUILD_DIR, '.gitkeep' ),
-		'# Phase A bootstrap — no blocks migrated yet. See plan/WBCOM-BLOCK-STANDARD-MIGRATION.md.\n'
+		'# Phase A bootstrap - no blocks migrated yet. See plan/WBCOM-BLOCK-STANDARD-MIGRATION.md.\n'
 	);
 	process.stdout.write(
-		'wb-gamification: src/Blocks/ has no block.json yet — emitted empty build/.\n'
+		'wb-gamification: src/Blocks/ has no block.json yet - emitted empty build/.\n'
 	);
 	process.exit( 0 );
 }
@@ -66,7 +66,7 @@ if ( result.status === null || result.status !== 0 ) {
 /**
  * Force-sync every src/Blocks/<slug>/render.php to build/Blocks/<slug>/render.php
  * after wp-scripts has finished. wp-scripts uses CopyWebpackPlugin which
- * only emits on detected file changes — if a build artefact is deleted
+ * only emits on detected file changes - if a build artefact is deleted
  * or a render.php edit isn't fingerprinted (mtime collision, identical
  * size), the PHP renderer goes stale. Block-level register_block_type()
  * resolves render.php from the build path, so stale here means stale on
@@ -103,7 +103,7 @@ function syncRenderPhp() {
 					shouldCopy = false;
 				}
 			} catch ( _e ) {
-				// Stat fail — fall through to copy.
+				// Stat fail - fall through to copy.
 			}
 		}
 		if ( shouldCopy ) {
@@ -124,7 +124,7 @@ function syncRenderPhp() {
  * wp-scripts only compiles a block's style.css into build/Blocks/<slug>/style-index.css
  * if the block's index.js executes `import './style.css'`. Two blocks
  * (cohort-rank, community-challenges) shipped 1.5.0-era visual updates
- * with the file in src/ but no import line — webpack happily produced
+ * with the file in src/ but no import line - webpack happily produced
  * the JS bundle, and the per-block CSS silently never appeared in build/.
  * The frontend block then rendered without its styles.
  *
@@ -140,7 +140,7 @@ function syncRenderPhp() {
  *
  * Failure mode this prevents: block ships without its CSS. The block still
  * renders (HTML is fine) so QA can easily miss it. Visual regression catches
- * it only on screenshot diff — far downstream from the build failure.
+ * it only on screenshot diff - far downstream from the build failure.
  */
 function syncBlockStyleCss() {
 	const slugs = readdirSync( BLOCKS_DIR, { withFileTypes: true } )
@@ -171,11 +171,11 @@ function syncBlockStyleCss() {
 
 	if ( orphans.length > 0 ) {
 		process.stderr.write(
-			`\nwb-gamification: WARN — ${ orphans.length } block(s) shipped style.css without a matching\n` +
+			`\nwb-gamification: WARN - ${ orphans.length } block(s) shipped style.css without a matching\n` +
 				`  \`import './style.css'\` in their index.js. The source CSS has been copied through\n` +
 				`  unprocessed so the block isn't unstyled in production, but PostCSS (autoprefixer,\n` +
 				`  nested CSS, etc.) did NOT run on it. Fix by adding the import at the top of each\n` +
-				`  block's index.js — webpack will take over and you can remove this safety-net path.\n` +
+				`  block's index.js - webpack will take over and you can remove this safety-net path.\n` +
 				`  Affected blocks:\n`
 		);
 		for ( const slug of orphans ) {

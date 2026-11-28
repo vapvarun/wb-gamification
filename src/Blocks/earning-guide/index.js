@@ -1,5 +1,5 @@
 /**
- * Earning Guide — block registration entry.
+ * Earning Guide - block registration entry.
  *
  * @see plans/WBCOM-BLOCK-STANDARD-MIGRATION.md Phase D.1
  */

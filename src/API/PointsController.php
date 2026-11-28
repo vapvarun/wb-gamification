@@ -8,7 +8,7 @@
  * DELETE /wb-gamification/v1/points/{id}      Admin revoke a specific point row
  *
  * Read endpoints (points total + paginated history) live in MembersController
- * at GET /members/{id}/points — no duplication here.
+ * at GET /members/{id}/points - no duplication here.
  *
  * @package WB_Gamification
  * @since   0.1.0
@@ -26,15 +26,15 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -116,7 +116,7 @@ class PointsController extends WP_REST_Controller {
 			)
 		);
 
-		// POST /points/bulk — award the same points to every member of a role
+		// POST /points/bulk - award the same points to every member of a role
 		// (or all members). Routes through PointsEngine::award_batch, which
 		// respects the Settings > Access exclusions (force = false).
 		register_rest_route(
@@ -241,7 +241,7 @@ class PointsController extends WP_REST_Controller {
 		// when non-empty. Pre-1.4.1 `PointTypeService::resolve()` silently
 		// fell back to the primary type for unknown slugs, so an admin who
 		// thought they were awarding "gems" actually awarded "points" with
-		// no error. Reject the request explicitly — same philosophy as
+		// no error. Reject the request explicitly - same philosophy as
 		// the enum-drift gate. Closes audit
 		// DATA-FLOW-ADMIN-REST-2026-05-27.md §G13.
 		$pt_service = new \WBGam\Services\PointTypeService();
@@ -335,7 +335,7 @@ class PointsController extends WP_REST_Controller {
 	 * Revoke a specific point ledger row.
 	 *
 	 * Hard-deletes the ledger row. The event record is preserved
-	 * (events are immutable) — only the points side-effect is removed.
+	 * (events are immutable) - only the points side-effect is removed.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
@@ -378,7 +378,7 @@ class PointsController extends WP_REST_Controller {
 			return new WP_Error( 'rest_delete_failed', __( 'Could not revoke points.', 'wb-gamification' ), array( 'status' => 500 ) );
 		}
 
-		// Decrement the materialised total — `bump_user_total` is the canonical
+		// Decrement the materialised total - `bump_user_total` is the canonical
 		// helper that every ledger mutation must call. The negative delta
 		// applied here mirrors the row's stored value. Its return MUST be
 		// checked: a failed UPSERT after a committed DELETE would leave
@@ -415,7 +415,7 @@ class PointsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * POST /points/bulk — award the same points to a whole role, or to every
+	 * POST /points/bulk - award the same points to a whole role, or to every
 	 * member. Uses PointsEngine::award_batch (chunked, single round-trip per
 	 * chunk) and respects Settings > Access exclusions (force = false), so
 	 * excluded staff / bots are skipped even in a bulk grant.

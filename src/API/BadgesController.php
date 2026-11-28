@@ -8,7 +8,7 @@
  * DELETE /wb-gamification/v1/badges/{id}         Delete badge definition (admin)
  * POST   /wb-gamification/v1/badges/{id}/award   Admin-only manual award
  *
- * All badge definitions are visible (locked-but-visible model) — unearned
+ * All badge definitions are visible (locked-but-visible model) - unearned
  * badges appear greyed-out in the UI so members can see what to work toward.
  *
  * Rarity: percentage of members who have earned each badge, computed in a
@@ -32,15 +32,15 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -189,7 +189,7 @@ class BadgesController extends WP_REST_Controller {
 	/**
 	 * Check if the current user can manually award a badge.
 	 *
-	 * Same surface as admin_check — manual award is a managing-badges action.
+	 * Same surface as admin_check - manual award is a managing-badges action.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return true|WP_Error True if the request has permission, WP_Error otherwise.
@@ -222,13 +222,13 @@ class BadgesController extends WP_REST_Controller {
 			$user_id = get_current_user_id();
 		}
 
-		// Privacy gate — the per-user response carries `earned` + `earned_at`
+		// Privacy gate - the per-user response carries `earned` + `earned_at`
 		// fields, so anonymous reads against a specific user_id must honour
 		// the same `Privacy::can_view_public_profile` check every block
 		// renderer respects. Without this, anyone could iterate user IDs and
 		// harvest badge timestamps for users who opted out of public
 		// profiles. Caught by the 2026-05-27 data-flow audit (admin-rest G4).
-		// Self-reads bypass — a logged-in user always sees their own badges.
+		// Self-reads bypass - a logged-in user always sees their own badges.
 		$wb_gam_self_or_no_user = ( 0 === $user_id || $user_id === get_current_user_id() );
 		if ( ! $wb_gam_self_or_no_user && ! \WBGam\Engine\Privacy::can_view_public_profile( $user_id ) ) {
 			// Treat as catalog read (no per-user enrichment). Strip earned + earned_at
@@ -402,7 +402,7 @@ class BadgesController extends WP_REST_Controller {
 		}
 		// Nullable caps. Gate on has_param(), not `null !== get_param()`: a blank
 		// admin number input serialises to JSON `null`, which the old check could
-		// not tell apart from "field absent" — so clearing a cap silently kept the
+		// not tell apart from "field absent" - so clearing a cap silently kept the
 		// old value. `0`, `''` and `null` all mean "no limit" and store SQL NULL.
 		foreach ( array( 'validity_days', 'max_earners' ) as $field ) {
 			if ( ! $request->has_param( $field ) ) {
@@ -429,7 +429,7 @@ class BadgesController extends WP_REST_Controller {
 	 * @param string                                                                   $badge_id  Badge id.
 	 * @param array{type?: string, points?: int, action_id?: string, count?: int}|null $condition Condition payload.
 	 * @return bool True when the replace committed; false when it rolled back
-	 *              (caller MUST surface this — a half-applied replace would
+	 *              (caller MUST surface this - a half-applied replace would
 	 *              leave the badge with NO award condition, silently disabling
 	 *              auto-award).
 	 */
@@ -495,7 +495,7 @@ class BadgesController extends WP_REST_Controller {
 
 		if ( true !== $ok ) {
 			Log::error(
-				'BadgesController::persist_condition — badge condition replace failed',
+				'BadgesController::persist_condition - badge condition replace failed',
 				array(
 					'badge_id'   => $badge_id,
 					'conditions' => null === $group ? 'manual (no rule)' : count( $group['conditions'] ),
@@ -543,7 +543,7 @@ class BadgesController extends WP_REST_Controller {
 		$formats[]         = '%s';
 
 		/**
-		 * Filter — abort badge creation by returning WP_Error.
+		 * Filter - abort badge creation by returning WP_Error.
 		 *
 		 * @param array           $row     Sanitised badge row.
 		 * @param WP_REST_Request $request REST request.
@@ -590,7 +590,7 @@ class BadgesController extends WP_REST_Controller {
 		$created = BadgeEngine::get_badge_def( $badge_id );
 		do_action( 'wb_gam_after_create_badge', $created, $request );
 
-		// 201 Created — match the REST convention + the sibling LevelsController.
+		// 201 Created - match the REST convention + the sibling LevelsController.
 		return new WP_REST_Response( $created, 201 );
 	}
 
@@ -613,7 +613,7 @@ class BadgesController extends WP_REST_Controller {
 		$formats   = $collected['formats'];
 
 		/**
-		 * Filter — abort the update by returning WP_Error.
+		 * Filter - abort the update by returning WP_Error.
 		 *
 		 * @param array           $data    Sanitised diff (only changed fields).
 		 * @param array|null      $def     Pre-update badge definition.
@@ -795,7 +795,7 @@ class BadgesController extends WP_REST_Controller {
 	/**
 	 * Return a map of badge_id → rarity percentage (% of users who have it).
 	 *
-	 * CACHED. Rarity is a COSMETIC DISPLAY STAT — "held by 3% of members". Nobody
+	 * CACHED. Rarity is a COSMETIC DISPLAY STAT - "held by 3% of members". Nobody
 	 * is harmed if that figure is a few minutes stale, and no decision anywhere in
 	 * the plugin branches on it.
 	 *
@@ -803,7 +803,7 @@ class BadgesController extends WP_REST_Controller {
 	 * ("not suitable for generic caching") because it conflated rarity with
 	 * BadgeEngine's `max_earners` guard. They are not the same:
 	 *
-	 *   - `max_earners` MUST be live. A stale count over-awards a limited badge —
+	 *   - `max_earners` MUST be live. A stale count over-awards a limited badge -
 	 *     "first 100 members" would hand out 130. It stays uncached, and now has
 	 *     idx_badge_id so it is a ref lookup instead of a full scan.
 	 *   - Rarity is decoration. It can be stale. It must not cost a full scan of an
@@ -811,12 +811,12 @@ class BadgesController extends WP_REST_Controller {
 	 *
 	 * Both aggregations here scale with `wb_gam_user_badges` (millions of rows on a
 	 * large site) and both ran on EVERY request to `GET /badges` and
-	 * `GET /badges/{id}` — both `permission_callback => '__return_true'`, i.e.
+	 * `GET /badges/{id}` - both `permission_callback => '__return_true'`, i.e.
 	 * anonymous. That made a public endpoint a free full-table-scan generator.
 	 *
 	 * Invalidated on award/revoke via BadgeEngine's `wb_gamification` cache group
 	 * (see self::flush_rarity_cache()), so the number is never *wrong*, only ever
-	 * slightly behind — and it self-heals within the TTL even if an invalidation is
+	 * slightly behind - and it self-heals within the TTL even if an invalidation is
 	 * missed.
 	 *
 	 * @since 1.6.4 Cached. Was an uncached full scan on every anonymous request.
@@ -839,7 +839,7 @@ class BadgesController extends WP_REST_Controller {
 	 * this second COUNT over the same table, on the same anonymous request.
 	 *
 	 * Falls back to a direct count only when the badge is absent from the map
-	 * (i.e. nobody holds it yet) — which is an index lookup on idx_badge_id, not
+	 * (i.e. nobody holds it yet) - which is an index lookup on idx_badge_id, not
 	 * a scan.
 	 *
 	 * @since 1.6.4 Reuses the cached aggregation instead of a second full scan.

@@ -1,8 +1,8 @@
 /**
- * Submit Achievement — view-side handler.
+ * Submit Achievement - view-side handler.
  *
  * Listens for form submit, POSTs to /submissions via the shared
- * `window.wbGam.rest()` client (assets/js/rest.js — handles the expired-
+ * `window.wbGam.rest()` client (assets/js/rest.js - handles the expired-
  * nonce retry), and shows inline success or error. The rest_url + nonce +
  * every user-facing string are passed via data-attrs on the wrapper. PHP
  * renders those through `__('…', 'wb-gamification')` so the view.js
@@ -78,7 +78,7 @@
 					}
 					setStatus( i18nSuccess, 'success' );
 					form.reset();
-					// Reset the TinyMCE editor explicitly — form.reset()
+					// Reset the TinyMCE editor explicitly - form.reset()
 					// only touches the underlying textarea, leaving the
 					// rich-text instance still holding the submitted content.
 					if (

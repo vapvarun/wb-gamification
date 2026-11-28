@@ -1,5 +1,5 @@
 /**
- * Daily Login Bonus — editor surface.
+ * Daily Login Bonus - editor surface.
  */
 
 import { __ } from '@wordpress/i18n';

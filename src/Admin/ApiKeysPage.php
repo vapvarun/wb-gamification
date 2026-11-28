@@ -16,7 +16,7 @@ use WBGam\API\ApiKeyAuth;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Manages the API Keys admin page — form, nonce handling, and key listing.
+ * Manages the API Keys admin page - form, nonce handling, and key listing.
  *
  * @package WB_Gamification
  */
@@ -188,14 +188,14 @@ final class ApiKeysPage {
 							<tr>
 								<th><label for="key_label"><?php esc_html_e( 'Label', 'wb-gamification' ); ?></label></th>
 								<td>
-									<input type="text" id="key_label" name="key_label" class="regular-text wbgam-input" placeholder="e.g. MediaVerse Production" required>
+									<input type="text" id="key_label" name="key_label" class="regular-text wbgam-input" placeholder="<?php echo esc_attr__( 'e.g. MediaVerse Production', 'wb-gamification' ); ?>" required>
 									<p class="description"><?php esc_html_e( 'A human-readable name to identify this key, e.g. the site or application it belongs to.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
 							<tr>
 								<th><label for="site_id"><?php esc_html_e( 'Site ID', 'wb-gamification' ); ?></label></th>
 								<td>
-									<input type="text" id="site_id" name="site_id" class="regular-text wbgam-input" placeholder="e.g. mediaverse-prod">
+									<input type="text" id="site_id" name="site_id" class="regular-text wbgam-input" placeholder="<?php echo esc_attr__( 'e.g. mediaverse-prod', 'wb-gamification' ); ?>">
 									<p class="description"><?php esc_html_e( 'Unique identifier for the remote site. Used for per-site reporting.', 'wb-gamification' ); ?></p>
 								</td>
 							</tr>
@@ -231,10 +231,10 @@ final class ApiKeysPage {
 									?>
 									<tr data-key-preview="<?php echo esc_attr( $preview ); ?>" data-key-id="<?php echo esc_attr( (string) $row['id'] ); ?>">
 										<td><strong><?php echo esc_html( $row['label'] ); ?></strong></td>
-										<td><code><?php echo esc_html( '' !== $row['site_id'] ? $row['site_id'] : '—' ); ?></code></td>
+										<td><code><?php echo esc_html( '' !== $row['site_id'] ? $row['site_id'] : '-' ); ?></code></td>
 										<td><code><?php echo esc_html( $preview ); ?></code></td>
 										<td><?php echo esc_html( get_date_from_gmt( (string) $row['created_at'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?></td>
-										<td><?php echo esc_html( $row['last_used'] ? get_date_from_gmt( (string) $row['last_used'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) : '—' ); ?></td>
+										<td><?php echo esc_html( $row['last_used'] ? get_date_from_gmt( (string) $row['last_used'], get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) : '-' ); ?></td>
 										<td>
 											<?php if ( 1 === (int) $row['is_active'] ) : ?>
 												<span class="wbgam-pill wbgam-pill--active"><?php esc_html_e( 'Active', 'wb-gamification' ); ?></span>

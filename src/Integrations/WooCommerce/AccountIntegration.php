@@ -1,12 +1,12 @@
 <?php
 /**
- * WB Gamification — WooCommerce My Account integration.
+ * WB Gamification - WooCommerce My Account integration.
  *
  * Adds an "Achievements" endpoint to the WooCommerce My Account area
  * (/my-account/achievements/) so stores that run WooCommerce WITHOUT
  * BuddyPress still get a member-facing gamification surface. My Account is
  * always the logged-in customer's own account, so this renders the full Hub
- * block (the self dashboard) by reuse — no duplicated display logic — plus a
+ * block (the self dashboard) by reuse - no duplicated display logic - plus a
  * link to the mapped Hub page.
  *
  * Mirrors src/BuddyPress/ProfileIntegration.php for the WooCommerce context.
@@ -52,7 +52,7 @@ final class AccountIntegration {
 	 *
 	 * Rewrite rules are normally flushed on plugin activation. A one-time
 	 * option guard is not enough on its own: the option can survive while the
-	 * actual `rewrite_rules` option does not contain the endpoint rule — site
+	 * actual `rewrite_rules` option does not contain the endpoint rule - site
 	 * restores / migration clones that keep the options table but lose
 	 * regenerated rules, another plugin flushing rules after WooCommerce has
 	 * already built its query-var rules, or the upgrade flush firing before the
@@ -92,7 +92,7 @@ final class AccountIntegration {
 	 * account endpoints rely on the rewrite system, and forcing a flush on
 	 * every request when permalinks are off would be a per-request flush storm
 	 * that fixes nothing. The self-heal only fires when rules exist but ours is
-	 * missing — the genuine "rules regenerated without our endpoint" case.
+	 * missing - the genuine "rules regenerated without our endpoint" case.
 	 *
 	 * @return bool True when stored rules exist but lack the endpoint rule.
 	 */
@@ -159,7 +159,7 @@ final class AccountIntegration {
 
 		// My Account is always self-scoped, so render the full Hub block for
 		// the current user. MemberSurface owns the shared plumbing (assets,
-		// mapped "View full dashboard" link, wrapper) — same path as the
+		// mapped "View full dashboard" link, wrapper) - same path as the
 		// BuddyPress tab, no duplicated display logic. Block SSR markup is
 		// already escaped; re-escaping would corrupt it.
 		echo MemberSurface::render( do_shortcode( '[wb_gam_hub]' ), (int) $user_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

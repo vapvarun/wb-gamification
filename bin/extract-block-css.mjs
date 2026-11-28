@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * One-shot Phase F helper — extracts per-block CSS sections from
+ * One-shot Phase F helper - extracts per-block CSS sections from
  * `assets/css/frontend.css` into `src/Blocks/<slug>/style.css` files,
  * then rewrites frontend.css to keep only shared utilities (design
  * tokens, toasts, overlays, empty states, progress-fill).
@@ -33,7 +33,7 @@ const PER_BLOCK_SECTIONS = {
 	'Top Members':     'top-members',
 	'Year Recap block': 'year-recap',
 	'Points History':  'points-history',
-	'Earning Guide':   null, // Earning-guide rules don't have a section header — collected at end.
+	'Earning Guide':   null, // Earning-guide rules don't have a section header - collected at end.
 };
 
 // Sections we KEEP in frontend.css (shared utilities).
@@ -107,10 +107,10 @@ function writeBlockStyle( slug, body, header ) {
 	}
 	const target = join( blockDir, 'style.css' );
 	if ( existsSync( target ) ) {
-		console.log( `· skipped ${ slug } (style.css already exists — leaving it alone)` );
+		console.log( `· skipped ${ slug } (style.css already exists - leaving it alone)` );
 		return false;
 	}
-	const intro = `/**\n * ${ header } — frontend stylesheet.\n *\n * Phase F migration: extracted from assets/css/frontend.css so the\n * block ships its own CSS via block.json (\`style\` field).\n */\n\n`;
+	const intro = `/**\n * ${ header } - frontend stylesheet.\n *\n * Phase F migration: extracted from assets/css/frontend.css so the\n * block ships its own CSS via block.json (\`style\` field).\n */\n\n`;
 	writeFileSync( target, intro + body.trim() + '\n' );
 	console.log( `✓ wrote src/Blocks/${ slug }/style.css` );
 	return true;
@@ -131,7 +131,7 @@ function main() {
 			continue;
 		}
 		if ( ! KEEP_SECTIONS.has( section.title ) ) {
-			console.log( `! unknown section "${ section.title }" — leaving in frontend.css` );
+			console.log( `! unknown section "${ section.title }" - leaving in frontend.css` );
 		}
 	}
 

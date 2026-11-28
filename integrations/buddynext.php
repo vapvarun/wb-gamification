@@ -93,7 +93,12 @@ return array(
 					'post_id'  => $post_id,
 				);
 			},
-			'permanent'         => 'No removal hook in BuddyNext 1.3.0: ShareService::unshare() deletes with no action (card on the BuddyNext board).',
+			// Per sharer and original post (a re-share gets a new share id): unsharing, or deleting the
+			// repost card, takes it back, so share/unshare loops net to one award.
+			'once_per_object'   => static fn( int $share_id, int $post_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $post_id ),
+			'reverse_on'        => array(
+				'buddynext_post_unshared' => static fn( $share_id, $post_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $post_id ),
+			),
 			'default_points'    => 5,
 			'category'          => 'content',
 			'icon'              => 'icon-share-2',
@@ -130,7 +135,11 @@ return array(
 				);
 			},
 			'once_per_object'   => static fn( $comment_id ): int => (int) $comment_id,
-			'reverse_on'        => array( 'buddynext_comment_deleted' => static fn( $comment_id ): int => (int) $comment_id ),
+			// A deleted post removes its comments in bulk and reports them once per post, not per comment.
+			'reverse_on'        => array(
+				'buddynext_comment_deleted'       => static fn( $comment_id ): int => (int) $comment_id,
+				'buddynext_post_comments_deleted' => static fn( $comment_ids ): array => array_map( 'intval', (array) $comment_ids ),
+			),
 			'owner_callback'    => static fn( $comment_id, $object_type, $object_id ): int => 'post' === $object_type ? $wb_gam_bn_post_owner( $object_id ) : 0,
 			'default_points'    => 3,
 			'category'          => 'content',
@@ -161,6 +170,9 @@ return array(
 			// Per reactor and post: removing the reaction takes the author's points back.
 			'reverse_on'        => array(
 				'buddynext_reaction_removed' => static fn( $object_type, $object_id, $user_id ): int => 'post' === $object_type ? \WBGam\Engine\Registry::object_key( (int) $user_id, 'post', (int) $object_id ) : 0,
+				// A deleted post takes its reactions with it and names only its author (arg 3), so the
+				// author's awards for that post are found by the post id their events recorded.
+				'buddynext_post_deleted'     => static fn( $post_id, $user_id = 0, $author_id = 0 ): array => \WBGam\Engine\PointsEngine::object_ids_by_meta( (int) $author_id, 'bn_reaction_received', 'post_id', (int) $post_id ),
 			),
 			'default_points'    => 2,
 			'category'          => 'content',
@@ -185,7 +197,12 @@ return array(
 					'option_id' => $option_id,
 				);
 			},
-			'permanent'         => 'No removal hook in BuddyNext 1.3.0: PollService removes a vote with no action (card on the BuddyNext board).',
+			// Per voter and poll: a vote taken back (toggle off, or the old side of a switch) takes the
+			// point back, so a switch or a vote/remove loop nets to one award.
+			'once_per_object'   => static fn( int $post_id, int $option_id, int $user_id ): int => \WBGam\Engine\Registry::object_key( $user_id, $post_id ),
+			'reverse_on'        => array(
+				'buddynext_poll_vote_removed' => static fn( $post_id, $option_id, $user_id ): int => \WBGam\Engine\Registry::object_key( (int) $user_id, (int) $post_id ),
+			),
 			'owner_callback'    => static fn( $post_id ): int => $wb_gam_bn_post_owner( $post_id ),
 			'default_points'    => 1,
 			'category'          => 'content',
@@ -369,7 +386,7 @@ return array(
 			'description'    => static fn(): string => __( 'Awarded once when a member completes every task on their Profile Strength checklist.', 'wb-gamification' ),
 			// Fires: do_action( 'buddynext_profile_strength_changed', int $user_id, int $percent ).
 			// Strength (BuddyNext 1.0.5+) is the curated checklist the member
-			// actually sees on the Profile Strength ring — the old
+			// actually sees on the Profile Strength ring - the old
 			// completion_changed hook scores EVERY schema field, so its 100%
 			// could stay unreachable while the member's widget said "All set"
 			// and this award silently never fired.

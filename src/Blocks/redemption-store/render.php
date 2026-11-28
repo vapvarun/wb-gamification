@@ -6,7 +6,7 @@
  * by the legacy block, calls `WBGam\Blocks\CSS::add()` to register
  * per-instance scoped CSS, and emits `data-wp-*` directives for the
  * Interactivity API store wired up in `view.js`. The frontend
- * confirmation flow is in-DOM markup toggled via state — replacing
+ * confirmation flow is in-DOM markup toggled via state - replacing
  * `window.confirm` per the Block Quality Standard.
  *
  * @package WB_Gamification
@@ -17,15 +17,15 @@
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+//   - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 //     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 //     Plugin Check auto-detects `wb_gamification` from the text-domain header
 //     and doesn't share the .phpcs.xml prefix list; hooks like
 //     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+//   - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 //     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 //   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 //     table work. Table names are interpolated from `{$wpdb->prefix}` plus
 //     literal constants (no user input); user-supplied values pass through
 //     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -34,7 +34,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Block render.php files are invoked from inside render_callback by the
 // WP block registrar, so every $wb_gam_* in this file is function-scoped,
-// not global. PrefixAllGlobals can't tell — its `phpcs:disable` here is
+// not global. PrefixAllGlobals can't tell - its `phpcs:disable` here is
 // the WP-standard way to silence the false positive. The plugin's own
 // .phpcs.xml already declares `wb_gam` as a valid prefix; this annotation
 // extends that signal to Plugin Check's internal phpcs invocation.
@@ -83,7 +83,7 @@ $wb_gam_balance_pts = $wb_gam_user_id ? (int) PointsEngine::get_total( $wb_gam_u
 
 // Pre-fetch the currency label map so each reward can render its own
 // point_type label without an N+1 query inside the loop. Each reward
-// item carries a `point_type` field — the cost suffix matches that
+// item carries a `point_type` field - the cost suffix matches that
 // type so a "Coins" reward says "100 Coins" not "100 pts".
 $wb_gam_pt_service = new \WBGam\Services\PointTypeService();
 
@@ -95,7 +95,7 @@ $wb_gam_extra_css  = array();
 $wb_gam_inline_styles = array_filter(
 	array(
 		'accentColor'      => 'background',
-		'accentHoverColor' => null, // Hover only — applied via inline rule below.
+		'accentHoverColor' => null, // Hover only - applied via inline rule below.
 	),
 	static fn ( $value ) => null !== $value
 );
@@ -303,7 +303,7 @@ BlockHooks::before(
 							 * A REAL dialog, not a div wearing a dialog's clothes.
 							 *
 							 * This was `role="dialog" aria-modal="false"` on a hidden <div>: it told a screen
-							 * reader it was a dialog while trapping nothing, and — the part that actually hurt —
+							 * reader it was a dialog while trapping nothing, and - the part that actually hurt -
 							 * it never moved FOCUS. A keyboard user pressed "Redeem", a confirmation appeared
 							 * somewhere below, and their focus stayed on the button they had just pressed. As far
 							 * as they could tell, nothing had happened.

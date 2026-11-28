@@ -1,9 +1,9 @@
 <?php
 /**
- * Gamification Hub block — Wbcom Block Quality Standard render.
+ * Gamification Hub block - Wbcom Block Quality Standard render.
  *
  * Phase D.5 migration: per-instance scoped CSS, design tokens via
- * `wb-gam-tokens`, `.wb-gam-block-{uniqueId}` wrapper class — without
+ * `wb-gam-tokens`, `.wb-gam-block-{uniqueId}` wrapper class - without
  * disturbing the existing Interactivity API store wired up in
  * `assets/interactivity/index.js` (preserved until Phase E).
  *
@@ -14,15 +14,15 @@
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+//   - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 //     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 //     Plugin Check auto-detects `wb_gamification` from the text-domain header
 //     and doesn't share the .phpcs.xml prefix list; hooks like
 //     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+//   - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 //     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 //   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 //     table work. Table names are interpolated from `{$wpdb->prefix}` plus
 //     literal constants (no user input); user-supplied values pass through
 //     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -31,7 +31,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Block render.php files are invoked from inside render_callback by the
 // WP block registrar, so every $wb_gam_* in this file is function-scoped,
-// not global. PrefixAllGlobals can't tell — its `phpcs:disable` here is
+// not global. PrefixAllGlobals can't tell - its `phpcs:disable` here is
 // the WP-standard way to silence the false positive. The plugin's own
 // .phpcs.xml already declares `wb_gam` as a valid prefix; this annotation
 // extends that signal to Plugin Check's internal phpcs invocation.
@@ -155,7 +155,7 @@ $wb_gam_conv_service = new \WBGam\Services\PointTypeConversionService();
 $wb_gam_pt_catalog   = $wb_gam_pt_service->list();
 $wb_gam_balances     = PointsEngine::get_totals_by_type( $wb_gam_user_id );
 
-// Index outbound conversion rules per source-type slug — so each currency
+// Index outbound conversion rules per source-type slug - so each currency
 // tile can show a "Convert" button only when a rule exists for that slug.
 $wb_gam_conv_rules = $wb_gam_conv_service->list_active();
 $wb_gam_outbound   = array();
@@ -166,7 +166,7 @@ $wb_gam_has_conv_rules = ! empty( $wb_gam_conv_rules );
 
 if ( $wb_gam_has_conv_rules ) {
 	wp_enqueue_script( 'wb-gamification-hub-convert' );
-	// One-shot localisation; safe to call again — wp_localize_script is idempotent for repeated identical data, and the modal is a singleton.
+	// One-shot localisation; safe to call again - wp_localize_script is idempotent for repeated identical data, and the modal is a singleton.
 	wp_localize_script(
 		'wb-gamification-hub-convert',
 		'wbGamHubConvert',
@@ -296,7 +296,7 @@ $wb_gam_cards = array(
 
 // On a Jetonomy site the reputation leaderboard is the single ranking
 // (wb-gam points mirror reputation 1:1), so DisplayDefer suppresses the
-// leaderboard block. Drop the hub card too — otherwise its tile would open
+// leaderboard block. Drop the hub card too - otherwise its tile would open
 // an empty panel. Badges + everything else stay; only the duplicate ranking
 // is removed.
 if ( \WBGam\Integrations\Jetonomy\DisplayDefer::defers_leaderboard() ) {
@@ -305,7 +305,7 @@ if ( \WBGam\Integrations\Jetonomy\DisplayDefer::defers_leaderboard() ) {
 
 // Challenges card is only meaningful when there's something to enter. An
 // empty "0 active challenges" tile pointing at a panel that also says
-// "no active challenges" is two layers of empty state for the same fact —
+// "no active challenges" is two layers of empty state for the same fact -
 // confusing for non-technical members. Conditionally inject the card so the
 // hub grid collapses cleanly when nothing's running (Basecamp 9925231618).
 //
@@ -340,7 +340,7 @@ if ( $wb_gam_active_count > 0 ) {
 	}
 
 	// Panel renders the personal-challenges block first, then the
-	// community-challenges block — only the blocks that actually have
+	// community-challenges block - only the blocks that actually have
 	// data, so the panel doesn't show duplicate empty states.
 	$wb_gam_panel_blocks = array();
 	if ( $wb_gam_personal_count > 0 ) {
@@ -558,7 +558,7 @@ BlockHooks::before( 'hub', $wb_gam_attrs );
 	</dialog>
 
 	<?php if ( ! empty( $wb_gam_conv_rules ) ) : ?>
-		<!-- Currency-conversion modal — shared across all currency tiles.
+		<!-- Currency-conversion modal - shared across all currency tiles.
 		     Native <dialog>::showModal() provides role=dialog + aria-modal=true +
 		     ESC + focus-trap implicitly. aria-labelledby points at the visible
 		     <h2> title so screen readers announce the dialog by name. -->

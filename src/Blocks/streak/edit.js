@@ -1,5 +1,5 @@
 /**
- * Streak — editor surface.
+ * Streak - editor surface.
  *
  * @see plans/WBCOM-BLOCK-STANDARD-MIGRATION.md Phase D.1
  */

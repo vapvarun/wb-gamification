@@ -10,7 +10,7 @@
  *
  * Levels tab: editable level name and min_points thresholds.
  *
- * All form processing uses Settings API + nonces. No AJAX in this phase —
+ * All form processing uses Settings API + nonces. No AJAX in this phase -
  * page reloads on save. Interactivity API enhancements are Phase 2.
  *
  * @package WB_Gamification
@@ -184,7 +184,7 @@ final class SettingsPage {
 	/**
 	 * Dismiss the setup-progress checklist for the current admin.
 	 *
-	 * Separate from the welcome card — admins may want to keep "Getting
+	 * Separate from the welcome card - admins may want to keep "Getting
 	 * Started" visible while hiding the checklist (or vice versa).
 	 */
 	public static function handle_dismiss_checklist(): void {
@@ -206,7 +206,7 @@ final class SettingsPage {
 	 * Compute setup-checklist step state from live site data.
 	 *
 	 * Each step queries the site (option, meta, table count) so admins
-	 * never need to manually mark a step done — it self-checks. Returns
+	 * never need to manually mark a step done - it self-checks. Returns
 	 * a list of associative arrays consumed by the dashboard render.
 	 *
 	 * @param int  $hub_page_id   Current hub page ID (0 if not yet auto-created).
@@ -501,7 +501,7 @@ final class SettingsPage {
 	}
 
 	/**
-	 * Render the Engagement settings section — the controls for features that
+	 * Render the Engagement settings section - the controls for features that
 	 * previously had sensible defaults but no admin UI: daily login bonus,
 	 * streaks, weekly recap email, leaderboard nudge email, BuddyPress
 	 * activity-stream event toggles, and the public-profile URL slug.
@@ -706,7 +706,7 @@ final class SettingsPage {
 			update_option( \WBGam\API\SSEController::TRANSPORT_OPTION, $raw );
 		}
 
-		// Toast stack position — validated against the allowed set so the
+		// Toast stack position - validated against the allowed set so the
 		// value can only ever map to a known .wb-gam-toasts--* CSS modifier.
 		$position = isset( $_POST['wb_gam_toast_position'] ) ? sanitize_key( wp_unslash( $_POST['wb_gam_toast_position'] ) ) : '';
 		if ( in_array( $position, \WBGam\Engine\NotificationBridge::TOAST_POSITIONS, true ) ) {
@@ -863,7 +863,7 @@ final class SettingsPage {
 	 *
 	 * The Emails form uses the data-wb-gam-rest-form attribute pattern shared
 	 * with WebhooksAdminPage / ManualAwardPage, but the JS driver was never
-	 * enqueued on this page — without it the toggle form fell back to a
+	 * enqueued on this page - without it the toggle form fell back to a
 	 * native GET submit that wiped the URL and never saved any toggle
 	 * (Basecamp 9925227946 / 9925205802 Issue 2).
 	 *
@@ -1007,7 +1007,7 @@ final class SettingsPage {
 		// gate stopped the action-row toggle JS from ever loading and the
 		// rule form's per-action context fields (BP group id, role slug,
 		// message subject/content) never appeared on dropdown change
-		// (Basecamp 9925298656 issue 1). Always enqueue — the script is a
+		// (Basecamp 9925298656 issue 1). Always enqueue - the script is a
 		// no-op if the rules form isn't on the page.
 
 		wp_enqueue_script(
@@ -1059,7 +1059,7 @@ final class SettingsPage {
 				</div>
 				<div class="wbgam-settings-topbar__actions">
 					<?php
-					// Hide the wizard-launch CTA once setup is completed — site owners
+					// Hide the wizard-launch CTA once setup is completed - site owners
 					// who finished onboarding don't need the redundant "Run Setup
 					// Wizard" prompt every time they open Settings (Basecamp
 					// #9925205802 issue 3). They can still re-run the wizard by
@@ -1184,8 +1184,8 @@ final class SettingsPage {
 	private static function render_points_tab(): void {
 		$actions = Registry::get_actions();
 		// Group point actions by their SOURCE PLUGIN (the integration that
-		// registered them) so admins reason per-integration — "what does
-		// BuddyNext / Learnomy / Listora reward?" — instead of by abstract
+		// registered them) so admins reason per-integration - "what does
+		// BuddyNext / Learnomy / Listora reward?" - instead of by abstract
 		// category. ManifestLoader stamps the plugin name on every trigger.
 		$by_plugin = array();
 		foreach ( $actions as $action ) {
@@ -1199,7 +1199,7 @@ final class SettingsPage {
 		}
 		ksort( $by_plugin );
 
-		// Resolve the default currency label once — used for the section title +
+		// Resolve the default currency label once - used for the section title +
 		// table column header so the UI never hard-codes "Points" when the site
 		// has renamed the primary type or set a different currency as default.
 		$wb_gam_pt_service    = new \WBGam\Services\PointTypeService();
@@ -1212,7 +1212,7 @@ final class SettingsPage {
 
 		// Multi-currency mode: when the site has > 1 point type, show a per-action
 		// currency picker in the settings table. Otherwise the currency column is
-		// hidden — there's nothing to choose between.
+		// hidden - there's nothing to choose between.
 		$wb_gam_multi_currency = count( $wb_gam_pt_catalog ) > 1;
 		?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wb-gamification&tab=points' ) ); ?>">
@@ -1399,7 +1399,7 @@ final class SettingsPage {
 
 				<div class="wbgam-earn-status" role="status" aria-live="polite" data-wb-gam-earn-status hidden>
 					<span data-wb-gam-earn-status-text></span>
-					<button type="button" class="wbgam-btn wbgam-btn--secondary wbgam-btn--sm" data-wb-gam-earn-undo><?php esc_html_e( 'Undo', 'wb-gamification' ); ?></button>
+					<button type="button" class="wbgam-btn wbgam-btn--secondary wbgam-btn--sm" data-wb-gam-earn-undo><?php esc_html_e( 'Undo', 'wb-gamification' ); ?> <span data-wb-gam-earn-undo-count></span></button>
 				</div>
 
 				<?php self::enqueue_action_overrides_script(); ?>
@@ -1652,15 +1652,12 @@ final class SettingsPage {
 		<?php
 		// Hand awards are shown apart from what members earned by taking part, and a gentle note
 		// appears when they are an unusual share of the month (a migration, or points used as a
-		// manual prize). top_actions holds the ten biggest actions by points, so a hand-award
-		// total outside it is small by definition.
-		$all_actions  = (array) $stats['top_actions'];
-		$manual_pts   = 0;
+		// manual prize). The hand total is its own uncapped aggregate (get_stats()), not a sum over
+		// top_actions, which holds only the ten biggest actions and so drops small hand awards.
+		$manual_pts   = (int) ( $stats['manual_points'] ?? 0 );
 		$earn_actions = array();
-		foreach ( $all_actions as $row ) {
-			if ( in_array( $row['action_id'] ?? '', ManualAwardPage::ACTION_IDS, true ) ) {
-				$manual_pts += (int) ( $row['pts'] ?? 0 );
-			} else {
+		foreach ( (array) $stats['top_actions'] as $row ) {
+			if ( ! in_array( $row['action_id'] ?? '', ManualAwardPage::ACTION_IDS, true ) ) {
 				$earn_actions[] = $row;
 			}
 		}
@@ -1923,7 +1920,7 @@ final class SettingsPage {
 		</div>
 		<?php
 		// Action-row toggle JS lives at assets/js/admin-rule-action-toggle.js
-		// and is enqueued via enqueue_assets() — never inline.
+		// and is enqueued via enqueue_assets() - never inline.
 	}
 
 	// ── Kudos section ─────────────────────────────────────────────────────────
@@ -2444,7 +2441,7 @@ final class SettingsPage {
 	}
 
 	/**
-	 * Appearance — member-facing accent color picker.
+	 * Appearance - member-facing accent color picker.
 	 *
 	 * Lets the site owner override the frontend gamification accent. When the
 	 * reset box is ticked the override is cleared and the theme/default color
@@ -2647,7 +2644,7 @@ final class SettingsPage {
 	// ── Integrations section ──────────────────────────────────────────────────
 
 	/**
-	 * Render the Emails section — per-event toggles for transactional emails.
+	 * Render the Emails section - per-event toggles for transactional emails.
 	 *
 	 * Each email type has a wb_gam_email_<slug> option. Default OFF so
 	 * existing sites don't get a flood of email after upgrade. Saves via

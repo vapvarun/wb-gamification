@@ -1,6 +1,6 @@
 <?php
 /**
- * Transaction — re-entrant atomic-write wrapper for the points engine.
+ * Transaction - re-entrant atomic-write wrapper for the points engine.
  *
  * The detail lives on the class below, deliberately. The WP.org Plugin Check reads only the FIRST
  * 50 LINES of a file when it looks for the direct-access guard, and this file's explanation used to
@@ -25,20 +25,20 @@ defined( 'ABSPATH' ) || exit;
  * opens the transaction; inner calls participate without opening a new one. The transaction commits
  * only when the outermost closure returns a truthy value AND its own depth unwinds to zero.
  *
- * Usage — single-table:
+ * Usage - single-table:
  *
  *     Transaction::run( function () {
  *         global $wpdb;
  *         return $wpdb->insert( ... );    // truthy → commit, false → rollback
  *     } );
  *
- * Usage — multi-table composition (the redeem flow):
+ * Usage - multi-table composition (the redeem flow):
  *
  *     return Transaction::run( function () use ( $user_id, $cost, $item_id, $event ) {
  *         $debit = PointsEngine::debit( $user_id, $cost, 'redemption', $event, null, true );
  *         if ( ! $debit['success'] ) {
  *             return false; // PointsEngine::debit also called Transaction::run
- *                          // but at inner depth — its return value cascades up.
+ *                          // but at inner depth - its return value cascades up.
  *         }
  *         if ( ! self::decrement_stock( $item_id ) ) {
  *             return false;
@@ -48,7 +48,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * Why explicit `return false` for rollback:
  *
- *   PHP exceptions also trigger rollback (and re-throw) — use those when the failure is genuinely
+ *   PHP exceptions also trigger rollback (and re-throw) - use those when the failure is genuinely
  *   exceptional. `return false` is the soft path for "validation failed, no points have been moved,
  *   this is a normal business-rule outcome." Both paths correctly unwind the depth counter.
  *
@@ -75,7 +75,7 @@ final class Transaction {
 	 * Result-tracker: if any nested closure returned false, the outermost
 	 * frame rolls back even when its own closure returned truthy. This
 	 * prevents "outer scope happily commits the partial state that inner
-	 * scope already declared a failure on" — a real footgun without it.
+	 * scope already declared a failure on" - a real footgun without it.
 	 *
 	 * @var bool
 	 */
@@ -124,7 +124,7 @@ final class Transaction {
 
 		// A falsy return from any frame marks the whole transaction aborted.
 		// Even if an outer frame's closure later returns truthy, the rollback
-		// signal propagates — partial state from a "failed" inner frame must
+		// signal propagates - partial state from a "failed" inner frame must
 		// never commit.
 		if ( false === $result || null === $result ) {
 			self::$aborted = true;
@@ -151,7 +151,7 @@ final class Transaction {
 	 *
 	 * Engine code that wants to take advantage of an outer transaction
 	 * without opening a new one can branch on this. Most callers should
-	 * just call run() unconditionally — that's the whole point of the
+	 * just call run() unconditionally - that's the whole point of the
 	 * re-entrant design.
 	 *
 	 * @return bool

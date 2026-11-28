@@ -1,10 +1,10 @@
 /**
- * Redemption Store — block registration entry.
+ * Redemption Store - block registration entry.
  *
  * Phase C pilot for the Wbcom Block Quality Standard. The full standard
- * editor surface — Content / Layout / Style / Advanced inspector panels
+ * editor surface - Content / Layout / Style / Advanced inspector panels
  * with responsive controls, hover colours, per-side spacing, box-shadow,
- * border-radius, and device visibility — lives in `./edit.js`.
+ * border-radius, and device visibility - lives in `./edit.js`.
  *
  * @see plans/WBCOM-BLOCK-STANDARD-MIGRATION.md Phase C
  */

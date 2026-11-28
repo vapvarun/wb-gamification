@@ -24,7 +24,7 @@ Prefer a shortcode? Use:
 
 ## Big collections
 
-The block shows 12 badges per tab (All, Earned, Locked), then a **Show all N badges** button that reveals the rest in place. Each tab folds on its own count, and a tab with 12 or fewer shows no button. The header always counts the whole collection, even when **Limit** is set, so "3 / 28 badges earned" stays true. Without JavaScript every badge shows.
+The block shows 12 badges per tab (All, Earned, Locked), then a **Show all N badges** button that reveals the rest in place. The All, Earned and Locked tabs show whenever **Show locked** is on and the collection has badges; a tab with nothing in it is disabled. Each tab folds on its own count, and a tab with 12 or fewer shows no button. The header always counts the whole collection, even when **Limit** is set, so "3 / 28 badges earned" stays true. Without JavaScript every badge shows.
 
 To change the 12, use the `wb_gam_badge_showcase_page_size` filter; `0` shows every badge with no button:
 

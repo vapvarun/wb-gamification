@@ -11,7 +11,7 @@
  *   - Streak health (% of members with streak > 0)
  *
  * All queries are read-only aggregations with object-cache backing.
- * Dashboard renders server-side HTML — no JS build required.
+ * Dashboard renders server-side HTML - no JS build required.
  *
  * @package WB_Gamification
  * @since   0.1.0
@@ -40,6 +40,9 @@ final class AnalyticsDashboard {
 	private const CACHE_GROUP = 'wb_gamification';
 	private const CACHE_TTL   = 600; // 10 minutes
 
+	/** Windows (days) the dashboard and Overview ask for; each has its own cache entry. */
+	private const PERIODS = array( 7, 30, 90 );
+
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
 	/**
@@ -50,6 +53,37 @@ final class AnalyticsDashboard {
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
+	}
+
+	/**
+	 * Drop the cached stats so the next read sees the points that just moved.
+	 *
+	 * A delete, never a rebuild; the next dashboard view recomputes once.
+	 *
+	 * @return void
+	 */
+	public static function flush_stats(): void {
+		foreach ( self::PERIODS as $period ) {
+			wp_cache_delete( "wb_gam_analytics_{$period}", self::CACHE_GROUP );
+			delete_transient( "wb_gam_analytics_{$period}" );
+		}
+	}
+
+	/**
+	 * Flush after a ledger change made by someone who reads these numbers.
+	 *
+	 * Hooked to `wb_gam_leaderboard_cache_invalidated`, which every award, debit, revoke, import undo
+	 * and progress reset fires. A member's own award is the hot path (thousands a minute on a busy
+	 * site) and must not pay for six cache deletes, so only a change made by a user who can open the
+	 * Overview flushes: a hand award, a deduction, a revoke, a reset. Everything else shows within the
+	 * cache window. The capability check reads the already-loaded user, so it costs no query.
+	 *
+	 * @return void
+	 */
+	public static function flush_for_admin(): void {
+		if ( current_user_can( 'wb_gam_view_analytics' ) ) {
+			self::flush_stats();
+		}
 	}
 
 	/**
@@ -361,7 +395,7 @@ final class AnalyticsDashboard {
 		// wp_cache is per-request only, so every dashboard load re-ran three
 		// full-window GROUP BY scans over wb_gam_points. The transient lands in
 		// the options table on such installs and holds for CACHE_TTL. The data is
-		// time-windowed and tolerates that staleness (no invalidation on award).
+		// time-windowed; flush_stats() drops it whenever points move, so a hand award shows at once.
 		$cached = wp_cache_get( $cache_key, self::CACHE_GROUP );
 		if ( false !== $cached ) {
 			return (array) $cached;
@@ -484,6 +518,19 @@ final class AnalyticsDashboard {
 			)
 		);
 
+		// Points given by hand, over the same window and filter as $points_total. Its own query, not a
+		// sum over the top-ten list below: a small hand award never makes that list, so summing it
+		// there under-reports (and a big one inflates the share). Uses KEY idx_action.
+		$manual_in     = implode( ', ', array_fill( 0, count( ManualAwardPage::ACTION_IDS ), '%s' ) );
+		$manual_points = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $manual_in is one %s per id, bound below.
+				"SELECT COALESCE(SUM(points),0) FROM {$wpdb->prefix}wb_gam_points
+				  WHERE action_id IN ( {$manual_in} ) AND created_at >= %s AND is_spend = 0",
+				array_merge( ManualAwardPage::ACTION_IDS, array( $since ) )
+			)
+		);
+
 		// Top 10 actions by total points.
 		$top_actions = $wpdb->get_results(
 			$wpdb->prepare(
@@ -535,6 +582,7 @@ final class AnalyticsDashboard {
 
 		$data = compact(
 			'points_total',
+			'manual_points',
 			'active_members',
 			'total_members',
 			'badges_earned',
@@ -584,22 +632,22 @@ final class AnalyticsDashboard {
 	}
 
 	/**
-	 * Render two intelligence panels — high churn-risk + anomaly flagged.
+	 * Render two intelligence panels - high churn-risk + anomaly flagged.
 	 *
 	 * Surfaces the wb_gam_user_intelligence projection that
 	 * IntelligenceProjector populates on the daily cron. Without these
-	 * panels the projection is invisible to admins — useful for
+	 * panels the projection is invisible to admins - useful for
 	 * scripts and the SDK, but hidden from the people who'd actually
 	 * use the data (community managers, growth team).
 	 *
 	 * Read-only listing. Sorts by churn_risk DESC for the risk panel,
 	 * by events_30d DESC for the anomaly panel. Caps at 25 rows per
-	 * panel — power users with a big install can build their own
+	 * panel - power users with a big install can build their own
 	 * reporting on top of the REST endpoint.
 	 */
 	private static function render_intelligence_panels(): void {
 		if ( ! get_option( 'wb_gam_feature_user_intelligence_v1' ) ) {
-			return; // Projection table not migrated yet — silent skip.
+			return; // Projection table not migrated yet - silent skip.
 		}
 
 		global $wpdb;
@@ -729,14 +777,14 @@ final class AnalyticsDashboard {
 	 * Render the "unknown action_ids" diagnostic panel.
 	 *
 	 * Surfaces events that called `Engine::process()` with an action_id
-	 * that is not in the Registry — the silent failure class Engine
+	 * that is not in the Registry - the silent failure class Engine
 	 * v1.5.0 started logging via `wb_gam_unknown_action`. The dashboard
 	 * is the production-facing surface; `debug.log` only works in dev.
 	 *
 	 * The buffer is a 24-hour transient (see {@see \WBGam\Engine\Engine}
 	 * UNKNOWN_ACTIONS_TRANSIENT), so it self-clears between runs and
-	 * doesn't grow unbounded. Empty buffer renders nothing — no panel,
-	 * no noise — so healthy installs see a clean dashboard.
+	 * doesn't grow unbounded. Empty buffer renders nothing - no panel,
+	 * no noise - so healthy installs see a clean dashboard.
 	 */
 	private static function render_unknown_actions_panel(): void {
 		$buffer = \WBGam\Engine\Engine::get_unknown_actions_recent();
@@ -885,7 +933,7 @@ final class AnalyticsDashboard {
 										__( '%s ago', 'wb-gamification' ),
 										human_time_diff( (int) strtotime( $last . ' UTC' ) )
 									)
-									: '—'
+									: '-'
 							);
 							?>
 							</td>
@@ -953,7 +1001,7 @@ final class AnalyticsDashboard {
 		// A chart with no scale is a picture of some rectangles.
 		//
 		// It rendered as bare bars: no axis, no labels, no baseline. And because one busy day sets the
-		// maximum, every other day was drawn at ~1% of 80px — a row of 1px stubs that read as broken
+		// maximum, every other day was drawn at ~1% of 80px - a row of 1px stubs that read as broken
 		// rather than as "quiet days". The scale is now stated, so a tall bar next to flat ones is
 		// legible as what it is instead of looking like a rendering fault.
 		$summary = sprintf(
@@ -978,7 +1026,14 @@ final class AnalyticsDashboard {
 			// and disappears, so "a few points" and "no points at all" looked identical.
 			$h = $pts > 0 ? max( 2, (int) round( ( $pts / $max ) * 100 ) ) : 0;
 
-			$bar_title = esc_attr( $day . ': ' . number_format_i18n( $pts ) . ' ' . __( 'pts', 'wb-gamification' ) );
+			$bar_title = esc_attr(
+				sprintf(
+					/* translators: 1: date, 2: points earned that day (a number). */
+					__( '%1$s: %2$s pts', 'wb-gamification' ),
+					$day,
+					number_format_i18n( $pts )
+				)
+			);
 			$bar_width = esc_attr( number_format( $w, 4 ) );
 
 			echo '<div class="wb-gam-analytics__spark-bar' . ( 0 === $h ? ' is-empty' : '' ) . '" style="--bar-h:' . (int) $h . '%;--bar-w:' . $bar_width . '%" title="' . $bar_title . '"></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $h is an int; $bar_width and $bar_title are esc_attr()-escaped.

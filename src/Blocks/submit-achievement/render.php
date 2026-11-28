@@ -1,6 +1,6 @@
 <?php
 /**
- * Submit Achievement block — render.
+ * Submit Achievement block - render.
  *
  * Renders a guest-blocked submission form. Member picks an action,
  * provides text + optional URL evidence, submits via REST. The view.js
@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Block render.php files are invoked from inside render_callback by the
 // WP block registrar, so every $wb_gam_* in this file is function-scoped,
-// not global. PrefixAllGlobals can't tell — its `phpcs:disable` here is
+// not global. PrefixAllGlobals can't tell - its `phpcs:disable` here is
 // the WP-standard way to silence the false positive. The plugin's own
 // .phpcs.xml already declares `wb_gam` as a valid prefix; this annotation
 // extends that signal to Plugin Check's internal phpcs invocation.
@@ -46,7 +46,7 @@ wp_enqueue_script( 'wp-api-fetch' );
 // Frontend wp_editor() requires the editor scripts. wp_enqueue_editor()
 // loads tinymce-core + quicktags + media. MemberUploadCap grants
 // upload_files to every logged-in user via a user_has_cap filter so the
-// Add Media button works for subscribers / contributors too — site
+// Add Media button works for subscribers / contributors too - site
 // owners can opt out via the `wb_gam_grant_member_uploads` filter.
 if ( is_user_logged_in() ) {
 	wp_enqueue_editor();
@@ -93,7 +93,7 @@ if ( ! $wb_gam_actions ) {
 }
 
 // Pass REST URL + nonce + actions list as data attrs so view.js can use them
-// without a separate wp_localize_script — keeps the block self-contained.
+// without a separate wp_localize_script - keeps the block self-contained.
 
 $wb_gam_wrapper = get_block_wrapper_attributes( array(
 	'class'                => implode( ' ', $wb_gam_classes ),
@@ -101,7 +101,7 @@ $wb_gam_wrapper = get_block_wrapper_attributes( array(
 	'data-rest-nonce'      => wp_create_nonce( 'wp_rest' ),
 	'data-actions'         => wp_json_encode( $wb_gam_actions ),
 	// i18n strings consumed by view.js. Same pattern as the redemption-store
-	// block — render-time translations flow through the PHP textdomain so
+	// block - render-time translations flow through the PHP textdomain so
 	// view.js stays string-free and ships to every locale unchanged.
 	'data-i18n-success'    => __( 'Submitted! A reviewer will look at it soon.', 'wb-gamification' ),
 	'data-i18n-failed'     => __( 'Submission failed.', 'wb-gamification' ),
@@ -125,7 +125,7 @@ BlockHooks::before( 'submit-achievement', $wb_gam_attrs );
 		<div class="wb-gam-submit-achievement__field wb-gam-submit-achievement__field--editor">
 			<span class="wb-gam-submit-achievement__label"><?php esc_html_e( 'Tell us about it', 'wb-gamification' ); ?></span>
 			<?php
-			// wp_editor() in frontend — teeny toolbar (bold/italic/list/link
+			// wp_editor() in frontend - teeny toolbar (bold/italic/list/link
 			// only) so the form stays compact. Media button visibility is
 			// gated by user capability: editors / authors get image upload;
 			// members without upload_files see formatting buttons only.

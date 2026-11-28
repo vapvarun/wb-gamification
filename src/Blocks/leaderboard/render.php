@@ -1,6 +1,6 @@
 <?php
 /**
- * Leaderboard block — Wbcom Block Quality Standard render.
+ * Leaderboard block - Wbcom Block Quality Standard render.
  *
  * @package WB_Gamification
  *
@@ -13,15 +13,15 @@ defined( 'ABSPATH' ) || exit;
 // already have the broker on every page).
 wp_enqueue_script( 'wb-gamification-realtime' );
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+//   - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 //     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 //     Plugin Check auto-detects `wb_gamification` from the text-domain header
 //     and doesn't share the .phpcs.xml prefix list; hooks like
 //     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+//   - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 //     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 //   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 //     table work. Table names are interpolated from `{$wpdb->prefix}` plus
 //     literal constants (no user input); user-supplied values pass through
 //     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -30,7 +30,7 @@ wp_enqueue_script( 'wb-gamification-realtime' );
 
 // Block render.php files are invoked from inside render_callback by the
 // WP block registrar, so every $wb_gam_* in this file is function-scoped,
-// not global. PrefixAllGlobals can't tell — its `phpcs:disable` here is
+// not global. PrefixAllGlobals can't tell - its `phpcs:disable` here is
 // the WP-standard way to silence the false positive. The plugin's own
 // .phpcs.xml already declares `wb_gam` as a valid prefix; this annotation
 // extends that signal to Plugin Check's internal phpcs invocation.
@@ -66,7 +66,7 @@ $wb_gam_rows       = LeaderboardEngine::get_leaderboard( $wb_gam_period, $wb_gam
  * Filter the leaderboard rows before render.
  *
  * Use this hook to reorder, exclude, or add display fields to entries
- * — e.g. tag VIP members, splice in a "you" row, or attach extra
+ * - e.g. tag VIP members, splice in a "you" row, or attach extra
  * metadata that the surrounding theme renders below the block.
  *
  * @since 1.0.0
@@ -91,7 +91,7 @@ $wb_gam_period_labels = array(
 );
 $wb_gam_period_label  = $wb_gam_period_labels[ $wb_gam_period ] ?? $wb_gam_period_labels['all'];
 
-// Realtime board signature — view.js registers this with the heartbeat
+// Realtime board signature - view.js registers this with the heartbeat
 // broker so the server returns fresh rows for this specific block every
 // tick. Stable signature (period + scope + limit + point_type + uniqueId)
 // lets two instances on the same page receive different snapshots.
@@ -153,7 +153,7 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 		<ol class="wb-gam-leaderboard__list">
 			<?php
 			// Warm the earned-badge cache for every row in one query so the
-			// per-row count_user_badges() below are cache hits — avoids an
+			// per-row count_user_badges() below are cache hits - avoids an
 			// N+1 that would grow with the board size.
 			\WBGam\Engine\BadgeEngine::prime_earned_badges( array_column( $wb_gam_rows, 'user_id' ) );
 			// Same reason, for the user record + privacy meta MemberUrl::resolve() reads.
@@ -205,7 +205,7 @@ BlockHooks::before( 'leaderboard', $wb_gam_attrs );
 
 					<?php
 					/*
-					 * Badge count beside points — added in 1.4.0 (B15).
+					 * Badge count beside points - added in 1.4.0 (B15).
 					 * Reads the materialised count, never the per-badge rows, so
 					 * even 1000-row leaderboards stay O(N) on the per-user lookup.
 					 *

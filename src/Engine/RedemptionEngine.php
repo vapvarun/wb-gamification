@@ -3,17 +3,17 @@
  * Points Redemption Engine
  *
  * Allows members to spend earned points on defined reward items.
- * Smile.io / loyalty program model — integrates with WooCommerce coupons
+ * Smile.io / loyalty program model - integrates with WooCommerce coupons
  * when WooCommerce is active, falls back to custom reward items otherwise.
  *
  * Reward types:
- *   discount_pct   — % off WooCommerce order (requires WooCommerce)
- *   discount_fixed — Fixed amount off WooCommerce order (requires WooCommerce)
- *   free_shipping  — Free-shipping WooCommerce coupon (requires WooCommerce)
- *   free_product   — 100%-off coupon scoped to a specific product (requires WooCommerce)
- *   wbcom_credits  — Top up balance in a Wbcom Credits SDK slug
+ *   discount_pct   - % off WooCommerce order (requires WooCommerce)
+ *   discount_fixed - Fixed amount off WooCommerce order (requires WooCommerce)
+ *   free_shipping  - Free-shipping WooCommerce coupon (requires WooCommerce)
+ *   free_product   - 100%-off coupon scoped to a specific product (requires WooCommerce)
+ *   wbcom_credits  - Top up balance in a Wbcom Credits SDK slug
  *                    (requires the wbcom-credits-sdk to be loaded by another plugin)
- *   custom         — Admin-defined reward, fulfillment handled via hook
+ *   custom         - Admin-defined reward, fulfillment handled via hook
  *
  * Reward config (JSON in reward_config column) per type:
  *   discount_pct/discount_fixed: { "amount": 10 }
@@ -38,15 +38,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -78,7 +78,7 @@ final class RedemptionEngine {
 	/**
 	 * Map an internal failure-reason slug to a localised error message.
 	 *
-	 * @param string   $reason       Failure reason — one of
+	 * @param string   $reason       Failure reason - one of
 	 *                               `insufficient` | `out_of_stock` |
 	 *                               `ledger_write_failed` | `record_write_failed` |
 	 *                               `redemption_failed`.
@@ -184,13 +184,13 @@ final class RedemptionEngine {
 		$cost = (int) $item['points_cost'];
 		$type = ( new \WBGam\Services\PointTypeService() )->resolve( (string) ( $item['point_type'] ?? '' ) );
 
-		// Stock semantics — NULL means unlimited. 0 means SOLD OUT. Any positive
+		// Stock semantics - NULL means unlimited. 0 means SOLD OUT. Any positive
 		// value is finite stock, decremented atomically on each redemption.
 		//
 		// This used to read "NULL *or 0* means unlimited", and that collided with
 		// the decrement below, which walks finite stock down to exactly 0. So a
 		// reward with stock=1 sold its one unit, landed on 0, and from that moment
-		// was indistinguishable from "unlimited" — it could be redeemed forever. An
+		// was indistinguishable from "unlimited" - it could be redeemed forever. An
 		// owner offering a single laptop gave away laptops without limit. The two
 		// states genuinely are different and now have different representations.
 		//
@@ -212,7 +212,7 @@ final class RedemptionEngine {
 		// Build the canonical redemption event up-front so PointsEngine::debit
 		// can audit-log it, and the redemption record can later reference the
 		// same event_id (the prior implementation generated the event inside
-		// debit() then dropped the reference — events and redemptions were
+		// debit() then dropped the reference - events and redemptions were
 		// disconnected on the analytics side).
 		$event = new Event(
 			array(
@@ -240,7 +240,7 @@ final class RedemptionEngine {
 			function () use ( $user_id, $item_id, $cost, $type, $event, $enforced_stock ) {
 				global $wpdb;
 
-				// Step 1 — debit (FOR UPDATE balance lock, audit-logged).
+				// Step 1 - debit (FOR UPDATE balance lock, audit-logged).
 				$debit = PointsEngine::debit( $user_id, $cost, 'redemption', $event, $type, true );
 				if ( ! $debit['success'] ) {
 					self::$last_failure_reason = ( 'insufficient_balance' === ( $debit['reason'] ?? '' ) )
@@ -249,12 +249,12 @@ final class RedemptionEngine {
 					return false;
 				}
 
-				// Step 2 — atomic stock decrement when stock is finite (NULL = unlimited).
+				// Step 2 - atomic stock decrement when stock is finite (NULL = unlimited).
 				//
 				// The `stock > 0` predicate is what makes this safe under concurrency:
 				// the check above ran outside this transaction, so two members can both
 				// pass it for the last remaining unit. Only one UPDATE can match, the
-				// loser gets 0 affected rows and rolls the whole redemption back — the
+				// loser gets 0 affected rows and rolls the whole redemption back - the
 				// debit included. Stock cannot go negative and points are never burned
 				// on a failed redemption.
 				if ( null !== $enforced_stock ) {
@@ -270,7 +270,7 @@ final class RedemptionEngine {
 					}
 				}
 
-				// Step 3 — record the redemption inside the same transaction.
+				// Step 3 - record the redemption inside the same transaction.
 				// Rolled back together with the debit if the record write fails.
 				//
 				// created_at is written explicitly, in UTC, and NOT left to the column's
@@ -346,13 +346,13 @@ final class RedemptionEngine {
 				array( 'id' => $redemption_id )
 			);
 		} else {
-			// Custom — fire hook for third-party fulfillment.
+			// Custom - fire hook for third-party fulfillment.
 			$wpdb->update( $wpdb->prefix . 'wb_gam_redemptions', array( 'status' => 'pending_fulfillment' ), array( 'id' => $redemption_id ) );
 		}
 
 		// Fulfillment failed AFTER points + stock were already committed. Reverse
 		// both so the member is never charged for a reward they did not receive,
-		// and report the failure honestly — the old code left the points spent, the
+		// and report the failure honestly - the old code left the points spent, the
 		// stock decremented, and still returned success:true with coupon_code:null.
 		if ( $fulfillment_failed ) {
 			// Reverse the debit + stock through the shared refund path (credits the
@@ -392,7 +392,7 @@ final class RedemptionEngine {
 
 	/**
 	 * Refund a redemption: credit the points back, restore stock, mark it
-	 * 'refunded'. Idempotent — a redemption already refunded is a no-op success.
+	 * 'refunded'. Idempotent - a redemption already refunded is a no-op success.
 	 *
 	 * Shared by redeem()'s fulfillment-failure path and the owner/REST refund
 	 * action, so an owner can undo a mistaken, unfulfillable, or returned reward
@@ -466,7 +466,7 @@ final class RedemptionEngine {
 	}
 
 	/**
-	 * Mark a custom / physical redemption as fulfilled — the owner has delivered
+	 * Mark a custom / physical redemption as fulfilled - the owner has delivered
 	 * the reward. Only transitions from pending / pending_fulfillment; idempotent
 	 * for an already-fulfilled row.
 	 *
@@ -577,7 +577,16 @@ final class RedemptionEngine {
 		$coupon->set_email_restrictions( array( $user->user_email ) );
 		$coupon->set_individual_use( true );
 		$coupon->set_date_expires( strtotime( '+30 days' ) );
-		$coupon->set_description( sprintf( 'Redeemed via WB Gamification — %s', $item['title'] ) );
+		// A note for the shop admin who reads it on the coupon, not for the member who redeemed.
+		$coupon->set_description(
+			RecipientLocale::run_in_site(
+				static fn(): string => sprintf(
+					/* translators: %s: reward title. */
+					__( 'Redeemed via WB Gamification - %s', 'wb-gamification' ),
+					$item['title']
+				)
+			)
+		);
 		$coupon->save();
 
 		return $code;
@@ -619,7 +628,7 @@ final class RedemptionEngine {
 			return false;
 		}
 
-		$note   = sprintf( 'WB Gamification redemption — %s', $item['title'] );
+		$note   = sprintf( 'WB Gamification redemption - %s', $item['title'] );
 		$result = \Wbcom\Credits\Credits::topup( $slug, $user_id, $amount, $note );
 
 		if ( false === $result ) {

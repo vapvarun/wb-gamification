@@ -84,7 +84,7 @@ final class SSEController {
 		// cookie-nonce check (rest_cookie_check_errors → 'rest_cookie_
 		// invalid_nonce') would reject every SSE connection even from
 		// authenticated users. Read-only GET on a per-user-scoped stream
-		// is safe to allow without the nonce — the auth cookie itself
+		// is safe to allow without the nonce - the auth cookie itself
 		// proves identity, and our check_permission() still gates on
 		// is_user_logged_in() AND scopes the stream to the current user.
 		add_filter( 'rest_authentication_errors', array( __CLASS__, 'maybe_bypass_nonce_for_stream' ), 99 );
@@ -107,7 +107,7 @@ final class SSEController {
 		}
 
 		// Only bypass for the stream route. REQUEST_URI is the safest
-		// signal — `rest_route` query param OR pretty permalink form
+		// signal - `rest_route` query param OR pretty permalink form
 		// both end in the same trailing path.
 		$uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 		if ( false === strpos( $uri, '/wb-gamification/v1/events/stream' ) ) {
@@ -160,7 +160,7 @@ final class SSEController {
 	 *   2. EventSource streams text/event-stream with correct headers
 	 *   3. wb_gam_notifications_queue table receives kudos rows
 	 *   4. sse.js dispatches received events into wbGamRealtime broker
-	 *   5. Heartbeat path stays active in parallel — toast.js Set-dedupe
+	 *   5. Heartbeat path stays active in parallel - toast.js Set-dedupe
 	 *      collapses cross-transport duplicates so the user sees one toast
 	 *   6. EventSource auto-reconnects across the 28-second server-side
 	 *      soft deadline without losing events
@@ -232,7 +232,7 @@ final class SSEController {
 	/**
 	 * Returns true if SSE should be served. Gated by sse_allowed() so a
 	 * stale client (or a hand-crafted request) can't pin a worker when
-	 * SSE isn't permitted — we refuse with 503 and the JS adapter falls
+	 * SSE isn't permitted - we refuse with 503 and the JS adapter falls
 	 * back to heartbeat permanently.
 	 */
 	public static function is_enabled(): bool {
@@ -260,7 +260,7 @@ final class SSEController {
 	 *   - REST framework JSON wrapping → write raw bytes + exit (no return)
 	 *   - Floating connections        → connection_aborted() inside loop
 	 *
-	 * Returns nothing — exits the request inline. WordPress sees the
+	 * Returns nothing - exits the request inline. WordPress sees the
 	 * response as completed.
 	 */
 	public function stream( \WP_REST_Request $request ) {
@@ -268,7 +268,7 @@ final class SSEController {
 			return new \WP_REST_Response(
 				array(
 					'code'      => 'sse_disabled',
-					'message'   => 'Server-Sent Events transport is not enabled on this install.',
+					'message'   => __( 'Server-Sent Events transport is not enabled on this install.', 'wb-gamification' ),
 					'transport' => self::get_transport(),
 				),
 				503,
@@ -292,7 +292,7 @@ final class SSEController {
 			session_write_close();
 		}
 
-		// Headers — text/event-stream + cache + buffering opt-outs.
+		// Headers - text/event-stream + cache + buffering opt-outs.
 		header( 'Content-Type: text/event-stream' );
 		header( 'Cache-Control: no-cache' );
 		header( 'Connection: keep-alive' );
@@ -328,7 +328,7 @@ final class SSEController {
 				break;
 			}
 
-			// THE queue reader — the same one the footer seed, the heartbeat tick
+			// THE queue reader - the same one the footer seed, the heartbeat tick
 			// and the REST poll use. SSE differs only in where its cursor lives
 			// (this request's `last_event_id`, not user_meta), so it passes one in
 			// rather than owning a second copy of the query. Returns the NEWEST
@@ -343,12 +343,15 @@ final class SSEController {
 				$last_event_at = time();
 
 				// The client dedupes toasts by `_id`, and every reader stamps the
-				// authoritative table row id — so the same event arriving over SSE
+				// authoritative table row id - so the same event arriving over SSE
 				// and over the footer/heartbeat path carries one key and renders once.
 				$payload = $row['payload'];
 				if ( ! empty( $payload ) ) {
 					$payload['_id'] = $last_id;
-					$data           = (string) wp_json_encode( $payload );
+					// Reading is not delivering: the page acknowledges what it showed (toast.js
+					// posts `_ack` to members/me/toasts/ack), so the stream moves no cursor.
+					$payload['_ack'] = $last_id;
+					$data            = (string) wp_json_encode( $payload );
 				} else {
 					// Undecodable row: emit an empty object rather than nothing, so
 					// the id still advances the client's cursor past it.
@@ -358,7 +361,7 @@ final class SSEController {
 				// SSE wire format: `id`, `event`, `data`. Each terminated
 				// by \n; record terminated by extra \n. This is a
 				// text/event-stream response, not HTML, so esc_html()/esc_attr()
-				// would corrupt the protocol AND the JSON payload — the correct
+				// would corrupt the protocol AND the JSON payload - the correct
 				// "escaping" here is preventing a stray CR/LF from injecting an
 				// extra SSE field. $last_id is an int; $data is wp_json_encode
 				// output (newlines already \u-escaped); event_type is the only
@@ -378,11 +381,10 @@ final class SSEController {
 					$data
 				);
 
-				NotificationBridge::advance_cursor( $user_id, $last_id );
 				echo $record; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SSE stream, not HTML: esc_html() would corrupt the protocol and the JSON. $last_id is %d, $event_name is CRLF-stripped, $data is wp_json_encode output. See note above.
 			}
 
-			// Keep-alive comment — proxies that idle-close after 30s of
+			// Keep-alive comment - proxies that idle-close after 30s of
 			// silence see ongoing bytes.
 			if ( empty( $rows ) ) {
 				echo ": keepalive\n\n";
@@ -399,7 +401,7 @@ final class SSEController {
 		}
 
 		// Emit a `close` event so the client knows the server-side soft
-		// deadline ended — distinct from an error. EventSource will
+		// deadline ended - distinct from an error. EventSource will
 		// auto-reconnect from this state.
 		echo "event: close\ndata: {}\n\n";
 		@ob_flush(); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
@@ -408,7 +410,7 @@ final class SSEController {
 		exit;
 	}
 
-	// The queue is read through NotificationBridge::fetch_unseen() — this
+	// The queue is read through NotificationBridge::fetch_unseen() - this
 	// controller owns no query of its own. It previously kept a private
 	// fetch_pending() with its own `ORDER BY id ASC LIMIT 50`, which is exactly
 	// how the backlog-replay bug survived on this surface while the footer path

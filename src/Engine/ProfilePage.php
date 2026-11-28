@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Public Profile Pages
+ * WB Gamification - Public Profile Pages
  *
  * Adds a permalink at `/u/{user_login}` that renders a member's
  * gamification showcase. Reuses the existing member-points,
@@ -38,7 +38,7 @@ final class ProfilePage {
 	public const META_PUBLIC  = 'wb_gam_profile_public';
 
 	/**
-	 * Boot — register rewrite rule + query var + template hook.
+	 * Boot - register rewrite rule + query var + template hook.
 	 */
 	public static function init(): void {
 		add_action( 'init', array( __CLASS__, 'register_rewrite' ) );
@@ -75,7 +75,7 @@ final class ProfilePage {
 	 * If the request matches our query var, render the profile page and exit.
 	 *
 	 * Hooked on `template_redirect` (runs after WP::main, before any template
-	 * include). We control the entire response — no template lookup needed.
+	 * include). We control the entire response - no template lookup needed.
 	 */
 	public static function maybe_render(): void {
 		$slug = get_query_var( self::QUERY_VAR );
@@ -92,8 +92,8 @@ final class ProfilePage {
 		}
 
 		/**
-		 * Filter a URL to redirect this standalone `/u/` profile to. BuddyNext —
-		 * the master community — owns the member profile, and the same standing,
+		 * Filter a URL to redirect this standalone `/u/` profile to. BuddyNext -
+		 * the master community - owns the member profile, and the same standing,
 		 * badges and points already render on the BuddyNext profile, so its bridge
 		 * returns the BuddyNext profile URL here and the visitor lands there
 		 * (BuddyNext then applies its own profile visibility). Empty string (the
@@ -201,8 +201,7 @@ final class ProfilePage {
 		}
 
 		$pt_service   = new PointTypeService();
-		$pt_record    = $pt_service->get( $pt_service->default_slug() );
-		$points_label = (string) ( $pt_record['label'] ?? __( 'Points', 'wb-gamification' ) );
+		$points_label = $pt_service->name_for( 2 );
 		$points       = (int) PointsEngine::get_total( (int) $user->ID );
 		$level        = LevelEngine::get_level_for_user( (int) $user->ID );
 		$badge_count  = count( BadgeEngine::get_user_earned_badge_ids( (int) $user->ID ) );
@@ -230,12 +229,12 @@ final class ProfilePage {
 			$level['name'] ?? __( 'Newcomer', 'wb-gamification' )
 		);
 
-		// Canonical link — claim the /u/{slug} URL as the authoritative
+		// Canonical link - claim the /u/{slug} URL as the authoritative
 		// destination for this member's gamification showcase. Without this,
 		// search engines may treat WP core's /author/{slug}/ archive as the
 		// canonical and our richer /u/{slug} page never wins. Themes that
 		// emit their own canonical for the 404/template should not also
-		// fire here because we exit before the theme template loads — but
+		// fire here because we exit before the theme template loads - but
 		// a defensive remove_action skips any duplicate from rel-canonical
 		// plugins that hooked at the same priority.
 		remove_action( 'wp_head', 'rel_canonical' );
@@ -295,7 +294,7 @@ final class ProfilePage {
 		// 301 on every link. That was cheap to ignore while only the share page
 		// linked here; since 1.6.4 every leaderboard row, podium slot and kudos
 		// entry resolves through MemberUrl to this URL, so it is the form that
-		// should ship — and the one og:url ought to advertise.
+		// should ship - and the one og:url ought to advertise.
 		return home_url( '/' . self::slug_base() . '/' . rawurlencode( $user_login ) . '/' );
 	}
 
@@ -349,12 +348,12 @@ final class ProfilePage {
 	}
 
 	/**
-	 * Set a member's own profile visibility choice — the write path for the
+	 * Set a member's own profile visibility choice - the write path for the
 	 * `wb_gam_profile_public` user-meta the read gates have always consumed.
 	 *
 	 * Before 1.5.5 this meta was read by {@see Privacy::can_view_public_profile()}
 	 * and {@see is_publicly_visible()} and registered in the GDPR export/erase
-	 * model, but nothing ever wrote it — so a member could not make their own
+	 * model, but nothing ever wrote it - so a member could not make their own
 	 * profile private. This is that missing surface.
 	 *
 	 * Stores an explicit '1' (public) or '0' (private) so the choice round-trips
@@ -393,14 +392,13 @@ final class ProfilePage {
 	}
 
 	/**
-	 * Render the profile body — header card + showcase blocks.
+	 * Render the profile body - header card + showcase blocks.
 	 *
 	 * @param \WP_User $user Profile owner.
 	 */
 	private static function render_profile( \WP_User $user ): void {
 		$pt_service   = new PointTypeService();
-		$pt_record    = $pt_service->get( $pt_service->default_slug() );
-		$points_label = (string) ( $pt_record['label'] ?? __( 'Points', 'wb-gamification' ) );
+		$points_label = $pt_service->name_for( 2 );
 
 		$points      = (int) PointsEngine::get_total( (int) $user->ID );
 		$level       = LevelEngine::get_level_for_user( (int) $user->ID );
@@ -434,7 +432,7 @@ final class ProfilePage {
 		);
 		echo '</div></header>';
 
-		// Owner-only privacy control — the member-facing write surface for
+		// Owner-only privacy control - the member-facing write surface for
 		// wb_gam_profile_public. Only the profile owner sees it (admins
 		// viewing another member must not flip that member's choice here).
 		// Hidden when a community plugin decides privacy: the switch would do nothing there.

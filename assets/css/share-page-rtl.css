@@ -1,6 +1,6 @@
-/*! share-page-rtl.css — auto-generated from share-page.css by bin/build-rtl.js. Do not edit by hand. */
+/*! share-page-rtl.css - auto-generated from share-page.css by bin/build-rtl.js. Do not edit by hand. */
 /**
- * WB Gamification — Badge Share Page
+ * WB Gamification - Badge Share Page
  *
  * Public, shareable credential card. Premium + uniform: consumes the shared
  * `--wb-gam-*` design tokens (with hex fallbacks) on the canonical card
@@ -161,12 +161,6 @@
 	background: var( --wb-gam-color-success-soft, rgba( 34, 197, 94, 0.14 ) );
 }
 
-.wb-gam-share-card__action:focus-visible {
-	/* Transparent, not none: forced-colors mode drops the ring and repaints this outline. */
-	outline: 2px solid transparent;
-	box-shadow: 0 0 0 3px var( --wb-gam-color-accent-ring, rgba( 59, 130, 246, 0.3 ) );
-}
-
 .wb-gam-share-card__copy-status {
 	min-height: 1.1em;
 	margin: 0 0 var( --wb-gam-space-md, 16px );
@@ -195,7 +189,7 @@
 	font-weight: 600;
 	color: var( --wb-gam-color-white, #ffffff );
 	text-decoration: none;
-	background: #0a66c2; /* LinkedIn brand — intentional, not a token. */
+	background: #0a66c2; /* LinkedIn brand - intentional, not a token. */
 	border-radius: var( --wb-gam-radius-full, 999px );
 }
 
@@ -225,15 +219,9 @@
 	padding: 0 24px;
 	font-size: var( --wb-gam-font-sm, 14px );
 	font-weight: 600;
-	color: var( --wb-gam-pop-accent-fg );
 	text-decoration: none;
-	background: var(--wb-gam-pop-accent); /* With --wb-gam-pop-accent-fg: the solid fill its text colour was computed for. */
 	border-radius: var( --wb-gam-radius-full, 999px );
 	transition: background-color 0.15s ease;
-}
-
-.wb-gam-share-card__cta-primary:hover {
-	background: var( --wb-gam-color-accent-hover, #2563eb );
 }
 
 .wb-gam-share-card__cta-secondary {

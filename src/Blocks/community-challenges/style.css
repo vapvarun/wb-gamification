@@ -1,5 +1,5 @@
 /**
- * Community Challenges block — frontend styles.
+ * Community Challenges block - frontend styles.
  *
  * Mirrors the regular Challenges block: card layout per item with a
  * title row, progress bar, and a meta row (count + time-left).
@@ -106,7 +106,7 @@
 }
 
 /* Completed-but-not-yet-expired state. Members keep seeing the win
-   until ends_at passes — see CommunityChallengeEngine::get_visible.
+   until ends_at passes - see CommunityChallengeEngine::get_visible.
    Visual treatment: green left-border accent, soft green tint on the
    card, full progress bar in success colour, "Completed" pill badge. */
 .wb-gam-community-challenges__item--completed {

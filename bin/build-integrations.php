@@ -6,12 +6,12 @@
  * truth so the integration surface stays legible as the plugin grows. Two
  * sources feed each integration:
  *
- *   1. Manifest files under `integrations/` (and `integrations/contrib/`) —
+ *   1. Manifest files under `integrations/` (and `integrations/contrib/`) -
  *      each returns `array( 'plugin' => ..., 'version' => ..., 'triggers' =>
  *      [...] )` and guards on a `defined()` / `class_exists()` check. We
  *      static-parse the plugin name, version, the detect guard, and the
- *      trigger count (no execution — the files `exit` without ABSPATH).
- *   2. Adapter classes under `src/Integrations/` — the PHP that wires hooks
+ *      trigger count (no execution - the files `exit` without ABSPATH).
+ *   2. Adapter classes under `src/Integrations/` - the PHP that wires hooks
  *      (e.g. JetonomyIntegration, DisplayDefer, WooCommerce\AccountIntegration).
  *      Grouped to an integration by sub-directory; top-level adapters with no
  *      manifest (GraphQL, ActivityPub) become `tier: platform` entries.
@@ -201,7 +201,7 @@ foreach ( $adapter_files as $file ) {
 	$by_slug[ $slug ]['adapter_classes'][] = $fqcn;
 }
 
-// ─── 3. Assemble — sort by tier (first-party, contrib, platform) then slug ───
+// ─── 3. Assemble - sort by tier (first-party, contrib, platform) then slug ───
 $tier_rank = array(
 	'first-party' => 0,
 	'contrib'     => 1,
@@ -235,7 +235,7 @@ if ( false === $encoded ) {
 	exit( 2 );
 }
 // Re-indent 4-space (JSON_PRETTY_PRINT) to 2-space to match the rest of the
-// file — the same convention every other manifest generator uses.
+// file - the same convention every other manifest generator uses.
 $encoded  = wbgam_int_two_space( $encoded );
 $encoded .= "\n";
 

@@ -104,7 +104,7 @@ final class MemberData {
 		'wb_gam_league_tier',
 		// The five the gate could not see. All are written against a MEMBER (verified at each write
 		// site), so all are member data and all must go when the member does.
-		'_wb_gam_last_award_note',      // PointsController, ManualAwardPage — staff's note about an award, stored on the member.
+		'_wb_gam_last_award_note',      // PointsController, ManualAwardPage - staff's note about an award, stored on the member.
 		'wb_gam_decayed_at',            // PointsExpiry::META_LAST.
 		'wb_gam_last_retention_nudge',  // StatusRetentionEngine::NUDGE_META.
 		'wb_gam_dismissed_wizard_notice', // SetupWizard::NOTICE_DISMISSED_META.

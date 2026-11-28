@@ -1,5 +1,5 @@
 /**
- * Give Kudos block — premium, token-driven form.
+ * Give Kudos block - premium, token-driven form.
  *
  * Renders on the canonical card surface every wb-gamification block shares
  * (white surface, soft shadow, accent submit). Consumes the `--wb-gam-*`
@@ -48,23 +48,11 @@
 	padding: 10px 12px;
 	font-size: var( --wb-gam-font-md, 15px );
 	font-family: inherit;
-	color: var( --wb-gam-color-text, #1a1a1a );
-	background: var( --wb-gam-color-surface, #ffffff );
-	border: 1px solid var( --wb-gam-color-border-strong, #cbd2dc );
+	/* Text, fill, border, placeholder and focus border: the shared form-control rule in design-tokens.css. */
+	border-width: 1px;
+	border-style: solid;
 	border-radius: var( --wb-gam-radius-md, 10px );
 	transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.wb-gam-give-kudos__input::placeholder,
-.wb-gam-give-kudos__textarea::placeholder {
-	color: var( --wb-gam-color-text-light, #9aa3b2 );
-}
-
-.wb-gam-give-kudos__input:focus,
-.wb-gam-give-kudos__textarea:focus {
-	outline: 2px solid transparent; /* forced-colors repaints it; the ring below is dropped there */
-	border-color: var( --wb-gam-color-accent, #3b82f6 );
-	box-shadow: 0 0 0 3px var( --wb-gam-color-accent-ring, rgba( 59, 130, 246, 0.2 ) );
 }
 
 .wb-gam-give-kudos__textarea {
@@ -79,26 +67,15 @@
 	font-size: var( --wb-gam-font-sm, 14px );
 	font-weight: 600;
 	font-family: inherit;
-	color: var( --wb-gam-pop-accent-fg );
-	background: var(--wb-gam-pop-accent); /* With --wb-gam-pop-accent-fg: the solid fill its text colour was computed for. */
+	/* Fill, label and border come from the shared accent-button rule in design-tokens.css (theme-proof). */
 	border: none;
 	border-radius: var( --wb-gam-radius-full, 999px );
 	cursor: pointer;
 	transition: background-color 0.15s ease, transform 0.05s ease;
 }
 
-.wb-gam-give-kudos__submit:hover {
-	background: color-mix(in srgb, var(--wb-gam-pop-accent) 88%, #000000);
-}
-
 .wb-gam-give-kudos__submit:active {
 	transform: translateY( 1px );
-}
-
-.wb-gam-give-kudos__submit:focus-visible {
-	/* Transparent, not none: forced-colors mode drops the ring and repaints this outline. */
-	outline: 2px solid transparent;
-	box-shadow: 0 0 0 3px var( --wb-gam-color-accent-ring, rgba( 59, 130, 246, 0.35 ) );
 }
 
 .wb-gam-give-kudos__submit[disabled] {
@@ -199,7 +176,7 @@
 /* Guest: a way in. */
 .wb-gam-give-kudos__login {
 	font-weight: 600;
-	color: var( --wb-gam-color-accent, #3b82f6 );
+	color: var( --wb-gam-color-accent-text, var( --wb-gam-color-accent, #3b82f6 ) );
 	text-decoration: underline;
 	text-underline-offset: 2px;
 }

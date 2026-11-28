@@ -60,8 +60,7 @@ class EmailCommand {
 		}
 
 		$pt_service   = new PointTypeService();
-		$pt_record    = $pt_service->get( $pt_service->default_slug() );
-		$points_label = (string) ( $pt_record['label'] ?? __( 'Points', 'wb-gamification' ) );
+		$points_label = $pt_service->name_for( 2 );
 		$site_name    = (string) get_bloginfo( 'name' );
 		$base_vars    = array(
 			'user'         => $user,
@@ -168,7 +167,7 @@ class EmailCommand {
 
 		$body = Email::render( $template, $vars );
 		if ( '' === $body ) {
-			\WP_CLI::error( "Template '{$template}' did not render — check the file exists at templates/emails/{$template}.php or theme override." );
+			\WP_CLI::error( "Template '{$template}' did not render - check the file exists at templates/emails/{$template}.php or theme override." );
 		}
 
 		$headers = array(

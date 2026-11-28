@@ -24,15 +24,15 @@ use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -99,7 +99,7 @@ class ChallengesController extends WP_REST_Controller {
 							'sanitize_callback' => 'sanitize_text_field',
 						),
 						'description'  => array(
-							// Added in 1.4.1 — DB table has had a `description`
+							// Added in 1.4.1 - DB table has had a `description`
 							// column since 1.0.0 and admin forms have always
 							// posted one, but the REST schema dropped it
 							// silently. Closes audit/DATA-FLOW-ADMIN-REST-
@@ -459,7 +459,7 @@ class ChallengesController extends WP_REST_Controller {
 	 * public information, and the site's own blocks render it to logged-out visitors.
 	 *
 	 * The `?user_id=` parameter is not. It enriches each challenge with that member's `progress` and
-	 * `completed` — and this method used to hand back whatever ID it was asked for, so an anonymous
+	 * `completed` - and this method used to hand back whatever ID it was asked for, so an anonymous
 	 * caller with no cookie and no nonce could walk `?user_id=1,2,3…` and harvest every member's
 	 * progress, including members who opted OUT of a public profile. Verified against a live site
 	 * before this fix: an unauthenticated GET returned the admin's real 3/5.
@@ -467,7 +467,7 @@ class ChallengesController extends WP_REST_Controller {
 	 * The privacy gate belongs HERE, at the single point both read routes resolve through, rather
 	 * than copied into each callback -- two copies of a security check is one copy that will be
 	 * forgotten. Failing the gate degrades to a catalogue read (user 0: no progress, no completion),
-	 * which is the exact shape an anonymous client gets when it omits `?user_id` — so the response
+	 * which is the exact shape an anonymous client gets when it omits `?user_id` - so the response
 	 * stays well-formed and tells the caller nothing about whether the member exists.
 	 *
 	 * `BadgesController::get_items()` already defends the identical parameter this way; Challenges

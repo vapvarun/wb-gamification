@@ -8740,6 +8740,14 @@
         "callback": "src/API/MembersController.php:1323"
       },
       {
+        "route": "/wb-gamification/v1/members/me/toasts/ack",
+        "methods": [
+          "POST"
+        ],
+        "permission": "MembersController::get_toasts_permissions_check",
+        "callback": "src/API/MembersController.php:ack_toasts"
+      },
+      {
         "route": "/wb-gamification/v1/members/(?P<id>[\\d]+)/preferences",
         "methods": [
           "GET"

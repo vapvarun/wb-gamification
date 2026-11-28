@@ -1,17 +1,17 @@
 <?php
 /**
- * WB Gamification — Tutor LMS Integration Manifest
+ * WB Gamification - Tutor LMS Integration Manifest
  *
  * Auto-loaded by ManifestLoader when this file exists in integrations/.
  * Triggers fire only when Tutor LMS is active.
  *
  * Actions covered:
- *   Course completed — tutor_course_complete_after
- *   Lesson completed — tutor_mark_lesson_complete_after (both the button and a finished video)
- *   Quiz passed      — tutor_quiz/attempt_ended, tutor_quiz/attempt/graded
- *   Course enrolled  — tutor_after_enroll, tutor_after_enrolled, tutor/course/enrol_status_change/after
- *   Review posted    — tutor_after_rating_placed
- *   Question asked   — tutor_after_asked_question
+ *   Course completed - tutor_course_complete_after
+ *   Lesson completed - tutor_mark_lesson_complete_after (both the button and a finished video)
+ *   Quiz passed      - tutor_quiz/attempt_ended, tutor_quiz/attempt/graded
+ *   Course enrolled  - tutor_after_enroll, tutor_after_enrolled, tutor/course/enrol_status_change/after
+ *   Review posted    - tutor_after_rating_placed
+ *   Question asked   - tutor_after_asked_question
  *
  * A member earns the first five once per course, lesson or quiz.
  *

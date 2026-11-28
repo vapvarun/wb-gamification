@@ -1,5 +1,5 @@
 /**
- * BlockPreviewCard — editor-only styled preview for Interactivity-API blocks.
+ * BlockPreviewCard - editor-only styled preview for Interactivity-API blocks.
  *
  * Loaded via `enqueue_block_editor_assets` (see wb-gamification.php). Consumes
  * the shared `--wb-gam-*` design tokens so the preview matches the canonical

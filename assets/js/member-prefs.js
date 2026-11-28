@@ -1,5 +1,5 @@
 /**
- * Member preferences — the member's own choices on their profile.
+ * Member preferences - the member's own choices on their profile.
  *
  * Each checkbox saves on change to `wb-gamification/v1/members/{id}/preferences`.
  * Two checkboxes are worded positively, so they send the inverse of the stored

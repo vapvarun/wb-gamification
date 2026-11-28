@@ -1,11 +1,11 @@
 <?php
 /**
- * WB Gamification — defer the LEADERBOARD display to Jetonomy.
+ * WB Gamification - defer the LEADERBOARD display to Jetonomy.
  *
  * Jetonomy ships a reputation leaderboard (/community/leaderboard/, ranked
  * `ORDER BY reputation DESC`). wb-gamification mirrors every Jetonomy
  * reputation delta 1:1 into its points ledger (see JetonomyIntegration), so on
- * a Jetonomy site wb-gam's own leaderboard is a genuine DUPLICATE ranking —
+ * a Jetonomy site wb-gam's own leaderboard is a genuine DUPLICATE ranking -
  * same members, same order. Rather than show two competing leaderboards, we
  * suppress wb-gam's leaderboard + top-members blocks/shortcodes and let
  * Jetonomy's be the single source of truth.
@@ -78,7 +78,7 @@ final class DisplayDefer {
 	 *
 	 * Visitors see nothing (Jetonomy owns the ranking). Site editors get a
 	 * notice instead of a silent blank, so a deferred block on a dedicated page
-	 * isn't a mystery — the previous behaviour returned '' for everyone, which
+	 * isn't a mystery - the previous behaviour returned '' for everyone, which
 	 * looked like a broken block.
 	 *
 	 * @param string $content Rendered block HTML.

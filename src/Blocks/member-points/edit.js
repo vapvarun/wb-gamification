@@ -1,5 +1,5 @@
 /**
- * Member Points — editor surface.
+ * Member Points - editor surface.
  *
  * Phase D.1 of the Wbcom Block Quality Standard migration. Adopts the
  * canonical 3-panel inspector (Content / Layout / Style) via the shared

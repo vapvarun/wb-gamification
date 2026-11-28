@@ -59,7 +59,7 @@ A small line chart shows total points awarded each day across the selected perio
 
 ## Data Freshness
 
-All analytics queries are cached for **10 minutes**. The dashboard notes the last-refreshed time at the bottom of the page. If you need up-to-the-minute data after a major manual award, wait 10 minutes or clear the object cache.
+All analytics queries are cached for **10 minutes**. The dashboard notes the last-refreshed time at the bottom of the page. The Overview totals are cleared when you award, deduct or revoke points yourself, so a manual award shows on the next page load.
 
 ## What Is Not Shown
 

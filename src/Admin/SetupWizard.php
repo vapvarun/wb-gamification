@@ -18,15 +18,15 @@ use WBGam\Engine\Registry;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -65,7 +65,7 @@ final class SetupWizard {
 	/**
 	 * Option set by the activation hook to request a one-time auto-redirect
 	 * to the wizard on the next admin page load. Persists indefinitely
-	 * until {@see maybe_redirect()} consumes it — survives any
+	 * until {@see maybe_redirect()} consumes it - survives any
 	 * activation-to-admin gap (WP-CLI flows, slow workflows, multisite
 	 * cascades).
 	 */
@@ -84,14 +84,28 @@ final class SetupWizard {
 	private static string $hook_suffix = '';
 
 	/**
-	 * Register hooks. Idempotent — every load registers the same set; gating
+	 * Action ids whose amount was rejected on the last Launch (this request only).
+	 *
+	 * @var string[]
+	 */
+	private static array $invalid = array();
+
+	/**
+	 * The form as submitted when Launch was rejected, so the page comes back as the owner left it.
+	 *
+	 * @var array
+	 */
+	private static array $posted = array();
+
+	/**
+	 * Register hooks. Idempotent - every load registers the same set; gating
 	 * happens inside each handler so admins can re-run the wizard at any
 	 * time via the URL.
 	 */
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
 		// Listed nowhere in the menu and highlighted as Dashboard: AdminNav::CHILD_OF.
-		// Auto-redirect on admin_init:1 — earlier than the default 10 so any
+		// Auto-redirect on admin_init:1 - earlier than the default 10 so any
 		// later admin_init callback that emits output doesn't block our redirect.
 		add_action( 'admin_init', array( __CLASS__, 'maybe_redirect' ), 1 );
 		add_action( 'admin_init', array( __CLASS__, 'handle_submission' ) );
@@ -144,6 +158,7 @@ final class SetupWizard {
 					'rewards'    => __( '%1$d levels, your badge library, %2$s.', 'wb-gamification' ),
 					'boardOurs'  => __( 'the Gamification leaderboard', 'wb-gamification' ),
 					'boardJt'    => __( 'Jetonomy\'s leaderboard', 'wb-gamification' ),
+					'pointsErr'  => self::points_error(),
 				),
 			)
 		);
@@ -158,7 +173,7 @@ final class SetupWizard {
 	 * to avoid clutter. Because the page never lands in the `$submenu`
 	 * lookup, `get_admin_page_title()` would return null and
 	 * admin-header.php would emit a `strip_tags(): Passing null`
-	 * deprecation on every visit — so the `load-{hook}` callback pre-sets
+	 * deprecation on every visit - so the `load-{hook}` callback pre-sets
 	 * the `$title` global, which `get_admin_page_title()` short-circuits
 	 * on. (Registering under the real parent and calling
 	 * `remove_submenu_page()` is NOT an option: WP then 403s the page via
@@ -223,7 +238,7 @@ final class SetupWizard {
 		// Two trigger paths into the wizard:
 		//
 		// 1. Activation hook explicitly set the pending flag. This is the
-		// authoritative signal — fires on every fresh activation, no
+		// authoritative signal - fires on every fresh activation, no
 		// matter where the admin then navigates next.
 		//
 		// 2. Wizard has never been completed AND the admin has just landed
@@ -305,12 +320,12 @@ final class SetupWizard {
 	}
 
 	/**
-	 * Show a "welcome — run setup" notice on plugin admin pages until done.
+	 * Show a "welcome - run setup" notice on plugin admin pages until done.
 	 *
 	 * Fallback for installs where the activation auto-redirect was suppressed
 	 * (must-use plugin redirects, hosting filters, or activation via a route
 	 * that didn't pass through admin_init). Notice is scoped to plugin pages
-	 * only — never spams the global dashboard.
+	 * only - never spams the global dashboard.
 	 */
 	public static function maybe_show_welcome_notice(): void {
 		if ( get_option( self::COMPLETED_OPTION ) ) {
@@ -345,7 +360,7 @@ final class SetupWizard {
 		$wizard_url = admin_url( 'admin.php?page=' . self::PAGE_SLUG );
 		// Class `wb-gam-notice` whitelists this notice past the body-scoped CSS
 		// filter declared in assets/css/admin.css (Welcome notice section).
-		// Class `wb-gam-notice__cta` styles the CTA button spacing — see
+		// Class `wb-gam-notice__cta` styles the CTA button spacing - see
 		// the same CSS file. No inline style attributes (coding-rule 3).
 		// A REAL dismiss link, not just the X.
 		//
@@ -393,9 +408,17 @@ final class SetupWizard {
 
 		if ( 'launch' === $choice ) {
 			$post = wp_unslash( $_POST ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- plan() whitelists and casts every value.
+			$post = is_array( $post ) ? $post : array();
+			// Same rule the form applies in the browser: with JavaScript off, or past it, a bad amount
+			// is shown on the page instead of being saved, clamped or silently skipped.
+			self::$invalid = self::invalid_points( Registry::get_actions(), $post );
+			if ( self::$invalid ) {
+				self::$posted = $post;
+				return;
+			}
 			$plan = self::plan(
 				Registry::get_actions(),
-				is_array( $post ) ? $post : array(),
+				$post,
 				(array) get_option( 'wb_gam_action_overrides', array() ),
 				array(
 					'jetonomy'     => defined( 'JETONOMY_VERSION' ),
@@ -408,6 +431,9 @@ final class SetupWizard {
 		}
 
 		update_option( self::COMPLETED_OPTION, true );
+		// Setup is answered, Skip or Launch: the activation redirect has nothing left to ask. Left
+		// behind, maybe_redirect() sends the owner straight back here from Overview.
+		delete_option( self::PENDING_REDIRECT_OPTION );
 
 		/**
 		 * Fires after Setup has been saved.
@@ -418,6 +444,41 @@ final class SetupWizard {
 
 		wp_safe_redirect( admin_url( 'admin.php?page=wb-gamification&setup=complete' ) );
 		exit;
+	}
+
+	/**
+	 * The message shown beside an amount Launch cannot save (also sent to the script).
+	 */
+	private static function points_error(): string {
+		/* translators: %s: highest amount, for example 9,999. */
+		return sprintf( __( 'Enter a whole number from 0 to %s. Use 0 for no points.', 'wb-gamification' ), number_format_i18n( Registry::POINTS_MAX ) );
+	}
+
+	/**
+	 * The actions Launch cannot save: an amount for a kept plugin that is not a whole number from
+	 * 0 to Registry::POINTS_MAX. A blank amount is invalid, as it is on the Earning screen (a blank
+	 * Points field there is not a value and the saved amount stays); use 0 for "no points". Pure.
+	 *
+	 * @param array<string, array> $actions Registry::get_actions().
+	 * @param array                $post    The submitted form.
+	 * @return string[] Action ids, in registry order.
+	 */
+	public static function invalid_points( array $actions, array $post ): array {
+		$kept = array_map( 'strval', (array) ( $post['plugins'] ?? array() ) );
+		$pts  = (array) ( $post['points'] ?? array() );
+		$bad  = array();
+		foreach ( $actions as $id => $action ) {
+			$id     = (string) $id;
+			$plugin = self::plugin_of( $action );
+			if ( ! isset( $pts[ $id ] ) || ( 'WordPress' !== $plugin && ! in_array( $plugin, $kept, true ) ) ) {
+				continue; // Not posted, or its plugin is switched off (its amounts are not shown).
+			}
+			$amount = trim( (string) $pts[ $id ] );
+			if ( ! ctype_digit( $amount ) || (int) $amount > Registry::POINTS_MAX ) {
+				$bad[] = $id;
+			}
+		}
+		return $bad;
 	}
 
 	/**
@@ -586,13 +647,17 @@ final class SetupWizard {
 		$hub_id    = (int) get_option( 'wb_gam_hub_page_id', 0 );
 		$hub_url   = $hub_id ? get_permalink( $hub_id ) : '';
 		$jetonomy  = defined( 'JETONOMY_VERSION' );
-		$authority = (string) get_option( 'wb_gam_leaderboard_authority', 'gamification' );
+		$authority = (string) ( self::$posted['leaderboard'] ?? get_option( 'wb_gam_leaderboard_authority', 'gamification' ) );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- the level ladder (a handful of rows), Setup only.
 		$levels = (array) $wpdb->get_results( "SELECT name, min_points FROM {$wpdb->prefix}wb_gam_levels ORDER BY min_points ASC LIMIT 12", ARRAY_A );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one COUNT on the badge definitions, Setup only.
 		$badges = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wb_gam_badge_defs" );
 
-		$enabled = static fn( string $id ): bool => (bool) get_option( 'wb_gam_enabled_' . $id, true );
+		// A rejected Launch comes back as the owner left it, with the bad amounts marked.
+		$posted  = self::$posted;
+		$invalid = self::$invalid;
+		$enabled = static fn( string $id ): bool => $posted ? ! empty( $posted['on'][ $id ] ) : (bool) get_option( 'wb_gam_enabled_' . $id, true );
+		$checked = static fn( string $name, bool $saved ): bool => $posted ? ! empty( $posted[ $name ] ) : $saved;
 		$steps   = array(
 			1 => __( 'Your community', 'wb-gamification' ),
 			2 => __( 'How members earn', 'wb-gamification' ),
@@ -603,6 +668,23 @@ final class SetupWizard {
 		<div class="wrap wbgam-setup" data-wbgam-setup>
 			<form method="post" data-wbgam-setup-form>
 				<?php wp_nonce_field( self::NONCE_ACTION ); ?>
+
+				<?php if ( $invalid ) : ?>
+					<div class="notice notice-error inline wbgam-setup__alert" role="alert">
+						<p>
+							<?php
+							echo esc_html(
+								sprintf(
+									/* translators: %d: number of amounts that need fixing. */
+									_n( 'Setup was not saved. %1$d amount needs a whole number from 0 to %2$s.', 'Setup was not saved. %1$d amounts need a whole number from 0 to %2$s.', count( $invalid ), 'wb-gamification' ),
+									count( $invalid ),
+									number_format_i18n( Registry::POINTS_MAX )
+								)
+							);
+							?>
+						</p>
+					</div>
+				<?php endif; ?>
 
 				<header class="wbgam-setup__head">
 					<h1 class="wbgam-setup__title"><?php echo $is_re_run ? esc_html__( 'Setup', 'wb-gamification' ) : esc_html__( 'Set up gamification', 'wb-gamification' ); ?></h1>
@@ -656,7 +738,7 @@ final class SetupWizard {
 								<?php if ( $is_wp ) : ?>
 									<input type="hidden" name="plugins[]" value="WordPress">
 								<?php else : ?>
-									<input type="checkbox" name="plugins[]" value="<?php echo esc_attr( $plugin ); ?>" data-wbgam-plugin-toggle <?php checked( (bool) $kept ); ?>>
+									<input type="checkbox" name="plugins[]" value="<?php echo esc_attr( $plugin ); ?>" data-wbgam-plugin-toggle <?php checked( $posted ? in_array( $plugin, (array) ( $posted['plugins'] ?? array() ), true ) : (bool) $kept ); ?>>
 								<?php endif; ?>
 								<span class="wbgam-setup__plugin-head">
 									<strong>
@@ -710,7 +792,7 @@ final class SetupWizard {
 						if ( $is_re_run ) {
 							$paces = array( 'keep' => array( __( 'Keep my limits', 'wb-gamification' ), __( 'Leave the limits you set under Earning as they are.', 'wb-gamification' ) ) ) + $paces;
 						}
-						$default_pace = $is_re_run ? 'keep' : 'balanced';
+						$default_pace = $posted && isset( $paces[ $posted['pace'] ?? '' ] ) ? $posted['pace'] : ( $is_re_run ? 'keep' : 'balanced' );
 						foreach ( $paces as $key => $pace ) :
 							?>
 							<label class="wbgam-setup__pace">
@@ -739,7 +821,13 @@ final class SetupWizard {
 													<span class="wbgam-pill wbgam-pill--warning"><?php esc_html_e( 'Takes points', 'wb-gamification' ); ?></span>
 												<?php endif; ?>
 											</td>
-											<td><input type="number" class="wbgam-input wbgam-input--xs" name="points[<?php echo esc_attr( $id ); ?>]" min="0" max="<?php echo esc_attr( (string) Registry::POINTS_MAX ); ?>" value="<?php echo esc_attr( (string) (int) get_option( 'wb_gam_points_' . $id, $a['default_points'] ?? 0 ) ); ?>" aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Points for %s', 'wb-gamification' ), $a['label'] ?? $id ) ); ?>"></td>
+											<?php $bad = in_array( (string) $id, $invalid, true ); ?>
+											<td>
+												<input type="number" class="wbgam-input wbgam-input--xs" name="points[<?php echo esc_attr( $id ); ?>]" min="0" max="<?php echo esc_attr( (string) Registry::POINTS_MAX ); ?>" required value="<?php echo esc_attr( isset( $posted['points'][ $id ] ) ? (string) $posted['points'][ $id ] : (string) (int) get_option( 'wb_gam_points_' . $id, $a['default_points'] ?? 0 ) ); ?>" aria-label="<?php /* translators: %s: action label */ echo esc_attr( sprintf( __( 'Points for %s', 'wb-gamification' ), $a['label'] ?? $id ) ); ?>"<?php echo $bad ? ' aria-invalid="true" aria-describedby="wbgam-pts-err-' . esc_attr( (string) $id ) . '"' : ''; ?>>
+												<?php if ( $bad ) : ?>
+													<span class="wbgam-setup__error" id="wbgam-pts-err-<?php echo esc_attr( (string) $id ); ?>" role="alert" aria-live="assertive"><?php echo esc_html( self::points_error() ); ?></span>
+												<?php endif; ?>
+											</td>
 											<td class="wbgam-setup__limit"><?php echo esc_html( self::limit_words( $a ) ); ?></td>
 										</tr>
 									<?php endforeach; ?>
@@ -800,7 +888,7 @@ final class SetupWizard {
 							<?php endif; ?>
 						</ul>
 						<?php if ( ! Privacy::host_decides() ) : ?>
-							<label class="wbgam-setup__choice"><input type="checkbox" name="profile_public" value="1" <?php checked( (bool) get_option( 'wb_gam_profile_public_enabled', true ) ); ?>> <strong><?php esc_html_e( 'Public profile pages', 'wb-gamification' ); ?></strong> <span><?php esc_html_e( 'Show members\' points, badges and level to others. Each member can still hide their own.', 'wb-gamification' ); ?></span></label>
+							<label class="wbgam-setup__choice"><input type="checkbox" name="profile_public" value="1" <?php checked( $checked( 'profile_public', (bool) get_option( 'wb_gam_profile_public_enabled', true ) ) ); ?>> <strong><?php esc_html_e( 'Public profile pages', 'wb-gamification' ); ?></strong> <span><?php esc_html_e( 'Show members\' points, badges and level to others. Each member can still hide their own.', 'wb-gamification' ); ?></span></label>
 						<?php endif; ?>
 					</div>
 					<p class="wbgam-setup__nav"><button type="button" class="button" data-wbgam-goto="2"><?php esc_html_e( 'Back', 'wb-gamification' ); ?></button> <button type="button" class="button button-primary" data-wbgam-goto="4"><?php esc_html_e( 'Continue', 'wb-gamification' ); ?></button></p>
@@ -825,7 +913,7 @@ final class SetupWizard {
 						);
 						foreach ( $emails as $name => $email ) :
 							?>
-							<label class="wbgam-setup__choice"><input type="checkbox" name="<?php echo esc_attr( $name ); ?>" value="1" <?php checked( $email[2] ); ?>> <strong><?php echo esc_html( $email[0] ); ?></strong> <span><?php echo esc_html( $email[1] ); ?></span></label>
+							<label class="wbgam-setup__choice"><input type="checkbox" name="<?php echo esc_attr( $name ); ?>" value="1" <?php checked( $checked( $name, $email[2] ) ); ?>> <strong><?php echo esc_html( $email[0] ); ?></strong> <span><?php echo esc_html( $email[1] ); ?></span></label>
 						<?php endforeach; ?>
 					</div>
 					<div class="wbgam-setup__card">

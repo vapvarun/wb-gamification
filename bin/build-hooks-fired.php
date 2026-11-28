@@ -3,14 +3,14 @@
  * bin/build-hooks-fired.php
  *
  * Regenerates `audit/manifest.json`'s `.hooks_fired[]` array from
- * ground truth — every `do_action()` and `apply_filters()` call site
+ * ground truth - every `do_action()` and `apply_filters()` call site
  * under `src/` and `integrations/`, with `consumed_by[]` derived from
  * the matching `add_action()` / `add_filter()` registrations.
  *
  * Why a generator: the hand-curated section drifted badly. At 2026-05-28
  * the manifest declared 43 actions (ground truth: 54) and 12 filters
  * (ground truth: 47, and 11 of the 12 listed referenced
- * `wb_gamification_*` hooks that don't exist anywhere in the code —
+ * `wb_gamification_*` hooks that don't exist anywhere in the code -
  * outright fabricated). Hand-curating 100+ entries on every release was
  * never realistic; the generator owns this now.
  *
@@ -94,7 +94,7 @@ foreach ( $scan_dirs as $dir ) {
 }
 
 // Build the new hooks_fired array. Sort by (type, name) so diffs read
-// alphabetically — easier for humans to skim.
+// alphabetically - easier for humans to skim.
 $new_entries = array();
 foreach ( array( 'action', 'filter' ) as $type ) {
 	if ( empty( $fired[ $type ] ) ) {
@@ -116,7 +116,7 @@ foreach ( array( 'action', 'filter' ) as $type ) {
 		$purpose      = (string) ( $prev['purpose'] ?? '' );
 		$entry['purpose'] = $purpose;
 
-		// fired_at[] is the new derivable field — where each do_action /
+		// fired_at[] is the new derivable field - where each do_action /
 		// apply_filters lives. Useful for cross-referencing the manifest
 		// against the codebase without grep.
 		$entry['fired_at'] = array_values(
@@ -158,7 +158,7 @@ $current      = (string) file_get_contents( $manifest_fp );
 $action_count = count( array_filter( $new_entries, static fn ( $e ) => 'action' === $e['type'] ) );
 $filter_count = count( array_filter( $new_entries, static fn ( $e ) => 'filter' === $e['type'] ) );
 
-// Always sync summary.counts.hooks_fired_* — it's a derived index, the
+// Always sync summary.counts.hooks_fired_* - it's a derived index, the
 // source of truth is the .hooks_fired[] array we just rebuilt. If the
 // summary drifted (count mismatch) we fix it here even when the manifest
 // itself didn't need a rewrite.
@@ -270,7 +270,7 @@ function scan_file_for_fires( string $abs_path, string $root, array &$out ): voi
  *
  * Populates consumed_by[] entries shaped as
  *   "<file>:<line> <callback>"
- * where callback is the parsed second-arg expression (best-effort —
+ * where callback is the parsed second-arg expression (best-effort -
  * static method, instance method, closure, or literal function name).
  *
  * @param string $abs_path

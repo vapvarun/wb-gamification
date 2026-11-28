@@ -5,7 +5,7 @@
 	"version": "2.0.0",
 	"title": "Gamification Hub",
 	"category": "widgets",
-	"description": "Member gamification dashboard — stats, badges, challenges, leaderboard, and more in a connected card layout with slide-in detail panels.",
+	"description": "Member gamification dashboard - stats, badges, challenges, leaderboard, and more in a connected card layout with slide-in detail panels.",
 	"keywords": [ "gamification", "hub", "dashboard", "points", "badges" ],
 	"textdomain": "wb-gamification",
 	"attributes": {

@@ -3,7 +3,7 @@
  * REST API controller: per-user behavioural intelligence.
  *
  * Exposes the wb_gam_user_intelligence projection table (v2.5 + AI v1
- * — populated by IntelligenceProjector). Read-only; the projection is
+ * - populated by IntelligenceProjector). Read-only; the projection is
  * recomputed by the daily cron, not by API consumers.
  *
  * Routes:
@@ -83,7 +83,7 @@ final class IntelligenceController extends WP_REST_Controller {
 			return new WP_REST_Response(
 				array(
 					'code'    => 'no_data',
-					'message' => 'No intelligence signals available for this user yet.',
+					'message' => __( 'No intelligence signals available for this user yet.', 'wb-gamification' ),
 				),
 				404
 			);

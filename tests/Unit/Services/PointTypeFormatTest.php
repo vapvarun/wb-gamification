@@ -28,6 +28,7 @@ class PointTypeFormatTest extends TestCase {
 		Monkey\setUp();
 		$this->resetPointTypeCache();
 		Functions\when( '__' )->returnArg( 1 );
+		Functions\when( '_n' )->alias( static fn( $one, $many, $n ) => 1 === (int) $n ? $one : $many );
 		Functions\when( 'number_format_i18n' )->alias( static fn( $n ) => number_format( (float) $n ) );
 		Functions\when( 'wp_cache_get' )->alias(
 			static fn( $key ) => array(

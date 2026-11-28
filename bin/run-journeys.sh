@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# bin/run-journeys.sh — orchestrate journey audits for WB Gamification.
+# bin/run-journeys.sh - orchestrate journey audits for WB Gamification.
 #
 # Each journey under audit/journeys/**/*.md is a self-contained
 # customer-flow contract. This script enumerates them, builds a runbook
@@ -94,7 +94,7 @@ done
 echo ""
 
 if [ "$DRY_RUN" = "1" ]; then
-  echo "Dry run — exiting before execution. Runbook at $RUNBOOK"
+  echo "Dry run - exiting before execution. Runbook at $RUNBOOK"
   exit 0
 fi
 
@@ -104,7 +104,7 @@ fi
 # access. Today the integration is manual: feed the runbook to a
 # claude-code session that has the relevant MCPs loaded:
 #
-#   claude-code "Run journeys per $RUNBOOK — for each, read the journey \
+#   claude-code "Run journeys per $RUNBOOK - for each, read the journey \
 #     markdown, execute every step against $SITE_URL using the playwright \
 #     MCP and curl/mysql, then write $RUN_DIR/{slug}.json with the schema \
 #     in audit/journeys/README.md"

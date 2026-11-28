@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Realtime channel (WordPress Heartbeat API).
+ * WB Gamification - Realtime channel (WordPress Heartbeat API).
  *
  * Single source of realtime data for the plugin's frontend. Every block,
  * shortcode, or future UI that needs "live" data subscribes to this one
@@ -42,15 +42,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -68,7 +68,7 @@ final class HeartbeatChannel {
 	 * Cap on number of leaderboards a single client can subscribe to per tick.
 	 *
 	 * Defends against a malicious / buggy client asking for hundreds of
-	 * boards. 8 is generous — even a heavy hub page with multiple block
+	 * boards. 8 is generous - even a heavy hub page with multiple block
 	 * instances doesn't need more.
 	 */
 	private const MAX_BOARDS_PER_TICK = 8;
@@ -138,8 +138,8 @@ final class HeartbeatChannel {
 	/**
 	 * Append the WB Gam realtime payload to every heartbeat response.
 	 *
-	 * Unlike `heartbeat_received`, this filter fires on every tick — even
-	 * when the client sent no data — so the broker reliably pushes user
+	 * Unlike `heartbeat_received`, this filter fires on every tick - even
+	 * when the client sent no data - so the broker reliably pushes user
 	 * stats + toasts to the page without depending on the client always
 	 * having something to ask for.
 	 *
@@ -208,7 +208,7 @@ final class HeartbeatChannel {
 		$primary_total = (int) PointsEngine::get_total( $user_id, $primary_slug );
 		$primary_label = $pt_service->name_for( $primary_total, $primary_slug );
 
-		// All-currency totals — keyed by slug so a multi-currency theme
+		// All-currency totals - keyed by slug so a multi-currency theme
 		// (XP + Coins) can pick the slug it cares about without a second
 		// REST round-trip.
 		$by_type = array();
@@ -262,11 +262,10 @@ final class HeartbeatChannel {
 	/**
 	 * Read pending toast notifications for the current user via heartbeat.
 	 *
-	 * Delegates to NotificationBridge::read_pending() with a dedicated
-	 * 'heartbeat' cursor. Non-destructive: the footer renderer and REST
-	 * poller maintain their own cursors and stay in sync with the same
-	 * source queue, eliminating the historical race where whichever reader
-	 * fired first drained the queue and the others saw nothing.
+	 * Delegates to NotificationBridge::read_pending(), which moves nothing: the page
+	 * acknowledges what it displayed (assets/js/toast.js), so a tick that reaches a
+	 * page about to unload loses no toast. The same rows can ride several ticks until
+	 * the acknowledgement lands; the page dedupes by `_id`.
 	 *
 	 * @param int $user_id Member id.
 	 * @return array
@@ -322,7 +321,7 @@ final class HeartbeatChannel {
 			// Trim the row payload to what the frontend renders. Avoid
 			// shipping internal flags or unbounded metadata.
 			//
-			// badge_count was added in 1.4.0 (Basecamp #9914601059) — the
+			// badge_count was added in 1.4.0 (Basecamp #9914601059) - the
 			// leaderboard block emits a server-rendered .__badges span and
 			// the view.js patcher reads this key on every tick to keep the
 			// count in sync without rebuilding the row (and dropping the

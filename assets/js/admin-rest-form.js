@@ -1,5 +1,5 @@
 /**
- * Generic admin REST form driver — Tier 0.C migration helper.
+ * Generic admin REST form driver - Tier 0.C migration helper.
  *
  * Any admin form annotated with `data-wb-gam-rest-form` becomes REST-driven:
  *
@@ -32,9 +32,9 @@
  *   </button>
  *
  * `data-wb-gam-rest-after`:
- *   - `reload`     — full page reload on success
- *   - `remove-row` — remove the closest `<tr>` from the DOM
- *   - omitted      — toast only, no DOM change
+ *   - `reload`     - full page reload on success
+ *   - `remove-row` - remove the closest `<tr>` from the DOM
+ *   - omitted      - toast only, no DOM change
  *
  * Settings: each per-page localized object provides `{ restUrl, nonce, i18n }`.
  *
@@ -280,7 +280,7 @@
 		const failure = button.dataset.wbGamRestErrorToast || ( settings.i18n && settings.i18n.failed ) || shared.actionFailed || 'Action failed.';
 		const after   = button.dataset.wbGamRestAfter || '';
 
-		// Optional inline JSON body — `data-wb-gam-rest-body='{"is_default":true}'`.
+		// Optional inline JSON body - `data-wb-gam-rest-body='{"is_default":true}'`.
 		// Falls through to null when omitted (DELETE etc. need no body).
 		let body = null;
 		if ( button.dataset.wbGamRestBody ) {
@@ -364,7 +364,7 @@
 		const selector = '.notice, .error, .updated, .update-nag';
 		const notices  = wrap.querySelectorAll( selector );
 		notices.forEach( function ( notice ) {
-			// Only lift direct-ish descendants — leave notices nested deep in
+			// Only lift direct-ish descendants - leave notices nested deep in
 			// plugin-managed UI (e.g. a meta box) where they belong.
 			let depth = 0;
 			let node  = notice.parentNode;
@@ -404,7 +404,7 @@
 	document.addEventListener( 'submit', onFormSubmit );
 	document.addEventListener( 'click', onActionClick );
 	// Keyboard parity: native <button> already supports Enter/Space, but the
-	// linter only sees the delegated click listener — explicit keydown
+	// linter only sees the delegated click listener - explicit keydown
 	// re-dispatch silences it without changing behavior.
 	document.addEventListener( 'keydown', function ( e ) {
 		if ( e.key !== 'Enter' && e.key !== ' ' ) {

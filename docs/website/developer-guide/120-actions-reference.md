@@ -117,7 +117,7 @@ plugin simply listens to its own hooks and republishes a normalized payload.
 
 | Hook | When it fires | Parameters |
 |------|---------------|------------|
-| `wb_gam_notification_created` | After this plugin decides one of its own events is worth a member-facing notification (badge earned, level up, kudos received, challenge completed, reward fulfilled, credential expired, personal record, streak milestone, league promotion, community goal, submission result). Never fires for the actor notifying themself, and never during an import (`ImportMode::is_active()`). | `array $payload` - `recipient_id`, `type`, `actor_id`, `object_type`, `object_id`, `message`, `url`, `group_key` |
+| `wb_gam_notification_created` | After this plugin decides one of its own events is worth a member-facing notification (badge earned, level up, kudos received, challenge completed, reward fulfilled, credential expired, personal record, streak milestone, league promotion, community goal, submission result). Never fires for the actor notifying themself, and never during an import (`ImportMode::is_active()`). | `array $payload` - `recipient_id`, `type`, `actor_id`, `object_type`, `object_id`, `message`, `url`, `group_key` (`message` is already in the recipient's language) |
 | `wb_gam_community_notification_removed` | After an object a notification named is PERMANENTLY gone - a kudos revoked, or a badge definition deleted (which removes both `badge_awarded` and `credential_expired` notifications naming it). Never fires for a state change that is merely hidden, not gone. | `string $object_type`, `int $object_id` |
 
 ## Admin CRUD (REST)

@@ -131,7 +131,7 @@
 		memberTd.appendChild( nameWrap );
 		tr.appendChild( memberCell );
 
-		tr.appendChild( el( 'td', null, Number( m.points || 0 ).toLocaleString() ) );
+		tr.appendChild( el( 'td', null, Number( m.points || 0 ).toLocaleString( document.documentElement.lang || undefined ) ) );
 		tr.appendChild( el( 'td', null, m.level || '-' ) );
 		tr.appendChild( el( 'td', null, m.badges || 0 ) );
 

@@ -1,5 +1,5 @@
 /**
- * Year Recap — frontend Interactivity API store.
+ * Year Recap - frontend Interactivity API store.
  *
  * Replaces the inline `onclick` handler in the legacy block. The
  * share button uses the Web Share API when available, falling back
@@ -27,7 +27,7 @@ store( NS, {
 				try {
 					yield navigator.share( { title, text, url } );
 				} catch ( err ) {
-					// User cancelled or share unavailable — silent.
+					// User cancelled or share unavailable - silent.
 				}
 				return;
 			}

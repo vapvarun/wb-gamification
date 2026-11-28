@@ -60,7 +60,7 @@
 			}
 			var dash = document.createElement( 'span' );
 			dash.className = 'wb-gam-kudos-table__muted';
-			dash.textContent = '—';
+			dash.textContent = '-';
 			actions.appendChild( dash );
 			actions.hidden = false;
 		}

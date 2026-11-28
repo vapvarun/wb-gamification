@@ -18,7 +18,7 @@
 	function toggle() {
 		var val = sel.value;
 		document.querySelectorAll( '.wb-gam-auto-field-row' ).forEach( function ( row ) {
-			// Visibility via class — keeps presentation in CSS, not inline.
+			// Visibility via class - keeps presentation in CSS, not inline.
 			row.classList.toggle( 'is-visible', row.dataset.for === val );
 		} );
 	}

@@ -6,7 +6,7 @@
  * POST /wb-gamification/v1/settings/emails   Save per-event email toggles.
  *
  * Backs the Settings → Emails section. Each known event gets its own
- * `wb_gam_email_<slug>` option (default false — opt-in per event so
+ * `wb_gam_email_<slug>` option (default false - opt-in per event so
  * existing sites don't suddenly start emailing every member).
  *
  * @package WB_Gamification
@@ -31,7 +31,7 @@ final class EmailSettingsController extends WP_REST_Controller {
 	/**
 	 * Whitelisted event slugs. Every other field in the POST body is dropped.
 	 *
-	 * `redemption` was missing pre-1.4.1 — TransactionalEmailEngine had the
+	 * `redemption` was missing pre-1.4.1 - TransactionalEmailEngine had the
 	 * listener, the template, and the gate, but the controller silently
 	 * filtered the slug out of every save and the settings UI iterates
 	 * this list so it never even rendered a toggle. Result: members who
@@ -100,7 +100,7 @@ final class EmailSettingsController extends WP_REST_Controller {
 	/**
 	 * Save toggle state. Only whitelisted event slugs are accepted.
 	 *
-	 * Semantics: PATCH-like — only the slugs the request body explicitly
+	 * Semantics: PATCH-like - only the slugs the request body explicitly
 	 * carries are written. Pre-1.4.1 every call wrote ALL 4 options
 	 * (whatever wasn't in the body became OFF), so a client that wanted
 	 * to flip a single toggle had to send all 4 values or risk silently

@@ -190,4 +190,163 @@ class CSSTest extends TestCase {
 		$this->assertStringNotContainsString( '--wb-gam-color-text:', $css );
 		$this->assertSame( '', CSS::get_visibility_classes( array( 'cardBackground' => 'var(--brand-surface)' ) ) );
 	}
+
+	/**
+	 * Resolve a token value the PHP side emits (#hex, or color-mix(in srgb, #a N%, #b)) to channels.
+	 *
+	 * @param string $value Token value.
+	 * @return array<int, float>
+	 */
+	private function channels( string $value ): array {
+		if ( preg_match( '/^color-mix\(in srgb, (#[0-9a-f]{6}) (\d+)%, (#[0-9a-f]{6})\)$/', $value, $m ) ) {
+			$a = $this->channels( $m[1] );
+			$b = $this->channels( $m[3] );
+			$p = (int) $m[2] / 100;
+			return array( $a[0] * $p + $b[0] * ( 1 - $p ), $a[1] * $p + $b[1] * ( 1 - $p ), $a[2] * $p + $b[2] * ( 1 - $p ) );
+		}
+		$this->assertMatchesRegularExpression( '/^#[0-9a-f]{6}$/', $value );
+		return array( (float) hexdec( substr( $value, 1, 2 ) ), (float) hexdec( substr( $value, 3, 2 ) ), (float) hexdec( substr( $value, 5, 2 ) ) );
+	}
+
+	/**
+	 * Assert every derived token reads on the card: text, muted and light text and the medals and status
+	 * inks at 4.5:1, the accent's text colour at 4.5:1, the focus ring at 3:1.
+	 *
+	 * @param string $card   Card colour.
+	 * @param string $accent Accent colour or ''.
+	 */
+	private function assertReadsOn( string $card, string $accent = '' ): void {
+		$t    = CSS::card_tokens( $card, $accent );
+		$bg   = $this->channels( $card );
+		$name = $card . ( '' !== $accent ? ' + ' . $accent : '' );
+		$this->assertNotEmpty( $t, $name );
+		foreach ( array( '--wb-gam-color-text', '--wb-gam-color-text-muted', '--wb-gam-color-text-light', '--wb-gam-color-gold-text', '--wb-gam-color-silver', '--wb-gam-color-bronze', '--wb-gam-color-success-strong', '--wb-gam-color-warning-strong', '--wb-gam-color-danger-strong', '--wb-gam-color-fire-strong', '--wb-gam-color-info' ) as $token ) {
+			$this->assertGreaterThanOrEqual( 4.5, CSS::contrast( $this->channels( $t[ $token ] ), $bg ), $name . ' ' . $token . ' ' . $t[ $token ] );
+		}
+		if ( '' !== $accent ) {
+			$this->assertGreaterThanOrEqual( 4.5, CSS::contrast( $this->channels( $t['--wb-gam-color-accent-text'] ), $bg ), $name . ' accent text' );
+		}
+		$this->assertGreaterThanOrEqual( 3.0, CSS::contrast( $this->channels( $t['--wb-gam-focus-ring'] ), $bg ), $name . ' focus ring' );
+	}
+
+	public function test_card_tokens_read_on_the_card_from_the_card_alone(): void {
+		// The exact cases of card 10523784929: a cream card with a red accent, and a navy and a black card.
+		$this->assertReadsOn( '#ffeedd', '#cc0000' );
+		$this->assertReadsOn( '#ffeedd' );
+		$this->assertReadsOn( '#14213d' );
+		$this->assertReadsOn( '#14213d', '#fca311' );
+		$this->assertReadsOn( '#000000' );
+		$this->assertReadsOn( '#000000', '#660000' );
+		$this->assertReadsOn( '#ffffff', '#ffee00' );
+		$this->assertReadsOn( '#808080', '#0000ff' );
+
+		$cream = CSS::card_tokens( '#ffeedd', '#cc0000' );
+		$navy  = CSS::card_tokens( '#14213d' );
+		$black = CSS::card_tokens( '#000000' );
+		$this->assertSame( '#1a1a2e', $cream['--wb-gam-color-text'] );
+		$this->assertSame( '#f5f5f7', $navy['--wb-gam-color-text'] );
+		$this->assertSame( '#f5f5f7', $black['--wb-gam-color-text'] );
+		// A dark card gets the lifted medals, a light card the deep ones.
+		$this->assertNotSame( $cream['--wb-gam-color-silver'], $navy['--wb-gam-color-silver'] );
+	}
+
+	public function test_card_tokens_sweep_of_cards_and_accents(): void {
+		$cards   = array( '#ffffff', '#000000', '#ffeedd', '#14213d', '#fafafa', '#101418', '#f0f4ff', '#223344', '#ffd54a', '#00695c', '#7b1fa2', '#ff5722', '#2e7d32', '#cfd8dc' );
+		for ( $g = 0; $g <= 255; $g += 17 ) {
+			$cards[] = sprintf( '#%02x%02x%02x', $g, $g, $g );
+		}
+		$accents = array( '', '#cc0000', '#fca311', '#ffee00', '#0000ff', '#660000', '#00ff00', '#5b4cdb', '#ffffff', '#000000', '#ff00ff' );
+		foreach ( $cards as $card ) {
+			foreach ( $accents as $accent ) {
+				$this->assertReadsOn( $card, $accent );
+			}
+		}
+	}
+
+	/**
+	 * WCAG 1.4.11: on a card a pale plate stands out from, the badge disc stands out from the card and the
+	 * art (black line-art, or the glyph ink; locked art is faded to half) stands out from the disc, 3:1.
+	 */
+	public function test_badge_icon_disc_reads_on_dark_and_mid_cards(): void {
+		$cards   = array( '#14213d', '#000000', '#101418', '#223344', '#00695c', '#7b1fa2', '#2e7d32', '#808080', '#666666', '#333333' );
+		$accents = array( '', '#cc0000', '#fca311', '#0000ff', '#00ff00' );
+		foreach ( $cards as $card ) {
+			$bg = $this->channels( $card );
+			foreach ( $accents as $accent ) {
+				$t    = CSS::card_tokens( $card, $accent );
+				$name = $card . ' + ' . $accent;
+				$this->assertArrayHasKey( '--wb-gam-badge-plate', $t, $name );
+				$art = $this->channels( $t['--wb-gam-badge-art-ink'] );
+				foreach ( array( '--wb-gam-badge-plate', '--wb-gam-badge-plate-locked' ) as $token ) {
+					$plate = $this->channels( $t[ $token ] );
+					$this->assertGreaterThanOrEqual( 3.0, CSS::contrast( $plate, $bg ), $name . ' ' . $token . ' against the card' );
+					$this->assertGreaterThanOrEqual( 3.0, CSS::contrast( $art, $plate ), $name . ' ink against ' . $token );
+					$faded = array( ( $art[0] + $plate[0] ) / 2, ( $art[1] + $plate[1] ) / 2, ( $art[2] + $plate[2] ) / 2 );
+					$this->assertGreaterThanOrEqual( 3.0, CSS::contrast( $faded, $plate ), $name . ' faded art against ' . $token );
+				}
+				$this->assertNotSame( $t['--wb-gam-badge-plate'], $t['--wb-gam-badge-plate-locked'], $name . ' earned and locked stay distinct' );
+			}
+		}
+		// A card too light for a pale plate to stand out keeps the tint (black art already reads on it).
+		$this->assertArrayNotHasKey( '--wb-gam-badge-plate', CSS::card_tokens( '#ffeedd', '#cc0000' ) );
+		$this->assertArrayNotHasKey( '--wb-gam-badge-plate', CSS::card_tokens( '#ffffff' ) );
+	}
+
+	public function test_card_tokens_are_scheme_independent_and_pure(): void {
+		$this->assertSame( CSS::card_tokens( '#ffeedd', '#cc0000' ), CSS::card_tokens( '#ffeedd', '#cc0000' ) );
+		// Short hex and rgb() read the same card.
+		$this->assertSame( CSS::card_tokens( '#ffeedd' ), CSS::card_tokens( '#fed' ) );
+		$this->assertSame( CSS::card_tokens( '#ffeedd' ), CSS::card_tokens( 'rgb(255, 238, 221)' ) );
+	}
+
+	public function test_a_dark_owner_card_on_a_light_page_is_a_dark_scheme_card(): void {
+		foreach ( array( '#14213d', '#000000' ) as $card ) {
+			$css = CSS::generate( 'm1', array( 'cardBackground' => $card ) );
+			$this->assertStringContainsString( '--wb-gam-color-text: #f5f5f7;', $css );
+			$this->assertStringContainsString( '--wb-gam-focus-ring: #f5f5f7;', $css );
+			$this->assertSame( 'wb-gam-scheme-dark', CSS::scheme_class( array( 'cardBackground' => $card ) ) );
+		}
+	}
+
+	public function test_accent_only_holds_the_accent_text_to_the_scheme_surface(): void {
+		$css = CSS::generate( 'a1', array( 'accentColor' => '#cc0000' ) );
+
+		$this->assertStringContainsString( '@supports (color: oklch(from red l c h))', $css );
+		$this->assertStringContainsString( '--wb-gam-color-accent-text: oklch(from var(--wb-gam-color-accent) clamp(', $css );
+		$this->assertStringContainsString( '--wb-gam-focus-ring: var(--wb-gam-color-accent-text);', $css );
+		$this->assertStringNotContainsString( '--wb-gam-color-text:', $css );
+		// With a card too, the accent text is a measured colour, not the relative-colour rule.
+		$both = CSS::generate( 'a2', array( 'accentColor' => '#cc0000', 'cardBackground' => '#ffeedd' ) );
+		$this->assertStringNotContainsString( '@supports', $both );
+		$this->assertMatchesRegularExpression( '/--wb-gam-color-accent-text: #[0-9a-f]{6};/', $both );
+	}
+
+	public function test_no_owner_colours_leave_the_output_unchanged(): void {
+		$attrs = array( 'padding' => array( 'top' => 8, 'right' => 8, 'bottom' => 8, 'left' => 8 ) );
+		$css   = CSS::generate( 'n1', $attrs );
+
+		$this->assertSame( ".wb-gam-block-n1 {\n\tpadding: 8px 8px 8px 8px;\n}\n", $css );
+		$this->assertSame( '', CSS::generate( 'n2', array() ) );
+		$this->assertSame( '', CSS::get_visibility_classes( $attrs ) );
+		$this->assertSame( '', CSS::scheme_class( $attrs ) );
+		// A border colour alone changes nothing about the card's tokens.
+		$border = CSS::generate( 'n3', array( 'cardBorderColor' => '#cccccc' ) );
+		$this->assertStringNotContainsString( '--wb-gam-color-text', $border );
+		$this->assertStringNotContainsString( 'focus-ring', $border );
+	}
+
+	public function test_owner_colours_are_validated_before_they_reach_a_style_rule(): void {
+		foreach ( array( 'red', '#12', '#12345', '#ggg', '#fff;}body{display:none', 'url(x)', 'expression(1)', '#fff</style>', "#fff\n}", 'var(--x);color:red' ) as $bad ) {
+			$this->assertSame( '', CSS::safe_color( $bad ), $bad );
+			$css = CSS::generate( 'v1', array( 'cardBackground' => $bad, 'accentColor' => $bad, 'cardBorderColor' => $bad ) );
+			$this->assertSame( '', $css, $bad );
+		}
+		foreach ( array( '#fff', '#ffff', '#ffeedd', '#ffeedd80', 'rgb(1, 2, 3)', 'rgba(1,2,3,0.5)', 'var(--brand)' ) as $good ) {
+			$this->assertSame( $good, CSS::safe_color( $good ), $good );
+		}
+		// A translucent card has no fixed contrast: the theme's tokens stay.
+		$this->assertSame( array(), CSS::card_tokens( '#ffeedd80' ) );
+		$this->assertSame( array(), CSS::card_tokens( 'rgba(0, 0, 0, 0.5)' ) );
+		$this->assertSame( '', CSS::scheme_class( array( 'cardBackground' => '#00000080' ) ) );
+	}
 }

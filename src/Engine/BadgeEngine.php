@@ -7,13 +7,13 @@
  *
  * Condition types (stored as JSON in wb_gam_rules.rule_config):
  *
- *   point_milestone  — user's cumulative points >= threshold
+ *   point_milestone  - user's cumulative points >= threshold
  *     { "condition_type": "point_milestone", "points": 100 }
  *
- *   action_count     — user has performed action >= N times
+ *   action_count     - user has performed action >= N times
  *     { "condition_type": "action_count", "action_id": "wp_publish_post", "count": 10 }
  *
- *   admin_awarded    — manual only; never auto-evaluates
+ *   admin_awarded    - manual only; never auto-evaluates
  *     { "condition_type": "admin_awarded" }
  *
  * Custom condition types can be registered via the
@@ -27,15 +27,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -101,11 +101,11 @@ final class BadgeEngine {
 	}
 
 	/**
-	 * Deactivation hook — clear the recurring daily badge cron pass.
+	 * Deactivation hook - clear the recurring daily badge cron pass.
 	 *
 	 * Mirrors LeaderboardEngine::deactivate(). Without this, the RECURRING
 	 * Action Scheduler action armed by maybe_schedule_cron_pass() keeps
-	 * rescheduling itself forever after the plugin is deactivated — AS
+	 * rescheduling itself forever after the plugin is deactivated - AS
 	 * actions are not tied to plugin lifecycle the way WP-Cron events
 	 * cleared via register_deactivation_hook are, so nothing stops it
 	 * unless we explicitly unschedule it here.
@@ -117,7 +117,7 @@ final class BadgeEngine {
 			as_unschedule_all_actions( self::CRON_PASS, array(), 'wb-gamification' );
 		}
 		// Legacy WP-Cron event predating the Action Scheduler migration (see
-		// maybe_schedule_cron_pass()) — cleared here too in case a site is
+		// maybe_schedule_cron_pass()) - cleared here too in case a site is
 		// deactivating before ever reaching init on this version.
 		wp_clear_scheduled_hook( 'wb_gam_tenure_check' );
 	}
@@ -435,7 +435,7 @@ final class BadgeEngine {
 	private const RARITY_CACHE_TTL = 900; // 15 minutes.
 
 	/**
-	 * Boot — hook into the points-awarded action to evaluate conditions.
+	 * Boot - hook into the points-awarded action to evaluate conditions.
 	 */
 	public static function init(): void {
 		add_action( 'wb_gam_points_awarded', array( __CLASS__, 'evaluate_on_award' ), 10, 3 );
@@ -511,7 +511,7 @@ final class BadgeEngine {
 	 * on it.
 	 *
 	 * That distinction is the entire fix. The pre-1.6.4 code refused to cache this
-	 * — its comment said "not suitable for generic caching" — because it conflated
+	 * - its comment said "not suitable for generic caching" - because it conflated
 	 * rarity with the `max_earners` guard below. They are not the same thing:
 	 *
 	 *   - `max_earners` MUST be live. A stale count over-awards a limited badge:
@@ -522,7 +522,7 @@ final class BadgeEngine {
 	 *     an EVENT-scaled table on every request.
 	 *
 	 * And it WAS every request: `GET /badges` and `GET /badges/{id}` are both
-	 * `permission_callback => '__return_true'`, so any anonymous visitor — or bot —
+	 * `permission_callback => '__return_true'`, so any anonymous visitor - or bot -
 	 * could trigger a `COUNT(DISTINCT user_id) GROUP BY badge_id` over millions of
 	 * rows, plus a `COUNT(*)` over wp_users, as often as they liked.
 	 *
@@ -549,8 +549,8 @@ final class BadgeEngine {
 		}
 
 		// GROUP BY badge_id is served directly by idx_badge_id (no temp table, no
-		// filesort). It is still an index scan — an aggregate has to touch every
-		// row — which is precisely why the RESULT is cached instead of recomputed.
+		// filesort). It is still an index scan - an aggregate has to touch every
+		// row - which is precisely why the RESULT is cached instead of recomputed.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- cached immediately below.
 		$rows = $wpdb->get_results(
 			"SELECT badge_id, COUNT(DISTINCT user_id) AS earner_count
@@ -573,7 +573,7 @@ final class BadgeEngine {
 	 * Drop the cached rarity map.
 	 *
 	 * Must be called from every path that inserts into or deletes from
-	 * wb_gam_user_badges — award (hooked in init()), an admin deleting a badge
+	 * wb_gam_user_badges - award (hooked in init()), an admin deleting a badge
 	 * definition, and a GDPR erase. A cache whose invalidation misses a write path
 	 * is just a slower way to serve wrong data.
 	 *
@@ -658,12 +658,12 @@ final class BadgeEngine {
 		// Load earned badge IDs in one query for in-memory filtering.
 		$earned = self::get_user_earned_badge_ids( $user_id );
 
-		// Resolve the currency the triggering event awarded — point_milestone
+		// Resolve the currency the triggering event awarded - point_milestone
 		// badges must check the SAME currency, otherwise a "100 coins" badge
 		// would silently grant on the user's points balance instead.
 		//
 		// Read `$event->point_type` first (stamped by Engine::process in
-		// 1.4.1) — it's the canonical answer. Falls back to metadata for
+		// 1.4.1) - it's the canonical answer. Falls back to metadata for
 		// callers that bypass Engine::process (legacy synthetic events),
 		// then to empty string (which PointsEngine::get_total treats as
 		// "primary currency"). See audit/DATA-FLOW-AWARD-2026-05-27.md §G5/G6.
@@ -996,7 +996,7 @@ final class BadgeEngine {
 	/**
 	 * Award a badge to a user.
 	 *
-	 * Idempotent — returns false if the user already holds the badge.
+	 * Idempotent - returns false if the user already holds the badge.
 	 * When the badge_def has `validity_days > 0`, sets `expires_at` automatically.
 	 *
 	 * @param int         $user_id   User to award.
@@ -1019,12 +1019,12 @@ final class BadgeEngine {
 		// Compute expiry if the badge_def specifies a validity window.
 		$def = self::get_badge_def( $badge_id );
 
-		// Eligibility gate: closes_at — stop awarding after the cutoff date.
+		// Eligibility gate: closes_at - stop awarding after the cutoff date.
 		if ( $def && ! empty( $def['closes_at'] ) && gmdate( 'Y-m-d H:i:s' ) >= $def['closes_at'] ) {
 			return false;
 		}
 
-		// Eligibility gate: max_earners — stop awarding once N members hold it.
+		// Eligibility gate: max_earners - stop awarding once N members hold it.
 		//
 		// This has to be ATOMIC and it was not: a bare COUNT-then-INSERT. Two workers both read
 		// $earner_count = 0 for a max_earners=1 badge, and both awarded it. UNIQUE(user_id,
@@ -1107,7 +1107,7 @@ final class BadgeEngine {
 			: null;
 
 		// Race-safe insert. The has_badge() check above is a cache-backed
-		// read — two concurrent callers can both pass that gate with stale
+		// read - two concurrent callers can both pass that gate with stale
 		// cache state and both reach this point. The wb_gam_user_badges
 		// table has UNIQUE(user_id, badge_id), so the second writer would
 		// otherwise trip a duplicate-key error and pollute debug.log. With
@@ -1116,12 +1116,26 @@ final class BadgeEngine {
 		// awarded-hook only fires once. See PERF-004
 		// (audit/PERF-DIAG-2026-05-27.yaml) for the original incident.
 		// NULL must be a literal: $wpdb->prepare() coerces a PHP null bound to
-		// %s into '' — which non-strict MySQL stores as the zero-date
+		// %s into '' - which non-strict MySQL stores as the zero-date
 		// 0000-00-00 00:00:00 in a DATETIME column. Zero-dates fail the
 		// `expires_at IS NULL OR expires_at > now` visibility filter, making
 		// every awarded badge invisible on all display surfaces (Basecamp
 		// 9985131435; shipped broken in 1.5.0–1.5.3 via ef8fb69).
 		$badges_table = $wpdb->prefix . 'wb_gam_user_badges';
+
+		// A lapsed credential keeps its row (UNIQUE(user_id, badge_id)), and has_badge() above does
+		// not count it, so a member who earns it again reached the INSERT IGNORE below, which did
+		// nothing: no renewal and no wb_gam_badge_awarded. Clear only the lapsed row so the award
+		// lands as a new one.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- write path.
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM `{$badges_table}` WHERE user_id = %d AND badge_id = %s AND expires_at IS NOT NULL AND expires_at <= %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+				$user_id,
+				$badge_id,
+				current_time( 'mysql', true )
+			)
+		);
 		if ( null === $expires_at ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix + literal.
 			$inserted = (int) $wpdb->query(
@@ -1147,9 +1161,9 @@ final class BadgeEngine {
 
 		if ( $inserted < 1 ) {
 			// Two paths land here:
-			// 1. Race-loser — another concurrent caller already inserted
+			// 1. Race-loser - another concurrent caller already inserted
 			// this badge. INSERT IGNORE no-ops; nothing to log.
-			// 2. Genuine DB failure — disk full, schema drift, etc.
+			// 2. Genuine DB failure - disk full, schema drift, etc.
 			// $wpdb->last_error will be non-empty.
 			if ( '' !== (string) $wpdb->last_error ) {
 				Log::error(
@@ -1438,13 +1452,13 @@ final class BadgeEngine {
 	 * Repair earned-badge rows whose expires_at holds a zero-date.
 	 *
 	 * 1.5.0–1.5.3 wrote `0000-00-00 00:00:00` instead of SQL NULL for
-	 * never-expiring badges (null passed through $wpdb->prepare() %s — see
+	 * never-expiring badges (null passed through $wpdb->prepare() %s - see
 	 * the note in award_badge()). Zero-dates fail the visibility filter, so
 	 * the badges exist but never display. This restores NULL, or
 	 * `earned_at + validity_days` when the badge definition declares a
 	 * validity window, then busts the per-user earned-badges caches.
 	 *
-	 * Idempotent — matching rows only exist while the data is broken. Called
+	 * Idempotent - matching rows only exist while the data is broken. Called
 	 * from DbUpgrader::upgrade_to_1_5_4() and `wp wb-gamification doctor --fix`.
 	 *
 	 * @since 1.5.4
@@ -1604,7 +1618,7 @@ final class BadgeEngine {
 	 * Insert a badge definition if it does not already exist.
 	 *
 	 * Used by importers to materialize a WB badge for each source achievement
-	 * before awarding it. Idempotent on `id` — an existing def is left as-is
+	 * before awarding it. Idempotent on `id` - an existing def is left as-is
 	 * (a re-run never clobbers admin edits).
 	 *
 	 * @param array{id:string, name:string, description?:string, image_url?:string, category?:string, is_credential?:bool, validity_days?:int|null, closes_at?:string|null, max_earners?:int|null} $def Definition.
@@ -1631,7 +1645,7 @@ final class BadgeEngine {
 		$formats = array( '%s', '%s', '%s', '%s', '%s', '%d', '%s' );
 
 		// Award-window columns. Previously omitted entirely, so a programmatic
-		// def could never carry an expiry, cutoff or earner cap — the columns
+		// def could never carry an expiry, cutoff or earner cap - the columns
 		// existed and every read path honoured them, but no writer set them.
 		// `null` (and `0` for the counters) means "no limit" and stores SQL NULL,
 		// which `$wpdb->insert()` emits as a literal NULL regardless of format.
@@ -1677,7 +1691,7 @@ final class BadgeEngine {
 	 * Get all badge definitions with earned status for a user.
 	 *
 	 * Unearned badges are included (greyed-out in UI) so members can see
-	 * what to work toward — the "locked but visible" forward motivation model.
+	 * what to work toward - the "locked but visible" forward motivation model.
 	 *
 	 * @param int $user_id User whose earned status to check. 0 = skip earned check.
 	 * @return array<int, array{id: string, name: string, description: string, image_url: string|null, is_credential: bool, category: string, earned: bool, earned_at: string|null}>

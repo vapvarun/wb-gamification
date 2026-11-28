@@ -1,34 +1,34 @@
 <?php
 /**
- * WB Gamification — WooCommerce Integration Manifest
+ * WB Gamification - WooCommerce Integration Manifest
  *
  * Auto-loaded by ManifestLoader. Fires only when WooCommerce is active.
  *
  * Actions covered:
- *   Order paid             — wb_gam_wc_order_paid bridge (once per order,
+ *   Order paid             - wb_gam_wc_order_paid bridge (once per order,
  *                            when a gateway confirms payment or when the
  *                            store marks a manual-payment order completed).
- *   First purchase ever    — wb_gam_wc_order_paid (once only)
- *   Product reviewed       — comment_post on product post type
- *   Wishlist item added    — yith_wcwl_added_to_wishlist (YITH Wishlist)
- *   Add to cart            — woocommerce_add_to_cart
+ *   First purchase ever    - wb_gam_wc_order_paid (once only)
+ *   Product reviewed       - comment_post on product post type
+ *   Wishlist item added    - yith_wcwl_added_to_wishlist (YITH Wishlist)
+ *   Add to cart            - woocommerce_add_to_cart
  *
  * Points scale example:
- *   First purchase  →  50 pts (loyalty hook — reward the relationship, not just the spend)
+ *   First purchase  →  50 pts (loyalty hook - reward the relationship, not just the spend)
  *   Each order      →  25 pts
- *   Leave a review  →  15 pts (quality signal — drives social proof)
+ *   Leave a review  →  15 pts (quality signal - drives social proof)
  *   Add to wishlist →   5 pts (intent signal)
  *
  * NOTE: pre-1.4.1 wc_order_completed + wc_first_purchase listened on
  * `woocommerce_order_status_completed`, which only fires when an admin
  * explicitly marks an order as completed. For stores where paid orders
  * sit in "processing" until shipment (the WC default for physical
- * goods), members never earned points for their purchases — they had
+ * goods), members never earned points for their purchases - they had
  * to wait for the admin to mark complete, sometimes days later. The
  * symptom on Basecamp #9925589914 was "WC events other than
  * add_to_cart not firing." Moving to `woocommerce_payment_complete`
  * fires once when payment succeeds regardless of subsequent
- * status — payment_complete is WC's canonical "money in hand" hook.
+ * status - payment_complete is WC's canonical "money in hand" hook.
  * Cash on delivery, bank transfer and check orders never call it, so
  * the bridge below also treats "completed" as paid for those orders.
  *

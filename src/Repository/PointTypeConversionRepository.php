@@ -6,7 +6,7 @@
  * conversion pairs (e.g. 100 points → 1 coin); members convert via REST.
  *
  * Per the canonical Wbcom 7-layer architecture (`plan/ARCHITECTURE.md`),
- * Repository classes own DB queries — no business logic, no HTTP, no
+ * Repository classes own DB queries - no business logic, no HTTP, no
  * rendering.
  *
  * @package WB_Gamification
@@ -136,7 +136,7 @@ final class PointTypeConversionRepository {
 
 	/**
 	 * Update mutable fields on an existing rule. From/to slugs are
-	 * pair-unique, immutable — admin must delete + recreate to change them.
+	 * pair-unique, immutable - admin must delete + recreate to change them.
 	 *
 	 * @param int                                                                                                            $id   Rule ID.
 	 * @param array{from_amount?:int,to_amount?:int,min_convert?:int,cooldown_seconds?:int,max_per_day?:int,is_active?:bool} $data Fields to update.
@@ -227,7 +227,7 @@ final class PointTypeConversionRepository {
 	}
 
 	/**
-	 * Latest conversion timestamp for a user/pair — used for cooldown checks.
+	 * Latest conversion timestamp for a user/pair - used for cooldown checks.
 	 *
 	 * @param int    $user_id User to check.
 	 * @param string $from    From-type slug.

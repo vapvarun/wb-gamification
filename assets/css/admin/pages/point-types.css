@@ -1,5 +1,5 @@
 /**
- * WB Gamification — Point Types Admin Page CSS
+ * WB Gamification - Point Types Admin Page CSS
  * =====================================================================
  * Per-page styles for `WBGam\Admin\PointTypesPage` (menu slug:
  * `wb-gam-point-types`). Manages point currencies (label, slug, icon,
@@ -23,7 +23,7 @@
 .wb-gam-pt-label,
 .wb-gam-pt-position,
 .wb-gam-pt-slug {
-	/* JS-bound point-type form inputs — visuals from .wbgam-input/.wbgam-textarea. */
+	/* JS-bound point-type form inputs - visuals from .wbgam-input/.wbgam-textarea. */
 }
 
 /* ==========================================================================

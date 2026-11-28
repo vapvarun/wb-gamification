@@ -1,6 +1,6 @@
 <?php
 /**
- * Feature Flags — single-plugin engine boot and per-feature toggles.
+ * Feature Flags - single-plugin engine boot and per-feature toggles.
  *
  * All engines ship in the free plugin. Heavy / opt-in engines are listed
  * in OPTIONAL_ENGINES and gated by a per-feature flag that defaults to
@@ -15,15 +15,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -46,7 +46,7 @@ final class FeatureFlags {
 	private const OPTION_KEY = 'wb_gam_features';
 
 	/**
-	 * Core engines — always boot.
+	 * Core engines - always boot.
 	 *
 	 * Excludes ManifestLoader, Registry, and Engine which keep their own
 	 * priority-ordered `add_action` calls (priorities 5, 6, 8).
@@ -186,7 +186,7 @@ final class FeatureFlags {
 	 * Boot all engines. Called from wb-gamification.php at plugins_loaded priority 10.
 	 *
 	 * ManifestLoader (5), Registry (6), and Engine (8) keep their own
-	 * priority-ordered `add_action` calls — this method handles everything
+	 * priority-ordered `add_action` calls - this method handles everything
 	 * at priority 10+.
 	 *
 	 * @return void
@@ -194,7 +194,7 @@ final class FeatureFlags {
 	public static function boot_engines(): void {
 		$namespace = 'WBGam\\Engine\\';
 
-		// Core engines — always boot.
+		// Core engines - always boot.
 		foreach ( self::CORE_ENGINES as $class ) {
 			$fqcn = $namespace . $class;
 			if ( method_exists( $fqcn, 'init' ) ) {
@@ -202,7 +202,7 @@ final class FeatureFlags {
 			}
 		}
 
-		// Optional engines — boot if their feature flag is enabled (all on by default).
+		// Optional engines - boot if their feature flag is enabled (all on by default).
 		foreach ( self::OPTIONAL_ENGINES as $flag => $class ) {
 			if ( self::is_enabled( $flag ) ) {
 				$fqcn = $namespace . $class;

@@ -45,6 +45,7 @@ const EMPTY_MOMENT = {
 	ring: '',
 	iconUrl: '',
 	cta: '',
+	id: 0,
 };
 
 const { state, actions } = store( NS, {
@@ -92,6 +93,12 @@ const { state, actions } = store( NS, {
 					return true;
 				}
 				seen.add( key );
+
+				// A card an earlier page of this tab already showed (its reload came before the server
+				// position could move past it): counted as displayed by toast.js, not shown again.
+				if ( window.wbGamDelivery && window.wbGamDelivery.consumed( event._id ) ) {
+					return true;
+				}
 
 				enqueue( toMoment( event ) );
 				return true;
@@ -178,6 +185,7 @@ function toMoment( event ) {
 		ring: event.ring || ( event.days != null ? String( event.days ) : '' ),
 		iconUrl: event.icon_url || '',
 		cta: event.cta || '',
+		id: parseInt( event._id, 10 ) || 0, // The queue row; reported once the card is on screen.
 	};
 }
 
@@ -186,6 +194,10 @@ function show( moment ) {
 	// The store updates the DOM on the next frame; start the confetti once the card is visible.
 	armClose();
 	window.requestAnimationFrame( () => {
+		// Displayed: toast.js may now let the server position move past this card's row.
+		if ( moment.id && window.wbGamDelivery ) {
+			window.wbGamDelivery.shown( [ moment.id ] );
+		}
 		const host = document.querySelector( '.wb-gam-moment' );
 		if ( host && window.wbGam && typeof window.wbGam.celebrate === 'function' ) {
 			window.wbGam.celebrate( host, 'full' );

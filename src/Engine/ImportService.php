@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — shared import ingestion service.
+ * WB Gamification - shared import ingestion service.
  *
  * One code path for every historical-event importer (the REST
  * `POST /events/import` endpoint and each competitor importer). Callers hand
@@ -8,7 +8,7 @@
  * write API (`Engine::process()` in import mode) so idempotency, occurred_at
  * backdating, and side-effect suppression behave identically no matter who
  * triggered the import. Importers therefore NEVER write to wb_gam_* tables
- * directly — they READ their source and normalize, then ingest here.
+ * directly - they READ their source and normalize, then ingest here.
  *
  * @package WB_Gamification
  * @since   1.6.2
@@ -29,9 +29,9 @@ final class ImportService {
 	 * Ingest normalized import rows.
 	 *
 	 * Each row: action_id (string, required), user_id (int, required),
-	 * points (int|null — explicit value preserved verbatim), point_type
+	 * points (int|null - explicit value preserved verbatim), point_type
 	 * (string|null), object_id (int|null), occurred_at (string ISO-8601|null),
-	 * source_key (string|null — de-dup key), metadata (array|null).
+	 * source_key (string|null - de-dup key), metadata (array|null).
 	 *
 	 * @param array<int, array<string, mixed>> $rows      Normalized rows.
 	 * @param bool                             $recompute Recompute badges and levels for the members this

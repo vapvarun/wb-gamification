@@ -1,11 +1,11 @@
 /**
- * Redemption Store — editor surface.
+ * Redemption Store - editor surface.
  *
  * Implements the canonical Wbcom Block Quality Standard inspector
  * layout: Content / Layout / Style panels in that order, with the
  * shared responsive controls from `src/shared/components`. Server-side
  * preview comes from ServerSideRender so the editor mirrors the
- * frontend exactly — no parallel React render path.
+ * frontend exactly - no parallel React render path.
  *
  * @see plans/WBCOM-BLOCK-STANDARD-MIGRATION.md Phase C.3
  */
@@ -267,6 +267,10 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 					<BaseControl
 						id={ `wb-gam-card-bg-${ uniqueId }` }
 						label={ __( 'Card background', 'wb-gamification' ) }
+						help={ __(
+							'Text, borders and accent colours adjust to stay readable on the colour you choose, in both the light and the dark scheme. Enter a hex colour, such as #ffeedd.',
+							'wb-gamification'
+						) }
 					>
 						<TextControl
 							value={ cardBackground }
@@ -312,7 +316,7 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 					icon={ store }
 					title={ __( 'Redemption Store', 'wb-gamification' ) }
 					description={ __(
-						'Member-facing rewards catalog — active redemption items with point cost and a Redeem button.',
+						'Member-facing rewards catalog - active redemption items with point cost and a Redeem button.',
 						'wb-gamification'
 					) }
 					status={

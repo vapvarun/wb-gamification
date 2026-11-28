@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — BuddyPress Profile Integration
+ * WB Gamification - BuddyPress Profile Integration
  *
  * Injects rank/level display into the BP profile header automatically.
  * No shortcode required.
@@ -48,7 +48,7 @@ final class ProfileIntegration {
 	 *
 	 * Each sub-tab renders existing gamification blocks (via their
 	 * shortcodes, scoped to the displayed member with `user_id`) so the
-	 * profile reuses the single source of block markup — no duplicated
+	 * profile reuses the single source of block markup - no duplicated
 	 * profile-only templates to keep in sync.
 	 */
 	public static function setup_nav(): void {
@@ -112,7 +112,7 @@ final class ProfileIntegration {
 
 		// Pick the blocks for the active sub-tab; MemberSurface owns the
 		// shared plumbing (asset enqueue, mapped hub link, wrapper). Overview
-		// stays a concise PERSONAL summary — member-points already shows the
+		// stays a concise PERSONAL summary - member-points already shows the
 		// next level and streak shows the next milestone, so "what's next" is
 		// covered without the site-wide earning guide (that stays on the Hub).
 		// Locked badges ("what to earn next") live in the Badges sub-tab.

@@ -14,15 +14,15 @@ namespace WBGam\Admin;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -44,7 +44,7 @@ final class RedemptionStorePage {
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_page' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
-		// admin_post_wb_gam_{save,delete}_reward removed in 1.0.0 — page now
+		// admin_post_wb_gam_{save,delete}_reward removed in 1.0.0 - page now
 		// consumes /wb-gamification/v1/redemptions/items via the generic
 		// admin-rest-form driver. See Tier 0.C migration.
 	}
@@ -515,7 +515,7 @@ final class RedemptionStorePage {
 			<?php
 			// ── Transaction log (closes Basecamp #9860090437) ──────────
 			// Site owners had no admin-side audit trail of what was
-			// redeemed and by whom — every redeem wrote to wb_gam_redemptions
+			// redeemed and by whom - every redeem wrote to wb_gam_redemptions
 			// but the table was only readable via direct DB query. This
 			// surfaces the last 50 redemptions inline so support staff can
 			// trace coupon codes and fulfilment status without WP-CLI.
@@ -563,7 +563,7 @@ final class RedemptionStorePage {
 									$txn_status     = $status_meta[ $txn_status_key ] ?? array( 'info', ucfirst( str_replace( '_', ' ', $txn_status_key ) ) );
 									?>
 									<tr>
-										<td><?php echo esc_html( $txn_when ? wp_date( 'M j, Y · H:i', strtotime( $txn_when . ' UTC' ) ) : '—' ); ?></td>
+										<td><?php echo esc_html( $txn_when ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $txn_when . ' UTC' ) ) : '-' ); ?></td>
 										<td><?php echo esc_html( $txn_user_name ); ?></td>
 										<td><?php echo esc_html( (string) $txn['title'] ); ?></td>
 										<td><strong><?php echo esc_html( number_format_i18n( (int) $txn['points_cost'] ) ); ?></strong></td>
@@ -571,7 +571,7 @@ final class RedemptionStorePage {
 											<?php if ( ! empty( $txn['coupon_code'] ) ) : ?>
 												<code><?php echo esc_html( (string) $txn['coupon_code'] ); ?></code>
 											<?php else : ?>
-												<span class="wbgam-text-muted">—</span>
+												<span class="wbgam-text-muted">-</span>
 											<?php endif; ?>
 										</td>
 										<td>
@@ -614,7 +614,7 @@ final class RedemptionStorePage {
 												</button>
 											<?php endif; ?>
 											<?php if ( ! $can_fulfill && ! $can_refund ) : ?>
-												<span class="wbgam-text-muted">—</span>
+												<span class="wbgam-text-muted">-</span>
 											<?php endif; ?>
 										</td>
 									</tr>
@@ -633,7 +633,7 @@ final class RedemptionStorePage {
 		<?php
 		// Reward-type toggle CSS  → assets/css/admin-redemption.css
 		// Reward-type toggle JS   → assets/js/admin-reward-type-toggle.js
-		// Both are enqueued via enqueue_assets() — never inline.
+		// Both are enqueued via enqueue_assets() - never inline.
 	}
 
 	// handle_save() / handle_delete() removed in 1.0.0 (Tier 0.C). Rewards are

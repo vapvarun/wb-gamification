@@ -5,10 +5,10 @@
  * Catalogue of available point currencies. List is public (consumers need
  * to know what types exist to scope queries); writes require admin caps.
  *
- * GET    /wb-gamification/v1/point-types          Public — list all types
- * POST   /wb-gamification/v1/point-types          Admin — create
- * PUT    /wb-gamification/v1/point-types/{slug}   Admin — update
- * DELETE /wb-gamification/v1/point-types/{slug}   Admin — delete (default protected)
+ * GET    /wb-gamification/v1/point-types          Public - list all types
+ * POST   /wb-gamification/v1/point-types          Admin - create
+ * PUT    /wb-gamification/v1/point-types/{slug}   Admin - update
+ * DELETE /wb-gamification/v1/point-types/{slug}   Admin - delete (default protected)
  *
  * @package WB_Gamification
  * @since   1.0.0
@@ -147,7 +147,7 @@ class PointTypesController extends WP_REST_Controller {
 	// ── Callbacks ───────────────────────────────────────────────────────────────
 
 	/**
-	 * GET /point-types — public list.
+	 * GET /point-types - public list.
 	 */
 	public function handle_list( WP_REST_Request $request ): WP_REST_Response {
 		$rows = $this->service->list();
@@ -171,7 +171,7 @@ class PointTypesController extends WP_REST_Controller {
 	}
 
 	/**
-	 * POST /point-types — admin create.
+	 * POST /point-types - admin create.
 	 */
 	public function handle_create( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$result = $this->service->create(
@@ -195,7 +195,7 @@ class PointTypesController extends WP_REST_Controller {
 	}
 
 	/**
-	 * PUT /point-types/{slug} — admin update.
+	 * PUT /point-types/{slug} - admin update.
 	 */
 	public function handle_update( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$slug  = (string) $request['slug'];
@@ -220,7 +220,7 @@ class PointTypesController extends WP_REST_Controller {
 	}
 
 	/**
-	 * DELETE /point-types/{slug} — admin delete (default protected).
+	 * DELETE /point-types/{slug} - admin delete (default protected).
 	 */
 	public function handle_delete( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$slug   = (string) $request['slug'];

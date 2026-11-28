@@ -5,15 +5,15 @@
  * Asserts that every auto-awarded badge whose name/description promises a
  * literal action ("First Post", "Published 10 posts", "Left 10 comments")
  * is seeded with condition_type=action_count and a matching action_id +
- * count — NEVER point_milestone.
+ * count - NEVER point_milestone.
  *
  * Background: 2026-05-27. Five badges (first_post, prolific_writer,
  * content_creator, first_comment, engaged_reader) were originally seeded
  * with point_milestone conditions. A user could reach 50 points by any
  * combination of actions (kudos, profile completion, daily login) and
  * earn the "First Comment" badge without ever commenting. The defensive
- * justification — "ensures they work on both standalone WP and BuddyPress
- * installs, regardless of which action IDs are registered" — was wrong:
+ * justification - "ensures they work on both standalone WP and BuddyPress
+ * installs, regardless of which action IDs are registered" - was wrong:
  * integrations/wordpress.php registers wp_publish_post and wp_leave_comment
  * unconditionally on every install. Basecamp cards #9933063928 +
  * #9933079634 walked the audit. This gate is the regression sentinel.
@@ -26,8 +26,8 @@
  *   - rank badges (name/description says "rank" or "level") must be level_reached
  *
  * Exit codes:
- *   0 — every "literal action" badge is action_count + correct
- *   1 — at least one violation
+ *   0 - every "literal action" badge is action_count + correct
+ *   1 - at least one violation
  *
  * @package WB_Gamification
  */
@@ -134,7 +134,7 @@ foreach ( $cond_rows as $row ) {
 	$body = $row[3];
 
 	if ( ! isset( $descriptions[ $id ] ) ) {
-		continue; // Condition without a matching badge def — flag separately if it ever appears.
+		continue; // Condition without a matching badge def - flag separately if it ever appears.
 	}
 	$name = $descriptions[ $id ]['name'];
 	$desc = $descriptions[ $id ]['description'];
@@ -163,10 +163,10 @@ foreach ( $cond_rows as $row ) {
 		continue;
 	}
 
-	// Otherwise — name/description promises a literal action. Must be action_count.
+	// Otherwise - name/description promises a literal action. Must be action_count.
 	if ( 'action_count' !== $type ) {
 		$violations[] = sprintf(
-			"%s: badge \"%s\" — \"%s\" — has condition_type=%s; expected action_count",
+			"%s: badge \"%s\" - \"%s\" - has condition_type=%s; expected action_count",
 			$id,
 			$name,
 			$desc,
@@ -207,7 +207,7 @@ foreach ( $cond_rows as $row ) {
 		continue;
 	}
 
-	// "First X" — description doesn't carry a digit but starts with "First" / "Your first"
+	// "First X" - description doesn't carry a digit but starts with "First" / "Your first"
 	if ( preg_match( '/\b(first|your first|made your first|posted your first|published your very first|left your first|created your first|earned your first)\b/i', $desc ) ) {
 		if ( ! preg_match( "/'count'\s*=>\s*(\d+)/", $body, $cm ) || 1 !== (int) $cm[1] ) {
 			$violations[] = "$id: description implies first-time action but count is not 1";

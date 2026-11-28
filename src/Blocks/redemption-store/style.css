@@ -1,5 +1,5 @@
 /**
- * Redemption Store — frontend stylesheet.
+ * Redemption Store - frontend stylesheet.
  *
  * Phase C of the Wbcom Block Quality Standard migration moves the
  * previous inline `<style>` block into a tokenised stylesheet served
@@ -18,7 +18,7 @@
  */
 
 .wb-gam-redemption {
-	/* Block-local theming proxies — every value flows from the global
+	/* Block-local theming proxies - every value flows from the global
 	   `--wb-gam-*` token contract (src/shared/design-tokens.css,
 	   enqueued via the `wb-gam-tokens` handle). No hardcoded hex; if a
 	   token is missing the cascade inherits from the parent / theme. */
@@ -176,8 +176,10 @@
 }
 
 .wb-gam-redemption__btn[ disabled ]:not( .is-loading ) {
-	background: var( --wb-gam-color-disabled );
-	color: var( --wb-gam-color-disabled-text );
+	/* !important: the shared accent-button rule (design-tokens.css) is !important too, and this state must win. */
+	background: var( --wb-gam-color-disabled ) !important;
+	border-color: var( --wb-gam-color-disabled ) !important;
+	color: var( --wb-gam-color-disabled-text ) !important;
 	cursor: not-allowed;
 }
 

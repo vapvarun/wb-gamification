@@ -1,6 +1,6 @@
 <?php
 /**
- * Badge Showcase block — Wbcom Block Quality Standard render.
+ * Badge Showcase block - Wbcom Block Quality Standard render.
  *
  * 1.4.0 UX refactor (Basecamp follow-up: hub flyout / "My Badges" panel):
  *   - earned badges bubble to the top with a celebratory check pip
@@ -19,15 +19,15 @@
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+//   - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 //     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 //     Plugin Check auto-detects `wb_gamification` from the text-domain header
 //     and doesn't share the .phpcs.xml prefix list; hooks like
 //     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+//   - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 //     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 //   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 //     table work. Table names are interpolated from `{$wpdb->prefix}` plus
 //     literal constants (no user input); user-supplied values pass through
 //     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -36,7 +36,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Block render.php files are invoked from inside render_callback by the
 // WP block registrar, so every $wb_gam_* in this file is function-scoped,
-// not global. PrefixAllGlobals can't tell — its `phpcs:disable` here is
+// not global. PrefixAllGlobals can't tell - its `phpcs:disable` here is
 // the WP-standard way to silence the false positive. The plugin's own
 // .phpcs.xml already declares `wb_gam` as a valid prefix; this annotation
 // extends that signal to Plugin Check's internal phpcs invocation.
@@ -62,7 +62,7 @@ if ( 0 === $wb_gam_user_id ) {
 	$wb_gam_user_id = get_current_user_id();
 }
 
-// Privacy gate — see plan/PRIVACY-MODEL.md.
+// Privacy gate - see plan/PRIVACY-MODEL.md.
 if ( $wb_gam_user_id > 0 && ! Privacy::can_view_public_profile( $wb_gam_user_id ) ) {
 	// A logged-in viewer who may not see this member's data gets nothing, not a login prompt.
 	if ( is_user_logged_in() ) {
@@ -114,6 +114,36 @@ if ( '' !== $wb_gam_category ) {
  * @param int   $user_id    Member whose showcase is rendered.
  */
 $wb_gam_badges = (array) apply_filters( 'wb_gam_block_badge_showcase_data', $wb_gam_badges, $wb_gam_attrs, $wb_gam_user_id );
+
+// Normalise the filtered list ONCE. The filter is public API, so a callback can hand back anything:
+// non-array entries, records missing keys, or the same badge twice. Every count, tab and card below
+// reads this one list, so they cannot disagree. A record keeps its slot; a repeated id is folded into
+// the first copy (the earned copy wins, so a member is never shown a badge as locked and earned).
+$wb_gam_clean = array();
+$wb_gam_seen  = array();
+foreach ( $wb_gam_badges as $wb_gam_row ) {
+	if ( ! is_array( $wb_gam_row ) ) {
+		continue;
+	}
+	$wb_gam_row['id']        = (string) ( $wb_gam_row['id'] ?? '' );
+	$wb_gam_row['name']      = (string) ( $wb_gam_row['name'] ?? '' );
+	$wb_gam_row['earned']    = (bool) ( $wb_gam_row['earned'] ?? false );
+	$wb_gam_row['image_url'] = (string) ( $wb_gam_row['image_url'] ?? '' );
+
+	if ( '' !== $wb_gam_row['id'] && isset( $wb_gam_seen[ $wb_gam_row['id'] ] ) ) {
+		$wb_gam_slot = $wb_gam_seen[ $wb_gam_row['id'] ];
+		if ( $wb_gam_row['earned'] && ! $wb_gam_clean[ $wb_gam_slot ]['earned'] ) {
+			$wb_gam_clean[ $wb_gam_slot ] = $wb_gam_row;
+		}
+		continue;
+	}
+	if ( '' !== $wb_gam_row['id'] ) {
+		$wb_gam_seen[ $wb_gam_row['id'] ] = count( $wb_gam_clean );
+	}
+	$wb_gam_clean[] = $wb_gam_row;
+}
+$wb_gam_badges = $wb_gam_clean;
+unset( $wb_gam_clean, $wb_gam_seen, $wb_gam_row, $wb_gam_slot );
 
 // Ladder order comes from the engine (category, then threshold), the same order the admin
 // badge list uses. Earned-first is a stable partition on top of it (usort is stable on
@@ -226,7 +256,8 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 				<div class="wb-gam-badge-showcase__progress-fill" style="width: <?php echo esc_attr( (string) $wb_gam_progress_pct ); ?>%"></div>
 			</div>
 
-			<?php if ( $wb_gam_show_locked && $wb_gam_locked_count > 0 && $wb_gam_earned_count > 0 ) : ?>
+			<?php // The tabs show whenever the member can see locked badges and there is a collection. A tab with nothing in it is disabled, not removed: removing all of them left a member with only locked badges unable to switch views. ?>
+			<?php if ( $wb_gam_show_locked && $wb_gam_total_count > 0 ) : ?>
 				<nav class="wb-gam-badge-showcase__filters" role="tablist" aria-label="<?php esc_attr_e( 'Filter badges', 'wb-gamification' ); ?>">
 					<button type="button" class="wb-gam-badge-showcase__filter is-active"
 						role="tab" aria-selected="true" data-wb-gam-filter="all">
@@ -234,12 +265,12 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 						<span class="wb-gam-badge-showcase__filter-count"><?php echo esc_html( number_format_i18n( $wb_gam_total_count ) ); ?></span>
 					</button>
 					<button type="button" class="wb-gam-badge-showcase__filter"
-						role="tab" aria-selected="false" data-wb-gam-filter="earned">
+						role="tab" aria-selected="false" data-wb-gam-filter="earned"<?php echo 0 === $wb_gam_earned_count ? ' disabled' : ''; ?>>
 						<?php esc_html_e( 'Earned', 'wb-gamification' ); ?>
 						<span class="wb-gam-badge-showcase__filter-count"><?php echo esc_html( number_format_i18n( $wb_gam_earned_count ) ); ?></span>
 					</button>
 					<button type="button" class="wb-gam-badge-showcase__filter"
-						role="tab" aria-selected="false" data-wb-gam-filter="locked">
+						role="tab" aria-selected="false" data-wb-gam-filter="locked"<?php echo 0 === $wb_gam_locked_count ? ' disabled' : ''; ?>>
 						<?php esc_html_e( 'Locked', 'wb-gamification' ); ?>
 						<span class="wb-gam-badge-showcase__filter-count"><?php echo esc_html( number_format_i18n( $wb_gam_locked_count ) ); ?></span>
 					</button>
@@ -312,12 +343,12 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 					//
 					// Not rendered for anyone else's board. There is no version of this button that makes
 					// sense pointed at somebody else's achievement.
-					if ( $wb_gam_is_earned && $wb_gam_is_own_board ) :
-						$wb_gam_shared = \WBGam\Engine\BadgeShare::is_shared( $wb_gam_user_id, (string) $wb_gam_badge['id'] );
+					if ( $wb_gam_is_earned && $wb_gam_is_own_board && '' !== $wb_gam_badge['id'] ) :
+						$wb_gam_shared = \WBGam\Engine\BadgeShare::is_shared( $wb_gam_user_id, $wb_gam_badge['id'] );
 						?>
 						<button type="button"
 							class="wb-gam-badge-showcase__share"
-							data-wb-gam-share="<?php echo esc_attr( (string) $wb_gam_badge['id'] ); ?>"
+							data-wb-gam-share="<?php echo esc_attr( $wb_gam_badge['id'] ); ?>"
 							data-rest-url="<?php echo esc_url( rest_url( 'wb-gamification/v1/badges/' . $wb_gam_badge['id'] . '/share' ) ); ?>"
 							data-rest-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>"
 							data-shared="<?php echo $wb_gam_shared ? '1' : '0'; ?>"
@@ -335,7 +366,7 @@ BlockHooks::before( 'badge-showcase', $wb_gam_attrs );
 						<?php
 						// Once shared, the member needs the link itself: to open it, or to paste it
 						// elsewhere. Rendered for a badge already shared; view.js fills it in on share.
-						$wb_gam_share_url = $wb_gam_shared ? \WBGam\Engine\BadgeSharePage::get_share_url( (string) $wb_gam_badge['id'], $wb_gam_user_id ) : '';
+						$wb_gam_share_url = $wb_gam_shared ? \WBGam\Engine\BadgeSharePage::get_share_url( $wb_gam_badge['id'], $wb_gam_user_id ) : '';
 						?>
 						<span class="wb-gam-badge-showcase__share-link" data-wb-gam-share-link <?php echo $wb_gam_shared ? '' : 'hidden'; ?>>
 							<a href="<?php echo esc_url( $wb_gam_share_url ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Open share page', 'wb-gamification' ); ?></a>

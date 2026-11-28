@@ -1,5 +1,5 @@
 /**
- * Top Members — frontend stylesheet.
+ * Top Members - frontend stylesheet.
  *
  * Phase F migration: extracted from assets/css/frontend.css so the
  * block ships its own CSS via block.json (`style` field).
@@ -69,7 +69,7 @@
 	text-decoration: none;
 	max-width: 100%;
 	min-width: 0;
-	/* Podium tile grows vertically to fit a long name — never truncate. */
+	/* Podium tile grows vertically to fit a long name - never truncate. */
 	overflow-wrap: anywhere;
 	word-break: break-word;
 	line-height: 1.3;

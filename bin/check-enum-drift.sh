@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# bin/check-enum-drift.sh — catch cross-layer enum drift.
+# bin/check-enum-drift.sh - catch cross-layer enum drift.
 #
 # The plugin has multiple controller-side validator constants (VALID_*)
 # whose values must match what the corresponding engine switches handle.
 # When a controller adds a case the engine forgets about (or vice versa),
-# the symptom is a generic 400 / unhandled value at runtime — and
+# the symptom is a generic 400 / unhandled value at runtime - and
 # typically a Basecamp card a week later. This gate diffs each known
 # enum pair at build time so the drift fails the build, not production.
 #
@@ -72,11 +72,11 @@ diff_enums() {
   rm -f "$left" "$right"
 
   if [ -z "$only_left" ] && [ -z "$only_right" ]; then
-    printf "${GREEN}✓${RESET}  %s — aligned\n" "$pair_name"
+    printf "${GREEN}✓${RESET}  %s - aligned\n" "$pair_name"
     return 0
   fi
 
-  printf "${RED}✗${RESET}  %s — drift detected\n" "$pair_name"
+  printf "${RED}✗${RESET}  %s - drift detected\n" "$pair_name"
   if [ -n "$only_left" ]; then
     printf "    %s has values the %s doesn't handle:\n" "$left_label" "$right_label"
     echo "$only_left" | sed 's/^/      - /'
@@ -91,7 +91,7 @@ diff_enums() {
 echo "=== enum-drift gate ==="
 echo ""
 
-# ─── Pair 1 — RedemptionController VALID_REWARD_TYPES vs RedemptionEngine ────
+# ─── Pair 1 - RedemptionController VALID_REWARD_TYPES vs RedemptionEngine ────
 # Drift here caused Basecamp #9927682021 (Free Shipping → HTTP 400 from the
 # controller because the validator didn't list `free_shipping` even though
 # the engine switch had handled it for two releases).
@@ -99,7 +99,7 @@ LEFT_VALUES="$(extract_const_values \
   src/API/RedemptionController.php VALID_REWARD_TYPES)"
 RIGHT_VALUES="$(extract_case_values src/Engine/RedemptionEngine.php)"
 # The engine has cases for other constants too (e.g. point_type). Restrict
-# the right-hand set to the union with the controller's surface — drift is
+# the right-hand set to the union with the controller's surface - drift is
 # only meaningful for values the controller validates. Items the engine
 # uses internally and the controller never sees are out of scope.
 RIGHT_RESTRICTED="$(comm -12 <(echo "$LEFT_VALUES") <(echo "$RIGHT_VALUES"); \
@@ -124,15 +124,15 @@ while IFS= read -r value; do
 done <<< "$LEFT_VALUES"
 
 if [ -z "$MISSING_IN_ENGINE" ]; then
-  printf "${GREEN}✓${RESET}  RedemptionController::VALID_REWARD_TYPES ↔ RedemptionEngine — aligned\n"
+  printf "${GREEN}✓${RESET}  RedemptionController::VALID_REWARD_TYPES ↔ RedemptionEngine - aligned\n"
 else
-  printf "${RED}✗${RESET}  RedemptionController::VALID_REWARD_TYPES — drift detected\n"
+  printf "${RED}✗${RESET}  RedemptionController::VALID_REWARD_TYPES - drift detected\n"
   printf "    Reward types the controller allows but the engine never references:\n"
   printf "$MISSING_IN_ENGINE" | sed 's/^/      - /'
   FAILED=1
 fi
 
-# ─── Pair 2 — RedemptionEngine reasons ↔ RedemptionController error-map ──────
+# ─── Pair 2 - RedemptionEngine reasons ↔ RedemptionController error-map ──────
 # Drift here caused Basecamp #9927027277 (engine returned 'not_found' but
 # the controller's match() arm only mapped 'inactive' / 'insufficient' →
 # generic redemption_failed for the not_found case).
@@ -152,16 +152,16 @@ while IFS= read -r reason; do
 done <<< "$ENGINE_REASONS"
 
 if [ -z "$MISSING_IN_CONTROLLER" ]; then
-  printf "${GREEN}✓${RESET}  RedemptionEngine reasons ↔ RedemptionController error map — aligned\n"
+  printf "${GREEN}✓${RESET}  RedemptionEngine reasons ↔ RedemptionController error map - aligned\n"
 else
-  printf "${YELLOW}!${RESET}  RedemptionEngine reasons — controller doesn't map every reason to a specific error code\n"
+  printf "${YELLOW}!${RESET}  RedemptionEngine reasons - controller doesn't map every reason to a specific error code\n"
   printf "    Reasons returned by the engine that the controller falls through on:\n"
   printf "$MISSING_IN_CONTROLLER" | sed 's/^/      - /'
   printf "    These will surface as the generic wb_gam_redemption_failed code.\n"
   printf "    Add a match() arm in RedemptionController::redeem(). Not a build-fail.\n"
 fi
 
-# ─── Pair 3 — WebhooksController VALID_EVENTS ↔ engine event emitters ────────
+# ─── Pair 3 - WebhooksController VALID_EVENTS ↔ engine event emitters ────────
 # Drift here caused Basecamp #1.2.0 dev-loop bug (webhook subscribers
 # couldn't subscribe to `badge_awarded` because controller called it
 # `badge_earned`; fixed by aligning names).
@@ -178,16 +178,16 @@ while IFS= read -r event; do
 done <<< "$EVENT_NAMES"
 
 if [ -z "$MISSING_EMITTER" ]; then
-  printf "${GREEN}✓${RESET}  WebhooksController::VALID_EVENTS ↔ engine emitters — aligned\n"
+  printf "${GREEN}✓${RESET}  WebhooksController::VALID_EVENTS ↔ engine emitters - aligned\n"
 else
-  printf "${RED}✗${RESET}  WebhooksController::VALID_EVENTS — drift detected\n"
+  printf "${RED}✗${RESET}  WebhooksController::VALID_EVENTS - drift detected\n"
   printf "    Events the controller allows subscribing to but no engine emits:\n"
   printf "$MISSING_EMITTER" | sed 's/^/      - /'
   FAILED=1
 fi
 
-# ─── Pair 4 — RulesController VALID_RULE_TYPES ↔ RuleEngine ──────────────────
-# Defensive — the rule engine is new and the surface is small (2 values).
+# ─── Pair 4 - RulesController VALID_RULE_TYPES ↔ RuleEngine ──────────────────
+# Defensive - the rule engine is new and the surface is small (2 values).
 # Drift here would silently disable a feature.
 RULE_TYPES="$(extract_const_values \
   src/API/RulesController.php VALID_RULE_TYPES)"
@@ -202,9 +202,9 @@ while IFS= read -r rt; do
 done <<< "$RULE_TYPES"
 
 if [ -z "$MISSING_RULE_TYPE" ]; then
-  printf "${GREEN}✓${RESET}  RulesController::VALID_RULE_TYPES ↔ RuleEngine — aligned\n"
+  printf "${GREEN}✓${RESET}  RulesController::VALID_RULE_TYPES ↔ RuleEngine - aligned\n"
 else
-  printf "${RED}✗${RESET}  RulesController::VALID_RULE_TYPES — drift detected\n"
+  printf "${RED}✗${RESET}  RulesController::VALID_RULE_TYPES - drift detected\n"
   printf "    Rule types the controller allows but no engine consumes:\n"
   printf "$MISSING_RULE_TYPE" | sed 's/^/      - /'
   FAILED=1
@@ -215,7 +215,7 @@ if [ "$FAILED" -eq 0 ]; then
   printf "${GREEN}enum-drift gate green${RESET}\n"
   exit 0
 else
-  printf "${RED}enum-drift gate failed${RESET} — fix the drift above before pushing.\n"
+  printf "${RED}enum-drift gate failed${RESET} - fix the drift above before pushing.\n"
   printf "${DIM}To add a new enum pair, edit bin/check-enum-drift.sh.${RESET}\n"
   exit 1
 fi

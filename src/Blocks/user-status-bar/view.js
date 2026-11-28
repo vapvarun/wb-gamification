@@ -1,9 +1,9 @@
 /**
- * User Status Bar — frontend view module.
+ * User Status Bar - frontend view module.
  *
  * Subscribes to the wb-gamification realtime broker (Heartbeat-backed)
  * and updates the bar's data bindings on every tick. Pure DOM mutation
- * — no rerender, no virtual DOM, so the bar plays nicely with FSE
+ * - no rerender, no virtual DOM, so the bar plays nicely with FSE
  * theme.json overrides and any custom CSS the site has bolted on.
  *
  * @since 1.4.0
@@ -15,13 +15,13 @@
 	/**
 	 * Park a top-anchored bar BELOW whatever is actually at the top of the page.
 	 *
-	 * The CSS used to hardcode `top: 48px` — the WP admin-bar height — and expose a
+	 * The CSS used to hardcode `top: 48px` - the WP admin-bar height - and expose a
 	 * `--wb-gam-status-bar-top-offset` variable with a comment inviting THEMES to correct it. No theme
 	 * sets it, including our own: on BuddyX the bar rendered at y=48..146 while the header occupied
 	 * y=37..106, so it sat squarely on top of the site's nav.
 	 *
 	 * Expecting every theme on earth to fix our positioning is not a default; it is a bug with a
-	 * comment. So we measure what is up there and set the variable ourselves. The variable STAYS —
+	 * comment. So we measure what is up there and set the variable ourselves. The variable STAYS -
 	 * a theme or an owner that wants to override the measurement still can.
 	 *
 	 * @param {Element} bar The status bar.
@@ -69,7 +69,7 @@
 			return document.querySelectorAll( '[data-wb-gam-status-bar]' );
 		}
 
-		// Collapsible toggle — pure CSS class flip; pref persists for the
+		// Collapsible toggle - pure CSS class flip; pref persists for the
 		// session so an admin who collapsed it doesn't have to do it again
 		// on every page. Runs per bar, when that bar appears.
 		window.wbGam.onMount( '[data-wb-gam-status-bar]', function ( bar ) {
@@ -99,7 +99,7 @@
 			bars().forEach( function ( bar ) {
 				// Hide bar entirely for guests (when hideForGuests=true).
 				if ( ! payload.user_id ) {
-					// Keep server-rendered state — don't touch the DOM.
+					// Keep server-rendered state - don't touch the DOM.
 					return;
 				}
 				bind( bar, 'primary_total', formatInt( payload.primary_total ) );
@@ -138,7 +138,7 @@
 				return '0';
 			}
 			var int = parseInt( n, 10 ) || 0;
-			return int.toLocaleString();
+			return int.toLocaleString( document.documentElement.lang || undefined );
 		}
 
 		function subscribe() {

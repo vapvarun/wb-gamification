@@ -10,15 +10,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -41,14 +41,14 @@ final class Installer {
 	public static bool $installing = false;
 
 	/**
-	 * Self-healing install — detects missing-tables state and runs the
+	 * Self-healing install - detects missing-tables state and runs the
 	 * full activation payload (tables, caps, wizard redirect) to recover.
 	 *
 	 * Why this exists separately from `install()`:
 	 *
 	 *   WordPress fires `register_activation_hook` only on the canonical
 	 *   activation path. The hook is skipped (or its effects are lost)
-	 *   in several real-world scenarios — `wp plugin activate` from CLI
+	 *   in several real-world scenarios - `wp plugin activate` from CLI
 	 *   with `--skip-plugins`, site restores from a backup that kept the
 	 *   active_plugins option but lost custom tables, InstaWP / migration
 	 *   clones that snapshot the filesystem after activation but before
@@ -90,7 +90,7 @@ final class Installer {
 			return false;
 		}
 
-		// Mirror the activation hook payload — keep this in sync with the
+		// Mirror the activation hook payload - keep this in sync with the
 		// `register_activation_hook` callback in wb-gamification.php.
 		self::install();
 		if ( self::$installing ) {
@@ -144,7 +144,7 @@ final class Installer {
 		// Every DATETIME column holds UTC, written from PHP with current_time( 'mysql', true ). The
 		// CURRENT_TIMESTAMP defaults are a safety net only (they use the database server's zone).
 
-		// Append-only event log — source of truth for all gamification state. Rows leave only through
+		// Append-only event log - source of truth for all gamification state. Rows leave only through
 		// retention (LogPruner, organic events only: a row with a source_key is imported history and is kept),
 		// a member's erasure (MemberData), a progress reset, or an import undo (ImportUndo).
 		// `point_type` records which currency the resulting award affected (analytics + audit).
@@ -169,7 +169,7 @@ final class Installer {
 		) $charset;"
 		);
 
-		// Points ledger — derived from events; event_id nullable until Phase 0 Engine is built.
+		// Points ledger - derived from events; event_id nullable until Phase 0 Engine is built.
 		// `point_type` scopes the row to a specific currency (points / xp / coins / ...).
 		// Default 'points' preserves single-currency behaviour for back-compat.
 		dbDelta(
@@ -194,7 +194,7 @@ final class Installer {
 		) $charset;"
 		);
 
-		// Point types — defines available currencies (Points / XP / Coins / Karma / ...).
+		// Point types - defines available currencies (Points / XP / Coins / Karma / ...).
 		// Seeded with one default 'points' row so single-currency installs work without setup.
 		dbDelta(
 			"CREATE TABLE {$wpdb->prefix}wb_gam_point_types (
@@ -211,7 +211,7 @@ final class Installer {
 		) $charset;"
 		);
 
-		// Currency conversion rates — admin defines pairs like
+		// Currency conversion rates - admin defines pairs like
 		// '100 points → 1 coin' and members convert balance via REST.
 		// Defaults are permissive (no cooldown, no daily cap, min 1) so
 		// real-site usage isn't blocked out of the box; admins tighten
@@ -488,7 +488,7 @@ final class Installer {
 		) $charset;"
 		);
 
-		// UGC achievement submissions — pending queue admins review.
+		// UGC achievement submissions - pending queue admins review.
 		// Members POST evidence (text + optional URL); admin approves
 		// → fires the corresponding action so points + badges flow
 		// through the standard pipeline. One row per submission.
@@ -510,7 +510,7 @@ final class Installer {
 		) $charset;"
 		);
 
-		// Materialised user-totals — incrementally updated on every award/debit
+		// Materialised user-totals - incrementally updated on every award/debit
 		// so PointsEngine::get_total() is a single-row PK lookup instead of a
 		// SUM against the full ledger. Critical for 100k-user scale: a hub
 		// page render touches get_total for every visible currency tile, and
@@ -527,8 +527,8 @@ final class Installer {
 		) $charset;"
 		);
 
-		// Leaderboard snapshot cache — written by cron, read by LeaderboardEngine.
-		// Note: `rank` is a MySQL 8.0 reserved word — must be backtick-escaped.
+		// Leaderboard snapshot cache - written by cron, read by LeaderboardEngine.
+		// Note: `rank` is a MySQL 8.0 reserved word - must be backtick-escaped.
 		dbDelta(
 			"CREATE TABLE {$wpdb->prefix}wb_gam_leaderboard_cache (
 			id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -545,7 +545,7 @@ final class Installer {
 		) $charset;"
 		);
 
-		// API keys — dedicated table replacing the legacy wb_gam_api_keys
+		// API keys - dedicated table replacing the legacy wb_gam_api_keys
 		// option. Stores SHA-256 hashes of issued keys (never plaintext) so
 		// DB backups + dump exports can't expose live keys. The full key is
 		// shown once on creation; thereafter the prefix + suffix are visible
@@ -631,27 +631,48 @@ final class Installer {
 		) $charset;"
 		);
 
-		// Seed default levels.
-		self::seed_default_levels();
-
-		// Seed default badge library (37 badges).
-		self::seed_default_badges();
-
-		// Seed default point type — 'points' as the primary currency.
-		self::seed_default_point_types();
-
 		update_option( 'wb_gam_db_version', WB_GAM_VERSION );
 
-		// Auto-create Gamification hub page if it doesn't exist.
-		self::maybe_create_hub_page();
+		// The starter library and the hub page carry translated text. WordPress may not load a
+		// translation before init (a __() earlier logs "_load_textdomain_just_in_time was called
+		// incorrectly" on WP 6.7+), and this method runs at plugins_loaded when the first request
+		// after a copy-in install triggers it. So seed now when init has fired (activation), else
+		// at the start of init, in the same request.
+		if ( did_action( 'init' ) ) {
+			self::seed_translated_defaults();
+		} else {
+			add_action( 'init', array( __CLASS__, 'seed_translated_defaults' ), 1 );
+		}
 
 		return true;
 	}
 
 	/**
+	 * Seed the starter levels, badges, point type and the hub page.
+	 *
+	 * The starter library is the SITE's data, stored once: it is seeded in the site language, not in
+	 * whichever language the administrator who activated the plugin happens to read. Needs a loaded
+	 * translation, so call it at or after init.
+	 *
+	 * @return void
+	 */
+	public static function seed_translated_defaults(): void {
+		RecipientLocale::run_in_site(
+			static function (): void {
+				self::seed_default_levels();
+				self::seed_default_badges(); // 37 badges.
+				self::seed_default_point_types(); // 'points', the primary currency.
+			}
+		);
+
+		// Auto-create the Gamification hub page if it does not exist.
+		self::maybe_create_hub_page();
+	}
+
+	/**
 	 * Idempotently ensure exactly one Gamification hub page exists.
 	 *
-	 * Resolution order — first hit wins, never creates if any earlier tier
+	 * Resolution order - first hit wins, never creates if any earlier tier
 	 * matches:
 	 *   1. `wb_gam_hub_page_id` option points to a live, non-trashed page → reuse
 	 *   2. Any page tagged with `_wb_gam_hub_page` meta → adopt
@@ -662,13 +683,13 @@ final class Installer {
 	 *
 	 * Pre-1.0.0 only checked tier 2; if the meta was wiped (DB reset, manual
 	 * cleanup, page rebuilt from import without meta) the installer kept
-	 * creating fresh pages — leading to "Gamification", "Gamification 2",
+	 * creating fresh pages - leading to "Gamification", "Gamification 2",
 	 * "Gamification 3"... in the page list across reactivations.
 	 *
 	 * @since 1.0.0
 	 */
 	private static function maybe_create_hub_page(): void {
-		// Tier 1 — option already points at a valid live page.
+		// Tier 1 - option already points at a valid live page.
 		$stored_id = (int) get_option( 'wb_gam_hub_page_id', 0 );
 		if ( $stored_id > 0 ) {
 			$stored_post = get_post( $stored_id );
@@ -677,17 +698,17 @@ final class Installer {
 				&& 'page' === $stored_post->post_type
 				&& 'trash' !== $stored_post->post_status
 			) {
-				// Backfill the meta in case it was lost — keeps tier 2 a valid path
+				// Backfill the meta in case it was lost - keeps tier 2 a valid path
 				// for future runs even after option-only restorations.
 				if ( '1' !== get_post_meta( $stored_id, '_wb_gam_hub_page', true ) ) {
 					update_post_meta( $stored_id, '_wb_gam_hub_page', '1' );
 				}
 				return;
 			}
-			// Stale pointer — fall through to discovery / creation.
+			// Stale pointer - fall through to discovery / creation.
 		}
 
-		// Tier 2 — adopt any page tagged with our meta.
+		// Tier 2 - adopt any page tagged with our meta.
 		$tagged = get_posts(
 			array(
 				'post_type'   => 'page',
@@ -703,7 +724,7 @@ final class Installer {
 			return;
 		}
 
-		// Tier 3 — adopt any page already rendering our hub block.
+		// Tier 3 - adopt any page already rendering our hub block.
 		$with_block = get_posts(
 			array(
 				'post_type'   => 'page',
@@ -720,7 +741,7 @@ final class Installer {
 			return;
 		}
 
-		// Tier 4 — none found, create one.
+		// Tier 4 - none found, create one.
 		$page_id = wp_insert_post(
 			array(
 				'post_title'   => __( 'Gamification', 'wb-gamification' ),
@@ -741,7 +762,7 @@ final class Installer {
 	 *
 	 * Without this, a stale option lingers pointing at a trashed/missing
 	 * page, and the next reactivation would land back at tier 1 with a
-	 * stale pointer and skip recreating — leaving the site without a hub.
+	 * stale pointer and skip recreating - leaving the site without a hub.
 	 * The caller is the registered handler for `wp_trash_post` and
 	 * `delete_post` actions; see WB_Gamification::register_hooks().
 	 *
@@ -755,7 +776,7 @@ final class Installer {
 	}
 
 	/**
-	 * Seed the default badge library — 37 badges across 5 categories.
+	 * Seed the default badge library - 37 badges across 5 categories.
 	 * Runs only on fresh installs (skipped when badge_defs table already has rows).
 	 */
 	private static function seed_default_badges(): void {
@@ -772,53 +793,53 @@ final class Installer {
 		// is_credential = 1 → admin-awarded badge suitable for external sharing.
 		$badges = array(
 			// ── Points milestones ──────────────────────────────────────────────
-			array( 'century_club', 'Century Club', 'Earned your first 100 points.', 'points', 0 ),
-			array( 'five_hundred_strong', 'Five Hundred Strong', 'Reached 500 total points.', 'points', 0 ),
-			array( 'thousand_points', 'Thousand Points Club', 'Earned 1,000 total points.', 'points', 0 ),
-			array( 'five_thousand_points', 'Five Thousand Strong', 'Reached 5,000 total points.', 'points', 0 ),
-			array( 'ten_thousand_points', 'Ten Thousand Club', 'Earned 10,000 total points.', 'points', 0 ),
+			array( 'century_club', __( 'Century Club', 'wb-gamification' ), __( 'Earned your first 100 points.', 'wb-gamification' ), 'points', 0 ),
+			array( 'five_hundred_strong', __( 'Five Hundred Strong', 'wb-gamification' ), __( 'Reached 500 total points.', 'wb-gamification' ), 'points', 0 ),
+			array( 'thousand_points', __( 'Thousand Points Club', 'wb-gamification' ), __( 'Earned 1,000 total points.', 'wb-gamification' ), 'points', 0 ),
+			array( 'five_thousand_points', __( 'Five Thousand Strong', 'wb-gamification' ), __( 'Reached 5,000 total points.', 'wb-gamification' ), 'points', 0 ),
+			array( 'ten_thousand_points', __( 'Ten Thousand Club', 'wb-gamification' ), __( 'Earned 10,000 total points.', 'wb-gamification' ), 'points', 0 ),
 
 			// ── WordPress ──────────────────────────────────────────────────────
-			array( 'welcome', 'Welcome Aboard', 'Joined the community.', 'wordpress', 0 ),
-			array( 'first_post', 'First Post', 'Published your very first post.', 'wordpress', 0 ),
-			array( 'prolific_writer', 'Prolific Writer', 'Published 10 posts.', 'wordpress', 0 ),
-			array( 'content_creator', 'Content Creator', 'Published 25 posts — a committed contributor.', 'wordpress', 0 ),
-			array( 'first_comment', 'First Comment', 'Left your first comment.', 'wordpress', 0 ),
-			array( 'engaged_reader', 'Engaged Reader', 'Left 10 comments — always adding to the conversation.', 'wordpress', 0 ),
+			array( 'welcome', __( 'Welcome Aboard', 'wb-gamification' ), __( 'Joined the community.', 'wb-gamification' ), 'wordpress', 0 ),
+			array( 'first_post', __( 'First Post', 'wb-gamification' ), __( 'Published your very first post.', 'wb-gamification' ), 'wordpress', 0 ),
+			array( 'prolific_writer', __( 'Prolific Writer', 'wb-gamification' ), __( 'Published 10 posts.', 'wb-gamification' ), 'wordpress', 0 ),
+			array( 'content_creator', __( 'Content Creator', 'wb-gamification' ), __( 'Published 25 posts - a committed contributor.', 'wb-gamification' ), 'wordpress', 0 ),
+			array( 'first_comment', __( 'First Comment', 'wb-gamification' ), __( 'Left your first comment.', 'wb-gamification' ), 'wordpress', 0 ),
+			array( 'engaged_reader', __( 'Engaged Reader', 'wb-gamification' ), __( 'Left 10 comments - always adding to the conversation.', 'wb-gamification' ), 'wordpress', 0 ),
 
 			// ── BuddyPress ────────────────────────────────────────────────────
-			array( 'first_update', 'First Update', 'Posted your first activity update.', 'buddypress', 0 ),
-			array( 'active_member', 'Active Member', 'Posted 10 activity updates.', 'buddypress', 0 ),
-			array( 'community_voice', 'Community Voice', 'Posted 50 activity updates — your voice shapes this community.', 'buddypress', 0 ),
-			array( 'first_friend', 'First Connection', 'Made your first friend.', 'buddypress', 0 ),
-			array( 'social_connector', 'Social Connector', 'Made 10 connections — growing the community network.', 'buddypress', 0 ),
-			array( 'group_creator', 'Group Creator', 'Created your first group.', 'buddypress', 0 ),
-			array( 'team_player', 'Team Player', 'Joined 3 or more groups.', 'buddypress', 0 ),
-			array( 'profile_pro', 'Profile Pro', 'Completed your extended profile.', 'buddypress', 0 ),
-			array( 'reaction_magnet', 'Reaction Magnet', 'Received 10 reactions on your activity.', 'buddypress', 0 ),
-			array( 'comment_champion', 'Comment Champion', 'Commented on 20 activity updates.', 'buddypress', 0 ),
-			array( 'poll_pioneer', 'Poll Pioneer', 'Created your first poll.', 'buddypress', 0 ),
-			array( 'blog_publisher', 'Blog Publisher', 'Published your first member blog post.', 'buddypress', 0 ),
+			array( 'first_update', __( 'First Update', 'wb-gamification' ), __( 'Posted your first activity update.', 'wb-gamification' ), 'buddypress', 0 ),
+			array( 'active_member', __( 'Active Member', 'wb-gamification' ), __( 'Posted 10 activity updates.', 'wb-gamification' ), 'buddypress', 0 ),
+			array( 'community_voice', __( 'Community Voice', 'wb-gamification' ), __( 'Posted 50 activity updates - your voice shapes this community.', 'wb-gamification' ), 'buddypress', 0 ),
+			array( 'first_friend', __( 'First Connection', 'wb-gamification' ), __( 'Made your first friend.', 'wb-gamification' ), 'buddypress', 0 ),
+			array( 'social_connector', __( 'Social Connector', 'wb-gamification' ), __( 'Made 10 connections - growing the community network.', 'wb-gamification' ), 'buddypress', 0 ),
+			array( 'group_creator', __( 'Group Creator', 'wb-gamification' ), __( 'Created your first group.', 'wb-gamification' ), 'buddypress', 0 ),
+			array( 'team_player', __( 'Team Player', 'wb-gamification' ), __( 'Joined 3 or more groups.', 'wb-gamification' ), 'buddypress', 0 ),
+			array( 'profile_pro', __( 'Profile Pro', 'wb-gamification' ), __( 'Completed your extended profile.', 'wb-gamification' ), 'buddypress', 0 ),
+			array( 'reaction_magnet', __( 'Reaction Magnet', 'wb-gamification' ), __( 'Received 10 reactions on your activity.', 'wb-gamification' ), 'buddypress', 0 ),
+			array( 'comment_champion', __( 'Comment Champion', 'wb-gamification' ), __( 'Commented on 20 activity updates.', 'wb-gamification' ), 'buddypress', 0 ),
+			array( 'poll_pioneer', __( 'Poll Pioneer', 'wb-gamification' ), __( 'Created your first poll.', 'wb-gamification' ), 'buddypress', 0 ),
+			array( 'blog_publisher', __( 'Blog Publisher', 'wb-gamification' ), __( 'Published your first member blog post.', 'wb-gamification' ), 'buddypress', 0 ),
 
 			// ── Special / admin-awarded ────────────────────────────────────────
-			array( 'early_adopter', 'Early Adopter', 'One of the first members of this community.', 'special', 0 ),
-			array( 'founding_member', 'Founding Member', 'A founding member — here from the very beginning.', 'special', 1 ),
-			array( 'top_contributor', 'Top Contributor', 'Recognized as a top community contributor.', 'special', 1 ),
-			array( 'mentor', 'Mentor', 'Helped guide and support other community members.', 'special', 1 ),
-			array( 'kudos_champion', 'Kudos Champion', 'Recognized for spreading positivity across the community.', 'special', 0 ),
-			array( 'event_host', 'Event Host', 'Hosted a community event.', 'special', 0 ),
-			array( 'community_veteran', 'Community Veteran', 'A long-standing, valued member of this community.', 'special', 1 ),
+			array( 'early_adopter', __( 'Early Adopter', 'wb-gamification' ), __( 'One of the first members of this community.', 'wb-gamification' ), 'special', 0 ),
+			array( 'founding_member', __( 'Founding Member', 'wb-gamification' ), __( 'A founding member - here from the very beginning.', 'wb-gamification' ), 'special', 1 ),
+			array( 'top_contributor', __( 'Top Contributor', 'wb-gamification' ), __( 'Recognized as a top community contributor.', 'wb-gamification' ), 'special', 1 ),
+			array( 'mentor', __( 'Mentor', 'wb-gamification' ), __( 'Helped guide and support other community members.', 'wb-gamification' ), 'special', 1 ),
+			array( 'kudos_champion', __( 'Kudos Champion', 'wb-gamification' ), __( 'Recognized for spreading positivity across the community.', 'wb-gamification' ), 'special', 0 ),
+			array( 'event_host', __( 'Event Host', 'wb-gamification' ), __( 'Hosted a community event.', 'wb-gamification' ), 'special', 0 ),
+			array( 'community_veteran', __( 'Community Veteran', 'wb-gamification' ), __( 'A long-standing, valued member of this community.', 'wb-gamification' ), 'special', 1 ),
 
 			// ── Tenure ─────────────────────────────────────────────────────────
-			array( 'tenure_1yr', '1-Year Member', 'Has been part of this community for one year.', 'special', 0 ),
-			array( 'tenure_2yr', '2-Year Member', 'A two-year member - a valued, long-standing contributor.', 'special', 0 ),
-			array( 'tenure_5yr', '5-Year Member', 'Five years and counting - a true community pillar.', 'special', 0 ),
-			array( 'tenure_10yr', '10-Year Member', 'A decade of community membership - legendary status.', 'special', 0 ),
+			array( 'tenure_1yr', __( '1-Year Member', 'wb-gamification' ), __( 'Has been part of this community for one year.', 'wb-gamification' ), 'special', 0 ),
+			array( 'tenure_2yr', __( '2-Year Member', 'wb-gamification' ), __( 'A two-year member - a valued, long-standing contributor.', 'wb-gamification' ), 'special', 0 ),
+			array( 'tenure_5yr', __( '5-Year Member', 'wb-gamification' ), __( 'Five years and counting - a true community pillar.', 'wb-gamification' ), 'special', 0 ),
+			array( 'tenure_10yr', __( '10-Year Member', 'wb-gamification' ), __( 'A decade of community membership - legendary status.', 'wb-gamification' ), 'special', 0 ),
 
 			// ── Site-first: one member only, see $max_earners below ────────────
-			array( 'first_champion', 'First Champion', 'The first member of this community to reach Champion rank.', 'special', 0 ),
-			array( 'first_10k_points', 'First to 10,000', 'The first member to earn 10,000 total points in this community.', 'special', 0 ),
-			array( 'first_100_day_streak', 'Century Streak Pioneer', 'The first member to reach a 100-day activity streak.', 'special', 0 ),
+			array( 'first_champion', __( 'First Champion', 'wb-gamification' ), __( 'The first member of this community to reach Champion rank.', 'wb-gamification' ), 'special', 0 ),
+			array( 'first_10k_points', __( 'First to 10,000', 'wb-gamification' ), __( 'The first member to earn 10,000 total points in this community.', 'wb-gamification' ), 'special', 0 ),
+			array( 'first_100_day_streak', __( 'Century Streak Pioneer', 'wb-gamification' ), __( 'The first member to reach a 100-day activity streak.', 'wb-gamification' ), 'special', 0 ),
 		);
 
 		$max_earners = array(
@@ -828,7 +849,7 @@ final class Installer {
 		);
 
 		// Conditions for auto-awarded badges (id => condition_type config).
-		// Admin-awarded badges have no condition entry — awarded manually via API.
+		// Admin-awarded badges have no condition entry - awarded manually via API.
 		$conditions = array(
 			// Points milestones.
 			'century_club'         => array(
@@ -852,18 +873,18 @@ final class Installer {
 				'points'         => 10000,
 			),
 
-			// WordPress actions — wp_user_register is always-on (not standalone_only).
+			// WordPress actions - wp_user_register is always-on (not standalone_only).
 			'welcome'              => array(
 				'condition_type' => 'action_count',
 				'action_id'      => 'wp_user_register',
 				'count'          => 1,
 			),
 			// WordPress action badges. Every badge's condition mirrors the literal
-			// action its name and description promise — "Published 10 posts" means
+			// action its name and description promise - "Published 10 posts" means
 			// 10 posts, not "250 points worth of activity." wp_publish_post and
 			// wp_leave_comment are always-on triggers in integrations/wordpress.php
 			// (standalone_only: false), so these conditions resolve on BuddyPress
-			// sites too. Do NOT re-flag those triggers standalone_only — doing so
+			// sites too. Do NOT re-flag those triggers standalone_only - doing so
 			// strands first_post / prolific_writer / content_creator / first_comment
 			// / engaged_reader as un-earnable badges on every BuddyPress install.
 			'first_post'           => array(
@@ -961,7 +982,7 @@ final class Installer {
 				'count'          => 1,
 			),
 
-			// Special / admin-awarded — no auto condition.
+			// Special / admin-awarded - no auto condition.
 			'early_adopter'        => array( 'condition_type' => 'admin_awarded' ),
 			'founding_member'      => array( 'condition_type' => 'admin_awarded' ),
 			'top_contributor'      => array( 'condition_type' => 'admin_awarded' ),
@@ -1103,7 +1124,7 @@ final class Installer {
 
 	/**
 	 * Seed the default level progression (Newcomer through Champion).
-	 * Runs only on fresh installs — skipped when the levels table already has rows.
+	 * Runs only on fresh installs - skipped when the levels table already has rows.
 	 */
 	private static function seed_default_levels(): void {
 		global $wpdb;
@@ -1116,27 +1137,27 @@ final class Installer {
 
 		$levels = array(
 			array(
-				'name'       => 'Newcomer',
+				'name'       => __( 'Newcomer', 'wb-gamification' ),
 				'min_points' => 0,
 				'sort_order' => 1,
 			),
 			array(
-				'name'       => 'Member',
+				'name'       => __( 'Member', 'wb-gamification' ),
 				'min_points' => 100,
 				'sort_order' => 2,
 			),
 			array(
-				'name'       => 'Contributor',
+				'name'       => __( 'Contributor', 'wb-gamification' ),
 				'min_points' => 500,
 				'sort_order' => 3,
 			),
 			array(
-				'name'       => 'Regular',
+				'name'       => __( 'Regular', 'wb-gamification' ),
 				'min_points' => 1500,
 				'sort_order' => 4,
 			),
 			array(
-				'name'       => 'Champion',
+				'name'       => __( 'Champion', 'wb-gamification' ),
 				'min_points' => 5000,
 				'sort_order' => 5,
 			),
@@ -1150,7 +1171,7 @@ final class Installer {
 	/**
 	 * Seed the default `points` point type.
 	 *
-	 * Idempotent — uses INSERT IGNORE on the slug primary key so re-activation
+	 * Idempotent - uses INSERT IGNORE on the slug primary key so re-activation
 	 * never duplicates the seed row. Sites can rename the label / icon later
 	 * via the admin UI; the slug stays as 'points' to keep back-compat for
 	 * every column that defaults to `'points'`.
@@ -1166,9 +1187,9 @@ final class Installer {
 			$wpdb->prepare(
 				"INSERT IGNORE INTO $table (slug, label, label_singular, description, icon, is_default, position, created_at) VALUES (%s, %s, %s, %s, %s, %d, %d, %s)",
 				'points',
-				'Points',
-				'Point',
-				'Primary points currency. Renamable; the slug stays as `points` for back-compat.',
+				__( 'Points', 'wb-gamification' ),
+				__( 'Point', 'wb-gamification' ),
+				__( 'Primary points currency. Renamable; the slug stays as `points` for back-compat.', 'wb-gamification' ),
 				'star',
 				1,
 				0,

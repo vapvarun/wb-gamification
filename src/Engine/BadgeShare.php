@@ -1,6 +1,6 @@
 <?php
 /**
- * Who may see a member's badge — the one answer, in one place.
+ * Who may see a member's badge - the one answer, in one place.
  *
  * Three public surfaces render a specific member's specific badge to anybody who asks:
  *

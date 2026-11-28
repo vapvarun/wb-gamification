@@ -167,17 +167,17 @@ final class SubmissionsPage {
 												<?php
 												// Submissions are stored as wp_kses_post-sanitised HTML
 												// (SubmissionService::submit) because the front-end
-												// editor is now wp_editor (commit 5928f95 — members
+												// editor is now wp_editor (commit 5928f95 - members
 												// can embed images via the Add Media button when the
 												// upload_files cap is granted).
 												//
 												// Pre-1.4.2 this cell stripped HTML for a trimmed text
-												// excerpt and dropped every embedded image — admins
+												// excerpt and dropped every embedded image - admins
 												// couldn't preview attached media (Basecamp #9927858743
 												// reopen comment). Now the cell shows:
 												// 1. Text excerpt (30 words, scanning-friendly)
 												// 2. Thumbnail strip of every <img> in the submission
-												// — each thumbnail links to the full-size image
+												// - each thumbnail links to the full-size image
 												// 3. A <details> reveal of the full sanitised HTML
 												// for the rare cases where the excerpt + thumbs
 												// aren't enough.
@@ -223,7 +223,7 @@ final class SubmissionsPage {
 														// $wb_gam_evidence was already passed through
 														// wp_kses_post at insert time, so it's safe to
 														// emit here. wp_kses_post() again as a
-														// defence-in-depth wrapper — costs nothing
+														// defence-in-depth wrapper - costs nothing
 														// since the input is already conformant.
 														echo wp_kses_post( $wb_gam_evidence );
 														?>

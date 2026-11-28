@@ -1,6 +1,6 @@
 <?php
 /**
- * Credential Expiry Engine — HubSpot-style renewal re-engagement
+ * Credential Expiry Engine - HubSpot-style renewal re-engagement
  *
  * When a badge_def has `validity_days > 0`, credentials earned from that
  * badge expire N days after award. CredentialController returns HTTP 410 Gone
@@ -11,7 +11,7 @@
  *   Earn badge → credential verifiable → credential expires (410 Gone) →
  *   member receives nudge → completes renewal action → re-earns badge.
  *
- * The renewal action is not hardcoded here — the `wb_gam_credential_expired`
+ * The renewal action is not hardcoded here - the `wb_gam_credential_expired`
  * hook lets the site admin trigger whatever re-qualification flow makes sense.
  *
  * @package WB_Gamification
@@ -22,15 +22,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -58,7 +58,7 @@ final class CredentialExpiryEngine {
 
 	/**
 	 * Credentials processed per tick. Bounds the notification loop and the
-	 * BuddyPress-notification write it performs per row — previously sized
+	 * BuddyPress-notification write it performs per row - previously sized
 	 * by however many credentials expired in the window, which is unbounded
 	 * on any site with a large credentialed population. Same shape as
 	 * StatusRetentionEngine::PAGE_SIZE.
@@ -73,7 +73,7 @@ final class CredentialExpiryEngine {
 	 */
 	public static function init(): void {
 		add_action( self::CRON_HOOK, array( __CLASS__, 'run' ) );
-		// Paged continuation — each page schedules the next until the window drains.
+		// Paged continuation - each page schedules the next until the window drains.
 		add_action( self::AS_PAGE_HOOK, array( __CLASS__, 'run_page' ), 10, 3 );
 	}
 
@@ -99,7 +99,7 @@ final class CredentialExpiryEngine {
 
 	/**
 	 * Weekly cron entry point. Resolves the (last_run, now] window once and
-	 * walks it in bounded pages via Action Scheduler — same shape as
+	 * walks it in bounded pages via Action Scheduler - same shape as
 	 * StatusRetentionEngine::run(). The window bounds are fixed for the
 	 * whole run and threaded through every page so a mid-window continuation
 	 * never drifts onto a different slice of time than the one it started.
@@ -118,15 +118,15 @@ final class CredentialExpiryEngine {
 	 * the page comes back full.
 	 *
 	 * Before 1.6.4 run() issued a single unbounded SELECT over every
-	 * credential that expired in the window and then looped every row —
-	 * including a BuddyPress notification insert per row — in one cron
+	 * credential that expired in the window and then looped every row -
+	 * including a BuddyPress notification insert per row - in one cron
 	 * tick. Fine at the handful of expiries a small community sees in a
 	 * week; unbounded on a site with a large credentialed population, the
 	 * same class of bug every other engine in this file already paid down
 	 * (see StatusRetentionEngine::run()).
 	 *
 	 * OPT_LAST is only advanced once the window is fully drained (the short
-	 * final page) — a mid-window continuation or an overlapping run must
+	 * final page) - a mid-window continuation or an overlapping run must
 	 * never move the watermark past credentials this run hasn't reached
 	 * yet, or the next weekly tick would silently skip them.
 	 *
@@ -136,7 +136,7 @@ final class CredentialExpiryEngine {
 	 */
 	public static function run_page( int $cursor = 0, string $window_start = '', string $window_end = '' ): void {
 		if ( '' === $window_start || '' === $window_end ) {
-			return; // Malformed continuation args — nothing safe to process.
+			return; // Malformed continuation args - nothing safe to process.
 		}
 
 		global $wpdb;
@@ -194,8 +194,8 @@ final class CredentialExpiryEngine {
 			do_action( 'wb_gam_credential_expired', $user_id, $badge_id, $row['expires_at'] );
 		}
 
-		// Short page: the window is drained. Advance the watermark now — not
-		// before the sweep started — so a run that dies partway through
+		// Short page: the window is drained. Advance the watermark now - not
+		// before the sweep started - so a run that dies partway through
 		// resumes from the true last-processed point on its next tick
 		// instead of silently skipping the remainder of the window.
 		if ( count( (array) $rows ) < self::PAGE_SIZE ) {
@@ -203,7 +203,7 @@ final class CredentialExpiryEngine {
 			return;
 		}
 
-		// More rows in this window — hand the next page to Action Scheduler
+		// More rows in this window - hand the next page to Action Scheduler
 		// rather than looping here, so no single tick carries a large
 		// backlog of expiries (e.g. a badge with validity_days set on a
 		// large cohort that all expire in the same week).
@@ -222,7 +222,7 @@ final class CredentialExpiryEngine {
 			return;
 		}
 
-		// No Action Scheduler — continue inline, still bounded per iteration.
+		// No Action Scheduler - continue inline, still bounded per iteration.
 		self::run_page( $last, $window_start, $window_end );
 	}
 

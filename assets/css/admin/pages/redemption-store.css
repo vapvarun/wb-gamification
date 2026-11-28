@@ -1,5 +1,5 @@
 /**
- * WB Gamification — Redemption Store Admin CSS
+ * WB Gamification - Redemption Store Admin CSS
  * =====================================================================
  * Per-page styles for `WBGam\Admin\RedemptionStorePage` (menu slug:
  * `wb-gam-redemption`). The rewards store admin:
@@ -12,7 +12,7 @@
  *
  * Token policy: `var(--wbgam-*)` only.
  *
- * Migration source: admin-pages.css "Redemption Store — reward-type
+ * Migration source: admin-pages.css "Redemption Store - reward-type
  * form toggle" section (`.wb-gam-config-row`, `.wb-gam-cfg-hint`,
  * `.wb-gam-cfg-*`).
  *
@@ -21,7 +21,7 @@
 
 /* Root wrapper marker. */
 .wb-gam-redemption {
-	/* Container — visuals from .wbgam-wrap. */
+	/* Container - visuals from .wbgam-wrap. */
 }
 
 /* JS hook for reward-type toggle. */
@@ -39,7 +39,7 @@
 .wb-gam-reward-stock,
 .wb-gam-reward-title,
 .wb-gam-reward-type {
-	/* JS-bound input hooks — visuals from .wbgam-input/.wbgam-select. */
+	/* JS-bound input hooks - visuals from .wbgam-input/.wbgam-select. */
 }
 
 /* ==========================================================================
@@ -77,7 +77,7 @@
 /* Stock mode control (Unlimited / Limited to [n] remaining).
  *
  * The shared .wbgam-input rule sets display:block, which dropped the quantity box
- * onto its own line and pushed "remaining" below it — the control read as three
+ * onto its own line and pushed "remaining" below it - the control read as three
  * stacked fragments at desktop while looking correct at 390px. Flex the row and
  * put the input back inline so the sentence reads as one. */
 .wb-gam-stock-modes {

@@ -1,5 +1,5 @@
 /**
- * Earning Guide — editor surface.
+ * Earning Guide - editor surface.
  */
 
 import { __ } from '@wordpress/i18n';

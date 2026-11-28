@@ -415,7 +415,7 @@
 				waiting = held.concat( waiting );
 				return;
 			}
-			// The page is clear: show what waited, one at a time on a phone, up to three otherwise.
+			// The page is clear: show what waited, one at a time on a phone, up to MAX_VISIBLE (two) otherwise.
 			var phone = window.matchMedia( ONE_AT_A_TIME ).matches;
 			var shown = function () {
 				return ( container ? container.children.length : 0 ) + bnLive.length;
@@ -451,7 +451,9 @@
 		} else {
 			link.hidden = true;
 		}
-
+		// With a button the text keeps the full width and the button sits under it, so a
+		// 40-character title reads in full at 360px (TOASTS.md).
+		el.classList.toggle( 'wb-gam-toast--action', hasLink );
 
 		// Every toast closes by itself; one with a link stays longer so it can be read and followed.
 		handle.ms = hasLink ? LINK_MS : DISMISS_MS;
@@ -487,10 +489,31 @@
 		return !! ( window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches );
 	}
 
+	/**
+	 * Group a number the way the reader reads it: the recipient's locale from the toast payload,
+	 * else the page language. Never the browser's own locale, which is not the language the page is in.
+	 */
+	function formatNumber( n, locale ) {
+		try {
+			return new Intl.NumberFormat( locale || document.documentElement.lang || undefined ).format( n );
+		} catch ( e ) {
+			return String( n );
+		}
+	}
+
 	/** The title with its {count} token as the final number, for readers and for stacks that do not count. */
 	function countText( opts ) {
 		var c = opts.count;
-		return String( opts.title || '' ).replace( '{count}', c ? Number( c.to ).toLocaleString() : '' );
+		return nameFor( String( opts.title || '' ).replace( '{count}', c ? formatNumber( Number( c.to ), c.locale ) : '' ), c, Number( c && c.to ) );
+	}
+
+	/**
+	 * The text after the number, with the unit in its singular for exactly 1 ("+1 Point", "+2 Points").
+	 * `count.unitOne` / `count.unitMany` are the site's own names, sent by the server; without them the
+	 * text is left as it is.
+	 */
+	function nameFor( text, c, n ) {
+		return ( c && c.unitOne && c.unitMany && 1 === n ) ? text.replace( c.unitMany, c.unitOne ) : text;
 	}
 
 	/**
@@ -514,7 +537,9 @@
 		num.setAttribute( 'aria-hidden', 'true' );
 		var shown = document.createElement( 'span' );
 		shown.setAttribute( 'aria-hidden', 'true' );
-		shown.append( parts[ 0 ], num, parts.slice( 1 ).join( '{count}' ) );
+		var tail = parts.slice( 1 ).join( '{count}' );
+		var rest = document.createTextNode( tail );
+		shown.append( parts[ 0 ], num, rest );
 		var said = document.createElement( 'span' );
 		said.className = 'screen-reader-text';
 		said.textContent = countText( opts );
@@ -523,20 +548,27 @@
 
 		var from = Number( c.from ) || 0;
 		var to   = Number( c.to ) || 0;
+		// One number, one place that writes it, so the unit follows the number on every frame.
+		var write = function ( n ) {
+			num.textContent = formatNumber( n, c.locale );
+			rest.nodeValue  = nameFor( tail, c, n );
+		};
 		if ( reducedMotion() || from === to ) {
-			num.textContent = to.toLocaleString();
+			write( to );
 			return;
 		}
 		var start = 0;
 		var step  = function ( t ) {
 			start = start || t;
-			var k = Math.min( 1, ( t - start ) / COUNT_MS );
-			num.textContent = Math.round( from + ( to - from ) * ( 1 - Math.pow( 1 - k, 3 ) ) ).toLocaleString();
+			// A frame's timestamp can precede the first one's (it is the frame start, not the call time): without the
+			// lower bound k went slightly negative and the number dipped below `from`, flashing "+-1" for a frame.
+			var k = Math.max( 0, Math.min( 1, ( t - start ) / COUNT_MS ) );
+			write( Math.round( from + ( to - from ) * ( 1 - Math.pow( 1 - k, 3 ) ) ) );
 			if ( k < 1 ) {
 				handle.countFrame = window.requestAnimationFrame( step );
 			}
 		};
-		num.textContent = from.toLocaleString();
+		write( from );
 		handle.countFrame = window.requestAnimationFrame( step );
 	}
 
@@ -554,6 +586,7 @@
 		el.appendChild( disc );
 
 		var body = document.createElement( 'div' );
+		body.className = 'wb-gam-toast__text';
 		var message = document.createElement( 'strong' );
 		message.className = 'wb-gam-toast__message';
 		var detail = document.createElement( 'span' );
@@ -563,7 +596,7 @@
 		body.appendChild( message );
 		body.appendChild( detail );
 		el.appendChild( body );
-		el.appendChild( link ); // Its own column: a small button on the right.
+		el.appendChild( link ); // A small button; under the text (popups.css .wb-gam-toast--action).
 
 		var close = document.createElement( 'button' );
 		close.type = 'button';
@@ -688,8 +721,8 @@
 	 * Is window.bnToast BuddyNext's own toast (which takes an options object)? Other plugins define
 	 * a text-only window.bnToast when BuddyNext is absent (Jetonomy's header.js), and BuddyNext's
 	 * early stub is text-only too; handing either an object printed "[object Object]". BuddyNext's
-	 * real one is the named function `bnToast` (shell/dialog.js) and, from BuddyNext 1.3.1, says
-	 * what it supports.
+	 * real one is the named function `bnToast` (shell/dialog.js) and, from the BuddyNext 1.3.0
+	 * toast rebuild, says what it supports (bnToast.supports); a build from before the rebuild has no flag and gets the final number as text.
 	 *
 	 * @return {boolean}
 	 */

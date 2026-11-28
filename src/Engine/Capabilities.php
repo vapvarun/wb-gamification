@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Capabilities
+ * WB Gamification - Capabilities
  *
  * Owns all custom capability registration. Granted on activation,
  * removed on uninstall. The administrator role gets every cap; site
@@ -44,7 +44,7 @@ final class Capabilities {
 		// Badge library only (BadgesController, BadgeAdminPage).
 		'wb_gam_manage_badges'         => array( 'administrator' ),
 		// Rule / level / challenge definition management (RulesController).
-		// Distinct from badge management — rules govern the broader
+		// Distinct from badge management - rules govern the broader
 		// award + level + challenge surface. Granting badge cap alone
 		// does NOT grant rules cap.
 		'wb_gam_manage_rules'          => array( 'administrator' ),
@@ -57,14 +57,14 @@ final class Capabilities {
 		// Level definition CRUD (LevelsController). Added in 1.4.1 after
 		// audit/DATA-FLOW-ADMIN-REST-2026-05-27.md §G1 found the
 		// controller already gated on this cap but the cap was never
-		// registered — granting it to non-admin roles did nothing.
+		// registered - granting it to non-admin roles did nothing.
 		'wb_gam_manage_levels'         => array( 'administrator' ),
 		// UGC submission queue (SubmissionsController). Added in 1.4.1
-		// after audit §G5 — pre-refactor the controller hardcoded
+		// after audit §G5 - pre-refactor the controller hardcoded
 		// `manage_options`, breaking the granular-delegation promise.
 		'wb_gam_manage_submissions'    => array( 'administrator' ),
 		// Transactional email toggles (EmailSettingsController). Added
-		// in 1.4.1 after audit §G6 — same hardcode pattern as G5.
+		// in 1.4.1 after audit §G6 - same hardcode pattern as G5.
 		'wb_gam_manage_email_settings' => array( 'administrator' ),
 		// Analytics dashboard view (AnalyticsDashboard).
 		'wb_gam_view_analytics'        => array( 'administrator' ),
@@ -154,7 +154,7 @@ final class Capabilities {
 	/**
 	 * Grant every plugin cap to its default roles.
 	 *
-	 * Idempotent — calling repeatedly is a no-op (WP_Role::add_cap
+	 * Idempotent - calling repeatedly is a no-op (WP_Role::add_cap
 	 * checks if the cap already exists before re-storing).
 	 *
 	 * @return void
@@ -182,7 +182,7 @@ final class Capabilities {
 	 * path from running register() on every page load when the option
 	 * write fails (e.g. broken `alloptions` cache, autoload misconfig).
 	 * Pre-1.4.1 those cases would loop every role × every cap on every
-	 * request until the write eventually succeeded — hammering the DB.
+	 * request until the write eventually succeeded - hammering the DB.
 	 * The transient is keyed on CAPS_VERSION so any future version bump
 	 * resets the breaker. Closes audit
 	 * DATA-FLOW-ADMIN-REST-2026-05-27.md §G16.
@@ -193,7 +193,7 @@ final class Capabilities {
 		if ( get_option( self::CAPS_VERSION_OPTION ) === self::CAPS_VERSION ) {
 			return;
 		}
-		// Circuit breaker — skip the heavy register() loop if we ran it
+		// Circuit breaker - skip the heavy register() loop if we ran it
 		// within the last hour. The transient TTL is intentionally short
 		// so a broken option-write doesn't permanently strand the install
 		// at the old version; the next hour's request retries.
@@ -208,7 +208,7 @@ final class Capabilities {
 	/**
 	 * Remove every plugin cap from every role.
 	 *
-	 * Called from uninstall.php — leaves no plugin-issued caps
+	 * Called from uninstall.php - leaves no plugin-issued caps
 	 * behind on the site.
 	 *
 	 * @return void

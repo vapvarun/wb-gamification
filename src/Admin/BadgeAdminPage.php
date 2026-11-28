@@ -4,7 +4,7 @@
  *
  * Adds "Badges" submenu under WB Gamification.
  * Lets admins create, edit, and delete badge definitions and their
- * auto-award conditions — no code required.
+ * auto-award conditions - no code required.
  *
  * @package WB_Gamification
  * @since   0.1.0
@@ -35,7 +35,7 @@ final class BadgeAdminPage {
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'add_submenu' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
-		// admin_post_wb_gam_{save,delete}_badge removed in 1.0.0 — page now
+		// admin_post_wb_gam_{save,delete}_badge removed in 1.0.0 - page now
 		// consumes /wb-gamification/v1/badges (POST + DELETE) via the generic
 		// admin-rest-form driver. See Tier 0.C migration.
 	}
@@ -111,7 +111,7 @@ final class BadgeAdminPage {
 			)
 		);
 
-		// The SHARED searchable member picker — same component ManualAwardPage and
+		// The SHARED searchable member picker - same component ManualAwardPage and
 		// KudosModerationPage use. This page used to reach for wp_dropdown_users()
 		// for the "Award this badge to a user" panel, which loads and renders every
 		// user on the site with no `number` cap: on a 100k-member community that is
@@ -354,7 +354,7 @@ final class BadgeAdminPage {
 		}
 
 		// Determine if the inline form should be visible.
-		// Read-only routing flag — `?action=new` toggles the create form
+		// Read-only routing flag - `?action=new` toggles the create form
 		// visibility without persisting anything; no nonce needed.
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$wb_gam_action_param = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
@@ -429,7 +429,7 @@ final class BadgeAdminPage {
 									<th><label for="wb-gam-badge-id"><?php esc_html_e( 'Badge ID', 'wb-gamification' ); ?></label></th>
 									<td>
 										<input type="text" name="id" id="wb-gam-badge-id" class="regular-text wbgam-input"
-											value="" placeholder="e.g. first_post" required>
+											value="" placeholder="<?php echo esc_attr__( 'e.g. first_post', 'wb-gamification' ); ?>" required>
 										<p class="description"><?php esc_html_e( 'Lowercase letters, numbers, underscores only.', 'wb-gamification' ); ?></p>
 									</td>
 								</tr>
@@ -691,7 +691,7 @@ final class BadgeAdminPage {
 
 						<?php if ( ! $is_new ) : ?>
 							<?php
-							// Manual-award panel — POSTs to /badges/{id}/award via the
+							// Manual-award panel - POSTs to /badges/{id}/award via the
 							// shared admin-rest-form pipeline. The endpoint accepts the
 							// award whatever the rule says (a manual badge has no auto
 							// rule, so this is the ONLY way it ever lands on a member;

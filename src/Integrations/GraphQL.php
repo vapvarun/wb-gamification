@@ -1,10 +1,10 @@
 <?php
 /**
- * WPGraphQL integration — exposes the gamification engine as GraphQL
+ * WPGraphQL integration - exposes the gamification engine as GraphQL
  * types and queries.
  *
  * Activates only when WPGraphQL is loaded (function_exists check).
- * No-op otherwise — installing this plugin without WPGraphQL doesn't
+ * No-op otherwise - installing this plugin without WPGraphQL doesn't
  * fire any errors or warnings.
  *
  * Types registered:
@@ -19,7 +19,7 @@
  *   wbGamBadges                      -> [WBGamBadge!]!
  *   wbGamIntelligence(userId: Int!)  -> WBGamIntelligence
  *
- * Resolvers delegate to existing engine methods — no business logic
+ * Resolvers delegate to existing engine methods - no business logic
  * duplication. The same code that powers the REST API powers GraphQL.
  *
  * @package WB_Gamification
@@ -50,7 +50,7 @@ final class GraphQL {
 	 */
 	public static function register_types(): void {
 		if ( ! function_exists( 'register_graphql_object_type' ) ) {
-			return; // belt + suspenders — should be loaded by the hook firing.
+			return; // belt + suspenders - should be loaded by the hook firing.
 		}
 
 		self::register_member_type();

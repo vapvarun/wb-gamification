@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# bin/check-action-async.sh — every repeatable action manifest must declare
+# bin/check-action-async.sh - every repeatable action manifest must declare
 # `async` explicitly.
 #
 # The WooCommerce-events bug (Basecamp #9925589914) had this root cause:
@@ -9,11 +9,11 @@
 # checkout completes. Fix (commit 5928f95) was explicit `'async' => false`
 # on user-initiated actions.
 #
-# This gate makes the choice mandatory — `repeatable=true` MUST be paired
+# This gate makes the choice mandatory - `repeatable=true` MUST be paired
 # with an explicit `async` line in the same manifest entry. Default-routing
 # is the smell.
 #
-# Baseline-driven via audit/action-async-baseline.txt — same shape as
+# Baseline-driven via audit/action-async-baseline.txt - same shape as
 # bin/check-css-orphans.sh. Existing implicit-async actions are recorded
 # at gate-introduction time so the build stays green; new ones fail.
 #
@@ -58,7 +58,7 @@ find_implicit_async() {
         in_trigger=0; id=""; rep=0; async=0; id_line=0
       }
       # New trigger block starts at the line containing an 'id' => key
-      # (no nesting — the block ends at the next '],' on its own).
+      # (no nesting - the block ends at the next '],' on its own).
       match($0, /[\x27"]id[\x27"][[:space:]]*=>[[:space:]]*[\x27"][^\x27"]+[\x27"]/) {
         flush()  # close any open trigger first
         s = substr($0, RSTART, RLENGTH)
@@ -92,7 +92,7 @@ if [ ! -f "$BASELINE_FILE" ]; then
   if [ "${1:-}" = "--update-baseline" ]; then
     mkdir -p "$(dirname "$BASELINE_FILE")"
     {
-      echo "# bin/check-action-async.sh baseline — register_action() call sites that"
+      echo "# bin/check-action-async.sh baseline - register_action() call sites that"
       echo "# set repeatable=true but don't declare async explicitly. Each non-comment"
       echo "# line is '<file>:<line> <action_id>'. New entries fail the gate; legitimate"
       echo "# fixes (explicit 'async' => true|false added) should DELETE the line in the"
@@ -118,7 +118,7 @@ FIXED_COUNT=$(printf '%s\n' "$FIXED" | grep -c '.' || true)
 if [ "${1:-}" = "--update-baseline" ]; then
   mkdir -p "$(dirname "$BASELINE_FILE")"
   {
-    echo "# bin/check-action-async.sh baseline — register_action() call sites that"
+    echo "# bin/check-action-async.sh baseline - register_action() call sites that"
     echo "# set repeatable=true but don't declare async explicitly. Each non-comment"
     echo "# line is '<file>:<line> <action_id>'. New entries fail the gate; legitimate"
     echo "# fixes (explicit 'async' => true|false added) should DELETE the line in the"
@@ -133,22 +133,22 @@ fi
 
 if [ "$NEW_COUNT" -eq 0 ]; then
   if [ "$FIXED_COUNT" -gt 0 ]; then
-    printf '%s\n' "${GREEN}✓${RESET}  Action async gate green — $FIXED_COUNT entry(ies) made explicit since baseline:"
+    printf '%s\n' "${GREEN}✓${RESET}  Action async gate green - $FIXED_COUNT entry(ies) made explicit since baseline:"
     printf '%s\n' "$FIXED" | sed 's/^/      ✓ /'
     printf '    %s\n' "${DIM}Refresh baseline: bin/check-action-async.sh --update-baseline${RESET}"
   else
-    printf '%s\n' "${GREEN}✓${RESET}  Action async gate green — no new implicit-async actions."
+    printf '%s\n' "${GREEN}✓${RESET}  Action async gate green - no new implicit-async actions."
   fi
   exit 0
 fi
 
-printf '%s\n' "${RED}✗${RESET}  Action async gate failed — $NEW_COUNT new register_action() entry(ies) set repeatable=true without declaring async:"
+printf '%s\n' "${RED}✗${RESET}  Action async gate failed - $NEW_COUNT new register_action() entry(ies) set repeatable=true without declaring async:"
 printf '%s\n' "$NEW" | sed 's/^/      - /'
 echo ""
 echo "    The Registry defaults async to derive from repeatable (true → async)."
-echo "    That routes the action through Action Scheduler — fine for high-volume"
+echo "    That routes the action through Action Scheduler - fine for high-volume"
 echo "    background work, wrong for user-initiated actions where the customer"
-echo "    expects an immediate award (see Basecamp #9925589914 — WooCommerce"
+echo "    expects an immediate award (see Basecamp #9925589914 - WooCommerce"
 echo "    events not firing was this exact bug)."
 echo ""
 echo "    Fix: declare 'async' explicitly in the affected manifest entry."

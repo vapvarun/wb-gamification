@@ -1,14 +1,14 @@
 <?php
 /**
- * WB Gamification — MemberPress Integration Manifest
+ * WB Gamification - MemberPress Integration Manifest
  *
  * Auto-loaded by ManifestLoader when this file exists in integrations/.
  * Fires only when MemberPress is active.
  *
  * Actions covered:
- *   Membership activated  — mepr-event-transaction-completed (once per membership)
- *   Membership renewed    — mepr-event-renewal-transaction-completed
- *   First signup ever     — mepr-event-member-signup-completed
+ *   Membership activated  - mepr-event-transaction-completed (once per membership)
+ *   Membership renewed    - mepr-event-renewal-transaction-completed
+ *   First signup ever     - mepr-event-member-signup-completed
  *
  * @package WB_Gamification
  */

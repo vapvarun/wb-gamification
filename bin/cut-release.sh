@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# bin/cut-release.sh — release-prep orchestrator.
+# bin/cut-release.sh - release-prep orchestrator.
 #
 # One command that brings the codebase to a tag-ready state. Replaces the
 # ~10-spot manual edit ritual that used to drift between version constants,
@@ -23,8 +23,8 @@
 #        - readme.txt (Stable tag)
 #        - audit/manifest.json (.plugin.version)
 #        - audit/manifest.summary.json (.plugin.version)
-#   3. Run bin/build-readme.php       — inline feature counts from manifest
-#   4. Run bin/build-docs-config.php  — regen docs_config.json from disk
+#   3. Run bin/build-readme.php       - inline feature counts from manifest
+#   4. Run bin/build-docs-config.php  - regen docs_config.json from disk
 #   5. On a real cut (not --check): insert empty changelog stubs:
 #        - readme.txt   "= NEW_VERSION - <Month Year> ="
 #        - CHANGELOG.md "## [NEW_VERSION] - <YYYY-MM-DD>"
@@ -85,7 +85,7 @@ fi
 
 # ─── 1. Version bump (skip on --check) ──────────────────────────────────────
 if [ "${CHECK_MODE}" -eq 0 ]; then
-    # wb-gamification.php — header + constant
+    # wb-gamification.php - header + constant
     sed -i.bak \
         -e "s/^ \* Version:     ${CURRENT_VERSION}$/ * Version:     ${NEW_VERSION}/" \
         -e "s/define( 'WB_GAM_VERSION', '${CURRENT_VERSION}' );/define( 'WB_GAM_VERSION', '${NEW_VERSION}' );/" \
@@ -96,17 +96,17 @@ if [ "${CHECK_MODE}" -eq 0 ]; then
     sed -i.bak "s/\"version\": \"${CURRENT_VERSION}\"/\"version\": \"${NEW_VERSION}\"/" package.json
     rm -f package.json.bak
 
-    # sdk/package.json — JS SDK version tracks the plugin version
+    # sdk/package.json - JS SDK version tracks the plugin version
     if [ -f sdk/package.json ]; then
         sed -i.bak "s/\"version\": \"${CURRENT_VERSION}\"/\"version\": \"${NEW_VERSION}\"/" sdk/package.json
         rm -f sdk/package.json.bak
     fi
 
-    # readme.txt — Stable tag
+    # readme.txt - Stable tag
     sed -i.bak "s/^Stable tag: ${CURRENT_VERSION}$/Stable tag: ${NEW_VERSION}/" readme.txt
     rm -f readme.txt.bak
 
-    # audit manifests — jq in-place
+    # audit manifests - jq in-place
     if ! command -v jq >/dev/null 2>&1; then
         echo "ERROR: jq required for manifest bump" >&2
         exit 1
@@ -130,17 +130,17 @@ if [ -f bin/build-readme.php ]; then
     php bin/build-readme.php || { echo "ERROR: bin/build-readme.php failed" >&2; exit 2; }
     echo "  ✓  readme.txt feature counts regenerated"
 else
-    echo "  WARN: bin/build-readme.php not present yet — skipping"
+    echo "  WARN: bin/build-readme.php not present yet - skipping"
 fi
 
 if [ -f bin/build-docs-config.php ]; then
     php bin/build-docs-config.php || { echo "ERROR: bin/build-docs-config.php failed" >&2; exit 2; }
     echo "  ✓  docs/website/docs_config.json regenerated"
 else
-    echo "  WARN: bin/build-docs-config.php not present yet — skipping"
+    echo "  WARN: bin/build-docs-config.php not present yet - skipping"
 fi
 
-# Hooks fired — manifest.hooks_fired[] rebuilt from grep of every
+# Hooks fired - manifest.hooks_fired[] rebuilt from grep of every
 # do_action / apply_filters call site under src/ + integrations/.
 # Also re-syncs the matching count fields in manifest.summary.json.
 # IMPORTANT for --check: snapshot manifest BEFORE the regen so we can
@@ -158,10 +158,10 @@ if [ -f bin/build-hooks-fired.php ]; then
     fi
     echo "  ✓  audit/manifest.hooks_fired in sync with code"
 else
-    echo "  WARN: bin/build-hooks-fired.php not present yet — skipping"
+    echo "  WARN: bin/build-hooks-fired.php not present yet - skipping"
 fi
 
-# Frontend assets — manifest.frontend_assets rebuilt from on-disk
+# Frontend assets - manifest.frontend_assets rebuilt from on-disk
 # canonical sources (drops *.min.* and *-rtl.* variants).
 if [ -f bin/build-frontend-assets.php ]; then
     PRE_MANIFEST_HASH="$(shasum -a 256 audit/manifest.json | awk '{print $1}')"
@@ -176,10 +176,10 @@ if [ -f bin/build-frontend-assets.php ]; then
     fi
     echo "  ✓  audit/manifest.frontend_assets in sync with disk"
 else
-    echo "  WARN: bin/build-frontend-assets.php not present yet — skipping"
+    echo "  WARN: bin/build-frontend-assets.php not present yet - skipping"
 fi
 
-# Integrations — manifest.integrations[] rebuilt from the integration manifest
+# Integrations - manifest.integrations[] rebuilt from the integration manifest
 # files (integrations/*.php + contrib/) and adapter classes (src/Integrations/).
 # Keeps the integration surface legible as the plugin adds more integrations.
 if [ -f bin/build-integrations.php ]; then
@@ -195,10 +195,10 @@ if [ -f bin/build-integrations.php ]; then
     fi
     echo "  ✓  audit/manifest.integrations in sync with disk"
 else
-    echo "  WARN: bin/build-integrations.php not present yet — skipping"
+    echo "  WARN: bin/build-integrations.php not present yet - skipping"
 fi
 
-# OpenAPI spec — requires WP-CLI because it walks the REST_Server's
+# OpenAPI spec - requires WP-CLI because it walks the REST_Server's
 # registered routes. Skip the step (with a clear note) when wp isn't on
 # PATH so this script still runs in CI containers that may not have it.
 if command -v wp >/dev/null 2>&1; then
@@ -218,11 +218,11 @@ if command -v wp >/dev/null 2>&1; then
         fi
     fi
 else
-    echo "  WARN: wp-cli not on PATH — skipping audit/openapi.json refresh."
+    echo "  WARN: wp-cli not on PATH - skipping audit/openapi.json refresh."
     echo "         Run 'wp wb-gamification openapi export' from a WP-CLI host before tagging."
 fi
 
-# JS SDK openapi-typescript types — sdk/src/openapi.d.ts must regenerate
+# JS SDK openapi-typescript types - sdk/src/openapi.d.ts must regenerate
 # byte-for-byte from audit/openapi.json. If audit/openapi.json drifted
 # but sdk/src/openapi.d.ts wasn't refreshed, downstream SDK consumers
 # would see a stale type surface. Skip cleanly if Node tooling isn't
@@ -248,7 +248,7 @@ if [ -d sdk/node_modules ]; then
         fi
     fi
 else
-    echo "  WARN: sdk/node_modules missing — skipping JS SDK type regen."
+    echo "  WARN: sdk/node_modules missing - skipping JS SDK type regen."
     echo "         Run 'cd sdk && npm install && npm run gen-types' before tagging."
 fi
 
@@ -280,7 +280,7 @@ fi
 MONTH_YEAR="$(date '+%B %Y')"
 ISO_DATE="$(date '+%Y-%m-%d')"
 
-# readme.txt — insert "= NEW_VERSION - Month Year =" right after the
+# readme.txt - insert "= NEW_VERSION - Month Year =" right after the
 # "== Changelog ==" header so the latest version is always top of section.
 python3 - "${NEW_VERSION}" "${MONTH_YEAR}" <<'PY'
 import sys, pathlib, re
@@ -296,7 +296,7 @@ else:
     print(f"  ✓  readme.txt: added stub for = {new_v} - {month_year} =")
 PY
 
-# CHANGELOG.md — insert after the existing [Unreleased] line.
+# CHANGELOG.md - insert after the existing [Unreleased] line.
 python3 - "${NEW_VERSION}" "${ISO_DATE}" <<'PY'
 import sys, pathlib, re
 new_v, iso_date = sys.argv[1], sys.argv[2]
@@ -317,7 +317,7 @@ PY
 # ─── 5. Done ───────────────────────────────────────────────────────────────
 echo ""
 echo "Release prep done. Next:"
-echo "  1. Edit readme.txt and CHANGELOG.md — replace the TODOs with the real release notes."
+echo "  1. Edit readme.txt and CHANGELOG.md - replace the TODOs with the real release notes."
 echo "  2. Review the diff with 'git diff' and run 'bash bin/local-ci.sh --quick'."
 echo "  3. Commit with a 'release: v${NEW_VERSION} - <summary>' message."
 echo "  4. Tag when ready: git tag -a v${NEW_VERSION} -m \"…\""

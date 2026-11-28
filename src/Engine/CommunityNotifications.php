@@ -2,14 +2,14 @@
 /**
  * Community notification contract.
  *
- * WB Gamification has no member-facing notification hook of its own today —
+ * WB Gamification has no member-facing notification hook of its own today -
  * `NotificationBridge` only queues footer toasts for the CURRENT page load,
  * which a host community plugin (BuddyNext) cannot subscribe to. This class
  * is the one place that turns eight of the plugin's own event hooks into a
  * single new hook, `wb_gam_notification_created`, carrying a payload array a
  * host reads to show one bell row with WB Gamification's own words and link.
  * WB Gamification keeps sending its own transactional email where it already
- * does (see TransactionalEmailEngine) — this class never emails.
+ * does (see TransactionalEmailEngine) - this class never emails.
  *
  * @package WB_Gamification
  * @since   1.6.5
@@ -30,22 +30,22 @@ final class CommunityNotifications {
 	 * the contract's types filter.
 	 */
 	public static function init(): void {
-		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'on_badge_awarded' ), 20, 3 );
-		add_action( 'wb_gam_level_changed', array( __CLASS__, 'on_level_changed' ), 20, 3 );
-		add_action( 'wb_gam_kudos_given', array( __CLASS__, 'on_kudos_given' ), 20, 4 );
+		add_action( 'wb_gam_badge_awarded', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_badge_awarded' ) ), 20, 3 );
+		add_action( 'wb_gam_level_changed', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_level_changed' ) ), 20, 3 );
+		add_action( 'wb_gam_kudos_given', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_kudos_given' ), 1 ), 20, 4 );
 		add_action( 'wb_gam_kudos_revoked', array( __CLASS__, 'on_kudos_revoked' ), 20, 1 );
-		add_action( 'wb_gam_challenge_completed', array( __CLASS__, 'on_challenge_completed' ), 20, 2 );
-		add_action( 'wb_gam_redemption_fulfilled', array( __CLASS__, 'on_redemption_fulfilled' ), 20, 2 );
-		add_action( 'wb_gam_credential_expired', array( __CLASS__, 'on_credential_expired' ), 20, 2 );
-		add_action( 'wb_gam_personal_record', array( __CLASS__, 'on_personal_record' ), 20, 5 );
-		add_action( 'wb_gam_streak_milestone', array( __CLASS__, 'on_streak_milestone' ), 20, 2 );
-		add_action( 'wb_gam_cohort_outcome', array( __CLASS__, 'on_cohort_outcome' ), 20, 4 );
-		add_action( 'wb_gam_community_goal_reached', array( __CLASS__, 'on_community_goal' ), 20, 3 );
-		add_action( 'wb_gam_submission_approved', array( __CLASS__, 'on_submission_approved' ), 20, 3 );
-		add_action( 'wb_gam_submission_rejected', array( __CLASS__, 'on_submission_rejected' ), 20, 3 );
+		add_action( 'wb_gam_challenge_completed', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_challenge_completed' ) ), 20, 2 );
+		add_action( 'wb_gam_redemption_fulfilled', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_redemption_fulfilled' ), 1 ), 20, 2 );
+		add_action( 'wb_gam_credential_expired', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_credential_expired' ) ), 20, 2 );
+		add_action( 'wb_gam_personal_record', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_personal_record' ) ), 20, 5 );
+		add_action( 'wb_gam_streak_milestone', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_streak_milestone' ) ), 20, 2 );
+		add_action( 'wb_gam_cohort_outcome', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_cohort_outcome' ) ), 20, 4 );
+		add_action( 'wb_gam_community_goal_reached', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_community_goal' ) ), 20, 3 );
+		add_action( 'wb_gam_submission_approved', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_submission_approved' ), 1 ), 20, 3 );
+		add_action( 'wb_gam_submission_rejected', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_submission_rejected' ), 1 ), 20, 3 );
 
-		// A deleted badge definition takes every notification that named it —
-		// both the award and any expiry notice — with it. One fire regardless
+		// A deleted badge definition takes every notification that named it -
+		// both the award and any expiry notice - with it. One fire regardless
 		// of how many members had earned it: purge() below matches by
 		// (object_type, object_id) only, not per recipient.
 		add_action( 'wb_gam_badge_deleted', array( __CLASS__, 'on_badge_deleted' ), 20, 1 );
@@ -80,7 +80,7 @@ final class CommunityNotifications {
 
 	/**
 	 * LevelEngine.php fires: do_action( 'wb_gam_level_changed', $user_id, $new_level, $old_level ).
-	 * Only a climb is news — the same rule BuddyNext's retired bridge applied
+	 * Only a climb is news - the same rule BuddyNext's retired bridge applied
 	 * (`wb_gam_is_level_climb()`), now owned here since this plugin decides
 	 * when to notify about its own events.
 	 *
@@ -173,7 +173,7 @@ final class CommunityNotifications {
 	/**
 	 * RedemptionEngine.php fires: do_action( 'wb_gam_redemption_fulfilled', $redemption_id, $user_id ).
 	 * WB Gamification's own email (TransactionalEmailEngine) fires on the
-	 * REDEMPTION REQUEST (`wb_gam_points_redeemed`), not on fulfilment — there
+	 * REDEMPTION REQUEST (`wb_gam_points_redeemed`), not on fulfilment - there
 	 * is no existing "your reward is ready" email to preserve or duplicate.
 	 *
 	 * @param int $redemption_id Redemption row id.
@@ -405,7 +405,7 @@ final class CommunityNotifications {
 	}
 
 	/**
-	 * A badge definition was permanently deleted — remove every notification
+	 * A badge definition was permanently deleted - remove every notification
 	 * that named it, for every member who had one.
 	 *
 	 * @param string $badge_id Deleted badge slug.
@@ -459,12 +459,12 @@ final class CommunityNotifications {
 	/**
 	 * Where a member's own notification should link: the canonical, single
 	 * "where does this member's name/profile link to" resolver
-	 * ({@see MemberUrl::resolve()}) — BuddyPress when active, else this
+	 * ({@see MemberUrl::resolve()}) - BuddyPress when active, else this
 	 * plugin's own public profile, else whatever `wb_gam_member_url` answers
 	 * (the filter BuddyNext's GamificationBridge already hooks to point every
 	 * member link at the BuddyNext profile). Falls back to the hub page, then
 	 * the site home, only when that resolver has nothing (private profile, no
-	 * BuddyPress, profiles switched off) — the achievement still happened, so
+	 * BuddyPress, profiles switched off) - the achievement still happened, so
 	 * the notification still gets a working link rather than being dropped for
 	 * want of one.
 	 *
@@ -484,7 +484,7 @@ final class CommunityNotifications {
 	 * A stable integer id for a badge slug, for the two contract types keyed on
 	 * a badge (`badge_awarded`, `credential_expired`) and for their removal.
 	 * `wb_gam_badge_defs.id` is a VARCHAR slug, not an int, and the contract's
-	 * object_id (and BuddyNext's removal match) is typed int — so the slug is
+	 * object_id (and BuddyNext's removal match) is typed int - so the slug is
 	 * hashed rather than dropped. crc32() is deterministic and stable for a
 	 * given slug for as long as the badge exists.
 	 *

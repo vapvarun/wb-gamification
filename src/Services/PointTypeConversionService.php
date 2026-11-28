@@ -21,15 +21,15 @@ use WBGam\Repository\PointTypeConversionRepository;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -189,7 +189,7 @@ final class PointTypeConversionService {
 	 * Flow:
 	 *   1. Resolve + validate from/to slugs (must be different, both registered).
 	 *   2. Look up the active rule. No rule → 'no_rule'.
-	 *   3. Check `min_convert` — input below minimum is rejected (UX hint).
+	 *   3. Check `min_convert` - input below minimum is rejected (UX hint).
 	 *   4. Cooldown check (default 0 = none).
 	 *   5. Daily-cap check (default 0 = unlimited).
 	 *   6. Compute units = floor( amount / from_amount ); reject if 0.
@@ -241,7 +241,7 @@ final class PointTypeConversionService {
 			);
 		}
 
-		// Cooldown — default 0 means no cooldown applied.
+		// Cooldown - default 0 means no cooldown applied.
 		$cooldown = (int) ( $rule['cooldown_seconds'] ?? 0 );
 		if ( $cooldown > 0 ) {
 			$last = $this->repo->last_conversion_at( $user_id, $from, $to );
@@ -253,7 +253,7 @@ final class PointTypeConversionService {
 			}
 		}
 
-		// Daily cap — default 0 means unlimited.
+		// Daily cap - default 0 means unlimited.
 		$max_per_day = (int) ( $rule['max_per_day'] ?? 0 );
 		if ( $max_per_day > 0 && $this->repo->count_today( $user_id, $from, $to ) >= $max_per_day ) {
 			return array(
@@ -262,7 +262,7 @@ final class PointTypeConversionService {
 			);
 		}
 
-		// Compute units — floor at $rule['from_amount']. Caller can spend
+		// Compute units - floor at $rule['from_amount']. Caller can spend
 		// 250 points at a 100→1 rate and receive 2 coins (50 points refunded
 		// to the from-balance via the floor).
 		$from_amount = max( 1, (int) $rule['from_amount'] );
@@ -310,7 +310,7 @@ final class PointTypeConversionService {
 		$lock_balance = 0;
 
 		// The WHOLE flow runs inside one re-entrant transaction. debit() also
-		// calls Transaction::run(), but nested at inner depth — it does NOT open
+		// calls Transaction::run(), but nested at inner depth - it does NOT open
 		// its own MySQL transaction (which previously triggered an implicit
 		// commit of the debit before the credit, the cause of debit-without-
 		// credit ledger corruption). This outer frame owns commit/rollback.
@@ -373,7 +373,7 @@ final class PointTypeConversionService {
 				}
 
 				// Credit the destination type via a direct ledger insert (skips
-				// the rate-limit pipeline — convert is admin-controlled). It
+				// the rate-limit pipeline - convert is admin-controlled). It
 				// shares the debit's event_id; the single events row debit()
 				// already persisted is the audit anchor for BOTH rows, so there
 				// is no second events insert here.
@@ -412,7 +412,7 @@ final class PointTypeConversionService {
 		);
 
 		if ( ! is_array( $result ) ) {
-			// Rolled back — nothing committed. Surface why.
+			// Rolled back - nothing committed. Surface why.
 			if ( 'insufficient' === $fail ) {
 				return array(
 					'ok'      => false,
@@ -427,7 +427,7 @@ final class PointTypeConversionService {
 			);
 		}
 
-		// Cache invalidation runs AFTER commit — the data is durable now. Use
+		// Cache invalidation runs AFTER commit - the data is durable now. Use
 		// the canonical cache key helper so this matches PointsEngine::get_total.
 		wp_cache_delete( PointsEngine::cache_key_total( $user_id, $from ), 'wb_gamification' );
 		wp_cache_delete( PointsEngine::cache_key_total( $user_id, $to ), 'wb_gamification' );

@@ -1,10 +1,13 @@
 <?php
 /**
- * One delivery position per member, shared by every toast reader.
+ * One delivery position per member, shared by every toast reader, moved only
+ * when a page acknowledges it displayed the toasts.
  *
  * Each reader (page seed, heartbeat, REST) used to keep its own position, so a
- * toast showed once per reader: the heartbeat painted it on one page and the
- * page seed painted it again on the next.
+ * toast showed once per reader. Then the shared position moved on READ, and a
+ * reload right after an award (BuddyNext reloads after a post) lost the toasts:
+ * the old page read them and was destroyed before painting. Reading no longer
+ * delivers; acknowledging does.
  *
  * @package WB_Gamification
  */
@@ -21,6 +24,7 @@ use WBGam\Engine\NotificationBridge;
 #[CoversMethod( NotificationBridge::class, 'read_pending' )]
 #[CoversMethod( NotificationBridge::class, 'cursor' )]
 #[CoversMethod( NotificationBridge::class, 'advance_cursor' )]
+#[CoversMethod( NotificationBridge::class, 'acknowledge' )]
 class SharedDeliveryCursorTest extends TestCase {
 
 	/**
@@ -56,9 +60,21 @@ class SharedDeliveryCursorTest extends TestCase {
 		$GLOBALS['wpdb'] = new class() {
 			public string $prefix = 'wp_';
 			private int $after   = 0;
+			private int $row     = 0;
 			public function prepare( $sql, ...$args ) {
-				$this->after = (int) ( $args[1] ?? 0 );
+				if ( str_contains( $sql, 'AND user_id' ) ) {
+					$this->row = (int) ( $args[0] ?? 0 ); // Primary-key lookup of one row of this member.
+				} else {
+					$this->after = (int) ( $args[1] ?? 0 );
+				}
 				return $sql;
+			}
+			public function get_var( $sql ) {
+				if ( str_contains( $sql, 'MAX(id)' ) ) {
+					return 10; // The member's newest queue row.
+				}
+				// Member 7 owns rows 1..10 except 5, which is another member's (queue ids are global).
+				return ( $this->row >= 1 && $this->row <= 10 && 5 !== $this->row ) ? $this->row : null;
 			}
 			public function get_results( $sql, $output = null ) {
 				$rows = array();
@@ -77,11 +93,60 @@ class SharedDeliveryCursorTest extends TestCase {
 	}
 
 	#[Test]
-	public function what_one_reader_delivered_no_other_reader_delivers_again(): void {
-		$this->assertNotEmpty( NotificationBridge::read_pending( 7, 'heartbeat' ), 'The waiting events arrive once (the page folds them into one toast).' );
-		$this->assertSame( array(), NotificationBridge::read_pending( 7, 'footer' ), 'The page seed must not repeat what the heartbeat showed.' );
-		$this->assertSame( array(), NotificationBridge::read_pending( 7 ) );
+	public function reading_never_moves_the_position_so_a_vanished_page_loses_nothing(): void {
+		$first  = NotificationBridge::read_pending( 7, 'heartbeat' );
+		$second = NotificationBridge::read_pending( 7, 'footer' );
+
+		$this->assertNotEmpty( $first );
+		$this->assertSame( array_column( $first, '_id' ), array_column( $second, '_id' ), 'Two reads before an acknowledgement return the same rows (a reload re-delivers; two tabs each show them once).' );
+		$this->assertSame( 0, NotificationBridge::cursor( 7 ), 'No reader moves the cursor.' );
+		$this->assertArrayNotHasKey( 'wb_gam_notif_cursor_member', $this->meta );
+	}
+
+	#[Test]
+	public function every_payload_carries_its_row_id_and_the_window_head_to_acknowledge(): void {
+		$events = NotificationBridge::read_pending( 7 );
+		$this->assertSame( array( 6, 7, 8, 9, 10 ), array_column( $events, '_id' ) );
+		$this->assertSame( array( 10, 10, 10, 10, 10 ), array_column( $events, '_ack' ) );
+	}
+
+	#[Test]
+	public function an_acknowledgement_moves_the_position_and_drops_what_it_covered(): void {
+		$this->assertTrue( NotificationBridge::acknowledge( 7, 10 ) );
 		$this->assertSame( 10, NotificationBridge::cursor( 7 ) );
+		$this->assertSame( array(), NotificationBridge::read_pending( 7 ), 'Delivered once: nothing left for the next page.' );
+	}
+
+	#[Test]
+	public function an_acknowledgement_only_moves_forward(): void {
+		NotificationBridge::acknowledge( 7, 9 );
+		$this->assertTrue( NotificationBridge::acknowledge( 7, 4 ), 'A late, lower acknowledgement is harmless.' );
+		$this->assertSame( 9, NotificationBridge::cursor( 7 ) );
+	}
+
+	#[Test]
+	public function an_acknowledgement_past_the_members_newest_row_is_refused(): void {
+		$this->assertFalse( NotificationBridge::acknowledge( 7, 11 ), 'A future (or another member\'s) id cannot skip toasts the page never received.' );
+		$this->assertFalse( NotificationBridge::acknowledge( 7, 0 ) );
+		$this->assertFalse( NotificationBridge::acknowledge( 0, 5 ) );
+		$this->assertSame( 0, NotificationBridge::cursor( 7 ) );
+	}
+
+	#[Test]
+	public function an_acknowledgement_of_another_members_row_is_refused_and_the_position_stays(): void {
+		$this->assertFalse( NotificationBridge::acknowledge( 7, 5 ), 'Row 5 is below the caller\'s newest row (10) but belongs to someone else: it must not move the caller\'s position past rows 1-4 and 6-10.' );
+		$this->assertSame( 0, NotificationBridge::cursor( 7 ) );
+		$this->assertSame( array( 6, 7, 8, 9, 10 ), array_column( NotificationBridge::read_pending( 7 ), '_id' ), 'The caller\'s unseen rows are still delivered.' );
+	}
+
+	#[Test]
+	public function a_truncated_backlog_is_dropped_only_once_acknowledged(): void {
+		// 10 rows, window 5: the page shows the newest 5 as a catch-up and the older 5 are never shown.
+		$events = NotificationBridge::read_pending( 7 );
+		$this->assertSame( 0, NotificationBridge::cursor( 7 ), 'Unacknowledged: the backlog is still there to re-deliver.' );
+		NotificationBridge::acknowledge( 7, (int) $events[0]['_ack'] );
+		$this->assertSame( 10, NotificationBridge::cursor( 7 ) );
+		$this->assertSame( array(), NotificationBridge::read_pending( 7 ) );
 	}
 
 	#[Test]

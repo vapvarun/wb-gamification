@@ -58,6 +58,7 @@ class RedemptionStoreRenderTest extends TestCase {
 					echo (string) $text; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				},
 				'__'                  => static fn ( $text ) => (string) $text,
+				'_n'                  => static fn ( $one, $many, $n ) => 1 === (int) $n ? $one : $many,
 				'wp_json_encode'      => static fn ( $value ) => json_encode( $value ),
 				'wp_login_url'        => static fn ( $value = '' ) => 'https://example.test/login',
 				'wp_create_nonce'     => static fn () => 'nonce-12345',

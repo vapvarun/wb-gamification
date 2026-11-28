@@ -1,13 +1,13 @@
 <?php
 /**
- * WB Gamification — GiveWP Integration Manifest
+ * WB Gamification - GiveWP Integration Manifest
  *
  * Auto-loaded by ManifestLoader. Fires only when GiveWP is active.
  *
  * Actions covered:
- *   Donation completed      — give_complete_donation (any amount, any form)
- *   First donation ever     — give_complete_donation (once only)
- *   Campaign goal reached   — wb_gam_give_campaign_goal_reached (GiveWP has no hook for this)
+ *   Donation completed      - give_complete_donation (any amount, any form)
+ *   First donation ever     - give_complete_donation (once only)
+ *   Campaign goal reached   - wb_gam_give_campaign_goal_reached (GiveWP has no hook for this)
  *
  * Nonprofit community model:
  *   Recognize the act of donating, not the amount (privacy-preserving).

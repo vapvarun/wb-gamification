@@ -21,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 /**
- * Manages the Award Points admin page — form, nonce handling, and recent award history.
+ * Manages the Award Points admin page - form, nonce handling, and recent award history.
  *
  * @package WB_Gamification
  */
@@ -49,7 +49,7 @@ final class ManualAwardPage {
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'add_submenu' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
-		// admin_post_wb_gam_manual_award removed in 1.0.0 — page now consumes
+		// admin_post_wb_gam_manual_award removed in 1.0.0 - page now consumes
 		// /wb-gamification/v1/points/award via the generic admin-rest-form driver.
 	}
 
@@ -488,7 +488,7 @@ final class ManualAwardPage {
 		// why every positive manual award appeared to vanish from the
 		// "Recent Manual Awards" table (Basecamp #9927666545). The browser
 		// verification on the live DB showed 32 'manual_award' + 6 'manual'
-		// rows that were invisible — collectively the bulk of award traffic.
+		// rows that were invisible - collectively the bulk of award traffic.
 		$in   = implode( ', ', array_fill( 0, count( self::ACTION_IDS ), '%s' ) );
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(

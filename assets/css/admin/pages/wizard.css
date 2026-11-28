@@ -1,5 +1,5 @@
 /**
- * WB Gamification — Setup CSS
+ * WB Gamification - Setup CSS
  * =====================================================================
  * Per-page styles for `WBGam\Admin\SetupWizard` (menu slug `wb-gamification-setup`): four steps
  * over one form (your community, how members earn, what members get, review and launch).
@@ -88,7 +88,6 @@
 	border-radius: var(--wbgam-card-radius);
 	background: var(--wbgam-card-bg);
 }
-.wbgam-setup__panel[hidden] { display: none; }
 .wbgam-setup__panel h2 { margin: 0 0 6px; font-size: var(--wbgam-fs-xl); }
 .wbgam-setup__lede { margin: 0 0 var(--wbgam-gap); color: var(--wbgam-text-secondary); max-width: 70ch; }
 
@@ -148,7 +147,6 @@
 	border: 1px solid var(--wbgam-border);
 	border-radius: var(--wbgam-radius-md);
 }
-.wbgam-setup__group[hidden] { display: none; }
 .wbgam-setup__group > summary {
 	display: flex;
 	flex-wrap: wrap;
@@ -166,6 +164,21 @@
 	text-align: start;
 	vertical-align: middle;
 }
+.wbgam-setup__error {
+	display: block;
+	margin-block-start: var(--wbgam-gap-2xs);
+	max-width: 22rem;
+	color: var(--wbgam-danger-dark);
+	font-size: var(--wbgam-fs-xs);
+	font-weight: 600;
+	line-height: 1.4;
+}
+.wbgam-setup__error::before { content: "\26A0\FE0E\00A0"; } /* a mark as well as colour */
+.wbgam-setup__actions input[aria-invalid="true"] {
+	border-color: var(--wbgam-danger);
+	box-shadow: 0 0 0 1px var(--wbgam-danger);
+}
+.wbgam-setup__alert { margin-block: var(--wbgam-gap-sm); }
 .wbgam-setup__actions th { color: var(--wbgam-text-muted); font-weight: 600; }
 .wbgam-setup__limit { color: var(--wbgam-text-secondary); white-space: nowrap; }
 
@@ -234,6 +247,7 @@
 		border-block-start: 1px solid var(--wbgam-border-light);
 	}
 	.wbgam-setup__actions td { padding: 0; border: 0; }
+	.wbgam-setup__actions td:has(.wbgam-setup__error) { grid-column: 1 / -1; }
 	.wbgam-setup__limit { grid-column: 2 / -1; }
 	.wbgam-setup__summary > div { grid-template-columns: 1fr auto; }
 	.wbgam-setup__summary dd[data-wbgam-sum] { grid-column: 1 / -1; grid-row: 2; }

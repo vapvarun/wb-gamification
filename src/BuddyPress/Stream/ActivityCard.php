@@ -1,12 +1,12 @@
 <?php
 /**
- * WB Gamification — BuddyPress Activity Card renderer + lookups.
+ * WB Gamification - BuddyPress Activity Card renderer + lookups.
  *
  * Shared utilities for every gamification stream poster:
- *   - render() — uniform HTML card with image + title + description
- *   - lookup_badge_def() / lookup_level() — DB hydration
- *   - user_link() / user_display_name() — profile-aware names
- *   - default_*_image() — embedded SVG data URIs for fallback icons
+ *   - render() - uniform HTML card with image + title + description
+ *   - lookup_badge_def() / lookup_level() - DB hydration
+ *   - user_link() / user_display_name() - profile-aware names
+ *   - default_*_image() - embedded SVG data URIs for fallback icons
  *
  * @package WB_Gamification
  * @since   1.2.1
@@ -275,7 +275,7 @@ final class ActivityCard {
 	 * The content card ({@see render()}) already names the specific badge /
 	 * level / challenge / kudos recipient, so the BuddyPress action headline
 	 * stays a short generic verb ("earned a badge") instead of repeating the
-	 * specific name — otherwise every gamification activity states the same
+	 * specific name - otherwise every gamification activity states the same
 	 * thing twice (the duplication QA flagged 2026-06).
 	 *
 	 * @param string $user_link HTML profile link for the actor (from user_link()).

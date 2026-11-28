@@ -32,15 +32,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -112,7 +112,7 @@ final class WeeklyEmailEngine {
 	public static function init(): void {
 		add_action( self::CRON_HOOK, array( __CLASS__, 'dispatch_batch' ) );
 		add_action( self::AS_HOOK, array( __CLASS__, 'send_to_user' ) );
-		// Paged continuation — each page schedules the next until the keyset drains.
+		// Paged continuation - each page schedules the next until the keyset drains.
 		add_action( self::AS_PAGE_HOOK, array( __CLASS__, 'dispatch_page' ) );
 	}
 
@@ -154,7 +154,7 @@ final class WeeklyEmailEngine {
 		// BuddyNext is the master community product and owns member communication
 		// (its notifications are collect-only and it never lets a partner email
 		// members on its behalf). When BuddyNext is active, wb-gamification does
-		// NOT send its own weekly member digest by default — standing already
+		// NOT send its own weekly member digest by default - standing already
 		// surfaces inside BuddyNext (the Achievements tab + activity feed). A site
 		// owner who genuinely wants the partner email can re-enable it by
 		// returning false from this filter.
@@ -175,7 +175,7 @@ final class WeeklyEmailEngine {
 
 		// Guard against overlapping dispatch. WP-Cron re-fires an overdue event on
 		// the next page load, so a tick that timed out part-way through would
-		// previously start a SECOND full dispatch — enqueueing a second job per
+		// previously start a SECOND full dispatch - enqueueing a second job per
 		// member. send_to_user() has no "already emailed this week" check, so that
 		// is a duplicate weekly email to every member who was already queued. The
 		// lock is what stops the duplicate, and the per-user dedupe below is the
@@ -241,11 +241,11 @@ final class WeeklyEmailEngine {
 	 *
 	 * Before 1.6.4 dispatch_batch() ran an unbounded `SELECT DISTINCT user_id`
 	 * over the whole ledger, pulled every active member into one PHP array, and
-	 * enqueued one Action Scheduler job per member — all inside a single 60-second
+	 * enqueued one Action Scheduler job per member - all inside a single 60-second
 	 * WP-Cron tick. At 100k members that is 100,000 INSERTs into
 	 * actionscheduler_actions in one request. It times out part-way, leaves the AS
 	 * queue flooded, and the un-enqueued remainder is simply lost until next week.
-	 * (This plugin has already been bitten by an AS blow-up once — see
+	 * (This plugin has already been bitten by an AS blow-up once - see
 	 * ActionSchedulerCleaner's PERF-002 note, 3.6M rows in 40 hours.)
 	 *
 	 * Now it walks a KEYSET cursor: each page selects the next PAGE_SIZE members
@@ -303,7 +303,7 @@ final class WeeklyEmailEngine {
 			$last = max( $last, $uid );
 
 			if ( ! function_exists( 'as_enqueue_async_action' ) ) {
-				// No Action Scheduler — send inline. Fine for a small site; a large
+				// No Action Scheduler - send inline. Fine for a small site; a large
 				// one always has AS (it ships with this plugin).
 				self::send_to_user( $uid );
 				continue;
@@ -324,7 +324,7 @@ final class WeeklyEmailEngine {
 			);
 		}
 
-		// A short page means the keyset is exhausted — the run is done.
+		// A short page means the keyset is exhausted - the run is done.
 		if ( count( $user_ids ) < self::PAGE_SIZE ) {
 			delete_transient( self::DISPATCH_LOCK_KEY );
 			return;
@@ -356,6 +356,16 @@ final class WeeklyEmailEngine {
 	 * @param int $user_id User ID to send the email to.
 	 */
 	public static function send_to_user( int $user_id ): void {
+		// The email is the member's: build it in their language, not the cron's or an admin's.
+		RecipientLocale::run_as_user( $user_id, static fn() => self::do_send_to_user( $user_id ) );
+	}
+
+	/**
+	 * Build and send the weekly summary email; send_to_user() runs it in the member's locale.
+	 *
+	 * @param int $user_id User ID to send the email to.
+	 */
+	private static function do_send_to_user( int $user_id ): void {
 		$user = get_userdata( $user_id );
 		if ( ! $user || ! $user->user_email ) {
 			return;
@@ -363,7 +373,7 @@ final class WeeklyEmailEngine {
 
 		// Worker-time re-check of the opt-out state. The batch SQL at
 		// `dispatch_batch` already filters `notification_mode != 'none'`
-		// at enqueue, but the AS queue can run minutes later — a user
+		// at enqueue, but the AS queue can run minutes later - a user
 		// who clicks the unsubscribe link in that window must NOT receive
 		// the recap that was already enqueued. Cheap PK lookup; SELECT
 		// cost is negligible compared to wp_mail.
@@ -392,7 +402,7 @@ final class WeeklyEmailEngine {
 		 * Use to completely replace the rendered HTML, or to inject
 		 * additional content. The base body is built by Email::render()
 		 * which already supports theme overrides via
-		 * YOUR-THEME/wb-gamification/emails/weekly-recap.php — only
+		 * YOUR-THEME/wb-gamification/emails/weekly-recap.php - only
 		 * use this filter when a template override isn't enough.
 		 *
 		 * @param string   $body    HTML email body.
@@ -492,8 +502,7 @@ final class WeeklyEmailEngine {
 		// Resolve the configured currency label so the email reads
 		// "You earned 240 Coins this week" on coins-default sites.
 		$pt_service   = new \WBGam\Services\PointTypeService();
-		$pt_record    = $pt_service->get( $pt_service->default_slug() );
-		$points_label = (string) ( $pt_record['label'] ?? __( 'Points', 'wb-gamification' ) );
+		$points_label = $pt_service->name_for( 2 );
 
 		return compact(
 			'points_this_week',
@@ -523,7 +532,7 @@ final class WeeklyEmailEngine {
 			sprintf( __( 'Your week in %s', 'wb-gamification' ), get_bloginfo( 'name' ) )
 		);
 
-		// Email subject markers — Unicode emojis stripped per the
+		// Email subject markers - Unicode emojis stripped per the
 		// Lucide-only rule. Subject lines can't render CSS-driven icons,
 		// so we use textual modifiers instead.
 		// One translatable sentence each, so a language can place the marker where it reads naturally.
@@ -541,7 +550,7 @@ final class WeeklyEmailEngine {
 	/**
 	 * Render the HTML email body for a weekly summary.
 	 *
-	 * Resolves the template via Email::locate() — themes can override by
+	 * Resolves the template via Email::locate() - themes can override by
 	 * dropping a custom template at:
 	 *
 	 *   YOUR-THEME/wb-gamification/emails/weekly-recap.php

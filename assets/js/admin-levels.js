@@ -1,10 +1,10 @@
 /**
- * Admin: Levels tab — REST-driven (replaces admin-post.php form-post handlers).
+ * Admin: Levels tab - REST-driven (replaces admin-post.php form-post handlers).
  *
  * Tier 0.C (REST migration) wired the SettingsPage Levels tab to the
  * canonical /wb-gamification/v1/levels endpoints. Bulk save sends N parallel
  * PATCH requests; create sends POST; delete sends DELETE. The table refreshes
- * in-place via GET on every successful mutation — no full-page reload.
+ * in-place via GET on every successful mutation - no full-page reload.
  *
  * Depends on assets/js/admin-rest-utils.js (window.wbGamAdminRest) for the
  * shared toast + apiFetch helpers.

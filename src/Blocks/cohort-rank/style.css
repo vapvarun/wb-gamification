@@ -1,5 +1,5 @@
 /**
- * Cohort Rank block — frontend styles.
+ * Cohort Rank block - frontend styles.
  *
  * Cohort = small weekly league of ~10 members who joined or scored
  * comparably. Header shows tier name + viewer's rank. Body shows the
@@ -44,7 +44,7 @@
 	box-shadow: 0 0 0 3px var( --wb-gam-tier-accent-soft, rgba( 91, 76, 219, 0.15 ) );
 }
 
-/* Tier-specific accents so members SEE their league at a glance — the
+/* Tier-specific accents so members SEE their league at a glance - the
    colour ladder mirrors the gamification hierarchy customers expect
    (bronze < silver < gold < diamond < obsidian). Block render emits
    data-tier on the wrapper. */
@@ -134,7 +134,7 @@
 	color: var(--wb-gam-text);
 	font-size: 0.9375rem;
 	min-width: 0;
-	/* Never truncate — full member names must read in full. */
+	/* Never truncate - full member names must read in full. */
 	overflow-wrap: anywhere;
 	word-break: break-word;
 	line-height: 1.3;

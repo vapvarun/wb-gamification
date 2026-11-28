@@ -358,6 +358,56 @@ class ContentReversalTest extends TestCase {
 	}
 
 	#[Test]
+	public function a_buddynext_share_unshare_loop_ends_holding_one_share_award(): void {
+		$t = $this->bn_trigger( 'bn_post_shared' );
+
+		// Hannah (7) shares post 16 three times, unsharing twice in between; each share gets a new share id.
+		foreach ( array( 501, 502, 503 ) as $i => $share_id ) {
+			$this->earn_if_allowed( 7, $t, array( $share_id, 16, 7 ) );
+			if ( $i < 2 ) {
+				$this->fire_reverse( $t, 'buddynext_post_unshared', array( $share_id, 16, 7 ) );
+			}
+		}
+
+		$this->assertSame( 5, $this->db->totals[7]['points'], 'Share, unshare, share, unshare, share pays one share.' );
+	}
+
+	#[Test]
+	public function a_buddynext_poll_vote_loop_ends_holding_one_vote_award(): void {
+		$t = $this->bn_trigger( 'bn_poll_voted' );
+
+		// Omar (8) votes on poll 40, removes, votes, removes, votes.
+		foreach ( array( 1, 2, 3 ) as $i => $option ) {
+			$this->earn_if_allowed( 8, $t, array( 40, $option, 8 ) );
+			if ( $i < 2 ) {
+				$this->fire_reverse( $t, 'buddynext_poll_vote_removed', array( 40, $option, 8 ) );
+			}
+		}
+		$this->earn_if_allowed( 8, $t, array( 40, 4, 8 ) ); // A second vote on a live vote pays nothing.
+
+		$this->assertSame( 1, $this->db->totals[8]['points'], 'Vote, remove, vote, remove, vote pays one vote.' );
+	}
+
+	#[Test]
+	public function deleting_a_buddynext_post_takes_back_its_comments_and_reactions(): void {
+		$comment  = $this->bn_trigger( 'bn_comment_created' );
+		$reaction = $this->bn_trigger( 'bn_reaction_received' );
+
+		// Amina (7) wrote posts 16 and 160. Elena (8) comments on 16; Kwame (9) reacts to both.
+		$this->earn_if_allowed( 8, $comment, array( 300, 'post', 16, 8 ) );
+		$this->earn_if_allowed( 7, $reaction, array( 16, 7, 9, 'like' ) );
+		$this->earn_if_allowed( 7, $reaction, array( 160, 7, 9, 'like' ) );
+		$this->assertSame( 4, $this->db->totals[7]['points'] );
+
+		// PostService::delete(): buddynext_post_deleted( post, deleter, author ), then the comments it swept.
+		$this->fire_reverse( $reaction, 'buddynext_post_deleted', array( 16, 7, 7 ) );
+		$this->fire_reverse( $comment, 'buddynext_post_comments_deleted', array( array( 300 ), 16, array( 300 => 8 ) ) );
+
+		$this->assertSame( 0, $this->db->totals[8]['points'], 'The commenter loses the comment award.' );
+		$this->assertSame( 2, $this->db->totals[7]['points'], 'The author loses the reaction on 16, keeps the one on 160.' );
+	}
+
+	#[Test]
 	public function history_names_the_reversal_after_the_action(): void {
 		$this->assertSame( 'Wp Publish Post (content removed)', Registry::label_for( 'wp_publish_post_removed' ) );
 		$this->assertSame( 'Wp Publish Post (content restored)', Registry::label_for( 'wp_publish_post_restored' ) );
@@ -384,6 +434,64 @@ class ContentReversalTest extends TestCase {
 	}
 
 	/**
+	 * One trigger from the BuddyNext manifest.
+	 *
+	 * @param string $id Action id.
+	 * @return array
+	 */
+	private function bn_trigger( string $id ): array {
+		defined( 'BUDDYNEXT_VERSION' ) || define( 'BUDDYNEXT_VERSION', '1.3.0-test' );
+		$manifest = include dirname( __DIR__, 3 ) . '/integrations/buddynext.php';
+		foreach ( $manifest['triggers'] as $t ) {
+			if ( $t['id'] === $id ) {
+				$this->assertArrayHasKey( 'once_per_object', $t, "$id pays once per object" );
+				return $t;
+			}
+		}
+		$this->fail( "$id not in buddynext.php" );
+	}
+
+	/**
+	 * Award a trigger the way Registry::fire() does, when the per-object gate lets it pay.
+	 *
+	 * @param int   $user_id Member paid.
+	 * @param array $t       Trigger.
+	 * @param array $args    Hook arguments.
+	 */
+	private function earn_if_allowed( int $user_id, array $t, array $args ): void {
+		$object = (int) $t['once_per_object']( ...$args );
+		$action = array(
+			'id'              => $t['id'],
+			'once_per_object' => $t['once_per_object'],
+			'point_type'      => '',
+		);
+		if ( PointsEngine::passes_rate_limits( $user_id, $t['id'], $action, $object ) ) {
+			$this->earn( $user_id, $t['id'], (int) $t['default_points'], $object );
+			$this->db->events[] = array(
+				'user_id'   => $user_id,
+				'action_id' => $t['id'],
+				'object_id' => $object,
+				'metadata'  => json_encode( $t['metadata_callback']( ...$args ) ),
+			);
+		}
+	}
+
+	/**
+	 * Run one reverse_on hook the way Registry::fire_object_hook() does.
+	 *
+	 * @param array  $t    Trigger.
+	 * @param string $hook Partner hook.
+	 * @param array  $args Hook arguments.
+	 */
+	private function fire_reverse( array $t, string $hook, array $args ): void {
+		$this->assertArrayHasKey( $hook, $t['reverse_on'] ?? array(), "{$t['id']} reverses on $hook" );
+		$ids = array_filter( array_map( 'intval', (array) $t['reverse_on'][ $hook ]( ...$args ) ) );
+		if ( $ids ) {
+			PointsEngine::reverse_object_awards( array( $t['id'] => $ids ) );
+		}
+	}
+
+	/**
 	 * An in-memory wb_gam_points ledger that answers the queries the reversal path runs.
 	 *
 	 * @return object
@@ -394,12 +502,27 @@ class ContentReversalTest extends TestCase {
 			public string $last_error = '';
 			public array $points      = array();
 			public array $totals      = array();
+			public array $events      = array();
 
 			public function prepare( string $sql, ...$args ): array {
 				return array( $sql, 1 === count( $args ) && is_array( $args[0] ) ? $args[0] : $args );
 			}
 
+			public function esc_like( string $text ): string {
+				return addcslashes( $text, '_%\\' );
+			}
+
 			public function get_results( $q, $output = null ): array {
+				if ( is_array( $q ) && str_contains( $q[0], 'wb_gam_events' ) ) {
+					list( $user, $action, $like ) = $q[1];
+					$needle                       = stripslashes( trim( $like, '%' ) );
+					return array_values(
+						array_filter(
+							$this->events,
+							static fn( $e ) => $e['user_id'] === $user && $e['action_id'] === $action && str_contains( $e['metadata'], $needle )
+						)
+					);
+				}
 				if ( ! is_array( $q ) || ! str_contains( $q[0], 'ORDER BY id' ) ) {
 					return array();
 				}

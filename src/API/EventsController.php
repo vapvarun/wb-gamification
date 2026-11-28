@@ -4,11 +4,11 @@
  *
  * POST /wb-gamification/v1/events
  *
- * Ingest an event from any source — headless frontend, mobile app, WP-CLI,
+ * Ingest an event from any source - headless frontend, mobile app, WP-CLI,
  * third-party automation (Zapier, Make, n8n).
  *
  * The endpoint validates the action_id against the Registry, builds a
- * WBGam\Engine\Event, and calls Engine::process() — identical to the internal
+ * WBGam\Engine\Event, and calls Engine::process() - identical to the internal
  * flow. Authentication via WordPress Application Passwords or REST nonce.
  *
  * Permission levels:
@@ -190,7 +190,7 @@ class EventsController extends WP_REST_Controller {
 					'wb_gam_import_only_param',
 					sprintf(
 						/* translators: %s: the rejected parameter name. */
-						__( '"%s" cannot be set on a live event. Use POST /events/import to backdate or replay history — it requires the capability to manage members.', 'wb-gamification' ),
+						__( '"%s" cannot be set on a live event. Use POST /events/import to backdate or replay history - it requires the capability to manage members.', 'wb-gamification' ),
 						$wb_gam_import_only
 					),
 					array( 'status' => 400 )
@@ -243,7 +243,7 @@ class EventsController extends WP_REST_Controller {
 		//
 		// passes_rate_limits() broadcasts the reason on `wb_gam_award_skipped` and
 		// then returns a bare false, so Engine::process() hands us no way to tell
-		// "on cooldown" apart from "no such rule" apart from "already awarded" — a
+		// "on cooldown" apart from "no such rule" apart from "already awarded" - a
 		// caller that explicitly fired an event just gets `processed: false` and is
 		// left guessing. Listening for the duration of our own call keeps the reason
 		// scoped to this request (no global state, no cross-request bleed) and adds
@@ -254,7 +254,7 @@ class EventsController extends WP_REST_Controller {
 		// member browsing the site did not (see NotificationBridge::init).
 		$skip    = null;
 		$capture = static function ( $skipped_user_id, $skipped_action_id, $reason, $context = array() ) use ( &$skip ) {
-			// First skip wins — it is the one that stopped the award.
+			// First skip wins - it is the one that stopped the award.
 			if ( null === $skip ) {
 				$skip = array(
 					'reason'  => (string) $reason,
@@ -313,7 +313,7 @@ class EventsController extends WP_REST_Controller {
 	 *
 	 * Each row may carry: action_id (required), user_id (required), object_id,
 	 * points (explicit value for actions not in the Registry), point_type,
-	 * occurred_at (ISO-8601 — preserved as the ledger timestamp), source_key
+	 * occurred_at (ISO-8601 - preserved as the ledger timestamp), source_key
 	 * (stable de-dup key), metadata. Rows are processed in import mode:
 	 * side-effects are suppressed and derived badge state is rebuilt once at
 	 * the end. Re-running the same batch is idempotent via source_key.

@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Jetonomy (Free) Integration Manifest
+ * WB Gamification - Jetonomy (Free) Integration Manifest
  *
  * Auto-loaded by ManifestLoader when Jetonomy free is active.
  * No dependency on WB Gamification at load time.

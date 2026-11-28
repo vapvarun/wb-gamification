@@ -1,13 +1,13 @@
 <?php
 /**
- * WB Gamification — Member achievements surface (shared renderer).
+ * WB Gamification - Member achievements surface (shared renderer).
  *
  * One source of truth for the "achievements surface" that integration
  * adapters mount inside a host's member area (BuddyPress profile tab,
  * WooCommerce My Account endpoint, LearnDash profile, ...). Each adapter
  * decides WHICH blocks to show and WHERE to mount; this class owns the
- * common plumbing — asset enqueue, block rendering scoped to a member, the
- * mapped "View full dashboard" link, and the shared wrapper — so no adapter
+ * common plumbing - asset enqueue, block rendering scoped to a member, the
+ * mapped "View full dashboard" link, and the shared wrapper - so no adapter
  * duplicates display logic.
  *
  * @package WB_Gamification
@@ -81,7 +81,7 @@ final class MemberSurface {
 	/**
 	 * Build the full surface HTML: enqueue assets, append the hub link, wrap
 	 * in the shared container. Callers echo the return value (it is already
-	 * escaped — block SSR markup + escaped link).
+	 * escaped - block SSR markup + escaped link).
 	 *
 	 * @param string $inner   Pre-rendered block markup.
 	 * @param int    $user_id The surface's subject member.

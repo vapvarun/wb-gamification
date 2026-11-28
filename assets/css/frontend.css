@@ -1,5 +1,5 @@
 /**
- * WB Gamification — Frontend Styles
+ * WB Gamification - Frontend Styles
  *
  * Minimal, utility-first styles for all gamification blocks.
  * Uses CSS custom properties for easy theming; block-specific overrides
@@ -10,7 +10,7 @@
  * Design tokens (canonical + shorthand aliases) live in
  * `src/shared/design-tokens.css`, registered as the `wb-gam-tokens`
  * style handle which this file (`wb-gamification`) depends on.
- * All blocks consume tokens via that handle alone — frontend.css is
+ * All blocks consume tokens via that handle alone - frontend.css is
  * legacy global polish (toasts, hub-only utilities) and must NOT
  * redeclare tokens.
  */
@@ -316,7 +316,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────
- * [wb_gam_my_rewards] — member-facing redemption history list
+ * [wb_gam_my_rewards] - member-facing redemption history list
  * Closes Basecamp #9927388714 / #9925383280 issue 3.
  * Plain semantic list; cards use the shared --wb-gam tokens so the
  * widget inherits site styling without per-theme overrides.
@@ -399,7 +399,7 @@
 	.wb-gam-my-rewards__title { flex-direction: column; align-items: flex-start; gap: 4px; }
 }
 
-/* BuddyPress "Achievements" profile tab — wraps the reused blocks rendered
+/* BuddyPress "Achievements" profile tab - wraps the reused blocks rendered
  * per sub-tab (Overview / Badges / Points / Streak). */
 .wb-gam-bp-achievements {
 	display: flex;
@@ -417,7 +417,7 @@
 	color: var(--wb-gam-color-accent);
 }
 
-/* LMS profile — single "My Achievements" hub link, aligned right so it reads
+/* LMS profile - single "My Achievements" hub link, aligned right so it reads
  * as a profile action rather than a floating banner. Shared by the LearnDash
  * (.wb-gam-ld-link) and Learnomy (.wb-gam-lrn-link) profile integrations. */
 .wb-gam-ld-link,
@@ -487,20 +487,9 @@
 	padding: 8px 16px;
 	border: 1px solid var(--wb-gam-color-accent, #2271b1);
 	border-radius: var(--wb-gam-radius, 8px);
-	background: var(--wb-gam-pop-accent); /* With --wb-gam-pop-accent-fg: the solid fill its text colour was computed for. */
-	color: var(--wb-gam-pop-accent-fg);
 	font-weight: 600;
 	font-size: 0.875rem;
 	cursor: pointer;
-}
-
-.wb-gam-profile-privacy__toggle:hover {
-	filter: brightness(0.94);
-}
-
-.wb-gam-profile-privacy__toggle:focus-visible {
-	outline: 2px solid var(--wb-gam-color-accent, #2271b1);
-	outline-offset: 2px;
 }
 
 .wb-gam-profile-privacy__toggle:disabled {

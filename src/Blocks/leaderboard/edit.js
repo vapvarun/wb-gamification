@@ -1,5 +1,5 @@
 /**
- * Leaderboard — editor surface.
+ * Leaderboard - editor surface.
  */
 
 import { __ } from '@wordpress/i18n';

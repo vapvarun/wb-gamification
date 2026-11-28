@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# UX Audit — scans a Wbcom plugin against ux-foundation rules.
+# UX Audit - scans a Wbcom plugin against ux-foundation rules.
 # Usage: ux-audit.sh [plugin_dir]   # defaults to $PWD
 #        PREFIX=jt ux-audit.sh ...  # override the plugin CSS prefix
 
@@ -10,8 +10,8 @@ PLUGIN_NAME="$(basename "$PLUGIN_DIR")"
 PREFIX="${PREFIX:-$(echo "$PLUGIN_NAME" | cut -c1-3)}"
 
 # Skip vendored / built / tests / scratch / docs / examples / marketing.
-# `audit/` is a generated inventory dump — not customer-facing code.
-# `examples/` ships sample manifests showing common patterns — those legitimately
+# `audit/` is a generated inventory dump - not customer-facing code.
+# `examples/` ships sample manifests showing common patterns - those legitimately
 # contain inline tags and dashicons. `docs/` is markdown + reference templates.
 # `marketing/` holds OG cards / one-off HTML demos. `.superpowers/` is local
 # brainstorm/scratch dir, never shipped.
@@ -34,9 +34,9 @@ violation() {
     printf '| %s | %s | %s:%s | %s |\n' "$severity" "$rule" "${file#$PLUGIN_DIR/}" "$line" "$snippet"
 }
 
-echo "# UX Audit — $PLUGIN_NAME"
+echo "# UX Audit - $PLUGIN_NAME"
 echo
-echo "_Generated $(date -u +%Y-%m-%dT%H:%M:%SZ)_ — prefix: \`${PREFIX}\`"
+echo "_Generated $(date -u +%Y-%m-%dT%H:%M:%SZ)_ - prefix: \`${PREFIX}\`"
 echo
 echo "| Severity | Rule | Location | Snippet |"
 echo "|---|---|---|---|"
@@ -194,7 +194,7 @@ BREAKPOINTS=$(find "$PLUGIN_DIR" -name '*.css' "${FIND_EXCLUDES[@]}" -not -name 
               | xargs -0 grep -hE '@media[^{]*\(\s*(min|max)-width:\s*[0-9]+px' 2>/dev/null \
               | grep -oE '[0-9]+px' | sort -u | wc -l | tr -d ' ')
 if [ "${BREAKPOINTS:-0}" -gt 3 ]; then
-    violation "advisory" "Rule responsive #1 breakpoints>3" "(global)" "0" "\`$BREAKPOINTS distinct breakpoint values — should be ≤3\`"
+    violation "advisory" "Rule responsive #1 breakpoints>3" "(global)" "0" "\`$BREAKPOINTS distinct breakpoint values - should be ≤3\`"
     ADVISORY_COUNT=$((ADVISORY_COUNT+1))
 fi
 

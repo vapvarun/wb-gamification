@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Transactional Email Engine
+ * WB Gamification - Transactional Email Engine
  *
  * Wires three event hooks to themed email templates:
  *
@@ -10,7 +10,7 @@
  *   wb_gam_points_redeemed     → templates/emails/redemption-confirmed.php
  *
  * Each event:
- *   1. Checks the matching enable option (`wb_gam_email_<event>` — default off
+ *   1. Checks the matching enable option (`wb_gam_email_<event>` - default off
  *      so existing sites don't get a flood of email after upgrade).
  *   2. Renders the template via `Email::render()` (theme override path).
  *   3. Sends via wp_mail with HTML headers + From header from settings.
@@ -38,15 +38,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -72,24 +72,24 @@ final class TransactionalEmailEngine {
 	private const AS_GROUP = 'wb-gamification-emails';
 
 	/**
-	 * Boot — bind one listener per event hook. Each listener is gated on
+	 * Boot - bind one listener per event hook. Each listener is gated on
 	 * an admin option so site owners can disable individual email types
 	 * without touching code.
 	 */
 	public static function init(): void {
-		add_action( 'wb_gam_level_changed', array( __CLASS__, 'on_level_up' ), 10, 3 );
-		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'on_badge_earned' ), 10, 3 );
-		add_action( 'wb_gam_challenge_completed', array( __CLASS__, 'on_challenge_completed' ), 10, 2 );
-		add_action( 'wb_gam_points_redeemed', array( __CLASS__, 'on_redemption' ), 10, 4 );
+		add_action( 'wb_gam_level_changed', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_level_up' ) ), 10, 3 );
+		add_action( 'wb_gam_badge_awarded', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_badge_earned' ) ), 10, 3 );
+		add_action( 'wb_gam_challenge_completed', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_challenge_completed' ) ), 10, 2 );
+		add_action( 'wb_gam_points_redeemed', \WBGam\Engine\RecipientLocale::user( array( __CLASS__, 'on_redemption' ), 1 ), 10, 4 );
 		add_action( self::AS_HOOK, array( __CLASS__, 'send_async' ), 10, 1 );
 	}
 
 	/**
-	 * AS worker — receives the rendered email payload and calls wp_mail.
+	 * AS worker - receives the rendered email payload and calls wp_mail.
 	 *
 	 * Split from the original on_* listeners so the synchronous page-load
 	 * isn't blocked on wp_mail() finishing (SMTP timeouts, slow MTAs,
-	 * Mailgun rate limits — all of those used to freeze the response that
+	 * Mailgun rate limits - all of those used to freeze the response that
 	 * fired the event). With Action Scheduler the user gets their response
 	 * immediately; mail goes out within seconds via the AS worker.
 	 *
@@ -107,7 +107,7 @@ final class TransactionalEmailEngine {
 
 		// Worker-time re-check of the admin option + member-pref opt-out.
 		// The synchronous listener already gated on these at enqueue time,
-		// but the AS queue can run a minute or more after enqueue — the
+		// but the AS queue can run a minute or more after enqueue - the
 		// user may have toggled `notification_mode = 'none'` (or the admin
 		// may have flipped the option) in the gap. Re-validate at delivery
 		// to honour the most-recent decision. Closes audit
@@ -119,7 +119,7 @@ final class TransactionalEmailEngine {
 
 		if ( '' === $to || '' === $subject || '' === $body ) {
 			Log::error(
-				'TransactionalEmailEngine::send_async — invalid payload',
+				'TransactionalEmailEngine::send_async - invalid payload',
 				array(
 					'has_to'      => '' !== $to,
 					'has_subject' => '' !== $subject,
@@ -158,7 +158,7 @@ final class TransactionalEmailEngine {
 			return;
 		}
 
-		// Fall back to looking the level up if the caller passed null —
+		// Fall back to looking the level up if the caller passed null -
 		// keeps the listener resilient to filter-based hook re-fires.
 		if ( null === $new_level ) {
 			$new_level = LevelEngine::get_level_for_user( $user_id );
@@ -168,8 +168,7 @@ final class TransactionalEmailEngine {
 		}
 
 		$pt_service   = new PointTypeService();
-		$pt_record    = $pt_service->get( $pt_service->default_slug() );
-		$points_label = (string) ( $pt_record['label'] ?? __( 'Points', 'wb-gamification' ) );
+		$points_label = $pt_service->name_for( 2 );
 
 		$body = Email::render(
 			'level-up',
@@ -310,7 +309,7 @@ final class TransactionalEmailEngine {
 	 * Bound to {@see RedemptionEngine::redeem()}'s `wb_gam_points_redeemed`
 	 * action. Members get a receipt summarising what they redeemed, the
 	 * points they spent, and (when applicable) the coupon code their
-	 * reward unlocked. Listener is idempotent — every redeem fires once
+	 * reward unlocked. Listener is idempotent - every redeem fires once
 	 * per redemption_id and the AS queue dedupes by payload.
 	 *
 	 * @param int         $redemption_id Row id in `wb_gam_redemptions`.
@@ -329,8 +328,7 @@ final class TransactionalEmailEngine {
 		}
 
 		$pt_service   = new PointTypeService();
-		$pt_record    = $pt_service->get( (string) ( $item['point_type'] ?? $pt_service->default_slug() ) );
-		$points_label = (string) ( $pt_record['label'] ?? __( 'points', 'wb-gamification' ) );
+		$points_label = $pt_service->name_for( 2, (string) ( $item['point_type'] ?? '' ) );
 
 		$body = Email::render(
 			'redemption-confirmed',
@@ -370,12 +368,12 @@ final class TransactionalEmailEngine {
 	/**
 	 * Whether a given email type is enabled for a given user.
 	 *
-	 * Three gates — ALL must pass:
+	 * Three gates - ALL must pass:
 	 *   1. Admin option `wb_gam_email_{$slug}` is on. Default OFF so an
 	 *      upgrade doesn't suddenly start emailing the whole member base.
 	 *   2. The user's `wb_gam_member_prefs.notification_mode` is NOT 'none'.
 	 *      Members who hit the unsubscribe link in WeeklyEmailEngine's
-	 *      footer MUST also stop receiving transactional emails — that's
+	 *      footer MUST also stop receiving transactional emails - that's
 	 *      the CAN-SPAM / GDPR contract the unsubscribe link implies.
 	 *      Pre-1.4.1 this engine bypassed the member-pref entirely
 	 *      (caught by the 2026-05-27 data-flow audit).
@@ -395,8 +393,8 @@ final class TransactionalEmailEngine {
 
 		$enabled = (bool) get_option( 'wb_gam_email_' . $slug, false );
 
-		// Step 2 — opt-out gate. Skip the DB read when step 1 already
-		// disabled the email type — no point checking prefs we won't honour.
+		// Step 2 - opt-out gate. Skip the DB read when step 1 already
+		// disabled the email type - no point checking prefs we won't honour.
 		if ( $enabled ) {
 			$enabled = 'none' !== MemberPrefs::get( $user_id )['notification_mode'];
 		}
@@ -404,7 +402,7 @@ final class TransactionalEmailEngine {
 		/**
 		 * Filter whether a transactional email type is enabled.
 		 *
-		 * Use to gate emails on additional per-user signals — role-based
+		 * Use to gate emails on additional per-user signals - role-based
 		 * suppression, A/B tests, frequency caps, lifecycle segmentation.
 		 * The defaults already cover admin-option + member-pref opt-out;
 		 * this filter is for everything beyond.
@@ -431,9 +429,9 @@ final class TransactionalEmailEngine {
 	 * @param string $subject Subject line.
 	 * @param string $body    HTML body.
 	 * @param string $slug    Email-type slug (`level_up` | `badge_earned` |
-	 *                        `challenge_completed` | `redemption`) — used by the
+	 *                        `challenge_completed` | `redemption`) - used by the
 	 *                        worker to re-check is_enabled at delivery time.
-	 * @param int    $user_id Recipient user ID — used for the same re-check.
+	 * @param int    $user_id Recipient user ID - used for the same re-check.
 	 * @as-fire-once Per-event delivery. Caller is the listener on
 	 *               wb_gam_level_changed / _badge_awarded / _challenge_completed /
 	 *               redemption events. The AS handler is self::send_async which
@@ -492,7 +490,7 @@ final class TransactionalEmailEngine {
 		// Closes audit/DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G4.
 		if ( $user_id > 0 && '' !== $slug && self::is_rate_limited( $user_id, $slug ) ) {
 			Log::debug(
-				'TransactionalEmailEngine::send — burst cap hit; dropping email.',
+				'TransactionalEmailEngine::send - burst cap hit; dropping email.',
 				array(
 					'user_id' => $user_id,
 					'slug'    => $slug,
@@ -515,14 +513,14 @@ final class TransactionalEmailEngine {
 			'user_id' => $user_id,
 		);
 
-		// Enqueue async if Action Scheduler is available — the page-load that
+		// Enqueue async if Action Scheduler is available - the page-load that
 		// fired the event isn't blocked on wp_mail() finishing.
 		if ( function_exists( 'as_enqueue_async_action' ) ) {
 			as_enqueue_async_action( self::AS_HOOK, array( $payload ), self::AS_GROUP );
 			return true;
 		}
 
-		// Fallback — synchronous send. Hits during unit tests + very early
+		// Fallback - synchronous send. Hits during unit tests + very early
 		// boot before Action Scheduler is loaded.
 		return self::send_now( $to, $subject, $body );
 	}
@@ -547,7 +545,7 @@ final class TransactionalEmailEngine {
 		$sent    = wp_mail( $to, $subject, $body, $headers );
 		if ( ! $sent ) {
 			Log::error(
-				'TransactionalEmailEngine::send_now — wp_mail returned false',
+				'TransactionalEmailEngine::send_now - wp_mail returned false',
 				array(
 					'to'      => $to,
 					'subject' => $subject,
@@ -567,7 +565,7 @@ final class TransactionalEmailEngine {
 	 * filter `wb_gam_email_burst_cap` to override per slug.
 	 *
 	 * Returns true (rate-limited) AFTER incrementing the counter, so the
-	 * Nth+1 attempt is dropped. This keeps the cap simple — no separate
+	 * Nth+1 attempt is dropped. This keeps the cap simple - no separate
 	 * "check then increment" race.
 	 *
 	 * @since 1.4.1

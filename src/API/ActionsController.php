@@ -1,7 +1,7 @@
 <?php
 /**
  * REST API: Actions Controller
- * Exposes all registered gamification actions — useful for headless/app setups.
+ * Exposes all registered gamification actions - useful for headless/app setups.
  *
  * GET /wp-json/wb-gamification/v1/actions
  * GET /wp-json/wb-gamification/v1/actions/{id}
@@ -79,7 +79,7 @@ class ActionsController extends WP_REST_Controller {
 			)
 		);
 
-		// PUT/POST /actions/{id}/overrides — admin-only edit of cooldown,
+		// PUT/POST /actions/{id}/overrides - admin-only edit of cooldown,
 		// daily_cap, weekly_cap, the on/off switch (`enabled`) and whether members
 		// may claim the action through Submit Achievement (`submittable`) without
 		// touching the manifest, plus the amount (`points`) and `point_type`: Settings > Earning saves every
@@ -146,7 +146,7 @@ class ActionsController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Overrides write gate — site admin only.
+	 * Overrides write gate - site admin only.
 	 *
 	 * @param \WP_REST_Request $request Request.
 	 * @return true|\WP_Error

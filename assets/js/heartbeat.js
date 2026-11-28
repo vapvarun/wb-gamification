@@ -1,5 +1,5 @@
 /**
- * WB Gamification — Realtime broker (WP Heartbeat client).
+ * WB Gamification - Realtime broker (WP Heartbeat client).
  *
  * Single client-side pub/sub bus that every WBGam frontend block hooks
  * into instead of running its own setInterval poll. Subscribes once to
@@ -54,7 +54,7 @@
 		// 'fast' (5s): at community scale, every logged-in member polling
 		// every 5s is a self-imposed request floor (10k concurrent members
 		// ≈ 2,000 admin-ajax hits/sec, each a full WP bootstrap). 15s cuts
-		// that ~3x while still feeling live — because we BURST to 'fast' for
+		// that ~3x while still feeling live - because we BURST to 'fast' for
 		// a short window right after the member does something (see burst()),
 		// which is exactly when realtime feedback matters. The earlier 'fast'
 		// default (Basecamp #9925151443) is preserved as the post-action
@@ -64,21 +64,21 @@
 		// IMPORTANT: this must be the integer 15, NOT the string 'standard'.
 		// WP's wp.heartbeat.interval() only accepts 'fast' / 'slow' /
 		// 'long-polling' or an integer 1-3600; an unrecognized string like
-		// 'standard' silently falls back to the frontend default of 60s —
+		// 'standard' silently falls back to the frontend default of 60s -
 		// which made the steady-state poll 60s instead of 15s, delaying every
 		// points/badge toast by up to a minute.
 		var DEFAULT_INTERVAL = 15;
 		if ( window.wbGamRealtimeInterval ) {
 			DEFAULT_INTERVAL = String( window.wbGamRealtimeInterval );
 		}
-		var FAST_INTERVAL   = 'fast'; // 5s — burst speed right after an action.
+		var FAST_INTERVAL   = 'fast'; // 5s - burst speed right after an action.
 		var BURST_MS        = 30000;  // hold fast this long, then ease back.
-		var HIDDEN_INTERVAL = 120;    // seconds — near-suspend while backgrounded.
+		var HIDDEN_INTERVAL = 120;    // seconds - near-suspend while backgrounded.
 		var burstTimer      = null;
 
 		wp.heartbeat.interval( DEFAULT_INTERVAL );
 
-		// Near-suspend when the tab is backgrounded — a member who switched
+		// Near-suspend when the tab is backgrounded - a member who switched
 		// away shouldn't generate ticks. WP core already slows heartbeat on
 		// blur; we make it explicit and restore (with a catch-up tick) on
 		// return.
@@ -150,9 +150,8 @@
 		$( document ).on( 'heartbeat-send', function ( e, data ) {
 			data.wb_gam = {
 				boards: Array.from( boards.values() ),
-				// Ask for toasts only when something on this page shows them: the server
-				// marks delivered toasts as shown, so a page without a renderer must not
-				// take them.
+				// Ask for toasts only when something on this page shows them (and then
+				// acknowledges them), so a page without a renderer never receives them.
 				toasts: subscribers.toasts.size > 0 ? 1 : 0,
 			};
 		} );
@@ -168,7 +167,7 @@
 			fanout( 'leaderboards', lastPayload.leaderboards );
 		} );
 
-		// Network errors don't kill the broker — Heartbeat self-heals.
+		// Network errors don't kill the broker - Heartbeat self-heals.
 
 		function fanout( channel, slice ) {
 			if ( ! subscribers[ channel ] ) {
@@ -237,7 +236,7 @@
 				burst();
 			},
 			/**
-			 * Explicit alias for ping() — burst to fast polling for ~30s
+			 * Explicit alias for ping() - burst to fast polling for ~30s
 			 * after a member action, then ease back. Named for intent at
 			 * call sites that want realtime feedback without committing the
 			 * whole session to 5s polling.
@@ -257,7 +256,7 @@
 			 * into the same channel set heartbeat publishes to.
 			 *
 			 * Subscribers don't know which transport delivered the
-			 * event — the broker is the contract.
+			 * event - the broker is the contract.
 			 *
 			 * @param {string} channel One of the channel names.
 			 * @param {*}      slice   Channel-specific payload.

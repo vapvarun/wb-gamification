@@ -5,7 +5,7 @@
  * Adds "Conversions" submenu under WB Gamification.
  * Manages exchange-rate rules between point currencies (e.g. 100 Points → 1 Coin).
  *
- * REST-driven via the generic admin-rest-form.js driver — no per-page JS.
+ * REST-driven via the generic admin-rest-form.js driver - no per-page JS.
  *
  * @package WB_Gamification
  * @since   1.0.0
@@ -91,7 +91,7 @@ final class PointTypeConversionsPage {
 	}
 
 	/**
-	 * Render the page — list of existing rules + create form.
+	 * Render the page - list of existing rules + create form.
 	 */
 	public static function render_page(): void {
 		$type_service = new PointTypeService();
@@ -100,7 +100,7 @@ final class PointTypeConversionsPage {
 		$types = $type_service->list();
 		$rules = $conv_service->list_active();
 
-		// Fewer than 2 types — conversion is meaningless. Show a guidance card
+		// Fewer than 2 types - conversion is meaningless. Show a guidance card
 		// instead of the form so admins know what to do.
 		if ( count( $types ) < 2 ) :
 			?>

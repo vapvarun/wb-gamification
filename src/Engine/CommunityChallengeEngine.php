@@ -1,6 +1,6 @@
 <?php
 /**
- * Community Challenge Engine — Phase 3
+ * Community Challenge Engine - Phase 3
  *
  * Time-limited, site-wide challenges where the entire community works toward
  * a shared target (Pokémon GO Community Day model).
@@ -8,7 +8,7 @@
  * How it works:
  *   1. Admin creates a community challenge (title, target_action, target_count,
  *      starts_at, ends_at, bonus_points).
- *   2. Engine hooks `wb_gam_points_awarded` — every matching event
+ *   2. Engine hooks `wb_gam_points_awarded` - every matching event
  *      increments the global counter atomically.
  *   3. When counter reaches target, Engine fires `wb_gam_community_challenge_completed`
  *      and awards bonus_points to every user who contributed at least one event.
@@ -25,15 +25,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -55,7 +55,7 @@ final class CommunityChallengeEngine {
 		// AS bonus-award handler. complete_challenge() enqueues one job per
 		// contributor; this listener is what actually grants the points
 		// when the queue runs. Pre-1.4.1 the action was queued but had no
-		// listener — every community challenge "completed" without ever
+		// listener - every community challenge "completed" without ever
 		// awarding the bonus (Basecamp #9933021972).
 		add_action( 'wb_gam_community_bonus_award', array( __CLASS__, 'award_community_bonus' ), 10, 3 );
 
@@ -89,13 +89,13 @@ final class CommunityChallengeEngine {
 	private const CACHE_TTL = 60;
 
 	/**
-	 * Action Scheduler callback — awards the community-challenge bonus to one contributor.
+	 * Action Scheduler callback - awards the community-challenge bonus to one contributor.
 	 *
 	 * Each job carries its own (user_id, challenge_id, points) tuple,
 	 * fanned out by {@see complete_challenge()}. Runs through the
 	 * standard PointsEngine::award path so the bonus goes through the
 	 * same ledger, currency, and badge-evaluation pipeline as any other
-	 * award — no shortcut writes to wp_wb_gam_points.
+	 * award - no shortcut writes to wp_wb_gam_points.
 	 *
 	 * @param int $user_id      Member receiving the bonus.
 	 * @param int $challenge_id Community challenge that triggered the bonus (for metadata).
@@ -272,7 +272,7 @@ final class CommunityChallengeEngine {
 	private static function complete_challenge( int $challenge_id, int $bonus_points ): void {
 		global $wpdb;
 
-		// Mark completed — use atomic update to prevent double-fire.
+		// Mark completed - use atomic update to prevent double-fire.
 		$updated = $wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$wpdb->prefix}wb_gam_community_challenges
@@ -352,7 +352,7 @@ final class CommunityChallengeEngine {
 	}
 
 	/**
-	 * Action Scheduler callback — pay one page of contributors, then queue the next.
+	 * Action Scheduler callback - pay one page of contributors, then queue the next.
 	 *
 	 * Keyset, not OFFSET: `user_id > $cursor ORDER BY user_id LIMIT n`. A deep OFFSET scans
 	 * everything it skips, so page 200 of a large payout would cost more than page 1.
@@ -427,7 +427,7 @@ final class CommunityChallengeEngine {
 	}
 
 	/**
-	 * Get all currently-visible community challenges — active OR completed
+	 * Get all currently-visible community challenges - active OR completed
 	 * within the still-running date window.
 	 *
 	 * The community-challenges block uses this so a challenge that hit its
@@ -437,8 +437,8 @@ final class CommunityChallengeEngine {
 	 * (sorted last) until ends_at passes, giving members the full window
 	 * to celebrate.
 	 *
-	 * Active challenges sort first (ascending by ends_at — most urgent
-	 * first); completed challenges follow (descending by completed_at —
+	 * Active challenges sort first (ascending by ends_at - most urgent
+	 * first); completed challenges follow (descending by completed_at -
 	 * most-recently-completed first).
 	 *
 	 * @return array<int, array>

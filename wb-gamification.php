@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WB Gamification
  * Plugin URI:  https://wbcomdesigns.com/
- * Description: Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks — zero config, works out of the box.
+ * Description: Complete gamification plugin for BuddyPress and WordPress. Part of the Reign Stack. Points, badges, levels, leaderboards, challenges, and streaks - zero config, works out of the box.
  * Version:     1.7.0
  * Author:      Wbcom Designs
  * Author URI:  https://wbcomdesigns.com/
@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 // path-spelling differences (drive-letter case, slash direction), causing
 // the same file to be parsed twice in one request and fataling on the
 // class declaration below. If our version constant already exists, a
-// first parse completed — bail out of the second one.
+// first parse completed - bail out of the second one.
 if ( defined( 'WB_GAM_VERSION' ) ) {
 	return;
 }
@@ -39,7 +39,7 @@ define( 'WB_GAM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WB_GAM_URL', plugin_dir_url( __FILE__ ) );
 define( 'WB_GAM_BASENAME', plugin_basename( __FILE__ ) );
 
-// Autoloader — PSR-4 for all WBGam\ classes + functions.php.
+// Autoloader - PSR-4 for all WBGam\ classes + functions.php.
 //
 // Runtime is fully self-contained: the plugin's own classes load through a
 // hand-written PSR-4 autoloader (no Composer at runtime), and bundled
@@ -63,10 +63,10 @@ spl_autoload_register(
 // Non-namespaced helper functions (formerly the Composer `files` autoload entry).
 require_once WB_GAM_PATH . 'src/Extensions/functions.php';
 
-// Action Scheduler — bundled under libs/, loaded before plugins_loaded.
+// Action Scheduler - bundled under libs/, loaded before plugins_loaded.
 require_once WB_GAM_PATH . 'libs/woocommerce/action-scheduler/action-scheduler.php';
 
-// EDD Software Licensing SDK — free plugin auto-updates with preset key.
+// EDD Software Licensing SDK - free plugin auto-updates with preset key.
 //
 // WB Gamification is GPLv2 free, but it's distributed from
 // store.wbcomdesigns.com (not the wp.org repo), so without an updater
@@ -106,7 +106,7 @@ add_action(
 	}
 );
 
-// Load the vendored EDD SL SDK only when the package is COMPLETE — same guard
+// Load the vendored EDD SL SDK only when the package is COMPLETE - same guard
 // BuddyNext uses (buddynext.php), kept identical so the whole family degrades
 // the same way.
 //
@@ -115,14 +115,14 @@ add_action(
 // requiring the entrypoint hard-fataled on install. It was the right lesson
 // applied one path short: a build that keeps the entrypoint AND vendor/ but
 // drops src/ passes both checks, and then the SDK fatals the moment it
-// instantiates a src class. Verified on a clean install of the 1.6.4 zip —
+// instantiates a src class. Verified on a clean install of the 1.6.4 zip -
 // hiding src/ returned 500 on the front end AND wp-admin, twice, with
 // `Uncaught Error: Class "EasyDigitalDownloads\Updater\Versions" not found`
 // thrown from edd-sl-sdk.php line 40.
 //
 // So guard on the class file the SDK actually reaches for, and degrade to
 // "updates disabled" behind a soft admin notice rather than a white screen.
-// Licensing only ever authorises update downloads here — it gates no feature —
+// Licensing only ever authorises update downloads here - it gates no feature -
 // so a member-facing site keeps working exactly as before.
 if ( file_exists( WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php' )
 	&& file_exists( WB_GAM_PATH . 'libs/easy-digital-downloads/edd-sl-sdk/src/Versions.php' ) ) {
@@ -159,7 +159,7 @@ if ( file_exists( WB_GAM_PATH . 'libs/package-signatures/package-signatures.php'
 // Preactivate the bundled preset license so EDD update checks
 // authenticate without the site owner ever entering a key. The real work
 // lives in WBGam\Engine\LicenseActivator::activate() (the main file
-// declares a class, so it can't also hold a named function — WPCS
+// declares a class, so it can't also hold a named function - WPCS
 // Universal.Files.SeparateFunctionsFromOO). It runs on plugin activation
 // (see register_activation_hook below) and on admin_init as an idempotent
 // fallback for CLI/restore activation paths and transient-error retries.
@@ -240,7 +240,7 @@ use WBGam\Engine\LeaderboardEngine;
 use WBGam\Engine\ShortcodeHandler;
 
 /**
- * Main plugin class — singleton loader.
+ * Main plugin class - singleton loader.
  */
 final class WB_Gamification {
 
@@ -258,7 +258,7 @@ final class WB_Gamification {
 	}
 
 	private function init_hooks(): void {
-		// load_plugin_textdomain() is no longer needed — WordPress 4.6+ auto-
+		// load_plugin_textdomain() is no longer needed - WordPress 4.6+ auto-
 		// loads translations for plugins hosted on WordPress.org based on the
 		// Text Domain header. For Wbcom-distributed plugins the .pot ships in
 		// languages/ and i18n falls back to the file-system loader.
@@ -307,7 +307,7 @@ final class WB_Gamification {
 
 		// Deleting a member has to take their gamification data with it. Nothing listened for that,
 		// so every points row, streak, badge and queued notification of every deleted member stayed
-		// in the database for ever — and quietly corrupted every aggregate built on those tables.
+		// in the database for ever - and quietly corrupted every aggregate built on those tables.
 		BootOrder::register( 'member_data', BootOrder::SLOT_CORE );
 		add_action( 'plugins_loaded', array( MemberData::class, 'init' ), BootOrder::SLOT_CORE );
 
@@ -347,23 +347,28 @@ final class WB_Gamification {
 		BootOrder::register( 'leaderboard_engine', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( LeaderboardEngine::class, 'init' ), BootOrder::SLOT_INTEGRATIONS );
 
-		// v2.5 + AI v1 — read-side projection. Daily cron computes
+		// Overview / Analytics KPI cache: dropped when an admin moves points (hand award, deduction,
+		// revoke, reset), all of which route through LeaderboardEngine::invalidate_cache(). Registered
+		// outside is_admin() because the REST routes behind them run there too.
+		add_action( 'wb_gam_leaderboard_cache_invalidated', array( AnalyticsDashboard::class, 'flush_for_admin' ) );
+
+		// v2.5 + AI v1 - read-side projection. Daily cron computes
 		// engagement / churn / diversity signals from the event log.
 		BootOrder::register( 'intelligence_projector', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( \WBGam\Engine\IntelligenceProjector::class, 'boot' ), BootOrder::SLOT_INTEGRATIONS );
 
-		// GraphQL extension — registers types + root queries when
+		// GraphQL extension - registers types + root queries when
 		// WPGraphQL is loaded. No-op otherwise.
 		BootOrder::register( 'graphql', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( \WBGam\Integrations\GraphQL::class, 'boot' ), BootOrder::SLOT_INTEGRATIONS );
 
-		// ActivityPub federation — listens for badge/level/challenge
+		// ActivityPub federation - listens for badge/level/challenge
 		// events + publishes to the WP ActivityPub plugin's outbox.
 		// Site-level + per-user opt-in (both off by default).
 		BootOrder::register( 'activitypub', BootOrder::SLOT_INTEGRATIONS, array( 'engine' ) );
 		add_action( 'plugins_loaded', array( \WBGam\Integrations\ActivityPub::class, 'boot' ), BootOrder::SLOT_INTEGRATIONS );
 
-		// Realtime channel — Heartbeat-backed broker that the frontend
+		// Realtime channel - Heartbeat-backed broker that the frontend
 		// toast.js, leaderboard view modules, and user-status-bar block
 		// all subscribe to. Single source of "live" data so each block
 		// doesn't run its own setInterval poll loop.
@@ -375,7 +380,7 @@ final class WB_Gamification {
 		// All remaining engines boot via FeatureFlags (core = always, pro = flag-gated).
 		add_action( 'plugins_loaded', array( FeatureFlags::class, 'boot_engines' ), 10 );
 
-		// Async award pipeline — collects events at priority 50 (after sync listeners
+		// Async award pipeline - collects events at priority 50 (after sync listeners
 		// BadgeEngine@10, ChallengeEngine@15; before NotificationBridge@99).
 		add_action( 'wb_gam_points_awarded', array( AsyncEvaluator::class, 'enqueue' ), 50, 3 );
 
@@ -384,7 +389,7 @@ final class WB_Gamification {
 		add_action( 'wp_trash_post', array( Installer::class, 'on_hub_page_removed' ) );
 		add_action( 'before_delete_post', array( Installer::class, 'on_hub_page_removed' ) );
 
-		// BuddyPress integrations — must boot on bp_loaded, not plugins_loaded.
+		// BuddyPress integrations - must boot on bp_loaded, not plugins_loaded.
 		add_action( 'bp_loaded', array( ProfileIntegration::class, 'init' ) );
 		add_action( 'bp_loaded', array( DirectoryIntegration::class, 'init' ) );
 		add_action( 'bp_loaded', array( BPActivity::class, 'init' ) );
@@ -414,7 +419,7 @@ final class WB_Gamification {
 			// shows as a blank square on Posts, Pages, Tools, etc.
 			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_global_admin_lucide' ) );
 			// 3rd-party-notice suppression is body-class-scoped CSS in
-			// assets/css/admin.css — no PHP needed, no inline <style>, and
+			// assets/css/admin.css - no PHP needed, no inline <style>, and
 			// the rule is active on every plugin admin page that loads
 			// admin.css (which `enqueue_admin_assets` always does).
 
@@ -422,7 +427,7 @@ final class WB_Gamification {
 			// plugins_loaded@0, so calling ::init() here is equivalent to
 			// (and strictly safer than) registering a nested
 			// add_action('plugins_loaded', …, 10). The nested pattern was
-			// the root cause of the chronic Setup Wizard reopen — fragile
+			// the root cause of the chronic Setup Wizard reopen - fragile
 			// timing when WP_Filter::do_action is already mid-iteration.
 			SettingsPage::init();
 			\WBGam\Admin\AdminNav::init();
@@ -471,7 +476,7 @@ final class WB_Gamification {
 		exit;
 	}
 
-	// load_textdomain() removed — superseded by WP 4.6+ auto-loader. See
+	// load_textdomain() removed - superseded by WP 4.6+ auto-loader. See
 	// register_hooks() comment above for details.
 
 	/**
@@ -513,7 +518,7 @@ final class WB_Gamification {
 	public function register_blocks(): void {
 		// All 15 blocks now live under `build/Blocks/<slug>/` and are registered by
 		// `WBGam\Blocks\Registrar` on `init@20`. The legacy `blocks/<slug>/` directory
-		// is deprecated and must NOT be re-registered here — older block.json files
+		// is deprecated and must NOT be re-registered here - older block.json files
 		// in that path lack the standard editorScript declaration and would shadow
 		// the migrated build/ output (silent editor "no support" failures).
 	}
@@ -628,7 +633,7 @@ final class WB_Gamification {
 	}
 
 	public function enqueue_assets(): void {
-		// Wbcom Block Quality Standard — design tokens that every standardised
+		// Wbcom Block Quality Standard - design tokens that every standardised
 		// block consumes. Registered standalone so blocks can declare it as a
 		// dependency without importing from JS (CSS @import would land tokens
 		// in the editor chunk via wp-scripts' style split).
@@ -639,7 +644,7 @@ final class WB_Gamification {
 			WB_GAM_VERSION
 		);
 
-		// Phase G.2 — shared block-card stylesheet. Single canonical
+		// Phase G.2 - shared block-card stylesheet. Single canonical
 		// `.wb-gam-card` family that every block consumes so the 15
 		// frontends share the hub's premium card UX (white surface,
 		// 10px radius, soft shadow, accent-tinted icon chip, hover
@@ -653,7 +658,7 @@ final class WB_Gamification {
 		);
 		wp_register_style( 'wb-gam-device-visibility', WB_GAM_URL . 'src/shared/device-visibility.css', array(), WB_GAM_VERSION );
 
-		// Register but don't enqueue — blocks and shortcodes will enqueue as needed.
+		// Register but don't enqueue - blocks and shortcodes will enqueue as needed.
 		wp_register_style(
 			'wb-gamification',
 			WB_GAM_URL . 'assets/css/frontend.css',
@@ -667,7 +672,7 @@ final class WB_Gamification {
 		// continues to use its own dedicated module
 		// (`assets/interactivity/hub.js` / `wb-gamification-hub`).
 
-		// Lucide icon font — bundled locally for hub page.
+		// Lucide icon font - bundled locally for hub page.
 		wp_register_style(
 			'lucide-icons',
 			WB_GAM_URL . 'assets/fonts/lucide.css',
@@ -690,7 +695,7 @@ final class WB_Gamification {
 			WB_GAM_VERSION
 		);
 
-		// Currency-conversion modal — wires the per-tile Convert button on the
+		// Currency-conversion modal - wires the per-tile Convert button on the
 		// hub block. Plain script (not a module) so it can use wp.apiFetch + the
 		// existing toast handle without dragging the IA bundle into every page.
 		wp_register_script(
@@ -702,7 +707,7 @@ final class WB_Gamification {
 		);
 		wp_set_script_translations( 'wb-gamification-hub-convert', 'wb-gamification', WB_GAM_PATH . 'languages' );
 
-		// Notifications IA store — drives the level-up + streak-milestone
+		// Notifications IA store - drives the level-up + streak-milestone
 		// overlays and the toast stack rendered by NotificationBridge.
 		// Without this module the overlay markup mounts but never binds,
 		// leaving the streak overlay permanently visible with an inert
@@ -715,7 +720,7 @@ final class WB_Gamification {
 			WB_GAM_VERSION
 		);
 
-		// Realtime broker — WP Heartbeat client. Single subscription bus
+		// Realtime broker - WP Heartbeat client. Single subscription bus
 		// the toast renderer, leaderboard live-update view module, and
 		// the user-status-bar block all hook into. Enqueued for members only:
 		// each tick is a full WordPress request, and a guest has no points or
@@ -749,7 +754,7 @@ final class WB_Gamification {
 
 		// SSE transport (scaffold; feature-flagged off by default). Loads
 		// alongside heartbeat.js; probes the transport option and no-ops
-		// when set to 'heartbeat'. Real streaming ships in stages 2-3 —
+		// when set to 'heartbeat'. Real streaming ships in stages 2-3 -
 		// see plan/REAL-TIME-TRANSPORT.md.
 		if ( $wb_gam_toast_readers ) {
 			wp_enqueue_script(
@@ -775,14 +780,14 @@ final class WB_Gamification {
 
 		// Shared top-strip measurement.
 		//
-		// Anything this plugin pins to the top of the viewport has to know what is ALREADY up there —
+		// Anything this plugin pins to the top of the viewport has to know what is ALREADY up there -
 		// admin bar, theme header (however it is positioned), sticky nav, cookie bar. We have shipped
 		// that bug twice: toasts behind the header, and a status bar hardcoded to `top: 48px` that
 		// landed on BuddyX's nav. One measurement, one file, so the next fix cannot land in only one
-		// of two copies. Registered (not enqueued) — consumers declare it as a dependency.
+		// of two copies. Registered (not enqueued) - consumers declare it as a dependency.
 		$this->register_dialog_script();
 
-		// The one mount utility. Our blocks bound themselves once, at DOMContentLoaded — which is
+		// The one mount utility. Our blocks bound themselves once, at DOMContentLoaded - which is
 		// correct for a page the BROWSER loaded and wrong for a page a ROUTER loaded. Host themes
 		// navigate client-side, and markup swapped in that way carries no listeners. Verified in a
 		// browser: after a swap, the give-kudos form's submit handler is gone, so the browser performs
@@ -850,31 +855,13 @@ final class WB_Gamification {
 				array(
 					'restUrl'  => rest_url( 'wb-gamification/v1/' ),
 					'nonce'    => wp_create_nonce( 'wp_rest' ),
+					// Keys the browser's record of toasts already shown (sessionStorage), so two members sharing a browser never read each other's.
+					'userId'   => get_current_user_id(),
 					'position' => \WBGam\Engine\NotificationBridge::get_toast_position(),
 					// Translated strings the renderer builds client-side (aria
 					// labels + the last-resort points-unit fallback). Seeded here
 					// because toast.js has no server-rendered markup to read.
-					'i18n'     => array(
-						'region'        => __( 'Notifications', 'wb-gamification' ),
-						'dismiss'       => __( 'Dismiss', 'wb-gamification' ),
-						'points'        => __( 'points', 'wb-gamification' ),
-						// The one summary toast for awards that land together (toast.js). Titles stay
-						// under 40 characters.
-						'welcome'       => __( 'Welcome aboard!', 'wb-gamification' ),
-						'andBadge'      => __( 'and a new badge', 'wb-gamification' ),
-						/* translators: %d: number of badges (2 or more). */
-						'andBadges'     => __( 'and %d new badges', 'wb-gamification' ),
-						'andChallenge'  => __( 'and a challenge done', 'wb-gamification' ),
-						/* translators: %d: number of challenges (2 or more). */
-						'andChallenges' => __( 'and %d challenges done', 'wb-gamification' ),
-						'andKudos'      => __( 'and kudos', 'wb-gamification' ),
-						/* translators: %d: number of rewards (2 or more). */
-						'andRewards'    => __( 'and %d rewards', 'wb-gamification' ),
-						/* translators: %d: number of rewards (2 or more). */
-						'rewards'       => __( '%d new rewards', 'wb-gamification' ),
-						/* translators: %s: name of the member who gave kudos. */
-						'kudosFrom'     => __( 'Kudos from %s', 'wb-gamification' ),
-					),
+					'i18n'     => \WBGam\Engine\NotificationBridge::toast_i18n(),
 				)
 			);
 		}
@@ -893,7 +880,7 @@ final class WB_Gamification {
 	 * `$settings['styles']` is injected into the canvas iframe.
 	 *
 	 * Without this, every wb-gamification block preview renders with undefined
-	 * `--wb-gam-*` variables and no card chrome — and IA blocks (which use a
+	 * `--wb-gam-*` variables and no card chrome - and IA blocks (which use a
 	 * static BlockPreviewCard instead of ServerSideRender) show as raw text.
 	 *
 	 * @param array<string, mixed> $settings Block editor settings.
@@ -944,7 +931,7 @@ final class WB_Gamification {
 	 * whenever the admin is viewing a page outside the plugin's own screens.
 	 *
 	 * The selector only matches the WB Gamification menu node, so the font
-	 * isn't visually applied elsewhere — only the font file is loaded.
+	 * isn't visually applied elsewhere - only the font file is loaded.
 	 *
 	 * @return void
 	 */
@@ -959,7 +946,7 @@ final class WB_Gamification {
 		}
 		wp_enqueue_style( 'lucide-icons' );
 
-		// Menu-icon paint rule — depends on Lucide font; tiny dedicated
+		// Menu-icon paint rule - depends on Lucide font; tiny dedicated
 		// stylesheet so the full admin.css (gated to plugin pages) stays
 		// out of every wp-admin page load.
 		wp_enqueue_style(
@@ -975,7 +962,7 @@ final class WB_Gamification {
 			return;
 		}
 
-		// Lucide icon font — register inline if not already (the frontend
+		// Lucide icon font - register inline if not already (the frontend
 		// register_styles only fires on wp_enqueue_scripts which doesn't
 		// run for admin pages). Mandatory dependency for every admin
 		// surface so banners, empty-states, sidebar nav, accordion
@@ -990,19 +977,19 @@ final class WB_Gamification {
 		}
 		wp_enqueue_style( 'lucide-icons' );
 
-		// Admin stylesheet — refactored 2026-05-27 from the 4069-line
+		// Admin stylesheet - refactored 2026-05-27 from the 4069-line
 		// admin-core + admin-pages pair into a four-layer cascade so the
 		// foundation (tokens / components / utilities / suppression) is
 		// shared across every admin page and per-page styling lives in
 		// dedicated files under assets/css/admin/pages/ that each admin
 		// page class enqueues for itself. Cascade order matters:
 		//
-		// 1. wb-gam-admin-tokens       — design tokens (:root only).
-		// 2. wb-gam-admin-components   — reusable UI primitives that
+		// 1. wb-gam-admin-tokens       - design tokens (:root only).
+		// 2. wb-gam-admin-components   - reusable UI primitives that
 		// consume the tokens.
-		// 3. wb-gam-admin-utilities    — atomic helpers, skeletons,
+		// 3. wb-gam-admin-utilities    - atomic helpers, skeletons,
 		// responsive grid, print rules.
-		// 4. wb-gam-admin-suppression  — body-scoped third-party
+		// 4. wb-gam-admin-suppression  - body-scoped third-party
 		// notice suppression.
 		//
 		// Per-page CSS is enqueued by each admin page's own enqueue_assets
@@ -1032,7 +1019,7 @@ final class WB_Gamification {
 			WB_GAM_VERSION
 		);
 
-		// Back-compat aliases — any third-party code or per-page admin
+		// Back-compat aliases - any third-party code or per-page admin
 		// module that did `wp_enqueue_style( 'wb-gam-admin' )`,
 		// `'wb-gam-admin-core'`, or `'wb-gam-admin-pages'` keeps working.
 		// The aliases have no `src` and depend on the new four-layer
@@ -1060,7 +1047,7 @@ register_activation_hook(
 		// Preactivate the bundled license the instant the plugin is switched
 		// on, so updates flow with zero manual steps from the site owner.
 		\WBGam\Engine\LicenseActivator::activate();
-		// Wizard redirect — only on first install, never on re-activation post-setup.
+		// Wizard redirect - only on first install, never on re-activation post-setup.
 		// The option persists until SetupWizard::maybe_redirect() consumes it on
 		// the first subsequent admin page load, regardless of activation-to-admin
 		// gap. Pre-1.0.0 used a 30s transient that silently dropped the redirect
@@ -1105,7 +1092,7 @@ register_deactivation_hook(
 		// v2.x engines (SideEffectDispatcher, IntelligenceProjector,
 		// NotificationBridge) schedule wp-cron hooks but predate the per-engine
 		// deactivate() convention above, so their events survived deactivation
-		// (smoke: D.action-scheduler-orphan — 3 wb_gam_ hooks left registered).
+		// (smoke: D.action-scheduler-orphan - 3 wb_gam_ hooks left registered).
 		// Clear them here so deactivation leaves no orphaned scheduled events.
 		wp_clear_scheduled_hook( \WBGam\Engine\SideEffectDispatcher::RECONCILE_CRON );
 		wp_clear_scheduled_hook( \WBGam\Engine\IntelligenceProjector::COMPUTE_CRON );
@@ -1135,7 +1122,7 @@ add_action(
 		Installer::maybe_install();
 
 		WB_Gamification::instance();
-		// Idempotent — only writes when CAPS_VERSION moves forward.
+		// Idempotent - only writes when CAPS_VERSION moves forward.
 		WBGam\Engine\Capabilities::sync();
 	},
 	0

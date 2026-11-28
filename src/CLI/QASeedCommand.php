@@ -8,7 +8,7 @@
  * Catches the class of bug we just hit (`[wb_gam_earning_guide]`
  * fatal) by producing a real customer-visible URL for each unit.
  *
- * Idempotent — re-running updates content but never duplicates pages.
+ * Idempotent - re-running updates content but never duplicates pages.
  *
  * @package WB_Gamification
  * @since   1.2.0
@@ -62,7 +62,7 @@ class QASeedCommand {
 		$updated = 0;
 		$ids     = array();
 
-		// Index page first — its ID becomes post_parent for every unit page,
+		// Index page first - its ID becomes post_parent for every unit page,
 		// so themes that auto-include published pages in their primary
 		// nav nest the 15 unit pages under one expandable entry rather
 		// than cluttering the top-level menu.
@@ -76,7 +76,7 @@ class QASeedCommand {
 			$post_data = array(
 				'post_type'      => 'page',
 				'post_status'    => 'publish',
-				'post_title'     => 'QA — ' . $unit['title'],
+				'post_title'     => 'QA - ' . $unit['title'],
 				'post_name'      => $page_slug,
 				'post_content'   => $content,
 				'post_excerpt'   => '',
@@ -136,7 +136,7 @@ class QASeedCommand {
 	 * Move every QA-seeded page to trash.
 	 *
 	 * Pages are detected by the `_wb_gam_qa_seeded` post meta key, so
-	 * any page the admin manually edited still gets cleaned up — the
+	 * any page the admin manually edited still gets cleaned up - the
 	 * meta marker is the source of truth, not the slug.
 	 *
 	 * ## OPTIONS

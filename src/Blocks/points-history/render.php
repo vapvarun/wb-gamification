@@ -1,6 +1,6 @@
 <?php
 /**
- * Points History block — Wbcom Block Quality Standard render.
+ * Points History block - Wbcom Block Quality Standard render.
  *
  * 1.4.0 UX refactor (Basecamp UX feedback 2026-05-26):
  *   - rows grouped under "Today" / "Yesterday" / "May 25, 2026" headers
@@ -10,7 +10,7 @@
  *   - daily totals printed in the group header so admins can audit a
  *     day's earning at a glance
  *   - manual-award message persists as a 2nd line below the action so
- *     "+5 Points — Reason: contest winner" reads meaningfully
+ *     "+5 Points - Reason: contest winner" reads meaningfully
  *   - empty state has a real call-to-action, not a one-liner
  *
  * @package WB_Gamification
@@ -20,15 +20,15 @@
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+//   - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 //     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 //     Plugin Check auto-detects `wb_gamification` from the text-domain header
 //     and doesn't share the .phpcs.xml prefix list; hooks like
 //     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+//   - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 //     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 //   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 //     table work. Table names are interpolated from `{$wpdb->prefix}` plus
 //     literal constants (no user input); user-supplied values pass through
 //     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -37,7 +37,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Block render.php files are invoked from inside render_callback by the
 // WP block registrar, so every $wb_gam_* in this file is function-scoped,
-// not global. PrefixAllGlobals can't tell — its `phpcs:disable` here is
+// not global. PrefixAllGlobals can't tell - its `phpcs:disable` here is
 // the WP-standard way to silence the false positive. The plugin's own
 // .phpcs.xml already declares `wb_gam` as a valid prefix; this annotation
 // extends that signal to Plugin Check's internal phpcs invocation.

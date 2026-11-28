@@ -1,6 +1,6 @@
-/*! components-rtl.css — auto-generated from components.css by bin/build-rtl.js. Do not edit by hand. */
+/*! components-rtl.css - auto-generated from components.css by bin/build-rtl.js. Do not edit by hand. */
 /**
- * WB Gamification — Admin Components
+ * WB Gamification - Admin Components
  * =====================================================================
  * Reusable UI components shared across the 14 admin pages: page wrap,
  * page header, settings topbar, cards, banners, buttons, inputs,
@@ -18,9 +18,9 @@
  * `--wb-gam-*` references in new rules.
  *
  * Dynamic-modifier safety: rules whose modifier classes are built at
- * runtime by PHP — `.wbgam-banner--{success|error|info|warning}`,
+ * runtime by PHP - `.wbgam-banner--{success|error|info|warning}`,
  * `.wbgam-pill--{active|inactive|info|warning|neutral|danger}`,
- * `.wb-gam-mode-badge--{community|standalone}` — stay co-located with
+ * `.wb-gam-mode-badge--{community|standalone}` - stay co-located with
  * their base selector here so a missing variant never breaks layout.
  *
  * Conflict resolution: where admin-core.css and admin-pages.css both
@@ -234,7 +234,7 @@
 }
 
 /* ==========================================================================
-   4. Card Component (premium variant — admin-pages.css wins)
+   4. Card Component (premium variant - admin-pages.css wins)
    ========================================================================== */
 
 .wbgam-card {
@@ -303,14 +303,14 @@
 	gap: var(--wbgam-gap-xs);
 }
 
-/* Card header actions — accommodate multiple buttons (Re-run wizard + Dismiss). */
+/* Card header actions - accommodate multiple buttons (Re-run wizard + Dismiss). */
 .wbgam-card-header__actions {
 	display: inline-flex;
 	gap: 6px;
 	flex-wrap: wrap;
 }
 
-/* Card link helper — "view all" style links inside card headers. */
+/* Card link helper - "view all" style links inside card headers. */
 .wbgam-card-link {
 	font-size: var(--wbgam-fs-sm);
 	color: var(--wbgam-primary);
@@ -323,12 +323,12 @@
 	text-decoration: underline;
 }
 
-/* Accent left-border — used on Quick Links / featured callouts. */
+/* Accent left-border - used on Quick Links / featured callouts. */
 .wbgam-card--accent {
 	border-inline-start: 4px solid var(--wbgam-primary, var(--wbgam-primary));
 }
 
-/* Success card — used by post-Setup-Wizard banner + other "you're all set" callouts. */
+/* Success card - used by post-Setup-Wizard banner + other "you're all set" callouts. */
 .wbgam-card--success {
 	border-inline-start: 4px solid var(--wbgam-success, var(--wbgam-success-strong));
 	background: var(--wbgam-success-soft, var(--wbgam-success-bg-soft));
@@ -341,7 +341,7 @@
 
 /* ==========================================================================
    5. Banner (with dynamic --success|--info|--warning|--error variants)
-   Dynamic-modifier base: wbgam-banner — PHP builds the variant at runtime.
+   Dynamic-modifier base: wbgam-banner - PHP builds the variant at runtime.
    ========================================================================== */
 
 .wbgam-banner {
@@ -432,8 +432,8 @@
 }
 
 /* ==========================================================================
-   6. Status Pills (premium variant — admin-pages.css wins)
-   Dynamic-modifier base: wbgam-pill — PHP builds variant at runtime.
+   6. Status Pills (premium variant - admin-pages.css wins)
+   Dynamic-modifier base: wbgam-pill - PHP builds variant at runtime.
    ========================================================================== */
 
 .wbgam-pill {
@@ -491,7 +491,7 @@
 }
 
 /* ==========================================================================
-   7. Buttons (premium variant — admin-pages.css wins)
+   7. Buttons (premium variant - admin-pages.css wins)
    ========================================================================== */
 
 .wbgam-btn {
@@ -564,7 +564,7 @@
 	pointer-events: none;
 }
 
-/* Loading state — the ::after sized via --wbgam-btn-spinner-size token (set in tokens.css). */
+/* Loading state - the ::after sized via --wbgam-btn-spinner-size token (set in tokens.css). */
 .wbgam-btn--loading {
 	position: relative;
 	color: transparent;
@@ -595,7 +595,7 @@
 }
 
 /* ==========================================================================
-   8. Form Inputs (premium variant — admin-pages.css wins)
+   8. Form Inputs (premium variant - admin-pages.css wins)
    ========================================================================== */
 
 .wbgam-input {
@@ -645,7 +645,7 @@
 	box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
 }
 
-/* Compact number input — used in settings tables where we need a tight 80px field. */
+/* Compact number input - used in settings tables where we need a tight 80px field. */
 .wbgam-input--xs {
 	width: 5rem;
 	padding: 0.375rem 0.5rem;
@@ -686,7 +686,7 @@
 }
 
 /* ==========================================================================
-   9. Select (premium variant — admin-pages.css wins)
+   9. Select (premium variant - admin-pages.css wins)
    ========================================================================== */
 
 /* Field label above a standalone control (select / input) inside a card. */
@@ -729,7 +729,7 @@
 	cursor: not-allowed;
 }
 
-/* Compact select — used in settings tables for per-row currency picker. */
+/* Compact select - used in settings tables for per-row currency picker. */
 .wbgam-select--sm {
 	min-width: 7rem;
 	max-width: 10rem;
@@ -810,7 +810,7 @@
 }
 
 /* ==========================================================================
-   11. Tables (premium variant — admin-pages.css wins)
+   11. Tables (premium variant - admin-pages.css wins)
    ========================================================================== */
 
 .wbgam-table {
@@ -847,7 +847,7 @@
 }
 
 /* Horizontal-scroll wrap for tables that don't reflow at narrow viewports.
-   Matches the canonical 640/782/1024 breakpoint discipline — tables collapse
+   Matches the canonical 640/782/1024 breakpoint discipline - tables collapse
    into a scrollable region under 640px instead of overflowing the card. */
 .wbgam-table-scroll {
 	overflow-x: auto;
@@ -876,7 +876,7 @@
 	color: var(--wbgam-wp-text-light);
 }
 
-/* Column-width helpers — reused across multiple tables. */
+/* Column-width helpers - reused across multiple tables. */
 .wbgam-col-actions {
 	width: 80px;
 }
@@ -912,7 +912,7 @@
 	margin: 0;
 }
 
-/* Compact empty variant — used as inline "no data yet" placeholder in dashboard cards. */
+/* Compact empty variant - used as inline "no data yet" placeholder in dashboard cards. */
 .wbgam-empty--inline {
 	color: var(--wbgam-text-muted);
 	font-size: var(--wbgam-fs-sm);
@@ -1095,7 +1095,7 @@
 	}
 }
 
-/* Action row — primary + secondary buttons aligned in a flex row, wraps on mobile. */
+/* Action row - primary + secondary buttons aligned in a flex row, wraps on mobile. */
 .wbgam-actions-row {
 	display: flex;
 	flex-wrap: wrap;
@@ -1140,17 +1140,17 @@
 .wb-gam-rest-confirm,
 .wb-gam-rest-method,
 .wb-gam-rest-path {
-	/* JS hook markers — no visual rules. */
+	/* JS hook markers - no visual rules. */
 }
 
-/* UTC datetime-local input marker — JS converts to UTC on submit. */
+/* UTC datetime-local input marker - JS converts to UTC on submit. */
 .wb-gam-utc {
 	/* JS hook marker. */
 }
 
 /* ==========================================================================
    20. Mode Badge (Standalone vs Community)
-   Dynamic-modifier base: wb-gam-mode-badge — variant built at runtime.
+   Dynamic-modifier base: wb-gam-mode-badge - variant built at runtime.
    ========================================================================== */
 
 .wb-gam-mode-badge {
@@ -1182,11 +1182,11 @@
 .wb-gam-challenges,
 .wb-gam-community-challenges,
 .wb-gam-point-types {
-	/* Marker wrapper classes — no specific visuals here; child elements
+	/* Marker wrapper classes - no specific visuals here; child elements
 	   inherit cards/tables/buttons from the components above. */
 }
 
-/* Vestibular safety — disable plugin keyframe motion under prefers-reduced-motion
+/* Vestibular safety - disable plugin keyframe motion under prefers-reduced-motion
  * (WCAG 2.3.3). Spinners/toasts/popovers still appear; only the motion stops. */
 @media (prefers-reduced-motion: reduce) {
 	[class*="wbgam-"],

@@ -1,18 +1,18 @@
 <?php
 /**
- * LicenseActivator — preactivates the bundled EDD preset license.
+ * LicenseActivator - preactivates the bundled EDD preset license.
  *
  * WB Gamification is GPLv2 free, but it ships from store.wbcomdesigns.com
  * (not the wp.org repo), so the only way users see "1 update available" in
  * their admin is through the bundled EDD Software Licensing SDK. The SDK
  * needs a license key to authenticate update checks. Because the product
  * is free, we bundle a no-charge preset key (a registration token) and
- * activate it automatically — the site owner never types a key.
+ * activate it automatically - the site owner never types a key.
  *
  * {@see activate()} runs on BOTH plugin activation (preactivates the
  * instant the plugin is switched on) and `admin_init` (an idempotent
- * fallback for activation paths that bypass the activation hook — CLI
- * clone, restore-from-backup — and a retry after a transient network
+ * fallback for activation paths that bypass the activation hook - CLI
+ * clone, restore-from-backup - and a retry after a transient network
  * error). The preset key + item id + store URL are the global
  * WB_GAM_LICENSE_PRESET_KEY / WB_GAM_EDD_ITEM_ID constants, sent through {@see self::request()}
  * constants defined in the main plugin file.
@@ -94,7 +94,7 @@ final class LicenseActivator {
 	public static function activate(): void {
 		$preset_key = WB_GAM_LICENSE_PRESET_KEY;
 
-		// Store the key so the SDK can find it immediately — this is what
+		// Store the key so the SDK can find it immediately - this is what
 		// makes the plugin preactivated even before the remote round-trip.
 		if ( WB_GAM_LICENSE_PRESET_KEY !== get_option( self::KEY_OPTION ) ) {
 			update_option( self::KEY_OPTION, $preset_key, false );

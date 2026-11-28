@@ -110,13 +110,13 @@ final class WebhookDispatcher {
 		add_action( 'wb_gam_challenge_completed', array( self::class, 'on_challenge_completed' ), 50, 2 );
 		// kudos_given fires with 4 args (giver, receiver, message, kudos_id);
 		// pre-1.4.1 the dispatcher only accepted 3, so kudos_id silently
-		// dropped from outbound webhook payloads — subscribers couldn't
+		// dropped from outbound webhook payloads - subscribers couldn't
 		// dedupe retries against a kudos row id or re-fetch the row from
 		// `/wb-gamification/v1/kudos/{id}`. Closes audit
 		// DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G12.
 		add_action( 'wb_gam_kudos_given', array( self::class, 'on_kudos_given' ), 50, 4 );
 
-		// Redemption event — Zapier/Make/n8n integrations want a webhook
+		// Redemption event - Zapier/Make/n8n integrations want a webhook
 		// when a member redeems a reward. Closes audit
 		// DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G2. TransactionalEmailEngine
 		// already subscribes to the same hook (commit ab7e79e); both run
@@ -188,7 +188,7 @@ final class WebhookDispatcher {
 	 *
 	 * Dispatch a webhook when a user redeems a reward.
 	 *
-	 * Subscribes to `wb_gam_points_redeemed` — same hook the transactional
+	 * Subscribes to `wb_gam_points_redeemed` - same hook the transactional
 	 * email engine listens on. Both consumers fire independently. Closes
 	 * audit/DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G2.
 	 *
@@ -218,7 +218,7 @@ final class WebhookDispatcher {
 	 * @param int    $giver_id    User who gave kudos.
 	 * @param int    $receiver_id User who received kudos.
 	 * @param string $message     Kudos message.
-	 * @param int    $kudos_id    DB row id (added 1.4.1 — see §G12). Optional
+	 * @param int    $kudos_id    DB row id (added 1.4.1 - see §G12). Optional
 	 *                            default 0 so legacy 3-arg fires don't fatal.
 	 */
 	public static function on_kudos_given( int $giver_id, int $receiver_id, string $message, int $kudos_id = 0 ): void {
@@ -269,9 +269,9 @@ final class WebhookDispatcher {
 
 		// Deterministic payload shape: every key always present, with explicit
 		// nulls for missing values. Pre-1.4.1 used `array_filter` which dropped
-		// any empty / zero / false / null entry — so subscribers saw a
+		// any empty / zero / false / null entry - so subscribers saw a
 		// different field set per call and couldn't write a stable schema.
-		// HMAC signature reproducibility also depends on this — the same
+		// HMAC signature reproducibility also depends on this - the same
 		// logical event must produce the same bytes. Closes audit
 		// DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G14.
 		$data = array_merge(
@@ -359,7 +359,7 @@ final class WebhookDispatcher {
 
 		if ( $status_code >= 400 ) {
 			self::log_delivery( $webhook_id, $event_type, $status_code, false );
-			// Terminal 4xx — receiver permanently refuses (revoked endpoint,
+			// Terminal 4xx - receiver permanently refuses (revoked endpoint,
 			// bad secret, gone). Don't waste retries on something that won't
 			// improve in 14 minutes. 408 / 425 / 429 are transient and DO
 			// retry. Closes audit/DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G6.
@@ -386,7 +386,7 @@ final class WebhookDispatcher {
 	 *
 	 * 4xx generally indicates a client error the receiver won't recover from
 	 * in the retry window (revoked endpoint, wrong secret, gone). The three
-	 * transient exceptions get retried like 5xx — 408 (request timeout),
+	 * transient exceptions get retried like 5xx - 408 (request timeout),
 	 * 425 (too early), 429 (too many requests).
 	 *
 	 * @since 1.4.1
@@ -405,14 +405,14 @@ final class WebhookDispatcher {
 	 * Handle a scheduled retry delivery.
 	 *
 	 * Re-fetches the subscription row from `wb_gam_webhooks` on every
-	 * retry — `(url, secret)` are read fresh so a secret rotation that
+	 * retry - `(url, secret)` are read fresh so a secret rotation that
 	 * happens between the initial dispatch and the eventual retry doesn't
 	 * leave the retry holding a stale HMAC the receiver will reject. The
 	 * payload is the only stable input (it represents a frozen moment in
 	 * the event timeline); URL + signature get re-derived.
 	 *
 	 * If the subscription was deleted between dispatch and retry, the
-	 * retry is dropped (no logging — nothing to log against).
+	 * retry is dropped (no logging - nothing to log against).
 	 *
 	 * Closes audit/DATA-FLOW-NOTIFICATIONS-2026-05-27.md §G5.
 	 *
@@ -485,7 +485,7 @@ final class WebhookDispatcher {
 
 		if ( $status_code >= 400 ) {
 			self::log_delivery( $webhook_id, $event, $status_code, false );
-			// Same terminal-4xx logic as deliver() — don't keep retrying a
+			// Same terminal-4xx logic as deliver() - don't keep retrying a
 			// receiver that's permanently refusing. Audit §G6.
 			if ( self::is_terminal_status( $status_code ) ) {
 				Log::warning(
@@ -522,7 +522,7 @@ final class WebhookDispatcher {
 	 *               next_retry guard above. Each call schedules exactly one
 	 *               retry; the retry handler is self::handle_retry which
 	 *               re-enters maybe_schedule_retry only after a new attempt
-	 *               fails — never reflexively.
+	 *               fails - never reflexively.
 	 */
 	private static function maybe_schedule_retry(
 		int $webhook_id,

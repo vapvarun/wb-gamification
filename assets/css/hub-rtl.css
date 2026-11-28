@@ -1,6 +1,6 @@
-/*! hub-rtl.css — auto-generated from hub.css by bin/build-rtl.js. Do not edit by hand. */
+/*! hub-rtl.css - auto-generated from hub.css by bin/build-rtl.js. Do not edit by hand. */
 /**
- * WB Gamification — Hub Design System
+ * WB Gamification - Hub Design System
  *
  * Theme-independent stylesheet for the Gamification Hub page.
  * Uses --gam-* custom properties so no theme CSS leaks in.
@@ -34,7 +34,7 @@
   /* Accent bridges to the standard --wb-gam-color-accent token so the
    * site owner's Settings > Appearance accent (WBGam\Engine\Appearance)
    * re-tints the Hub too. Falls back to the brand purple when unset, which
-   * is the previous hardcoded value — so default behaviour is unchanged.
+   * is the previous hardcoded value - so default behaviour is unchanged.
    * accent-light / accent-text derive from --gam-accent below, so they
    * follow automatically. See BC card 10060536808. */
   --gam-accent: var(--wb-gam-color-accent, var(--bx-color-accent, var(--reign-site-button-bg-color, #5b4cdb)));
@@ -42,7 +42,7 @@
    * dark mode (faint dark tint) instead of staying opaque light. */
   --gam-accent-light: color-mix(in srgb, var(--gam-accent) 14%, var(--gam-surface));
   /* Same formula as --wb-gam-color-accent-text (design-tokens.css): AA on the card in either mode. */
-  --gam-accent-text: color-mix(in srgb, var(--gam-accent) 50%, var(--wb-gam-color-accent-ink));
+  --gam-accent-text: var(--wb-gam-color-accent-text); /* the one derivation (design-tokens.css, CSS.php): same value by default, the owner's card where one is set */
   --gam-success: #0d9f6e;
   --gam-success-bg: color-mix(in srgb, var(--gam-success) 12%, var(--gam-surface));
   --gam-warning: #c2770e;
@@ -91,7 +91,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--gam-accent);
+  color: var(--gam-accent-text);
 }
 
 .gam-nudge__icon i {
@@ -130,20 +130,14 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: var(--wb-gam-pop-accent); /* With --wb-gam-pop-accent-fg: the solid fill its text colour was computed for. */
-  color: var(--wb-gam-pop-accent-fg);
   border: none;
   border-radius: var(--gam-radius-sm);
   padding: 8px 16px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity var(--gam-transition);
+  transition: background-color var(--gam-transition);
   text-decoration: none;
-}
-
-.gam-nudge__action:hover {
-  opacity: 0.9;
 }
 
 .gam-nudge__action i {
@@ -253,7 +247,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--gam-accent);
+  color: var(--gam-accent-text);
 }
 
 .gam-stat__icon i {
@@ -343,7 +337,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--gam-accent);
+  color: var(--gam-accent-text);
 }
 
 .gam-card__icon i {
@@ -419,11 +413,6 @@
 
 /* PANEL: the shell (native <dialog>, slide, scrim, close button) is .wb-gam-drawer in
  * assets/css/popups.css. Only the hub's own header and body live here. */
-.gam-card:focus-visible {
-  outline: 2px solid var(--gam-accent);
-  outline-offset: 2px;
-}
-
 .gam-panel__header {
   position: sticky;
   top: 0;
@@ -456,7 +445,7 @@
  * narrow for 90 cells) stay here.
  *
  * Previous overrides forced 90px badge cards which crammed the title
- * into 2 ellipsed lines — removed in 1.4.0 in favour of the badge-
+ * into 2 ellipsed lines - removed in 1.4.0 in favour of the badge-
  * showcase's own container queries (`@container (max-width: 520px)`
  * yields 3 cols, `<= 360px` yields 2).
  */
@@ -497,7 +486,7 @@
 .gam-panel__body .wb-gam-kudos-feed__empty::before { content: "\e2d6"; /* heart-handshake */ }
 .gam-panel__body .wb-gam-points-history__empty::before { content: "\e1f4"; /* history */ }
 
-/* Badge grid inside panel — the slide-in panel is fixed-narrow even on
+/* Badge grid inside panel - the slide-in panel is fixed-narrow even on
  * desktop, so a 3-up grid crammed each badge (medal + 2-line title +
  * description). Two columns give the badge art and text room to breathe.
  * minmax(0,1fr) keeps it clean when the panel goes full-width on mobile. */
@@ -575,7 +564,7 @@
 
 .gam-list-item__icon {
   font-size: 16px;
-  color: var(--gam-accent);
+  color: var(--gam-accent-text);
   flex-shrink: 0;
 }
 
@@ -723,8 +712,6 @@
 
 .gam-lb-pill--active {
   border-color: var(--gam-accent);
-  background: var(--wb-gam-pop-accent); /* With --wb-gam-pop-accent-fg: the solid fill its text colour was computed for. */
-  color: var(--wb-gam-pop-accent-fg);
 }
 
 /* Kudos inside panel */
@@ -745,7 +732,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--gam-accent);
+  color: var(--gam-accent-text);
   flex-shrink: 0;
 }
 
@@ -796,7 +783,7 @@
   .gam-nudge { padding: 12px 14px; }
 }
 
-/* CURRENCY CONVERT — per-tile button + shared modal. */
+/* CURRENCY CONVERT - per-tile button + shared modal. */
 .gam-stat__convert {
   margin-top: 8px;
   font-size: 12px;
@@ -811,13 +798,9 @@
 }
 .gam-stat__convert:hover,
 .gam-stat__convert:focus-visible {
-  background: var(--wb-gam-color-accent, #2563eb);
+  background: var(--wb-gam-pop-accent);
   color: var(--wb-gam-pop-accent-fg);
-  border-color: var(--wb-gam-color-accent, #2563eb);
-}
-.gam-stat__convert:focus-visible {
-  outline: 2px solid var(--wb-gam-color-accent, #2563eb);
-  outline-offset: 2px;
+  border-color: var(--wb-gam-pop-accent);
 }
 .gam-stat__convert:focus:not(:focus-visible) { outline: none; }
 
@@ -832,21 +815,10 @@
   width: 100%;
   min-height: var(--wb-gam-btn-h);
   padding: 8px 12px;
-  border: 1px solid var(--wb-gam-pop-line);
+  border-width: 1px;
+  border-style: solid;
   border-radius: var(--wb-gam-btn-r);
-  background: var(--wb-gam-pop-surface);
-  color: var(--wb-gam-pop-text);
   font-size: 14px;
-}
-.wbgam-convert-form__field select:focus,
-.wbgam-convert-form__field select:focus-visible,
-.wbgam-convert-form__field input:focus,
-.wbgam-convert-form__field input:focus-visible {
-  border-color: var(--wb-gam-pop-accent);
-  background: var(--wb-gam-pop-surface);
-  color: var(--wb-gam-pop-text);
-  outline: 2px solid var(--wb-gam-pop-accent-200);
-  outline-offset: 0;
 }
 .wbgam-convert-form__preview {
   margin: 0;
@@ -860,7 +832,7 @@
 .wbgam-convert-form__preview:empty { display: none; }
 
 /* Dark-mode tokens. The :root defaults derive the neutrals from BuddyX's
- * --bx-color-* with LIGHT fallbacks — fine on BuddyX (those props flip under
+ * --bx-color-* with LIGHT fallbacks - fine on BuddyX (those props flip under
  * dark) but wrong on themes that signal dark WITHOUT defining --bx-color-*
  * (Reign, Twenty Twenty-Five, Astra), which left the Hub cards solid white in
  * dark mode. Re-declare the neutrals here with DARK fallbacks: BuddyX still

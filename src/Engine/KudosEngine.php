@@ -9,7 +9,7 @@
  *   - Daily send limit per giver (default: 5/day).
  *   - Points awarded: receiver gets `wb_gam_kudos_receiver_points` (default 5).
  *                     giver   gets `wb_gam_kudos_giver_points`    (default 2).
- *   - Both awards flow through Engine::process() — full pipeline:
+ *   - Both awards flow through Engine::process() - full pipeline:
  *     event log, badge evaluation, level-up, streaks, webhooks.
  *   - Fires `wb_gam_kudos_given` after successful DB insert.
  *
@@ -21,15 +21,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -328,7 +328,7 @@ final class KudosEngine {
 		 * Pre-1.0.0 this hook also fired a 3-arg variant immediately after
 		 * the 4-arg one. That broke listeners registered with `accepted_args=4`
 		 * (PHP TypeError: missing $kudos_id) on every kudos send. The 3-arg
-		 * fire was redundant — the kudos_id is always available — so it was
+		 * fire was redundant - the kudos_id is always available - so it was
 		 * removed in 1.0.0. All listeners now receive 4 args reliably.
 		 *
 		 * @param int    $giver_id    User who gave the kudos.
@@ -365,7 +365,7 @@ final class KudosEngine {
 	/**
 	 * Has this giver kudos'd this receiver within the cooldown window?
 	 *
-	 * Used by the per-receiver cooldown gate in send(). Anti-spam — keeps
+	 * Used by the per-receiver cooldown gate in send(). Anti-spam - keeps
 	 * a giver from rapid-firing kudos to the same person. Window is in
 	 * seconds, filterable via `wb_gam_kudos_per_receiver_cooldown_seconds`.
 	 *
@@ -540,7 +540,7 @@ final class KudosEngine {
 	/**
 	 * Revoke a kudos: reverse BOTH point awards and soft-mark the row.
 	 *
-	 * A compound reversal — the giver and receiver each received points at send
+	 * A compound reversal - the giver and receiver each received points at send
 	 * time, so revoking debits BOTH by the EXACT amount they were awarded for
 	 * this kudos (looked up from wb_gam_points by object_id, not the current
 	 * option value, which may have changed). The row is kept (revoked_at set)
@@ -590,7 +590,7 @@ final class KudosEngine {
 		// Soft-revoke the row (kept for audit).
 		$wpdb->update( $table, array( 'revoked_at' => current_time( 'mysql', true ) ), array( 'id' => $kudos_id ), array( '%s' ), array( '%d' ) );
 
-		// Compensating debits — each audited to wb_gam_events with the reason.
+		// Compensating debits - each audited to wb_gam_events with the reason.
 		if ( $recv_pts > 0 ) {
 			PointsEngine::debit( $receiver_id, $recv_pts, 'kudos_revoked', self::revoke_event( 'kudos_revoked', $receiver_id, $kudos_id, $reason, $admin_id, 'receiver', $recv_pts ) );
 		}

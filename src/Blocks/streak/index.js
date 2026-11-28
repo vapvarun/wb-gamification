@@ -1,5 +1,5 @@
 /**
- * Streak — block registration entry.
+ * Streak - block registration entry.
  *
  * @see plans/WBCOM-BLOCK-STANDARD-MIGRATION.md Phase D.1
  */

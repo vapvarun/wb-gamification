@@ -39,7 +39,7 @@ final class AbilitiesRegistration {
 	 */
 	public static function init(): void {
 		// WP 6.9+ Abilities API. Registration MUST happen on
-		// `wp_abilities_api_init` per core's contract — using the generic
+		// `wp_abilities_api_init` per core's contract - using the generic
 		// `init` hook triggers a `_doing_it_wrong` notice on every page
 		// load and the abilities silently fail to register. The category
 		// must be registered first, on its own earlier hook, or every
@@ -49,14 +49,14 @@ final class AbilitiesRegistration {
 			add_action( 'wp_abilities_api_init', array( __CLASS__, 'register_abilities' ) );
 		}
 
-		// Fallback REST endpoint — works on any WP version.
+		// Fallback REST endpoint - works on any WP version.
 		add_action( 'rest_api_init', array( __CLASS__, 'register_fallback_route' ) );
 	}
 
 	/**
 	 * Register the "gamification" ability category.
 	 *
-	 * Both `label` and `description` are required — omitting either makes
+	 * Both `label` and `description` are required - omitting either makes
 	 * `wp_register_ability_category()` silently return null.
 	 *
 	 * Only ever reached via the `wp_abilities_api_categories_init` hook, which itself does not
@@ -86,7 +86,7 @@ final class AbilitiesRegistration {
 	 *
 	 * The discovery metadata from get_abilities() is mapped onto the args
 	 * core actually validates: `execute_callback` and `permission_callback`
-	 * are REQUIRED — without them WP_Ability::prepare_properties() throws,
+	 * are REQUIRED - without them WP_Ability::prepare_properties() throws,
 	 * the registry emits `_doing_it_wrong`, and the ability is dropped.
 	 * Execution proxies to the documented REST route, so the controller's
 	 * own permission_callback, validation, and sanitization still apply.
@@ -234,7 +234,7 @@ final class AbilitiesRegistration {
 					return is_user_logged_in();
 				};
 			default:
-				// 'none' / 'optional' — the proxied endpoint is public.
+				// 'none' / 'optional' - the proxied endpoint is public.
 				return static function (): bool {
 					return true;
 				};
@@ -278,8 +278,8 @@ final class AbilitiesRegistration {
 	/**
 	 * All gamification abilities with their metadata.
 	 *
-	 * Each ability describes an API capability — its endpoint, HTTP methods,
-	 * parameters, and auth requirements — so AI agents and mobile apps
+	 * Each ability describes an API capability - its endpoint, HTTP methods,
+	 * parameters, and auth requirements - so AI agents and mobile apps
 	 * can discover and invoke the right operations.
 	 *
 	 * @return array<string, array<string, mixed>>
@@ -296,7 +296,7 @@ final class AbilitiesRegistration {
 				'methods'     => array( 'GET' ),
 				'parameters'  => array(
 					// Period values must match LeaderboardController::get_scope_args()
-					// — singular forms (`day`, `week`, `month`, `all`). Plural forms
+					// - singular forms (`day`, `week`, `month`, `all`). Plural forms
 					// (`daily`, `weekly`, `monthly`) get rejected by the controller's
 					// sanitize_key + enum check. Enum-drift bug caught by
 					// wppqa_check_enum_consistency 2026-05-03.

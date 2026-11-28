@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Webhooks admin page
+ * WB Gamification - Webhooks admin page
  *
  * Closes the surface gap surfaced in
  * plans/ARCHITECTURE-DRIVEN-PLAN.md Phase 3.1: WebhookDispatcher is
@@ -42,7 +42,7 @@ final class WebhooksAdminPage {
 	public static function init(): void {
 		add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
-		// admin_post_wb_gam_webhook_{save,delete} removed in 1.0.0 — page now
+		// admin_post_wb_gam_webhook_{save,delete} removed in 1.0.0 - page now
 		// consumes /wb-gamification/v1/webhooks (POST/DELETE) directly via the
 		// generic admin-rest-form driver. See Tier 0.C migration.
 	}
@@ -164,7 +164,7 @@ final class WebhooksAdminPage {
 
 			<?php
 			// Read-only notice display from a redirect set by the admin
-			// REST handler — no state mutation, no nonce needed.
+			// REST handler - no state mutation, no nonce needed.
 			// phpcs:disable WordPress.Security.NonceVerification.Recommended
 			$wb_gam_notice_slug = isset( $_GET['notice'] ) ? sanitize_key( wp_unslash( $_GET['notice'] ) ) : '';
 			// phpcs:enable WordPress.Security.NonceVerification.Recommended
@@ -356,7 +356,7 @@ final class WebhooksAdminPage {
 	}
 
 	/**
-	 * Tooltip describing the payload shape for an event — shown on hover
+	 * Tooltip describing the payload shape for an event - shown on hover
 	 * over the event checkbox. Helps admins decide which events to pick
 	 * without leaving the page to read docs.
 	 *

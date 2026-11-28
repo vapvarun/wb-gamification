@@ -1,5 +1,5 @@
 /**
- * Member Points — block registration entry.
+ * Member Points - block registration entry.
  *
  * @see plans/WBCOM-BLOCK-STANDARD-MIGRATION.md Phase D.1
  */

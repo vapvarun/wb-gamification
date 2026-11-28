@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — BuddyPress badge_earned stream poster.
+ * WB Gamification - BuddyPress badge_earned stream poster.
  *
  * BadgeEngine fires:
  *   do_action( 'wb_gam_badge_awarded', $user_id, $def, $badge_id )
@@ -53,7 +53,7 @@ final class BadgeStream {
 	 * Wire the engine action to this poster.
 	 */
 	public static function init(): void {
-		add_action( 'wb_gam_badge_awarded', array( __CLASS__, 'post' ), 10, 3 );
+		add_action( 'wb_gam_badge_awarded', \WBGam\Engine\RecipientLocale::site( array( __CLASS__, 'post' ) ), 10, 3 );
 	}
 
 	/**
@@ -70,7 +70,7 @@ final class BadgeStream {
 
 		$def = is_array( $def ) ? $def : (array) $def;
 
-		// Engine sometimes fires before the def is hydrated — backfill from DB.
+		// Engine sometimes fires before the def is hydrated - backfill from DB.
 		if ( '' !== $badge_id && empty( $def['name'] ) ) {
 			$def = ActivityCard::lookup_badge_def( $badge_id ) ?: $def;
 		}

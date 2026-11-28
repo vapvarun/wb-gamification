@@ -1,5 +1,5 @@
 /**
- * Year Recap block — frontend stylesheet.
+ * Year Recap block - frontend stylesheet.
  *
  * Phase F migration: extracted from assets/css/frontend.css so the
  * block ships its own CSS via block.json (`style` field).
@@ -14,6 +14,11 @@
 	 * is fixed with them: --wb-gam-color-white is the THEME surface, which
 	 * turns dark in dark mode and left dark text on the dark hero. */
 	--wb-gam-recap-ink: #ffffff;
+	/* Panels and pills on the hero are a veil of the ink, so they follow it onto an owner's card. */
+	--wb-gam-recap-veil: var(--wb-gam-recap-ink);
+	--wb-gam-recap-gold: #ffd700;
+	/* The accent as text on the dark hero: lifted to a lightness that reads on it (an owner accent can be any colour). */
+	--wb-gam-recap-accent-text: color-mix(in srgb, var(--wb-gam-recap-accent) 55%, #ffffff);
 	background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
 	border-radius: 1.25rem;
 	padding: 2rem;
@@ -23,7 +28,34 @@
 	overflow: hidden;
 }
 
-/* Empty state — sits inside the dark hero, so text needs the inverse
+@supports (color: oklch(from red l c h)) {
+	.wb-gam-year-recap {
+		--wb-gam-recap-accent-text: oklch(from var(--wb-gam-recap-accent) clamp(0.7, l, 1) c h);
+	}
+}
+
+/* An owner's own Card background replaces the hero: the card colour, its ink and its tokens
+ * (CSS.php card_tokens(), carried by .wb-gam-scheme-light / -dark) take the place of the fixed
+ * gradient and the white ink, in the light and the dark theme alike. */
+.wb-gam-year-recap.wb-gam-scheme-light,
+.wb-gam-year-recap.wb-gam-scheme-dark {
+	--wb-gam-recap-ink: var(--wb-gam-color-text);
+	--wb-gam-recap-gold: var(--wb-gam-color-gold-text);
+	--wb-gam-recap-accent-text: var(--wb-gam-color-accent-text);
+	background-image: none;
+}
+/* The faded labels are the ink at 60-70% opacity on the dark hero; on an owner's card that is below AA, so they use the card's muted text. */
+.wb-gam-year-recap.wb-gam-scheme-light :is(.wb-gam-recap__subtitle, .wb-gam-recap__stat-label, .wb-gam-recap__peak-week-label, .wb-gam-recap__section-title, .wb-gam-recap__top-action-count),
+.wb-gam-year-recap.wb-gam-scheme-dark :is(.wb-gam-recap__subtitle, .wb-gam-recap__stat-label, .wb-gam-recap__peak-week-label, .wb-gam-recap__section-title, .wb-gam-recap__top-action-count) {
+	opacity: 1;
+	color: var(--wb-gam-color-text-muted);
+}
+.wb-gam-year-recap.wb-gam-scheme-light::before,
+.wb-gam-year-recap.wb-gam-scheme-dark::before {
+	opacity: 0.12;
+}
+
+/* Empty state - sits inside the dark hero, so text needs the inverse
  * (white-ish) of normal muted. Padded for breathing room since the
  * block has no other content to fill it. */
 .wb-gam-year-recap__empty {
@@ -31,7 +63,7 @@
 	padding: 2.5rem 1.5rem;
 	text-align: center;
 	font-size: 0.9375rem;
-	color: rgba(255, 255, 255, 0.78);
+	color: color-mix(in srgb, var(--wb-gam-recap-veil) 78%, transparent);
 	position: relative;
 }
 
@@ -77,7 +109,7 @@
 
 /* Headline */
 .wb-gam-recap__headline {
-	background: rgba(255, 255, 255, 0.08);
+	background: color-mix(in srgb, var(--wb-gam-recap-veil) 8%, transparent);
 	border-left: 4px solid var(--wb-gam-recap-accent, #6f42c1);
 	border-radius: 0 0.5rem 0.5rem 0;
 	padding: 0.875rem 1.25rem;
@@ -102,7 +134,7 @@
 }
 
 .wb-gam-recap__stat {
-	background: rgba(255, 255, 255, 0.07);
+	background: color-mix(in srgb, var(--wb-gam-recap-veil) 7%, transparent);
 	border-radius: 0.75rem;
 	padding: 1rem 0.75rem;
 	text-align: center;
@@ -113,13 +145,13 @@
 }
 
 .wb-gam-recap__stat:hover {
-	background: rgba(255, 255, 255, 0.12);
+	background: color-mix(in srgb, var(--wb-gam-recap-veil) 12%, transparent);
 }
 
 .wb-gam-recap__stat-value {
 	font-size: 1.625rem;
 	font-weight: 800;
-	color: var(--wb-gam-recap-accent, #6f42c1);
+	color: var(--wb-gam-recap-accent-text);
 	line-height: 1;
 }
 
@@ -135,7 +167,7 @@
 	display: flex;
 	align-items: center;
 	gap: 0.75rem;
-	background: rgba(255, 255, 255, 0.06);
+	background: color-mix(in srgb, var(--wb-gam-recap-veil) 6%, transparent);
 	border-radius: 0.75rem;
 	padding: 0.875rem 1.25rem;
 	margin-bottom: 1.5rem;
@@ -153,7 +185,7 @@
 }
 
 .wb-gam-recap__peak-week-pts {
-	color: var(--wb-gam-gold, #ffd700);
+	color: var(--wb-gam-recap-gold);
 	font-weight: 700;
 }
 
@@ -186,7 +218,7 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	background: rgba(255, 255, 255, 0.05);
+	background: color-mix(in srgb, var(--wb-gam-recap-veil) 5%, transparent);
 	border-radius: 0.5rem;
 	padding: 0.625rem 1rem;
 	font-size: 0.9375rem;
@@ -197,7 +229,7 @@
 
 .wb-gam-recap__top-action::before {
 	content: counter(recap-action);
-	color: var(--wb-gam-recap-accent, #6f42c1);
+	color: var(--wb-gam-recap-accent-text);
 	font-weight: 800;
 	min-width: 1.5rem;
 }
@@ -224,8 +256,8 @@
 }
 
 .wb-gam-recap__badge-pill {
-	background: rgba(255, 255, 255, 0.1);
-	border: 1px solid rgba(255, 255, 255, 0.18);
+	background: color-mix(in srgb, var(--wb-gam-recap-veil) 10%, transparent);
+	border: 1px solid color-mix(in srgb, var(--wb-gam-recap-veil) 18%, transparent);
 	border-radius: 999px;
 	padding: 0.3rem 0.875rem;
 	font-size: 0.8125rem;
@@ -235,7 +267,7 @@
 }
 
 .wb-gam-recap__badge-pill:hover {
-	background: rgba(255, 255, 255, 0.18);
+	background: color-mix(in srgb, var(--wb-gam-recap-veil) 18%, transparent);
 }
 
 /* Share button */
@@ -250,19 +282,16 @@
 	align-items: center;
 	gap: 0.5rem;
 	padding: 0.75rem 2rem;
-	background: var(--wb-gam-pop-accent); /* With --wb-gam-pop-accent-fg: the solid fill its text colour was computed for (4.29:1 on the raw accent). */
-	color: var(--wb-gam-pop-accent-fg);
 	border: none;
 	border-radius: 999px;
 	font-size: 0.9375rem;
 	font-weight: 700;
 	cursor: pointer;
-	transition: opacity 0.15s, transform 0.1s;
+	transition: background-color 0.15s, transform 0.1s;
 	letter-spacing: 0.02em;
 }
 
 .wb-gam-recap__share-btn:hover {
-	opacity: 0.9;
 	transform: translateY(-1px);
 }
 

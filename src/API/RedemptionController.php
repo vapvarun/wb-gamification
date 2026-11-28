@@ -240,7 +240,7 @@ class RedemptionController extends WP_REST_Controller {
 	public function get_items( $request ): WP_REST_Response {
 		$items = RedemptionEngine::get_items();
 
-		// Per-type balance map for the current user — frontend uses this to
+		// Per-type balance map for the current user - frontend uses this to
 		// flag insufficient-balance state per reward currency. `current_balance`
 		// stays as the primary-type total for back-compat with single-currency
 		// consumers.
@@ -438,7 +438,7 @@ class RedemptionController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Mark a redemption fulfilled (admin) — the reward has been delivered.
+	 * Mark a redemption fulfilled (admin) - the reward has been delivered.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.
@@ -457,7 +457,7 @@ class RedemptionController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Refund a redemption (admin) — credit points back and restore stock.
+	 * Refund a redemption (admin) - credit points back and restore stock.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error Response on success, WP_Error on failure.

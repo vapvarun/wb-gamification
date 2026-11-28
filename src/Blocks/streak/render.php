@@ -1,6 +1,6 @@
 <?php
 /**
- * Streak block — Wbcom Block Quality Standard render.
+ * Streak block - Wbcom Block Quality Standard render.
  *
  * Phase D.1 migration: per-instance scoped CSS via
  * `WBGam\Blocks\CSS::add()`, design tokens through `wb-gam-tokens`,
@@ -13,15 +13,15 @@
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-//   - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+//   - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 //     established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 //     Plugin Check auto-detects `wb_gamification` from the text-domain header
 //     and doesn't share the .phpcs.xml prefix list; hooks like
 //     `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-//   - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+//   - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 //     functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 //   - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+//     WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 //     table work. Table names are interpolated from `{$wpdb->prefix}` plus
 //     literal constants (no user input); user-supplied values pass through
 //     `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -30,7 +30,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Block render.php files are invoked from inside render_callback by the
 // WP block registrar, so every $wb_gam_* in this file is function-scoped,
-// not global. PrefixAllGlobals can't tell — its `phpcs:disable` here is
+// not global. PrefixAllGlobals can't tell - its `phpcs:disable` here is
 // the WP-standard way to silence the false positive. The plugin's own
 // .phpcs.xml already declares `wb_gam` as a valid prefix; this annotation
 // extends that signal to Plugin Check's internal phpcs invocation.
@@ -54,7 +54,7 @@ if ( $wb_gam_user_id <= 0 ) {
 }
 
 // Privacy gate. T1 fields (current/longest streak) need a public profile.
-// T2 field (heatmap — daily activity timeline) needs self/admin only.
+// T2 field (heatmap - daily activity timeline) needs self/admin only.
 // See plan/PRIVACY-MODEL.md.
 $wb_gam_can_t1 = $wb_gam_user_id > 0 && Privacy::can_view_public_profile( $wb_gam_user_id );
 $wb_gam_can_t2 = $wb_gam_user_id > 0 && Privacy::can_view_private_history( $wb_gam_user_id );
@@ -168,7 +168,7 @@ BlockHooks::before( 'streak', $wb_gam_attrs );
 	</div>
 
 	<?php if ( $wb_gam_next_mile ) :
-		// Progress bar percent — kept inside [0,100] so a 0-day current
+		// Progress bar percent - kept inside [0,100] so a 0-day current
 		// streak still shows a flat track and a partial week reads as a
 		// proportional fill. Added in 1.4.0 (Basecamp 9919406312) so
 		// members get a visual cue, not just a sentence, of how close
@@ -231,7 +231,7 @@ BlockHooks::before( 'streak', $wb_gam_attrs );
 				$wb_gam_pts   = (int) ( $wb_gam_heatmap[ $wb_gam_date ] ?? 0 );
 				$wb_gam_level = $wb_gam_pts > 0 ? (int) ceil( ( $wb_gam_pts / $wb_gam_max_pts ) * 4 ) : 0;
 
-				$wb_gam_formatted_date = wp_date( 'M j', $wb_gam_day->getTimestamp() );
+				$wb_gam_formatted_date = wp_date( _x( 'M j', 'short date format: month and day', 'wb-gamification' ), $wb_gam_day->getTimestamp() );
 				$wb_gam_title          = $wb_gam_pts > 0
 					? sprintf( /* translators: 1 = formatted date, 2 = points */ __( '%1$s: %2$s points', 'wb-gamification' ), $wb_gam_formatted_date, number_format_i18n( $wb_gam_pts ) )
 					: sprintf( /* translators: %s = formatted date */ __( '%s: No activity', 'wb-gamification' ), $wb_gam_formatted_date );

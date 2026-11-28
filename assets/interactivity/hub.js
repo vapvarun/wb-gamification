@@ -1,5 +1,5 @@
 /**
- * WB Gamification — Hub Interactivity API store
+ * WB Gamification - Hub Interactivity API store
  *
  * Handles:
  *  - Slide-in panel open / close (a native <dialog>, via assets/js/dialog.js)
@@ -55,7 +55,7 @@ function getServerPanelTitles() {
 				return parsed;
 			}
 		} catch ( e ) {
-			// Malformed JSON — fall through to the English fallback map.
+			// Malformed JSON - fall through to the English fallback map.
 		}
 	}
 	return {};

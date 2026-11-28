@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — WooCommerce refund handler.
+ * WB Gamification - WooCommerce refund handler.
  *
  * Reverses `wc_order_completed` points for orders paid before 1.6.8 when they are
  * refunded. Newer awards are reversed by the manifest's reverse_on.

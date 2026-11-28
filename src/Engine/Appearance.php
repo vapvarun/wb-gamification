@@ -1,6 +1,6 @@
 <?php
 /**
- * Appearance — site-owner control over the member-facing accent color.
+ * Appearance - site-owner control over the member-facing accent color.
  *
  * The frontend gamification UI (badges, hub, progress bars, buttons, toasts)
  * is tinted by a single design token, `--wb-gam-color-accent`, defined in
@@ -13,7 +13,7 @@
  * This class lets a site owner pick a custom accent in Settings. When set, it
  * emits a `:root` override (light + dark) on the frontend so the whole
  * gamification surface adopts the chosen color. When unset (empty option),
- * NOTHING is emitted and the existing theme-token / purple fallback applies —
+ * NOTHING is emitted and the existing theme-token / purple fallback applies -
  * the "override if set, else theme default" contract.
  *
  * @package WB_Gamification
@@ -54,7 +54,7 @@ final class Appearance {
 	}
 
 	/**
-	 * Boot — emit the override on the frontend when an accent is set.
+	 * Boot - emit the override on the frontend when an accent is set.
 	 *
 	 * Hooked at wp_enqueue_scripts priority 20 so the `wb-gam-tokens` style is
 	 * already registered (wb-gamification.php registers it during
@@ -102,7 +102,7 @@ final class Appearance {
 	/**
 	 * Build the `:root` override CSS for the current accent.
 	 *
-	 * Returns an empty string when no accent is set — the caller emits nothing,
+	 * Returns an empty string when no accent is set - the caller emits nothing,
 	 * so the theme-token / purple fallback in design-tokens.css applies.
 	 *
 	 * accent-light and accent-text already derive from --wb-gam-color-accent
@@ -151,7 +151,7 @@ final class Appearance {
 		// Ensure the base token style is enqueued so our inline CSS has a host
 		// handle and loads after it. wb-gamification.php registers it; blocks
 		// normally enqueue it, but a page may show only a shortcode that
-		// enqueues a different handle — enqueue defensively.
+		// enqueues a different handle - enqueue defensively.
 		if ( wp_style_is( 'wb-gam-tokens', 'registered' ) ) {
 			wp_enqueue_style( 'wb-gam-tokens' );
 			wp_add_inline_style( 'wb-gam-tokens', $css );

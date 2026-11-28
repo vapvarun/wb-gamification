@@ -52,7 +52,7 @@ class KudosController extends WP_REST_Controller {
 	 * @return void
 	 */
 	public function register_routes(): void {
-		// GET /kudos — recent kudos feed (public).
+		// GET /kudos - recent kudos feed (public).
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -71,7 +71,7 @@ class KudosController extends WP_REST_Controller {
 						),
 					),
 				),
-				// POST /kudos — give kudos (must be logged in).
+				// POST /kudos - give kudos (must be logged in).
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_item' ),
@@ -103,7 +103,7 @@ class KudosController extends WP_REST_Controller {
 			)
 		);
 
-		// GET /kudos/me — current user's kudos stats.
+		// GET /kudos/me - current user's kudos stats.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/me',
@@ -116,7 +116,7 @@ class KudosController extends WP_REST_Controller {
 			)
 		);
 
-		// DELETE /kudos/{id} — admin revoke (reverses both point awards,
+		// DELETE /kudos/{id} - admin revoke (reverses both point awards,
 		// soft-marks the row, audited). Admin-only.
 		register_rest_route(
 			$this->namespace,
@@ -161,7 +161,7 @@ class KudosController extends WP_REST_Controller {
 	}
 
 	/**
-	 * DELETE /kudos/{id} — revoke a kudos.
+	 * DELETE /kudos/{id} - revoke a kudos.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response|WP_Error
@@ -241,7 +241,7 @@ class KudosController extends WP_REST_Controller {
 		$message     = (string) $request->get_param( 'message' );
 
 		// Frontend forms send `recipient_login` (a user_login / slug) instead
-		// of `receiver_id` — the public WP users REST endpoint only returns
+		// of `receiver_id` - the public WP users REST endpoint only returns
 		// post authors, so member→ID resolution has to happen server-side.
 		//
 		// Pre-1.4.1 also accepted `email` lookups here. Removed in 1.4.1

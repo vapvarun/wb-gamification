@@ -2,7 +2,7 @@
  * How far down the page does the top strip actually go?
  *
  * ANY element this plugin pins to the top of the viewport has to answer this question, and it must
- * answer it by MEASURING — not by assuming.
+ * answer it by MEASURING - not by assuming.
  *
  * We have now got this wrong twice, the same way:
  *
@@ -14,7 +14,7 @@
  *     landed on top of the header's nav on every real site.
  *
  * Both are the same mistake: guessing what is at the top of somebody else's page. A page can have an
- * admin bar, a static header, a sticky nav, a cookie bar, a promo strip — in any combination, at any
+ * admin bar, a static header, a sticky nav, a cookie bar, a promo strip - in any combination, at any
  * height, and it can change on scroll.
  *
  * So this measures whatever is actually up there, whatever its position value, and returns the bottom
@@ -39,7 +39,7 @@
 	 *
 	 * An admin bar is 32px. A theme header is 50-120px. A cookie strip is 60-150px. Stack all three
 	 * and you are still under 300. Anything taller that starts at the top of the viewport is a
-	 * full-screen panel — an off-canvas menu, a modal backdrop — and pushing content below it means
+	 * full-screen panel - an off-canvas menu, a modal backdrop - and pushing content below it means
 	 * pushing content off the screen.
 	 */
 	var MAX_BAR_HEIGHT = 300;
@@ -47,7 +47,7 @@
 	/**
 	 * The bottom edge of the lowest thing occupying the top strip.
 	 *
-	 * @param {Element} [ignore] Element to exclude — the thing being positioned, and its ancestors.
+	 * @param {Element} [ignore] Element to exclude - the thing being positioned, and its ancestors.
 	 * @return {number} Bottom edge in CSS pixels, or 0 when the top of the page is clear.
 	 */
 	function topObstructionBottom( ignore ) {
@@ -101,7 +101,7 @@
 			//
 			// A thing in the way at the top of the page is a BAR: an admin bar, a header, a cookie
 			// strip. It is short and wide. A full-height element that happens to start at y=0 is an
-			// OVERLAY — an off-canvas mobile menu, a quick-view backdrop — and it is not "in the way"
+			// OVERLAY - an off-canvas mobile menu, a quick-view backdrop - and it is not "in the way"
 			// of anything, it is covering everything.
 			//
 			// Without this, BuddyX's `.mobile-menu-close` and Listora's `.listora-qv-overlay` (both
@@ -126,22 +126,22 @@
 	 * The mirror of topObstructionBottom(), and it exists for the same reason: the CSS can only
 	 * offset constants it knows about, and a bottom bar belongs to whatever else is on the page.
 	 * A bottom-anchored toast stack sat at `bottom: 1rem` regardless, so on BuddyNext's mobile
-	 * layout the "+3 Points" toast landed squarely on the fixed bottom nav — obscuring the primary
+	 * layout the "+3 Points" toast landed squarely on the fixed bottom nav - obscuring the primary
 	 * navigation for a few seconds after almost every rewarded action.
 	 *
 	 * WHY THIS DOES NOT REUSE THE TOP SCAN. The top scan walks `document.body.children`, which is
-	 * enough for an admin bar or a theme header — they are body-level. Bottom bars are not:
+	 * enough for an admin bar or a theme header - they are body-level. Bottom bars are not:
 	 * BuddyNext's `.bn-mobile-nav` is `position: fixed` but sits SIX levels deep
 	 * (nav > .bn-app > .wb-grid > .container > main.site-content > …), so a body-children scan
 	 * misses it completely. Measured in the browser at 390px.
 	 *
-	 * So this asks the honest question the same way the top scan does — "what is in the way RIGHT
-	 * NOW" — but by hit-testing the bottom edge of the viewport instead of guessing at the DOM
+	 * So this asks the honest question the same way the top scan does - "what is in the way RIGHT
+	 * NOW" - but by hit-testing the bottom edge of the viewport instead of guessing at the DOM
 	 * shape. elementsFromPoint() is O(1), sees through nesting, and finds whatever actually paints
 	 * there: our nav, a theme's live-chat widget, a cookie bar. Three probes (centre and both
 	 * corners) so a bar that hugs one side is still found.
 	 *
-	 * @param {Element} [ignore] Element to exclude — the thing being positioned, and its ancestors.
+	 * @param {Element} [ignore] Element to exclude - the thing being positioned, and its ancestors.
 	 * @return {number} Pixels occupied at the bottom, or 0 when the bottom of the page is clear.
 	 */
 	function bottomObstructionHeight( ignore ) {
@@ -188,7 +188,7 @@
 				return; // A corner bubble is not a bar; the stack can sit beside it.
 			}
 
-			// Too tall to be a bar — same reasoning as the top scan: a full-height fixed element
+			// Too tall to be a bar - same reasoning as the top scan: a full-height fixed element
 			// is an overlay covering everything, not a strip in the way of anything.
 			if ( rect.height > Math.min( MAX_BAR_HEIGHT, vh * 0.3 ) ) {
 				return;

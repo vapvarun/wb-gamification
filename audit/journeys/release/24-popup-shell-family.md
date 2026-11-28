@@ -48,8 +48,8 @@ timing, the family stops matching BuddyNext, and a member sees two different pro
 ### 3. Toasts merge, cap, and sit above dialogs
 - **Action**: queue five points events for one action within two seconds, plus a badge; then open a hub
   panel and trigger another toast.
-- **Expect**: the repeated action is ONE toast ("+N Points", body "x count"); at most three toasts are
-  visible; the toast host is a manual popover and paints above the open `dialog`; a badge toast fires a
+- **Expect**: the repeated action is ONE toast ("+N Points", body "x count"); at most two toasts are
+  visible on a desktop (one on a phone); the toast host is a manual popover and paints above the open `dialog`; a badge toast fires a
   small confetti burst.
   A one-line toast is vertically centred: the `.wb-gam-toast__message` box centre equals the icon disc centre (a hidden link or detail must take no space).
   On a BuddyNext page a toast with a link (`wbGam.toast({href:'/members/'})`) is still on screen after 6s, a plain toast is gone, and a `//host/x` link is dropped.
@@ -83,7 +83,7 @@ timing, the family stops matching BuddyNext, and a member sees two different pro
 ALL of the following hold:
 1. Every dialog, drawer, toast and Moment matches the shared shell values above.
 2. Moment cards queue one at a time, and confetti obeys reduced motion.
-3. Repeated points merge into one toast, at most three are visible, and toasts paint above dialogs.
+3. Repeated points merge into one toast, at most two are visible (one on a phone), and toasts paint above dialogs.
 4. The four migrated surfaces fit 390px and use the shared shells; the survey x does not deactivate.
 5. The new events create bell rows, a demotion creates none, no private note leaks.
 6. The motion-token gate passes and fails when a raw value is added.

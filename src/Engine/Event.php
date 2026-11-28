@@ -90,7 +90,7 @@ final class Event {
 	 * Stable de-duplication key for imported events (e.g. "gamipress:log:42").
 	 *
 	 * NULL for every organically-generated event. When set, the UNIQUE index
-	 * on wb_gam_events.source_key makes a repeated import idempotent —
+	 * on wb_gam_events.source_key makes a repeated import idempotent -
 	 * {@see \WBGam\Engine\Engine::process()} skips any event whose source_key
 	 * already exists rather than double-awarding.
 	 *
@@ -104,8 +104,8 @@ final class Event {
 	 *
 	 * Accepted keys: action_id (string), user_id (int), object_id (int, optional),
 	 * metadata (array, optional), created_at (string ISO-8601, optional),
-	 * event_id (string UUID, optional — auto-generated when omitted),
-	 * point_type (string|null, optional — set after Engine::process resolves).
+	 * event_id (string UUID, optional - auto-generated when omitted),
+	 * point_type (string|null, optional - set after Engine::process resolves).
 	 *
 	 * @param array $args Event data array.
 	 */
@@ -133,7 +133,7 @@ final class Event {
 	 *
 	 * Used by {@see \WBGam\Engine\Engine::process()} to publish the resolved
 	 * currency as a first-class field once Registry resolution has run.
-	 * Re-emits all other fields verbatim — strict value-object semantics.
+	 * Re-emits all other fields verbatim - strict value-object semantics.
 	 * Also stamps `metadata['point_type']` so listeners that already read
 	 * the metadata path stay correct.
 	 *

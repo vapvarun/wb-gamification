@@ -1,19 +1,19 @@
 <?php
 /**
- * WB Gamification — LearnDash Integration Manifest
+ * WB Gamification - LearnDash Integration Manifest
  *
  * Auto-loaded by ManifestLoader when this file exists in integrations/.
  * Triggers fire only when LearnDash is active (function existence guards).
  *
  * Actions covered:
- *   Course completed    — ldlms_program_course_completed / learndash_course_completed
- *   Lesson completed    — learndash_lesson_completed
- *   Topic completed     — learndash_topic_completed
- *   Quiz passed         — learndash_quiz_completed (score ≥ passing score)
- *   Assignment approved — learndash_assignment_approved
- *   Course enrolled     — learndash_update_course_access (not on removal)
- *   Assignment uploaded — learndash_assignment_uploaded
- *   Group completed     — learndash_group_completed
+ *   Course completed    - ldlms_program_course_completed / learndash_course_completed
+ *   Lesson completed    - learndash_lesson_completed
+ *   Topic completed     - learndash_topic_completed
+ *   Quiz passed         - learndash_quiz_completed (score ≥ passing score)
+ *   Assignment approved - learndash_assignment_approved
+ *   Course enrolled     - learndash_update_course_access (not on removal)
+ *   Assignment uploaded - learndash_assignment_uploaded
+ *   Group completed     - learndash_group_completed
  *
  * A member earns each of these once per course, lesson, topic, quiz, assignment or group.
  *
@@ -89,7 +89,7 @@ return [
 			'label'             => static fn(): string => __( 'Pass a LearnDash quiz', 'wb-gamification' ),
 			'description'       => static fn(): string => __( 'Awarded when a learner passes a quiz.', 'wb-gamification' ),
 			// LD fires: do_action( 'learndash_quiz_completed', $quizdata, $user ).
-			// Two positional args — NOT a single array.
+			// Two positional args - NOT a single array.
 			'hook'              => 'learndash_quiz_completed',
 			'user_callback'     => function ( $quizdata, $user = null ): int {
 				$quizdata = is_array( $quizdata ) ? $quizdata : (array) $quizdata;

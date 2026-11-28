@@ -85,7 +85,7 @@ class BadgeShareController extends WP_REST_Controller {
 			)
 		);
 
-		// POST|DELETE /badges/{badge_id}/share — the member publishes, or unpublishes, their OWN badge.
+		// POST|DELETE /badges/{badge_id}/share - the member publishes, or unpublishes, their OWN badge.
 		//
 		// No user_id in this route, deliberately. Consent is not a parameter: the only person who can
 		// publish a member's badge is that member. An admin who could pass ?user_id= would be able to
@@ -327,7 +327,7 @@ class BadgeShareController extends WP_REST_Controller {
 		 * `wb_gam_profile_public_enabled` kill-switch. The share-card
 		 * endpoint was designed to work even for members who opted out
 		 * of the public leaderboard (the credential URL is shared
-		 * deliberately), so the kill-switch is OFF by default — sites
+		 * deliberately), so the kill-switch is OFF by default - sites
 		 * that flip it on disable the entire share surface.
 		 *
 		 * Filter the default to true to make a site-wide public-profile
@@ -381,7 +381,7 @@ class BadgeShareController extends WP_REST_Controller {
 		$site_url    = home_url();
 		$profile_url = \WBGam\Engine\MemberUrl::resolve( (int) $user_id );
 
-		// LinkedIn share URL — pre-filled with badge name and site.
+		// LinkedIn share URL - pre-filled with badge name and site.
 		$linkedin_url = add_query_arg(
 			array(
 				'mini'   => 'true',

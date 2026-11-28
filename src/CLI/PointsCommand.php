@@ -23,7 +23,7 @@ class PointsCommand {
 	/**
 	 * Award points to a user.
 	 *
-	 * Bypasses cooldown and daily-cap checks — this is a direct admin award.
+	 * Bypasses cooldown and daily-cap checks - this is a direct admin award.
 	 *
 	 * ## OPTIONS
 	 *
@@ -78,7 +78,7 @@ class PointsCommand {
 		$awarded = PointsEngine::award( $user->ID, $action_id, $points, 0, $type, true );
 
 		if ( ! $awarded ) {
-			\WP_CLI::error( 'Award failed — check that the user is valid and points > 0.' );
+			\WP_CLI::error( 'Award failed - check that the user is valid and points > 0.' );
 		}
 
 		$new_total = PointsEngine::get_total( $user->ID, $type );
@@ -115,7 +115,7 @@ class PointsCommand {
 	/**
 	 * Resolve a --type flag to a known point-type slug.
 	 *
-	 * Empty input or an unknown slug falls back to the site default — same
+	 * Empty input or an unknown slug falls back to the site default - same
 	 * behaviour as the REST/admin-side resolver, so CLI awards are never
 	 * silently misrouted.
 	 *
@@ -127,7 +127,7 @@ class PointsCommand {
 
 		if ( '' !== $input && $slug !== sanitize_key( $input ) ) {
 			\WP_CLI::warning(
-				sprintf( "Unknown point-type '%s' — falling back to '%s'.", $input, $slug )
+				sprintf( "Unknown point-type '%s' - falling back to '%s'.", $input, $slug )
 			);
 		}
 

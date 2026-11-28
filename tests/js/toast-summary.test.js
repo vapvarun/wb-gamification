@@ -12,7 +12,7 @@ const { JSDOM } = require( 'jsdom' );
 
 const SRC = fs.readFileSync( path.join( __dirname, '../../assets/js/toast.js' ), 'utf8' );
 
-function page() {
+function page( i18n = {} ) {
 	const w = new JSDOM( '<!doctype html><body></body>', { runScripts: 'outside-only' } ).window;
 	let now = 0;
 	let seq = 0;
@@ -29,7 +29,7 @@ function page() {
 		}
 	};
 	const drawn = [];
-	w.wbGamToast = { restUrl: '/', nonce: 'n', i18n: {} };
+	w.wbGamToast = { restUrl: '/', nonce: 'n', i18n };
 	w.wbGam = {
 		rest: () => Promise.resolve( { ok: true, data: [] } ),
 		toast( o ) {
@@ -111,4 +111,25 @@ test( 'a streak bonus adds to the total and the streak is named once, not shown 
 	assert.strictEqual( p.drawn.length, 1 );
 	assert.deepStrictEqual( JSON.parse( JSON.stringify( p.drawn[ 0 ].o.count ) ), { from: 0, to: 15 }, 'the toast agrees with the ledger' );
 	assert.strictEqual( p.drawn[ 0 ].o.body, 'Publish a blog post, 5-day streak!' );
+} );
+
+test( 'the join phrase comes from the server table in the recipient language, by count', () => {
+	const de = [ '', 'und ein neues Abzeichen', 'und 2 neue Abzeichen', 'und 3 neue Abzeichen' ];
+	const p = page( { andBadges: de } );
+	p.send( [ { ...pts( 6000, 'Manuelle Auszeichnung' ), unit_many: 'Punkte', locale: 'de-DE' }, { ...pts( 5, 'x' ), unit_many: 'Punkte' }, { _id: ++id, type: 'badge', message: 'x', name: 'Champion' } ] );
+	p.tick( 1500 );
+	assert.strictEqual( p.drawn[ 0 ].o.title, '+{count} Punkte und ein neues Abzeichen' );
+	const q = page( { andBadges: de } );
+	q.send( [ pts( 5, 'a' ), pts( 5, 'b' ), { _id: ++id, type: 'badge', name: 'A' }, { _id: ++id, type: 'badge', name: 'B' } ] );
+	q.tick( 1500 );
+	assert.strictEqual( q.drawn[ 0 ].o.title, '+{count} Points und 2 neue Abzeichen' );
+} );
+
+test( 'the count carries the site\'s singular and plural names so the frame reading 1 says "Point"', () => {
+	const p = page();
+	p.send( [ { ...pts( 3, 'x' ), unit_one: 'Point' }, { ...pts( 2, 'y' ), unit_one: 'Point' } ] );
+	p.tick( 1600 );
+	const count = JSON.parse( JSON.stringify( p.drawn[ 0 ].o.count ) );
+	assert.strictEqual( count.unitOne, 'Point' );
+	assert.strictEqual( count.unitMany, 'Points' );
 } );

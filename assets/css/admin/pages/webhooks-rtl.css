@@ -1,6 +1,6 @@
-/*! webhooks-rtl.css — auto-generated from webhooks.css by bin/build-rtl.js. Do not edit by hand. */
+/*! webhooks-rtl.css - auto-generated from webhooks.css by bin/build-rtl.js. Do not edit by hand. */
 /**
- * WB Gamification — Webhooks Admin Page CSS
+ * WB Gamification - Webhooks Admin Page CSS
  * =====================================================================
  * Per-page styles for `WBGam\Admin\WebhooksAdminPage` (menu slug:
  * `wb-gamification-webhooks`). Manages outbound webhook endpoints
@@ -20,12 +20,12 @@
 /* Root + JS hook markers. */
 .wb-gam-webhooks,
 .wb-gam-webhook-form {
-	/* Wrapper + form markers — visuals from .wbgam-wrap + .wbgam-card. */
+	/* Wrapper + form markers - visuals from .wbgam-wrap + .wbgam-card. */
 }
 
 .wb-gam-webhook-secret,
 .wb-gam-webhook-url {
-	/* JS-bound form inputs — visuals from .wbgam-input. */
+	/* JS-bound form inputs - visuals from .wbgam-input. */
 }
 
 .wb-gam-event-tag {
@@ -37,7 +37,7 @@
 }
 
 /* ==========================================================================
-   1. Event List — Stacked checkbox list with code tag + description.
+   1. Event List - Stacked checkbox list with code tag + description.
    Used on the "Events to subscribe to" group.
    ========================================================================== */
 

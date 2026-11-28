@@ -6,7 +6,7 @@
  * customer-facing readme.txt cannot drift from the canonical inventory.
  *
  * Counts are substituted in-place via tightly-scoped regexes. The script
- * only touches the active sections (above == Changelog ==) — historical
+ * only touches the active sections (above == Changelog ==) - historical
  * changelog entries are preserved verbatim so old release notes don't
  * get rewritten.
  *
@@ -85,7 +85,7 @@ $controller_count = count( $controllers );
 $readme         = file_get_contents( $readme_fp );
 $original_hash  = sha1( $readme );
 
-// Split at "== Changelog ==" — we only rewrite the active prose above.
+// Split at "== Changelog ==" - we only rewrite the active prose above.
 // Historical changelogs keep whatever numbers they shipped with.
 $marker = "\n== Changelog ==\n";
 $split  = explode( $marker, $readme, 2 );
@@ -109,7 +109,7 @@ $subs = array(
 		'label'       => 'REST endpoints',
 	),
 
-	// "56 endpoints across 19 controllers" — keeps both numbers honest.
+	// "56 endpoints across 19 controllers" - keeps both numbers honest.
 	array(
 		'pattern'     => '/\b(\d+)\s+endpoints\s+across\s+(\d+)\s+controllers\b/',
 		'replacement' => $c['rest_endpoints'] . ' endpoints across ' . $controller_count . ' controllers',
@@ -186,7 +186,7 @@ if ( false === file_put_contents( $readme_fp, $updated ) ) {
 	exit( 2 );
 }
 
-echo "build-readme: updated readme.txt — substitutions in:\n";
+echo "build-readme: updated readme.txt - substitutions in:\n";
 foreach ( $diff_summary as $line ) {
 	echo $line . "\n";
 }

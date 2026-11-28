@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — BuddyPress Integration Manifest
+ * WB Gamification - BuddyPress Integration Manifest
  *
  * Auto-loaded by ManifestLoader when BuddyPress is active.
  * No dependency on WB Gamification at load time.
@@ -9,7 +9,7 @@
  * when BP is not active. Triggers marked requires_buddypress: true add
  * an explicit runtime guard for safety.
  *
- * Kudos triggers are handled by KudosEngine (Phase 2) — not listed here.
+ * Kudos triggers are handled by KudosEngine (Phase 2) - not listed here.
  *
  * @package WB_Gamification
  */
@@ -261,7 +261,7 @@ return [
 			'label'               => static fn(): string => __( 'Upload cover photo', 'wb-gamification' ),
 			'description'         => static fn(): string => __( 'Awarded the first time a member uploads a profile cover image.', 'wb-gamification' ),
 			// BP fires: do_action( 'members_cover_image_uploaded', $item_id, $name, $cover_url, $feedback_code ).
-			// $feedback_code === 1 means success — anything else is a soft-failure path we shouldn't reward.
+			// $feedback_code === 1 means success - anything else is a soft-failure path we shouldn't reward.
 			'hook'                => 'members_cover_image_uploaded',
 			'user_callback'       => function ( int $item_id, string $name = '', string $cover_url = '', int $feedback_code = 0 ): int {
 				return 1 === $feedback_code ? $item_id : 0;
@@ -283,7 +283,7 @@ return [
 			'label'               => static fn(): string => __( 'Upload group cover photo', 'wb-gamification' ),
 			'description'         => static fn(): string => __( 'Awarded once per group when an admin uploads a cover image for a group.', 'wb-gamification' ),
 			// BP fires: do_action( 'groups_cover_image_uploaded', $item_id, $name, $cover_url, $feedback_code ).
-			// We award the acting user (the admin who uploaded), not the group creator —
+			// We award the acting user (the admin who uploaded), not the group creator -
 			// each group cover earns once per (user, group) pair.
 			'hook'                => 'groups_cover_image_uploaded',
 			'once_per_object'     => static fn( int $item_id ): int => $item_id,

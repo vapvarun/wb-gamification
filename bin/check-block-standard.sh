@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# bin/check-block-standard.sh — Wbcom Block Quality Standard CI gate.
+# bin/check-block-standard.sh - Wbcom Block Quality Standard CI gate.
 #
 # Asserts that every `src/Blocks/<slug>/block.json` declares the
 # canonical standard attribute schema. Fails the build if a block is
@@ -17,7 +17,7 @@ PLUGIN_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BLOCKS_DIR="$PLUGIN_DIR/src/Blocks"
 
 if [ ! -d "$BLOCKS_DIR" ]; then
-  echo "✗ src/Blocks/ missing — has the standard migration regressed?"
+  echo "✗ src/Blocks/ missing - has the standard migration regressed?"
   exit 1
 fi
 
@@ -55,18 +55,18 @@ for block_dir in "$BLOCKS_DIR"/*/; do
 
   for attr in "${REQUIRED_ATTRS[@]}"; do
     if ! jq -e --arg key "$attr" '.attributes[$key]' "$manifest" >/dev/null 2>&1; then
-      echo "✗ $slug — block.json missing required standard attribute: $attr"
+      echo "✗ $slug - block.json missing required standard attribute: $attr"
       FAILED=1
     fi
   done
 
   if ! jq -e '.apiVersion' "$manifest" >/dev/null 2>&1; then
-    echo "✗ $slug — block.json missing apiVersion"
+    echo "✗ $slug - block.json missing apiVersion"
     FAILED=1
   else
     api_ver="$(jq -r '.apiVersion' "$manifest")"
     if [ "$api_ver" != "3" ]; then
-      echo "✗ $slug — block.json apiVersion=$api_ver (expected 3)"
+      echo "✗ $slug - block.json apiVersion=$api_ver (expected 3)"
       FAILED=1
     fi
   fi
@@ -79,9 +79,9 @@ fi
 
 if [ "$FAILED" -ne 0 ]; then
   echo ""
-  echo "Wbcom Block Quality Standard check — FAILED ($CHECKED block(s) inspected)"
+  echo "Wbcom Block Quality Standard check - FAILED ($CHECKED block(s) inspected)"
   exit 1
 fi
 
-echo "Wbcom Block Quality Standard check — green ($CHECKED block(s) compliant)"
+echo "Wbcom Block Quality Standard check - green ($CHECKED block(s) compliant)"
 exit 0

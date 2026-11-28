@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check-clock-contract — no SQL clock may touch a wb_gam_ table without a human saying so.
+# check-clock-contract - no SQL clock may touch a wb_gam_ table without a human saying so.
 #
 # WHY THIS IS A GREP AND NOT A PARSER
 #
@@ -99,7 +99,7 @@ if [ "$fail" -eq 1 ]; then
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────────────────────
-# PART 2 — the PHP side: every stored moment is UTC (1.6.5, card 10344291999)
+# PART 2 - the PHP side: every stored moment is UTC (1.6.5, card 10344291999)
 #
 # Before 1.6.5 this plugin wrote site-local wall-clock strings and this part enforced that. The
 # contract is now the WordPress one: store UTC, bound through Clock (site calendar -> UTC instant),
@@ -151,5 +151,5 @@ if [ "$fail" -eq 1 ]; then
   exit 1
 fi
 
-echo "✓ Clock contract — UTC storage: no database clock, no site-local moment, no UTC-day grouping"
+echo "✓ Clock contract - UTC storage: no database clock, no site-local moment, no UTC-day grouping"
 exit 0

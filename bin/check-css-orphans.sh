@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# bin/check-css-orphans.sh — catch PHP-CSS class name drift.
+# bin/check-css-orphans.sh - catch PHP-CSS class name drift.
 #
 # When a PHP template emits `class="wbgam-switch__slider"` but the CSS
-# only defines `.wbgam-switch__track`, the UI silently falls apart —
+# only defines `.wbgam-switch__track`, the UI silently falls apart -
 # the styled element is invisible / unclickable until someone notices
 # in QA. The Setup Wizard email toggles (Basecamp #9925205802 Issue 2)
 # hit exactly this pattern: PHP template said `__slider`, CSS knew
@@ -15,7 +15,7 @@
 # for `{$mode}`) are filtered out.
 #
 # Baseline-driven: existing orphans (56 at commit 343b0a1) are recorded
-# in audit/css-orphan-baseline.txt — gate fails only when the orphan
+# in audit/css-orphan-baseline.txt - gate fails only when the orphan
 # set GROWS. Refresh the baseline whenever an orphan is legitimately
 # fixed (delete it from the baseline file in the same commit).
 #
@@ -33,7 +33,7 @@ RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[0;33m'; DIM=$'\033[2m'; RE
 # 1. Extract every PHP-side wbgam-/wb-gam- class name from class="…" attrs.
 #    Includes compound classes (`class="foo bar"` → both `foo` and `bar`).
 #    Excludes any value containing a PHP tag, brace, percent, or angle
-#    bracket — those are interpolation placeholders, not real class names.
+#    bracket - those are interpolation placeholders, not real class names.
 php_classes() {
   grep -rhoE 'class="[^"]*"' \
     src/ templates/ integrations/ wb-gamification.php \
@@ -70,7 +70,7 @@ if [ ! -f "$BASELINE_FILE" ]; then
   if [ "${1:-}" = "--update-baseline" ]; then
     mkdir -p "$(dirname "$BASELINE_FILE")"
     {
-      echo "# bin/check-css-orphans.sh baseline — PHP classes with no matching CSS rule."
+      echo "# bin/check-css-orphans.sh baseline - PHP classes with no matching CSS rule."
       echo "# Each line is a class name. New orphans fail the gate; legitimate fixes"
       echo "# (matching CSS added) should DELETE the line from this file in the same commit."
       echo "# Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -98,7 +98,7 @@ FIXED_COUNT=$(printf '%s\n' "$FIXED_ORPHANS" | grep -c '.' || true)
 if [ "${1:-}" = "--update-baseline" ]; then
   mkdir -p "$(dirname "$BASELINE_FILE")"
   {
-    echo "# bin/check-css-orphans.sh baseline — PHP classes with no matching CSS rule."
+    echo "# bin/check-css-orphans.sh baseline - PHP classes with no matching CSS rule."
     echo "# Each line is a class name. New orphans fail the gate; legitimate fixes"
     echo "# (matching CSS added) should DELETE the line from this file in the same commit."
     echo "# Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -111,16 +111,16 @@ fi
 
 if [ "$NEW_COUNT" -eq 0 ]; then
   if [ "$FIXED_COUNT" -gt 0 ]; then
-    echo "${GREEN}✓${RESET}  CSS-orphan gate green — $FIXED_COUNT orphan(s) fixed since baseline:"
+    echo "${GREEN}✓${RESET}  CSS-orphan gate green - $FIXED_COUNT orphan(s) fixed since baseline:"
     echo "$FIXED_ORPHANS" | sed 's/^/      ✓ /'
     echo "    ${DIM}Refresh the baseline: bin/check-css-orphans.sh --update-baseline${RESET}"
   else
-    echo "${GREEN}✓${RESET}  CSS-orphan gate green — $BASELINE_COUNT known orphans, no new drift."
+    echo "${GREEN}✓${RESET}  CSS-orphan gate green - $BASELINE_COUNT known orphans, no new drift."
   fi
   exit 0
 fi
 
-echo "${RED}✗${RESET}  CSS-orphan gate failed — $NEW_COUNT new PHP class(es) have no matching CSS rule:"
+echo "${RED}✗${RESET}  CSS-orphan gate failed - $NEW_COUNT new PHP class(es) have no matching CSS rule:"
 echo "$NEW_ORPHANS" | sed 's/^/      - /'
 echo ""
 echo "    Each entry above is a PHP template emitting a class= value that no CSS file"

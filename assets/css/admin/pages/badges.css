@@ -1,5 +1,5 @@
 /**
- * WB Gamification — Badge Admin Page CSS
+ * WB Gamification - Badge Admin Page CSS
  * =====================================================================
  * Per-page styles for `WBGam\Admin\BadgeAdminPage` (menu slug:
  * `wb-gamification-badges`). The badge library:
@@ -22,10 +22,10 @@
 
 /* Page root wrapper marker. */
 .wb-gam-admin-badge {
-	/* Marker — full layout comes from .wbgam-wrap + .wbgam-page-header. */
+	/* Marker - full layout comes from .wbgam-wrap + .wbgam-page-header. */
 }
 
-/* Hidden helper — used by the form to toggle visibility of advanced fields. */
+/* Hidden helper - used by the form to toggle visibility of advanced fields. */
 .wb-gam-hidden {
 	display: none;
 }
@@ -136,7 +136,7 @@
 }
 
 /* ==========================================================================
-   3. Form-Field Markers (JS-bound; no visual rules — visuals from .wbgam-input).
+   3. Form-Field Markers (JS-bound; no visual rules - visuals from .wbgam-input).
    ========================================================================== */
 
 .wb-gam-badge-category,
@@ -219,10 +219,6 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
-}
-
-.wb-gam-condition-fields[hidden] {
-	display: none;
 }
 
 .wb-gam-condition-unit {

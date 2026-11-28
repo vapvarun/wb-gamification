@@ -1,6 +1,6 @@
 <?php
 /**
- * WB Gamification — Member preferences
+ * WB Gamification - Member preferences
  *
  * The one write path, and the read path for a single member, for a member's own
  * choices in `wb_gam_member_prefs`: hide their rank on their profile, stay off

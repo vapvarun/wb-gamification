@@ -1,5 +1,5 @@
 /**
- * Leaderboard — frontend stylesheet.
+ * Leaderboard - frontend stylesheet.
  *
  * Phase F migration: extracted from assets/css/frontend.css so the
  * block ships its own CSS via block.json (`style` field).
@@ -54,7 +54,7 @@
 	background: var(--wb-gam-color-surface-muted);
 }
 
-/* Podium tints — gold/silver/bronze-soft from the global token palette
+/* Podium tints - gold/silver/bronze-soft from the global token palette
  * so theme.json overrides cascade. */
 .wb-gam-leaderboard__entry:is(.wb-gam-rank-1) { background: var(--wb-gam-color-warning-soft); }
 .wb-gam-leaderboard__entry:is(.wb-gam-rank-2) { background: var(--wb-gam-color-surface-muted); }
@@ -95,7 +95,7 @@
 	min-width: 0;
 	max-width: 100%;
 	font-weight: 500;
-	/* Display names must never truncate — the row grows vertically to
+	/* Display names must never truncate - the row grows vertically to
 	 * fit a long name. "Ah..." in a narrow flyout is not acceptable. */
 	overflow-wrap: anywhere;
 	word-break: break-word;
@@ -134,7 +134,7 @@
 	margin-left: 8px;
 }
 
-/* Inline-SVG sizing — points + badges glyphs render as currentColor SVGs.
+/* Inline-SVG sizing - points + badges glyphs render as currentColor SVGs.
  * vertical-align:-2px brings the icon onto the text baseline. */
 .wb-gam-leaderboard__points-icon,
 .wb-gam-leaderboard__badges-icon {
@@ -193,7 +193,7 @@
 	}
 }
 
-/* Live-update bump — fires when view.js mutates a points cell on a
+/* Live-update bump - fires when view.js mutates a points cell on a
  * heartbeat tick. Pulse-then-rest tells the member "this just moved"
  * without a full row repaint. Respects reduced-motion preference. */
 @keyframes wb-gam-leaderboard-bump {
@@ -267,7 +267,7 @@
 	}
 }
 
-/* Mobile breakpoint — keep the row contained at 390px (smallest standard
+/* Mobile breakpoint - keep the row contained at 390px (smallest standard
  * viewport per skill Part 7.5). The flex track with avatar + name + points
  * was overflowing horizontally on long names because flex children default
  * to min-width:auto. The min-width:0 + max-width:100% above already handle

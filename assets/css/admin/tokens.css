@@ -1,12 +1,12 @@
 /**
- * WB Gamification — Admin Design Tokens
+ * WB Gamification - Admin Design Tokens
  * =====================================================================
  * The single :root block that declares every design token consumed by
  * the admin UI. Two halves:
  *
- *   §1A — Canonical --wbgam-* tokens (the source of truth). Colors,
+ *   §1A - Canonical --wbgam-* tokens (the source of truth). Colors,
  *         spacing, radius, type scale, motion, icon sizing.
- *   §1B — Legacy --wb-gam-* aliases. Early modules (frontend.css and
+ *   §1B - Legacy --wb-gam-* aliases. Early modules (frontend.css and
  *         a handful of admin pages) used the older --wb-gam-* prefix.
  *         These aliases re-route the older names onto the canonical
  *         values so existing rules keep working without a textual
@@ -16,7 +16,7 @@
  * Cascade position: loads FIRST on every plugin admin page. Nothing
  * else in the admin bundle is allowed to redeclare a token. All other
  * sheets (components.css / utilities.css / pages/*.css) only
- * REFERENCE tokens via var(--wbgam-*) — they never redefine them.
+ * REFERENCE tokens via var(--wbgam-*) - they never redefine them.
  *
  * Migration source: admin-core.css §1 (the :root design-token block).
  *
@@ -54,7 +54,7 @@
 	--wbgam-input-focus: var(--wbgam-primary);
 	--wbgam-transition: 0.15s ease;
 
-	/* Extended palette — every literal color the admin sheets used to
+	/* Extended palette - every literal color the admin sheets used to
 	   hard-code, lifted into tokens at its exact value (zero visual change).
 	   Replaces the ~140 raw-hex drift the 2026-05-30 color-token audit found.
 	   Grouped by family; numbered suffixes are darker/lighter steps. */
@@ -119,27 +119,27 @@
 	--wbgam-wp-border: #dcdcde;
 	--wbgam-wp-border-light: #c3c4c7;
 
-	/* Spacing scale — fills the gap between gap-xs (8) and gap-sm (16),
+	/* Spacing scale - fills the gap between gap-xs (8) and gap-sm (16),
 	   adds a 2xs (4) for tight chip/icon spacing, and exposes the page/
 	   row/section margins as tokens so the same gap works everywhere. */
 	--wbgam-gap-2xs: 4px;
 	--wbgam-gap-md: 12px;
 	--wbgam-gap-lg: 32px;
 
-	/* Radius scale — replaces the 9 distinct literal values found in the
+	/* Radius scale - replaces the 9 distinct literal values found in the
 	   audit (4 / 6 / 8 / 10 / 12 / 24 / 999 / 3 / 0.625rem). Use card-radius
 	   for cards, pill for badges/chips, sm for inputs, md for buttons. */
 	--wbgam-radius-sm: 4px;
 	--wbgam-radius-md: 6px;
 	--wbgam-radius-pill: 999px;
 
-	/* Icon sizing — paired with the type scale so icons in the sidebar /
+	/* Icon sizing - paired with the type scale so icons in the sidebar /
 	   inline rows share a coherent footprint. */
 	--wbgam-icon-sm: 16px;
 	--wbgam-icon-md: 18px;
 	--wbgam-icon-lg: 24px;
 
-	/* Legacy alias — early blocks (frontend.css mainly, also a few admin
+	/* Legacy alias - early blocks (frontend.css mainly, also a few admin
 	   modules) used --wb-gam-* tokens. Aliasing here means every existing
 	   rule auto-routes onto the canonical --wbgam-* tokens without a
 	   textual rename pass. New rules MUST use --wbgam-* directly. */
@@ -157,31 +157,31 @@
 	--wb-gam-gold: var(--wbgam-warning);
 	--wb-gam-bronze: var(--wbgam-warning);
 
-	/* Type scale — every admin font-size MUST resolve to one of these tokens.
+	/* Type scale - every admin font-size MUST resolve to one of these tokens.
 	   Sized in rem so they scale with the user's browser-root font-size
 	   (accessibility) and stay crisp under WP's 1em = 13px admin chrome.
 	   Base = 14px = WordPress admin body default.
 
 	   See assets/css/admin.css and assets/css/admin-premium.css for the
 	   sed migration that folded 27 distinct literal values into these 10. */
-	--wbgam-fs-2xs: 0.6875rem;   /* 11px — chips, micro labels, badges */
-	--wbgam-fs-xs: 0.75rem;      /* 12px — dense table cells, captions */
-	--wbgam-fs-sm: 0.8125rem;    /* 13px — secondary text, helper copy */
-	--wbgam-fs-base: 0.875rem;   /* 14px — body, inputs, labels (default) */
-	--wbgam-fs-md: 1rem;         /* 16px — card values, emphasised body */
-	--wbgam-fs-lg: 1.125rem;     /* 18px — card headings, section titles */
-	--wbgam-fs-xl: 1.25rem;      /* 20px — page subheaders */
-	--wbgam-fs-2xl: 1.5rem;      /* 24px — stat values, h2 */
-	--wbgam-fs-3xl: 1.75rem;     /* 28px — page h1, hero numbers */
-	--wbgam-fs-display: 3rem;    /* 48px — welcome card hero, big metrics */
+	--wbgam-fs-2xs: 0.6875rem;   /* 11px - chips, micro labels, badges */
+	--wbgam-fs-xs: 0.75rem;      /* 12px - dense table cells, captions */
+	--wbgam-fs-sm: 0.8125rem;    /* 13px - secondary text, helper copy */
+	--wbgam-fs-base: 0.875rem;   /* 14px - body, inputs, labels (default) */
+	--wbgam-fs-md: 1rem;         /* 16px - card values, emphasised body */
+	--wbgam-fs-lg: 1.125rem;     /* 18px - card headings, section titles */
+	--wbgam-fs-xl: 1.25rem;      /* 20px - page subheaders */
+	--wbgam-fs-2xl: 1.5rem;      /* 24px - stat values, h2 */
+	--wbgam-fs-3xl: 1.75rem;     /* 28px - page h1, hero numbers */
+	--wbgam-fs-display: 3rem;    /* 48px - welcome card hero, big metrics */
 
-	/* Line-height pairs — keep consistent vertical rhythm. */
+	/* Line-height pairs - keep consistent vertical rhythm. */
 	--wbgam-lh-tight: 1.2;       /* headings, hero numbers */
 	--wbgam-lh-snug: 1.4;        /* card titles, callouts */
 	--wbgam-lh-base: 1.5;        /* body, paragraphs */
 }
 
-/* Legacy duplicate-token block from the old admin-pages.css §1A — kept
+/* Legacy duplicate-token block from the old admin-pages.css §1A - kept
  * here only so any rule below that still resolved against --wb-gam-*
  * literal hex values (rather than the §1B aliases above) still paints
  * the same color. The aliases above point at the canonical --wbgam-*

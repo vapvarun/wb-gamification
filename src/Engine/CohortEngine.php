@@ -1,6 +1,6 @@
 <?php
 /**
- * Cohort League Engine — Weekly promotion/demotion leagues (Duolingo model)
+ * Cohort League Engine - Weekly promotion/demotion leagues (Duolingo model)
  *
  * Each week, active users are placed in cohorts of ~30 with similar point
  * totals. At end of week, the top 33% promote to the next tier, bottom 33%
@@ -11,8 +11,8 @@
  *   0 = Bronze, 1 = Silver, 2 = Gold, 3 = Diamond, 4 = Obsidian
  *
  * Cron schedule:
- *   Monday 00:05 UTC — assign new weekly cohorts
- *   Sunday 23:00 UTC — process promotions/demotions + notify users
+ *   Monday 00:05 UTC - assign new weekly cohorts
+ *   Sunday 23:00 UTC - process promotions/demotions + notify users
  *
  * @package WB_Gamification
  * @since   0.1.0
@@ -22,15 +22,15 @@ namespace WBGam\Engine;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -50,7 +50,7 @@ final class CohortEngine {
 	/**
 	 * Rows per multi-row upsert when persisting cohort membership.
 	 *
-	 * Was one $wpdb->replace() per member — 100,000 individual write queries in a
+	 * Was one $wpdb->replace() per member - 100,000 individual write queries in a
 	 * single weekly cron request, which times out long before it finishes and
 	 * leaves the cohort table half-populated with no resume.
 	 *
@@ -111,19 +111,39 @@ final class CohortEngine {
 	}
 
 	/**
+	 * The shipped, translated name of a tier, before any admin edit.
+	 *
+	 * TIERS stays the slot list (its count is the tier count); the words members read go through
+	 * here so a site in another language does not see "Bronze League".
+	 *
+	 * @param int $tier 0-indexed tier slot.
+	 * @return string
+	 */
+	public static function default_tier_name( int $tier ): string {
+		$names = array(
+			__( 'Bronze', 'wb-gamification' ),
+			__( 'Silver', 'wb-gamification' ),
+			__( 'Gold', 'wb-gamification' ),
+			__( 'Diamond', 'wb-gamification' ),
+			__( 'Obsidian', 'wb-gamification' ),
+		);
+		return $names[ $tier ] ?? $names[0];
+	}
+
+	/**
 	 * Resolve the display name for a given tier index.
 	 *
 	 * Reads {@see SETTINGS_OPTION} so admin tier-name edits flow to every
 	 * read-side surface (block render, REST `get_user_standing`, promotion
 	 * email subject lines). Falls back to the hard-coded TIERS constant
-	 * when the option is missing or the slot is empty — preserves the
+	 * when the option is missing or the slot is empty - preserves the
 	 * pre-1.4.1 behaviour for installs that never visited the admin page.
 	 *
 	 * @param int $tier 0-indexed tier slot.
 	 * @return string The customised name if admins set one, else the default.
 	 */
 	public static function get_tier_name( int $tier ): string {
-		$default  = self::TIERS[ $tier ] ?? 'Bronze';
+		$default  = self::default_tier_name( $tier );
 		$settings = get_option( self::SETTINGS_OPTION );
 		if ( ! is_array( $settings ) ) {
 			return $default;
@@ -190,26 +210,26 @@ final class CohortEngine {
 
 		// ONE query: active members, their tier, and their points this week.
 		//
-		// Cohort assignment needs a GLOBAL ranking — every active member sorted
-		// within their tier — so it cannot be keyset-paginated the way the weekly
+		// Cohort assignment needs a GLOBAL ranking - every active member sorted
+		// within their tier - so it cannot be keyset-paginated the way the weekly
 		// email can. What it CAN stop doing is the three things that made it fatal:
 		//
 		// 1. `update_meta_cache( 'user', $ids )` on every active member. That issues
 		// SELECT * FROM wp_usermeta WHERE user_id IN (...100k ids...) and loads
-		// EVERY meta row for EVERY active member into PHP — ~25 rows each, so
+		// EVERY meta row for EVERY active member into PHP - ~25 rows each, so
 		// ~2.5M rows resident. That alone is the OOM. The tier is ONE meta key;
 		// we LEFT JOIN it here instead and never touch the meta cache.
 		//
 		// 2. A `WHERE user_id IN ($placeholders)` clause built from one %d per
 		// member. At 100k members that is a ~700 KB prepared statement with
-		// 100,000 bind args — it blows max_allowed_packet before MySQL even
+		// 100,000 bind args - it blows max_allowed_packet before MySQL even
 		// plans it. The aggregate below needs no id list at all: the same
 		// `created_at` predicate that defines "active" also defines the rows.
 		//
 		// 3. One `REPLACE` per member (100k individual writes). See the batched
 		// multi-row upsert below.
 		//
-		// What remains resident is one small row per active member (id, pts, tier) —
+		// What remains resident is one small row per active member (id, pts, tier) -
 		// a few MB at 100k, which the global sort genuinely requires.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$rows = $wpdb->get_results(

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * bin/build-rtl.js — generate -rtl.css siblings for every source CSS in
- * assets/css/ (recursive — descends into subdirectories like
+ * bin/build-rtl.js - generate -rtl.css siblings for every source CSS in
+ * assets/css/ (recursive - descends into subdirectories like
  * assets/css/admin/pages/) that doesn't already have one. RTL is
  * mandatory for the release zip (Hebrew/Arabic/Persian/Urdu locales
  * rely on it); the plugin previously hand-authored these files which
@@ -23,7 +23,7 @@ const ROOT = path.resolve(__dirname, '..');
 const CSS_DIR = path.join(ROOT, 'assets', 'css');
 
 if (!fs.existsSync(CSS_DIR)) {
-	process.stdout.write('build:rtl — assets/css/ does not exist; nothing to do.\n');
+	process.stdout.write('build:rtl - assets/css/ does not exist; nothing to do.\n');
 	process.exit(0);
 }
 
@@ -60,7 +60,7 @@ function walkCss(dir) {
 const sources = walkCss(CSS_DIR);
 
 if (sources.length === 0) {
-	process.stdout.write('build:rtl — no LTR source CSS files found.\n');
+	process.stdout.write('build:rtl - no LTR source CSS files found.\n');
 	process.exit(0);
 }
 
@@ -74,10 +74,10 @@ for (const ltrPath of sources) {
 	const rtl = rtlcss.process(ltr);
 
 	const rel = path.relative(CSS_DIR, ltrPath);
-	const header = `/*! ${filename.replace(/\.css$/, '-rtl.css')} — auto-generated from ${filename} by bin/build-rtl.js. Do not edit by hand. */\n`;
+	const header = `/*! ${filename.replace(/\.css$/, '-rtl.css')} - auto-generated from ${filename} by bin/build-rtl.js. Do not edit by hand. */\n`;
 	fs.writeFileSync(rtlPath, header + rtl);
 	generated += 1;
 	process.stdout.write(`  rtl  ${rel} → ${path.relative(CSS_DIR, rtlPath)}\n`);
 }
 
-process.stdout.write(`build:rtl — ${generated} file${generated === 1 ? '' : 's'} generated.\n`);
+process.stdout.write(`build:rtl - ${generated} file${generated === 1 ? '' : 's'} generated.\n`);

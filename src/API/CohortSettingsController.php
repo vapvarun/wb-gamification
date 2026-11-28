@@ -25,15 +25,15 @@ use WBGam\Engine\ModuleToggles;
 
 defined( 'ABSPATH' ) || exit;
 // Silencing convention-driven false positives so Plugin Check signal stays clean:
-// - PrefixAllGlobals.NonPrefixedHooknameFound — plugin uses `wb_gam_*` as its
+// - PrefixAllGlobals.NonPrefixedHooknameFound - plugin uses `wb_gam_*` as its
 // established hook prefix (documented in CLAUDE.md, declared in .phpcs.xml).
 // Plugin Check auto-detects `wb_gamification` from the text-domain header
 // and doesn't share the .phpcs.xml prefix list; hooks like
 // `wb_gam_points_redeemed` are part of the public 1.0 API and can't rename.
-// - PrefixAllGlobals.NonPrefixedFunctionFound — same convention. Helper
+// - PrefixAllGlobals.NonPrefixedFunctionFound - same convention. Helper
 // functions exported under `wb_gam_*` are documented in `src/Extensions/`.
 // - PluginCheck.Security.DirectDB.UnescapedDBParameter +
-// WordPress.DB.PreparedSQL.InterpolatedNotPrepared — this file does custom-
+// WordPress.DB.PreparedSQL.InterpolatedNotPrepared - this file does custom-
 // table work. Table names are interpolated from `{$wpdb->prefix}` plus
 // literal constants (no user input); user-supplied values pass through
 // `$wpdb->prepare()`. MySQL doesn't allow placeholder table names, so the
@@ -154,7 +154,7 @@ final class CohortSettingsController extends WP_REST_Controller {
 		$enabled = null !== $request->get_param( 'enabled' ) ? (bool) $request->get_param( 'enabled' ) : ModuleToggles::enabled( 'cohort_leagues' );
 
 		/**
-		 * Filter — abort the save by returning WP_Error.
+		 * Filter - abort the save by returning WP_Error.
 		 *
 		 * @param array           $settings Sanitised settings document.
 		 * @param bool            $enabled  Whether cohort leagues are enabled.
@@ -191,11 +191,11 @@ final class CohortSettingsController extends WP_REST_Controller {
 		$settings = (array) get_option( self::OPTION_KEY, array() );
 
 		return array(
-			'tier_1'      => isset( $settings['tier_1'] ) ? (string) $settings['tier_1'] : 'Bronze',
-			'tier_2'      => isset( $settings['tier_2'] ) ? (string) $settings['tier_2'] : 'Silver',
-			'tier_3'      => isset( $settings['tier_3'] ) ? (string) $settings['tier_3'] : 'Gold',
-			'tier_4'      => isset( $settings['tier_4'] ) ? (string) $settings['tier_4'] : 'Diamond',
-			'tier_5'      => isset( $settings['tier_5'] ) ? (string) $settings['tier_5'] : 'Obsidian',
+			'tier_1'      => isset( $settings['tier_1'] ) ? (string) $settings['tier_1'] : \WBGam\Engine\CohortEngine::default_tier_name( 0 ),
+			'tier_2'      => isset( $settings['tier_2'] ) ? (string) $settings['tier_2'] : \WBGam\Engine\CohortEngine::default_tier_name( 1 ),
+			'tier_3'      => isset( $settings['tier_3'] ) ? (string) $settings['tier_3'] : \WBGam\Engine\CohortEngine::default_tier_name( 2 ),
+			'tier_4'      => isset( $settings['tier_4'] ) ? (string) $settings['tier_4'] : \WBGam\Engine\CohortEngine::default_tier_name( 3 ),
+			'tier_5'      => isset( $settings['tier_5'] ) ? (string) $settings['tier_5'] : \WBGam\Engine\CohortEngine::default_tier_name( 4 ),
 			'promote_pct' => isset( $settings['promote_pct'] ) ? (int) $settings['promote_pct'] : 20,
 			'demote_pct'  => isset( $settings['demote_pct'] ) ? (int) $settings['demote_pct'] : 20,
 			'duration'    => isset( $settings['duration'] ) ? (string) $settings['duration'] : 'weekly',
