@@ -21,6 +21,10 @@
 
 ---
 
+## Next release plan
+
+The plan, backlog, release flow and test environments for the next release live in `docs/plans/1.7.1.md`. Read it before starting 1.7.1 work; update it when decisions are made.
+
 ## Plugin Overview
 
 | Field | Value |
